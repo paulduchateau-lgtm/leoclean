@@ -10,7 +10,16 @@ import { defineConfig } from "vitest/config";
  * exécutable sans infrastructure.
  */
 export default defineConfig({
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    alias: {
+      // `server-only` n'a pas d'implémentation exécutable : c'est une garde de
+      // compilation. Sous Vitest, on la neutralise pour pouvoir tester
+      // directement les modules serveur.
+      "server-only": new URL("./test/server-only.stub.ts", import.meta.url)
+        .pathname,
+    },
+  },
   test: {
     environment: "node",
     include: ["src/**/*.integration.test.ts"],

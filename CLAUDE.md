@@ -93,6 +93,42 @@ Trois limites, documentées plutôt que masquées :
 Le client non cloisonné `prisma` est réservé à l'authentification, à
 l'administration plateforme sur un chemin explicite, et aux scripts.
 
+## Authentification et autorisation
+
+Connexion sans mot de passe : lien envoyé par email, ou Google. Sessions en
+base plutôt qu'en jeton signé, afin de pouvoir être révoquées immédiatement
+— suspension d'un intervenant, suppression de compte au titre du RGPD.
+
+**Les rôles ne sont pas hiérarchisés sur une échelle unique.** Un intervenant
+n'est pas « plus » qu'un client. On raisonne en capacités explicites
+(`src/lib/auth/permissions.ts`) et chaque rôle reçoit exactement les siennes.
+Conséquence voulue : aucun rôle de gestion ne détient `availability:manage:own`
+— personne ne peut imposer un créneau à un indépendant, et le produit ne crée
+donc pas de lien de subordination.
+
+**La session ne fait jamais autorité.** Elle transporte les appartenances pour
+l'affichage, mais `requireOrganization()` relit l'appartenance en base à chaque
+appel : une session émise avant une suspension ne donne plus accès à rien. Elle
+renvoie un client Prisma déjà cloisonné, si bien que l'appelant n'a plus
+l'occasion d'interroger une autre organisation.
+
+`asPlatformAdmin().scopeTo(orgId, motif)` est **le seul** chemin franchissant la
+frontière d'une organisation. Il est volontairement verbeux et journalise
+chaque accès de façon nominative et motivée.
+
+**`src/proxy.ts` ne fait pas d'autorisation** — en Next 16, `middleware.ts` est
+d'ailleurs renommé `proxy.ts`. Il constate l'absence de cookie et évite un
+aller-retour ; il ne sait pas si le cookie est valide ni à qui il appartient.
+La vraie vérification a lieu au contact des données.
+
+Toute mutation passe par les constructeurs de `src/lib/actions.ts`, qui
+valident avec Zod puis vérifient l'autorisation avant d'exécuter quoi que ce
+soit. `src/lib/action-result.ts` en isole la partie pure — forme du résultat et
+traduction des erreurs — pour rester testable sans Auth.js.
+
+Sans `RESEND_API_KEY`, les liens de connexion sont écrits dans la console : le
+parcours complet est praticable en développement sans service externe.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
@@ -128,6 +164,13 @@ src/
     site.ts            NAP et identité publique — source unique
     territory.ts       les 13 communes (INSEE, CP, population, centroïde)
     time.ts            conversions Europe/Paris <-> UTC
+    actions.ts         constructeurs de server actions (validation + autorisation)
+    action-result.ts   forme du résultat et traduction des erreurs (pur)
+    auth/
+      config.ts        configuration Auth.js
+      permissions.ts   capacités par rôle
+      session.ts       vérifications d'accès côté serveur
+  proxy.ts             redirection optimiste (ex-middleware.ts)
     scheduling/        moteur de disponibilité et de trajets (phase 5)
 prisma/
   schema.prisma        31 modèles, tous cloisonnés sauf exception justifiée
@@ -183,7 +226,10 @@ cloné.
 - [x] **Phase 1 — Schéma multi-tenant.** 31 modèles Prisma, PostGIS, verrou
       anti-double-réservation en base, extension de cloisonnement, seed
       réaliste, 24 tests d'intégration.
-- [ ] Phase 2 — Auth.js, rôles et appartenance
+- [x] **Phase 2 — Auth.js, rôles et appartenance.** Lien magique et Google,
+      sessions en base, capacités explicites par rôle, cloisonnement vérifié à
+      chaque appel, enveloppe de server action, journalisation des accès
+      transverses.
 - [ ] Phase 3 — Catalogue et tarification
 - [ ] Phase 4 — Site public, SEO local et GEO/AEO
 - [ ] Phase 5 — Moteur de disponibilité

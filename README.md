@@ -77,6 +77,11 @@ Trois modules portent les invariants du domaine :
   n'écrit jamais `where: { organizationId }` à la main : `forOrganization(id)`
   rend un client dont toutes les requêtes sont filtrées, et la liste des
   modèles concernés est dérivée du schéma plutôt que maintenue à la main.
+- `src/lib/auth/` — l'authentification et les autorisations. Les rôles ne sont
+  pas rangés sur une échelle unique : chacun reçoit des capacités explicites,
+  de sorte qu'un intervenant ne devienne jamais « supérieur » à un client par
+  effet de bord. La session ne fait pas autorité — l'appartenance est relue en
+  base à chaque appel, ce qui rend une suspension immédiate.
 
 Deux garanties sont écrites en SQL parce qu'aucun contrôle applicatif n'y
 résiste. `Address.geog` est une colonne générée depuis la latitude et la
@@ -98,6 +103,10 @@ brut, crédit d'impôt et reste à charge. Les mutations passent par des Server
 Actions ; les Route Handlers sont réservés aux webhooks et aux endpoints
 publics documentés. Zod valide chaque frontière, y compris les réponses des API
 externes.
+
+La connexion se fait sans mot de passe, par lien à usage unique ou via Google.
+Sans clé Resend, ces liens sont écrits dans la console : le parcours complet
+reste praticable en développement sans service externe.
 
 L'affichage du crédit d'impôt de 50 % est conditionné par
 `NEXT_PUBLIC_SAP_DECLARED` : le calcul est toujours effectué et stocké, mais

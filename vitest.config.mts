@@ -3,7 +3,15 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    alias: {
+      // `server-only` est une garde de compilation sans implémentation
+      // exécutable ; on la neutralise pour tester les modules serveur.
+      "server-only": new URL("./test/server-only.stub.ts", import.meta.url)
+        .pathname,
+    },
+  },
   test: {
     // Environnement Node par défaut : la majeure partie du code testé est du
     // domaine pur (tarification, disponibilité, trajets). Un fichier de test de
