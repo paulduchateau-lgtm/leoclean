@@ -10,14 +10,23 @@ et un **SaaS** pour les sociétés de ménage locales qui gèrent leurs propres
 
 ## Démarrage
 
-Prérequis : Node.js 22+, PostgreSQL 15+ avec l'extension PostGIS.
+Prérequis : Node.js 22+, PostgreSQL 15+ avec les extensions **PostGIS** et
+**btree_gist**.
 
 ```bash
 cd leoclean
 npm install
-cp .env.example .env   # puis compléter
+cp .env.example .env      # puis compléter DATABASE_URL et AUTH_SECRET
+npx prisma migrate deploy # crée le schéma
+npm run db:seed           # jeu de données de développement
 npm run dev
 ```
+
+Le seed monte un territoire crédible : trois organisations concurrentes
+(la marketplace LéoClean et deux sociétés de ménage locales), douze
+intervenants aux plannings remplis, soixante réservations réparties sur tous
+les statuts, et des adresses situées sur 156 voies réelles extraites de la Base
+Adresse Nationale.
 
 Les variables d'environnement sont validées au démarrage par Zod
 (`src/lib/env.ts`). Une configuration incomplète fait échouer le boot avec la
@@ -61,6 +70,21 @@ Trois modules portent les invariants du domaine :
   Lue par le JSON-LD, le pied de page, les mentions légales, `llms.txt` et les
   emails.
 - `src/lib/env.ts` — le schéma de configuration.
+
+- `src/lib/time.ts` — la frontière entre l'heure locale française et l'UTC.
+  Rien d'autre dans le code ne manipule de décalage horaire.
+- `src/lib/db.ts` — le client Prisma et le cloisonnement multi-tenant. On
+  n'écrit jamais `where: { organizationId }` à la main : `forOrganization(id)`
+  rend un client dont toutes les requêtes sont filtrées, et la liste des
+  modèles concernés est dérivée du schéma plutôt que maintenue à la main.
+
+Deux garanties sont écrites en SQL parce qu'aucun contrôle applicatif n'y
+résiste. `Address.geog` est une colonne générée depuis la latitude et la
+longitude, indexée en GIST. `Assignment_no_overlap` est une contrainte
+d'exclusion qui interdit à un intervenant deux missions se chevauchant, en
+comptant le temps de trajet : deux ménages jointifs à quinze kilomètres l'un de
+l'autre sont refusés par la base, pas par une vérification qu'une requête
+concurrente pourrait contourner.
 
 À venir : `src/lib/scheduling/`, qui contiendra la fonction de disponibilité
 — disponibilités déclarées moins occupations d'agenda externe, missions et

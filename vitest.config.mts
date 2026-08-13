@@ -10,8 +10,10 @@ export default defineConfig({
     // composant déclare `// @vitest-environment jsdom` en tête.
     environment: "node",
     include: ["src/**/*.test.{ts,tsx}"],
-    // Les tests de bout en bout appartiennent à Playwright.
-    exclude: ["e2e/**", "node_modules/**"],
+    // Les tests de bout en bout appartiennent à Playwright, et ceux qui
+    // exigent une vraie base à `npm run test:integration` : cette suite doit
+    // rester exécutable sans aucune infrastructure.
+    exclude: ["e2e/**", "node_modules/**", "src/**/*.integration.test.ts"],
     setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",

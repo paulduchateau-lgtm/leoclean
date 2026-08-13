@@ -1,0 +1,1208 @@
+// ---------------------------------------------------------------------------
+// LéoClean — schéma de données
+//
+// Deux principes gouvernent ce schéma.
+//
+// 1. Multi-tenant strict. Toute table métier porte `organizationId`. Le
+//    cloisonnement n'est pas laissé à la vigilance de l'appelant : l'extension
+//    Prisma de `src/lib/db.ts` dérive la liste des modèles concernés du DMMF et
+//    injecte le filtre elle-même. Un modèle métier ajouté sans `organizationId`
+//    fait échouer un test dédié.
+//
+// 2. Le temps est stocké en UTC, l'argent en centimes entiers. Aucun flottant
+//    ne représente un montant. Les heures locales de récurrence sont stockées
+//    en minutes depuis minuit, dans le fuseau d'affichage Europe/Paris, parce
+//    qu'un ménage « le mardi à 9 h » reste à 9 h de part et d'autre du
+//    changement d'heure.
+// ---------------------------------------------------------------------------
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================================================
+// Organisation et identités
+// ===========================================================================
+
+enum OrganizationType {
+  /// LéoClean elle-même. Une seule instance : la marketplace d'indépendants.
+  MARKETPLACE
+  /// Société de ménage locale, cliente du SaaS, avec ses propres salariés.
+  COMPANY
+  /// Intervenant indépendant disposant de sa propre page de réservation.
+  INDEPENDENT
+}
+
+/// Nature juridique de la prestation.
+///
+/// PRESTATAIRE : l'organisation vend la prestation et en porte la
+/// responsabilité. MANDATAIRE : l'organisation met en relation, le client
+/// devient l'employeur (CESU). Ce n'est pas une variante d'affichage — c'est un
+/// autre contrat, une autre facturation et une autre responsabilité juridique.
+/// Modélisé dès maintenant, non implémenté tant que le cadre n'est pas validé.
+enum EngagementMode {
+  PRESTATAIRE
+  MANDATAIRE
+}
+
+enum OrganizationStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+model Organization {
+  id     String             @id @default(cuid())
+  /// Segment de `/pro/[slug]`. Indexable, donc stable dans le temps.
+  slug   String             @unique
+  name   String
+  type   OrganizationType
+  status OrganizationStatus @default(PENDING)
+
+  engagementMode EngagementMode @default(PRESTATAIRE)
+
+  /// Commission par défaut, en points de base (2500 = 25 %). Recopiée et figée
+  /// sur chaque réservation à sa création.
+  commissionRateBp Int @default(2500)
+
+  /// Contenu de la page publique de réservation.
+  isPubliclyBookable Boolean @default(false)
+  tagline            String?
+  description        String?
+  logoUrl            String?
+  publicPhone        String?
+  publicEmail        String?
+
+  /// Identifiants légaux, vérifiés avant activation.
+  legalName            String?
+  siret                String?
+  /// Numéro de déclaration Services à la personne, requis pour communiquer
+  /// sur le crédit d'impôt.
+  sapDeclarationNumber String?
+  insuranceExpiresAt   DateTime?
+
+  /// Stripe. `stripeAccountId` est le compte Connect qui reçoit les
+  /// reversements ; `stripeCustomerId` porte l'abonnement SaaS des sociétés.
+  stripeAccountId    String?
+  stripeCustomerId   String?
+  subscriptionPlan   String?
+  subscriptionStatus String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships          Membership[]
+  clientProfiles       ClientProfile[]
+  cleanerProfiles      CleanerProfile[]
+  addresses            Address[]
+  services             Service[]
+  serviceOptions       ServiceOption[]
+  pricingRules         PricingRule[]
+  bookings             Booking[]
+  bookingItems         BookingItem[]
+  bookingStatusEvents  BookingStatusEvent[]
+  subscriptions        Subscription[]
+  availabilityRules    AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+  calendarConnections  CalendarConnection[]
+  externalBusyBlocks   ExternalBusyBlock[]
+  assignments          Assignment[]
+  payments             Payment[]
+  payouts              Payout[]
+  invoices             Invoice[]
+  reviews              Review[]
+  messages             Message[]
+  cleanerDocuments     CleanerDocument[]
+  leads                Lead[]
+  auditLogs            AuditLog[]
+
+  @@index([type, status])
+}
+
+enum Role {
+  /// Administrateur LéoClean. Seul rôle autorisé à franchir la frontière
+  /// d'organisation, et uniquement via un chemin explicite et journalisé.
+  PLATFORM_ADMIN
+  ORG_OWNER
+  ORG_MANAGER
+  CLEANER
+  CLIENT
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+/// Identité globale. Un utilisateur n'est pas cloisonné : une même personne
+/// peut être cliente de la marketplace et d'une société, ou cliente ici et
+/// intervenante là. Le cloisonnement porte sur les appartenances et les
+/// profils, pas sur le compte.
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  memberships      Membership[]
+  clientProfiles   ClientProfile[]
+  cleanerProfiles  CleanerProfile[]
+  auditLogs        AuditLog[]
+  sentMessages     Message[]        @relation("MessageSender")
+  receivedMessages Message[]        @relation("MessageRecipient")
+  verifiedDocuments CleanerDocument[] @relation("DocumentVerifier")
+}
+
+model Membership {
+  id             String           @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role
+  status         MembershipStatus @default(ACTIVE)
+
+  invitedAt  DateTime?
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// Une personne n'occupe qu'un rôle par organisation.
+  @@unique([userId, organizationId])
+  @@index([organizationId, role, status])
+}
+
+// --- Auth.js ---------------------------------------------------------------
+// Tables imposées par l'adaptateur Auth.js. Volontairement hors périmètre
+// multi-tenant : elles portent l'authentification, pas des données métier.
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ===========================================================================
+// Profils
+// ===========================================================================
+
+model ClientProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  userId         String
+
+  phone String?
+
+  /// Consignes d'accès au logement : code de porte, emplacement des clés,
+  /// présence d'animaux. Données sensibles, jamais exposées hors de
+  /// l'organisation ni à un intervenant non affecté.
+  accessNotes String?
+
+  stripeCustomerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses     Address[]
+  bookings      Booking[]
+  subscriptions Subscription[]
+  reviews       Review[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+}
+
+enum CleanerStatus {
+  /// Inscrit, documents non encore validés. Ne reçoit aucune mission.
+  PENDING_VERIFICATION
+  ACTIVE
+  /// Suspendu par la plateforme, ou congé longue durée.
+  SUSPENDED
+  INACTIVE
+}
+
+enum EmploymentType {
+  /// Auto-entrepreneur : facture sa prestation, reçoit un reversement Connect.
+  INDEPENDENT
+  /// Salarié d'une société cliente du SaaS : payé par son employeur.
+  EMPLOYEE
+}
+
+model CleanerProfile {
+  id             String @id @default(cuid())
+  organizationId String
+  userId         String
+
+  /// Prénom affiché au client. On ne publie jamais le nom complet.
+  displayName    String
+  bio            String?
+  photoUrl       String?
+  status         CleanerStatus  @default(PENDING_VERIFICATION)
+  employmentType EmploymentType @default(INDEPENDENT)
+
+  siret              String?
+  insuranceExpiresAt DateTime?
+  stripeAccountId    String?
+  /// Onboarding Stripe Connect achevé : sans cela, aucun reversement possible.
+  payoutsEnabled     Boolean   @default(false)
+
+  /// Point de départ et d'arrivée de la tournée quotidienne.
+  homeAddressId String? @unique
+
+  /// Temps de trajet maximal accepté depuis la mission précédente, en minutes.
+  maxTravelMinutes Int @default(30)
+
+  /// Agrégats dénormalisés, recalculés à la clôture d'une mission. Ils servent
+  /// au score d'attribution et à l'affichage ; la vérité reste dans Review et
+  /// Assignment.
+  ratingAverage  Float @default(0)
+  ratingCount    Int   @default(0)
+  acceptanceRate Float @default(1)
+
+  activatedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeAddress            Address?                @relation("CleanerHome", fields: [homeAddressId], references: [id], onDelete: SetNull)
+  documents              CleanerDocument[]
+  availabilityRules      AvailabilityRule[]
+  availabilityExceptions AvailabilityException[]
+  calendarConnections    CalendarConnection[]
+  externalBusyBlocks     ExternalBusyBlock[]
+  assignments            Assignment[]
+  payouts                Payout[]
+  reviews                Review[]
+  preferredForSubscriptions Subscription[]       @relation("PreferredCleaner")
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, status])
+}
+
+enum DocumentType {
+  SIRET
+  INSURANCE_RC_PRO
+  IDENTITY
+  BANK_DETAILS
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+/// Pièces justificatives exigées avant activation d'un intervenant : SIRET
+/// actif, attestation de responsabilité civile professionnelle, pièce
+/// d'identité, RIB.
+model CleanerDocument {
+  id               String         @id @default(cuid())
+  organizationId   String
+  cleanerProfileId String
+  type             DocumentType
+  status           DocumentStatus @default(PENDING)
+
+  fileUrl        String
+  expiresAt      DateTime?
+  verifiedAt     DateTime?
+  verifiedById   String?
+  rejectionReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+  verifiedBy   User?          @relation("DocumentVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@unique([cleanerProfileId, type])
+  @@index([organizationId, status])
+}
+
+// ===========================================================================
+// Adresses et géographie
+// ===========================================================================
+
+/// Adresse géocodée.
+///
+/// Le géocodage passe par la Base Adresse Nationale (api-adresse.data.gouv.fr).
+/// `inseeCode` est l'identifiant de résolution de la commune : trois communes
+/// de la zone partagent le code postal 33640 et six le 33650, et les noms sont
+/// saisis de façon inconstante par les clients.
+///
+/// La colonne `geog` est une colonne générée PostGIS (voir la migration
+/// initiale) : elle est dérivée de `lat`/`lng`, ne peut pas diverger, et porte
+/// l'index GIST utilisé par les requêtes de proximité.
+model Address {
+  id             String  @id @default(cuid())
+  organizationId String
+  clientProfileId String?
+
+  label      String?
+  street     String
+  complement String?
+  postalCode String
+  cityName   String
+  inseeCode  String
+
+  lat Float
+  lng Float
+
+  /// Identifiant de l'adresse dans la Base Adresse Nationale, quand la saisie
+  /// a été résolue automatiquement.
+  banId String?
+
+  /// Informations d'accès : étage, ascenseur, digicode, stationnement.
+  accessNotes String?
+  floor       String?
+  hasElevator Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile?  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  cleanerHome   CleanerProfile? @relation("CleanerHome")
+  bookings      Booking[]
+  subscriptions Subscription[]
+
+  @@index([organizationId])
+  @@index([inseeCode])
+}
+
+// ===========================================================================
+// Catalogue et tarification
+// ===========================================================================
+
+enum ServiceKind {
+  MENAGE_REGULIER
+  GRAND_MENAGE
+  REPASSAGE
+  VITRES
+  FIN_DE_BAIL
+}
+
+model Service {
+  id             String      @id @default(cuid())
+  organizationId String
+  slug           String
+  name           String
+  description    String?
+  kind           ServiceKind
+  isActive       Boolean     @default(true)
+  sortOrder      Int         @default(0)
+
+  /// Paramètres d'estimation de durée : surface traitée par heure et plancher
+  /// de facturation. Le client peut ajuster la durée proposée.
+  sqmPerHour         Int @default(25)
+  minDurationMinutes Int @default(120)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  options       ServiceOption[]
+  pricingRules  PricingRule[]
+  bookings      Booking[]
+  subscriptions Subscription[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId, isActive])
+}
+
+/// Option facturée en supplément : repassage, vitres, four, réfrigérateur.
+/// Une option ajoute une durée et, éventuellement, un montant forfaitaire.
+model ServiceOption {
+  id             String  @id @default(cuid())
+  organizationId String
+  serviceId      String
+  slug           String
+  name           String
+  description    String?
+
+  extraMinutes   Int     @default(30)
+  extraPriceCents Int    @default(0)
+  isActive       Boolean @default(true)
+  sortOrder      Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, slug])
+  @@index([serviceId, isActive])
+}
+
+enum Frequency {
+  ONE_OFF
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+/// Tarif horaire applicable à un service pour une fréquence donnée.
+///
+/// L'historisation par `validFrom`/`validUntil` permet de changer les tarifs
+/// sans réécrire le passé : une réservation conserve de toute façon le tarif
+/// figé au moment de sa création.
+model PricingRule {
+  id             String    @id @default(cuid())
+  organizationId String
+  serviceId      String
+  frequency      Frequency
+
+  hourlyRateCents Int
+  /// Taux du crédit d'impôt services à la personne, en points de base.
+  taxCreditRateBp Int       @default(5000)
+
+  validFrom  DateTime  @default(now())
+  validUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, serviceId, frequency, validFrom])
+}
+
+// ===========================================================================
+// Réservations
+// ===========================================================================
+
+enum BookingStatus {
+  DRAFT
+  PENDING_ASSIGNMENT
+  ASSIGNED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED_BY_CLIENT
+  CANCELLED_BY_CLEANER
+  NO_SHOW
+  DISPUTED
+}
+
+enum BookingSource {
+  /// Tunnel de réservation LéoClean.
+  LEOCLEAN
+  /// Page publique d'une organisation, /pro/[slug].
+  ORG_PAGE
+  /// Saisie manuelle par une société pour son propre client.
+  BACK_OFFICE
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  organizationId  String
+  clientProfileId String
+  addressId       String
+  serviceId       String
+  subscriptionId  String?
+
+  status BookingStatus @default(DRAFT)
+  source BookingSource @default(LEOCLEAN)
+
+  /// Instants en UTC. L'affichage en Europe/Paris est une préoccupation de
+  /// présentation, jamais de stockage.
+  scheduledStart  DateTime
+  scheduledEnd    DateTime
+  durationMinutes Int
+
+  surfaceSqm Int?
+  frequency  Frequency      @default(ONE_OFF)
+  engagementMode EngagementMode @default(PRESTATAIRE)
+
+  /// Montants figés à la création. Un changement de tarif ou de commission ne
+  /// réécrit jamais une réservation existante.
+  hourlyRateCents      Int
+  grossAmountCents     Int
+  taxCreditRateBp      Int @default(5000)
+  taxCreditAmountCents Int
+  netAmountCents       Int
+  commissionRateBp     Int
+  commissionAmountCents Int
+  cancellationFeeCents Int @default(0)
+
+  clientNotes   String?
+  internalNotes String?
+
+  cancelledAt     DateTime?
+  cancellationReason String?
+  completedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization  Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile        @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  address       Address              @relation(fields: [addressId], references: [id])
+  service       Service              @relation(fields: [serviceId], references: [id])
+  subscription  Subscription?        @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  items         BookingItem[]
+  assignments   Assignment[]
+  statusEvents  BookingStatusEvent[]
+  payments      Payment[]
+  invoices      Invoice[]
+  messages      Message[]
+  review        Review?
+
+  @@index([organizationId, status, scheduledStart])
+  @@index([organizationId, clientProfileId])
+  @@index([scheduledStart])
+}
+
+enum BookingItemKind {
+  SERVICE
+  OPTION
+}
+
+/// Ligne de réservation : instantané du catalogue au moment de la commande.
+/// Le libellé et le prix sont recopiés, de sorte qu'une modification ultérieure
+/// du catalogue ne change pas ce que le client a acheté.
+model BookingItem {
+  id             String          @id @default(cuid())
+  organizationId String
+  bookingId      String
+  kind           BookingItemKind
+
+  /// Référence au catalogue, conservée à titre indicatif : le libellé et le
+  /// prix ci-dessous font foi.
+  sourceId String?
+
+  label          String
+  quantity       Int    @default(1)
+  unitPriceCents Int
+  extraMinutes   Int    @default(0)
+  totalCents     Int
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+/// Journal des transitions de statut. Alimente les indicateurs (taux
+/// d'annulation, délai d'attribution) et sert de preuve en cas de litige.
+model BookingStatusEvent {
+  id             String        @id @default(cuid())
+  organizationId String
+  bookingId      String
+  fromStatus     BookingStatus?
+  toStatus       BookingStatus
+  reason         String?
+  actorUserId    String?
+  createdAt      DateTime      @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+/// Ménage récurrent — le cas nominal, pas une option.
+///
+/// La récurrence est décrite explicitement (fréquence, jour, heure locale)
+/// plutôt que par une RRULE : les quatre cas du produit s'expriment sans
+/// ambiguïté et restent lisibles en base. `anchorDate` fixe la parité des
+/// quinzaines ; `weekOfMonth` la semaine de référence des mensuels.
+///
+/// `preferredCleanerId` porte l'intervenant attitré : c'est lui que le moteur
+/// d'attribution privilégie absolument, et tout remplacement doit être notifié
+/// au client.
+model Subscription {
+  id              String @id @default(cuid())
+  organizationId  String
+  clientProfileId String
+  addressId       String
+  serviceId       String
+
+  frequency Frequency
+  /// 1 = lundi … 7 = dimanche (ISO 8601).
+  weekday   Int
+  /// Heure de début en minutes depuis minuit, fuseau Europe/Paris.
+  startMinute Int
+  durationMinutes Int
+  /// Pour les mensuels : 1 à 4, ou -1 pour la dernière semaine du mois.
+  weekOfMonth Int?
+  anchorDate  DateTime
+
+  preferredCleanerId String?
+  status             SubscriptionStatus @default(ACTIVE)
+  pausedUntil        DateTime?
+  cancelledAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization     Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile    ClientProfile   @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  address          Address         @relation(fields: [addressId], references: [id])
+  service          Service         @relation(fields: [serviceId], references: [id])
+  preferredCleaner CleanerProfile? @relation("PreferredCleaner", fields: [preferredCleanerId], references: [id], onDelete: SetNull)
+  bookings         Booking[]
+  invoices         Invoice[]
+
+  @@index([organizationId, status])
+}
+
+// ===========================================================================
+// Disponibilité et agenda externe
+// ===========================================================================
+
+/// Disponibilité déclarée par l'intervenant, récurrente à la semaine.
+/// Les minutes sont comptées depuis minuit dans le fuseau Europe/Paris : un
+/// intervenant disponible « le mardi de 9 h à 17 h » le reste de part et
+/// d'autre du changement d'heure.
+model AvailabilityRule {
+  id               String @id @default(cuid())
+  organizationId   String
+  cleanerProfileId String
+
+  /// 1 = lundi … 7 = dimanche (ISO 8601).
+  weekday     Int
+  startMinute Int
+  endMinute   Int
+
+  validFrom  DateTime  @default(now())
+  validUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([cleanerProfileId, weekday])
+}
+
+enum AvailabilityExceptionType {
+  /// Congé, absence : retire de la disponibilité.
+  UNAVAILABLE
+  /// Ouverture ponctuelle hors des règles habituelles.
+  AVAILABLE
+}
+
+model AvailabilityException {
+  id               String                    @id @default(cuid())
+  organizationId   String
+  cleanerProfileId String
+  type             AvailabilityExceptionType
+
+  startAt DateTime
+  endAt   DateTime
+  reason  String?
+
+  createdAt DateTime @default(now())
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([cleanerProfileId, startAt, endAt])
+}
+
+enum CalendarProvider {
+  GOOGLE
+  MICROSOFT
+  /// Flux iCal ou CalDAV en lecture seule.
+  ICAL
+}
+
+enum CalendarConnectionStatus {
+  HEALTHY
+  /// Jeton expiré ou révoqué : l'intervenant doit réautoriser.
+  NEEDS_RECONSENT
+  /// Échecs répétés côté fournisseur.
+  ERROR
+  REVOKED
+}
+
+/// Connexion à l'agenda personnel d'un intervenant.
+///
+/// Les jetons sont chiffrés au repos par la couche applicative. La
+/// synchronisation est incrémentale (`syncToken` pour Google, `deltaLink` pour
+/// Microsoft) et déclenchée par notification push ; le polling n'est qu'un
+/// repli, avec backoff.
+///
+/// `status` est exposé à l'intervenant comme à l'administrateur : une connexion
+/// silencieusement rompue produirait des créneaux vendus sur des heures
+/// occupées.
+model CalendarConnection {
+  id               String                   @id @default(cuid())
+  organizationId   String
+  cleanerProfileId String
+  provider         CalendarProvider
+  status           CalendarConnectionStatus @default(HEALTHY)
+
+  /// Compte externe connecté, affiché à l'intervenant pour qu'il sache quel
+  /// agenda est lié.
+  externalAccountEmail String?
+  externalCalendarId   String?
+
+  accessTokenEncrypted  String?
+  refreshTokenEncrypted String?
+  tokenExpiresAt        DateTime?
+
+  /// Curseur de synchronisation incrémentale, propre au fournisseur.
+  syncCursor String?
+
+  /// Abonnement aux notifications push. Expire et doit être renouvelé.
+  pushChannelId        String?
+  pushResourceId       String?
+  pushExpiresAt        DateTime?
+
+  /// Écriture des missions LéoClean dans l'agenda de l'intervenant.
+  writeEnabled Boolean @default(true)
+
+  lastSyncAt          DateTime?
+  lastErrorAt         DateTime?
+  lastErrorMessage    String?
+  consecutiveFailures Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile      @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+  busyBlocks   ExternalBusyBlock[]
+
+  @@unique([cleanerProfileId, provider, externalCalendarId])
+  @@index([organizationId, status])
+  @@index([pushExpiresAt])
+}
+
+/// Plage occupée importée d'un agenda externe.
+///
+/// Minimisation RGPD : on n'enregistre que le fait qu'une plage est occupée.
+/// Ni titre, ni description, ni participants, ni lieu. L'identifiant externe
+/// n'est conservé que pour appliquer les mises à jour et les suppressions.
+model ExternalBusyBlock {
+  id                   String @id @default(cuid())
+  organizationId       String
+  cleanerProfileId     String
+  calendarConnectionId String
+
+  startAt DateTime
+  endAt   DateTime
+  isAllDay Boolean @default(false)
+
+  externalEventId String
+  /// Événement maître d'une série récurrente, pour traiter les exceptions.
+  recurringEventId String?
+  sourceUpdatedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile     @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+  connection   CalendarConnection @relation(fields: [calendarConnectionId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarConnectionId, externalEventId])
+  @@index([cleanerProfileId, startAt, endAt])
+}
+
+// ===========================================================================
+// Attribution
+// ===========================================================================
+
+enum AssignmentStatus {
+  /// Proposée à l'intervenant, en attente de réponse sous délai.
+  PROPOSED
+  ACCEPTED
+  DECLINED
+  /// Délai de réponse dépassé : réattribution automatique.
+  EXPIRED
+  CANCELLED
+  COMPLETED
+}
+
+/// Affectation d'un intervenant à une réservation.
+///
+/// `blockStartAt`/`blockEndAt` étendent le créneau des tampons de trajet. La
+/// contrainte d'exclusion posée sur cet intervalle (voir la migration
+/// initiale) est le verrou anti-double-réservation : il vit dans la base, pas
+/// dans le code applicatif, et prend en compte le temps de route.
+model Assignment {
+  id               String           @id @default(cuid())
+  organizationId   String
+  bookingId        String
+  cleanerProfileId String
+  status           AssignmentStatus @default(PROPOSED)
+
+  /// Créneau de la mission, recopié depuis la réservation pour que la
+  /// contrainte d'exclusion puisse s'appliquer sans jointure.
+  startAt DateTime
+  endAt   DateTime
+  /// Créneau élargi des temps de trajet amont et aval.
+  blockStartAt DateTime
+  blockEndAt   DateTime
+
+  travelMinutesBefore Int @default(0)
+  travelMinutesAfter  Int @default(0)
+
+  /// Décomposition du score d'attribution : coût d'insertion trajet, note,
+  /// taux d'acceptation, équité de charge, priorité au cleaner attitré.
+  /// Conservée pour pouvoir expliquer une décision.
+  score         Float?
+  scoreBreakdown Json?
+
+  proposedAt  DateTime  @default(now())
+  respondBy   DateTime?
+  respondedAt DateTime?
+  declineReason String?
+
+  /// Renseigné quand cette affectation remplace un intervenant absent.
+  isReplacement        Boolean @default(false)
+  replacedAssignmentId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([cleanerProfileId, startAt])
+  @@index([bookingId, status])
+  @@index([respondBy])
+}
+
+// ===========================================================================
+// Argent
+// ===========================================================================
+
+enum PaymentStatus {
+  /// Empreinte prise à la réservation, débit différé après la prestation.
+  REQUIRES_CAPTURE
+  CAPTURED
+  PARTIALLY_REFUNDED
+  REFUNDED
+  FAILED
+  CANCELLED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  organizationId String
+  bookingId      String
+  status         PaymentStatus @default(REQUIRES_CAPTURE)
+
+  stripePaymentIntentId String? @unique
+  amountCents           Int
+  capturedAmountCents   Int     @default(0)
+  refundedAmountCents   Int     @default(0)
+
+  authorizedAt DateTime?
+  capturedAt   DateTime?
+  failureCode  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+}
+
+enum PayoutStatus {
+  PENDING
+  IN_TRANSIT
+  PAID
+  FAILED
+}
+
+model Payout {
+  id               String       @id @default(cuid())
+  organizationId   String
+  cleanerProfileId String
+  status           PayoutStatus @default(PENDING)
+
+  stripeTransferId String? @unique
+  amountCents      Int
+
+  periodStart DateTime
+  periodEnd   DateTime
+  paidAt      DateTime?
+  failureCode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([cleanerProfileId, periodStart])
+}
+
+enum InvoiceType {
+  /// Prestation facturée au client.
+  CLIENT_SERVICE
+  /// Commission prélevée par LéoClean à l'intervenant.
+  PLATFORM_COMMISSION
+  /// Abonnement SaaS d'une société.
+  ORG_SUBSCRIPTION
+}
+
+model Invoice {
+  id             String      @id @default(cuid())
+  organizationId String
+  bookingId      String?
+  subscriptionId String?
+  type           InvoiceType
+
+  /// Numérotation séquentielle, continue et propre à chaque organisation :
+  /// exigence comptable.
+  number String
+
+  issuedAt   DateTime @default(now())
+  totalCents Int
+  /// Part de la facture ouvrant droit au crédit d'impôt services à la personne.
+  taxCreditEligibleCents Int @default(0)
+  pdfUrl     String?
+
+  createdAt DateTime @default(now())
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, number])
+  @@index([organizationId, issuedAt])
+}
+
+// ===========================================================================
+// Relation client
+// ===========================================================================
+
+/// Avis client.
+///
+/// `communeInsee` est recopié depuis l'adresse de la prestation : les pages
+/// locales affichent les avis des clients de la commune concernée, ce qui est
+/// à la fois plus utile au lecteur et plus solide en référencement qu'un flux
+/// d'avis générique.
+model Review {
+  id               String @id @default(cuid())
+  organizationId   String
+  bookingId        String @unique
+  clientProfileId  String
+  cleanerProfileId String
+
+  rating       Int
+  comment      String?
+  communeInsee String
+
+  isPublic    Boolean   @default(true)
+  publishedAt DateTime?
+  reply       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking       Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  cleaner       CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, isPublic, publishedAt])
+  @@index([communeInsee, isPublic])
+  @@index([cleanerProfileId])
+}
+
+model Message {
+  id             String  @id @default(cuid())
+  organizationId String
+  bookingId      String?
+  senderUserId   String
+  recipientUserId String
+
+  body   String
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking?     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Cascade)
+  recipient    User         @relation("MessageRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, recipientUserId, readAt])
+  @@index([bookingId, createdAt])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  LOST
+}
+
+/// Demande de rappel déposée depuis le site public.
+///
+/// Le site est mis en ligne avant l'ouverture du tunnel de réservation, afin
+/// que l'indexation courre pendant la construction du moteur. Ce formulaire est
+/// le point de conversion en attendant.
+model Lead {
+  id             String     @id @default(cuid())
+  organizationId String
+  status         LeadStatus @default(NEW)
+
+  name         String
+  email        String?
+  phone        String
+  communeInsee String?
+  message      String?
+  /// Page d'origine, pour mesurer quelles pages locales convertissent.
+  sourcePath   String?
+
+  contactedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status, createdAt])
+}
+
+// ===========================================================================
+// Infrastructure
+// ===========================================================================
+
+/// Cache des temps de trajet.
+///
+/// Volontairement hors périmètre multi-tenant : un temps de trajet entre deux
+/// points est un fait géographique, pas une donnée d'organisation. Le mutualiser
+/// est ce qui rend le cache efficace — sur un territoire de 330 km², les mêmes
+/// couples d'adresses reviennent constamment.
+///
+/// Les clés sont des coordonnées arrondies : au-delà de cinq décimales, la
+/// précision dépasse celle du réseau routier et fragmente le cache pour rien.
+model TravelTimeCache {
+  id       String @id @default(cuid())
+  provider String
+
+  originKey String
+  destKey   String
+
+  originLat Float
+  originLng Float
+  destLat   Float
+  destLng   Float
+
+  durationSeconds Int
+  distanceMeters  Int
+
+  computedAt DateTime  @default(now())
+  expiresAt  DateTime?
+
+  @@unique([provider, originKey, destKey])
+  @@index([expiresAt])
+}
+
+/// Journal des webhooks reçus, garant de l'idempotence.
+///
+/// Stripe comme Google rejouent leurs notifications. L'identifiant externe est
+/// unique : un événement déjà traité est ignoré au lieu d'être appliqué deux
+/// fois.
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  provider   String
+  externalId String
+  eventType  String
+  payload    Json
+
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  error       String?
+
+  @@unique([provider, externalId])
+  @@index([provider, processedAt])
+}
+
+/// Journal d'audit. `organizationId` est optionnel : certaines actions sont
+/// le fait de la plateforme et ne relèvent d'aucune organisation.
+model AuditLog {
+  id             String  @id @default(cuid())
+  organizationId String?
+  actorUserId    String?
+
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+
+  createdAt DateTime @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  actor        User?         @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+}
