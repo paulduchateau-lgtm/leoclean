@@ -102,6 +102,12 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npx prisma migrate deploy
+      # Le tunnel et le formulaire de rappel rattachent leur écriture à
+      # l'organisation de type MARKETPLACE, résolue côté serveur. Sur une base
+      # seulement migrée elle n'existe pas, et la server action échoue par où
+      # elle doit : « le seed doit avoir été exécuté avant de recevoir des
+      # demandes ». Six tests en dépendaient.
+      - run: npm run db:seed
       - run: npm run e2e:install
       - run: npm run e2e
       - uses: actions/upload-artifact@v4
