@@ -423,6 +423,43 @@ du centre de la commune : les temps de trajet sont moins justes, donc les
 créneaux un peu plus prudents. C'est ce chemin que teste le parcours de bout en
 bout, précisément pour ne pas dépendre d'un service tiers.
 
+## Vitrine statique de démonstration
+
+`npm run build:demo -- --base-path /depot` produit dans `out/` un site de
+fichiers, publié sur GitHub Pages par `.github/workflows/leoclean-pages.yml`.
+Elle sert à montrer et à faire relire, jamais à prendre des réservations.
+
+**Le tunnel y fonctionne pour de bon**, et c'est le bénéfice concret d'avoir
+tenu les moteurs purs : tarification et disponibilité sont les mêmes fonctions
+qu'en production, exécutées dans le navigateur, sur une équipe d'intervenants
+fictive déclarée en clair dans `lib/demo/roster.ts`. La recherche d'adresse
+interroge réellement la Géoplateforme. Seule l'écriture manque.
+
+Le tunnel passe pour cela par `BookingBackend` : quatre opérations, deux
+implémentations — les server actions en production, `lib/demo/backend.ts` sur
+la vitrine — et pas un écran dupliqué. Attention à une contrainte de React :
+une fonction ordinaire ne traverse pas la frontière serveur/client, alors
+qu'une server action le peut. Le backend de démonstration est donc assemblé
+côté client, dans `booking-funnel-demo.tsx`.
+
+**Deux garde-fous, non négociables.** Toutes les pages sont en `noindex` et le
+`robots.txt` interdit tout : cette vitrine est un double intégral du futur
+site, rédigé pour se classer sur les mêmes requêtes, et un `github.io` indexé
+concurrencerait `leoclean.fr` sur les requêtes mêmes qu'il sert à gagner. Un
+bandeau non fermable annonce la démonstration, parce que le site affiche un
+vrai numéro et de vrais tarifs — quelqu'un pourrait croire y avoir réservé.
+
+**Le build écarte des fichiers plutôt que d'ajouter des conditions.**
+`scripts/build-demo-statique.mjs` déplace ce qu'un export ne peut pas produire
+— espaces connectés, server actions, middleware — pose les substituts de
+`demo/overlay/`, puis restaure l'arbre dans un `finally`. Une condition oubliée
+casserait le build de production ; un fichier déplacé ne casse que celui-ci.
+
+**`basePath` n'est pas appliqué au `src` d'une image non optimisée**, et
+l'export impose ce mode. D'où `lib/asset-path.ts` : tout fichier de `public/`
+référencé en dur doit passer par `assetPath()`, sinon il est cherché à la
+racine du domaine.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
