@@ -38,8 +38,20 @@ export const SITE = {
     `à La Brède et dans les ${COMMUNES.length - 2} autres communes de la Communauté de ` +
     `communes de Montesquieu, en Gironde, au sud de Bordeaux.`,
 
-  /** Coordonnées de contact. Un vrai numéro local est un engagement produit. */
-  phone: null as string | null,
+  /**
+   * Coordonnées de contact.
+   *
+   * Un vrai numéro joignable est un engagement produit, pas un ornement : c'est
+   * ce qui sépare une plateforme nationale anonyme d'un service de proximité.
+   * Il est affiché en clair sur le site, repris dans le JSON-LD et dans les
+   * fichiers destinés aux modèles de langage.
+   *
+   * Deux écritures du même numéro : celle qu'on lit, et celle qu'on compose.
+   * Le format international est requis par schema.org et par les liens `tel:`,
+   * qui échouent sur mobile avec des espaces.
+   */
+  phone: "06 84 36 38 62",
+  phoneE164: "+33684363862",
   email: "bonjour@leoclean.fr",
 
   /** Adresse postale du siège. La rue reste à renseigner. */
@@ -71,7 +83,6 @@ export const SITE = {
 export const PENDING_IDENTITY_FIELDS: readonly string[] = [
   ...(SITE.legalName === null ? ["raison sociale"] : []),
   ...(SITE.siret === null ? ["SIRET"] : []),
-  ...(SITE.phone === null ? ["numéro de téléphone local"] : []),
   ...(SITE.address.street === null ? ["adresse du siège"] : []),
   ...(SITE.foundingDate === null ? ["date de création"] : []),
   ...(SITE.founder === null ? ["fondateur"] : []),

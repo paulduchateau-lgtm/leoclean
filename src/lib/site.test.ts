@@ -29,10 +29,19 @@ describe("identité publique", () => {
     expect(SITE.address.postalCode).toBe("33850");
   });
 
+  it("expose le numéro sous les deux écritures attendues", () => {
+    // Celle qu'on lit, et celle qu'on compose : un lien `tel:` échoue sur
+    // mobile si le numéro contient des espaces, et schema.org attend le format
+    // international.
+    expect(SITE.phone).toMatch(/^0\d( \d{2}){4}$/);
+    expect(SITE.phoneE164).toMatch(/^\+33\d{9}$/);
+    expect(SITE.phoneE164).toBe(`+33${SITE.phone.replace(/\s/g, "").slice(1)}`);
+  });
+
   it("recense les champs de NAP encore manquants", () => {
-    // Ce test documente l'état : il devra être mis à jour au fur et à mesure
-    // que LéoClean fournit ses informations légales.
-    expect(PENDING_IDENTITY_FIELDS).toContain("numéro de téléphone local");
+    // Ce test documente l'état : il est mis à jour au fur et à mesure que
+    // LéoClean fournit ses informations légales.
+    expect(PENDING_IDENTITY_FIELDS).not.toContain("numéro de téléphone local");
     expect(PENDING_IDENTITY_FIELDS).toContain("SIRET");
   });
 });

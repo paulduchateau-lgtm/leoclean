@@ -91,7 +91,16 @@ export default function Home() {
           </p>
           <p className="mt-1">
             {HEADQUARTERS.name} ({HEADQUARTERS.postalCode}), Gironde,
-            Nouvelle-Aquitaine — {SITE.email}
+            Nouvelle-Aquitaine
+          </p>
+          <p className="mt-1">
+            <a
+              href={`tel:${SITE.phoneE164}`}
+              className="font-medium text-foreground"
+            >
+              {SITE.phone}
+            </a>{" "}
+            — <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
           </p>
         </div>
       </footer>
