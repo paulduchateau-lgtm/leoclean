@@ -26,9 +26,28 @@ const url =
 export const SITE = {
   name: "LéoClean",
 
-  /** Raison sociale. À compléter dès l'immatriculation. */
-  legalName: null as string | null,
-  siret: null as string | null,
+  /**
+   * Structure juridique exploitante.
+   *
+   * PAPER PLANE, SASU immatriculée le 8 avril 2021, dont le siège est déjà à
+   * Léognan — ce qui donne à LéoClean une antériorité locale réelle et une
+   * adresse vérifiable, deux signaux que Google Business Profile valorise.
+   *
+   * Réserve importante : le code APE de la société est 70.22Z, « conseil pour
+   * les affaires et autres conseils de gestion ». La déclaration Services à la
+   * personne est soumise à une condition d'activité exclusive : un organisme
+   * déclaré ne peut, en principe, exercer que des activités de services à la
+   * personne. Exploiter LéoClean depuis une société de conseil compromettrait
+   * donc la déclaration — et avec elle le crédit d'impôt, principal argument
+   * de conversion. À faire trancher avec la DDETS ou un conseil avant de
+   * communiquer sur l'avantage fiscal.
+   */
+  legalName: "PAPER PLANE",
+  legalForm: "SASU",
+  siren: "898228705",
+  siret: "89822870500015" as string | null,
+  /** Code APE de la structure. 70.22Z relève du conseil, non des SAP. */
+  apeCode: "70.22Z",
   /** Numéro de déclaration Services à la personne (DDETS). */
   sapDeclarationNumber: null as string | null,
 
@@ -60,9 +79,25 @@ export const SITE = {
   phoneE164: "+33684363862",
   email: "bonjour@leoclean.fr",
 
-  /** Adresse postale du siège. La rue reste à renseigner. */
+  /**
+   * Canaux de contact, par ordre d'engagement décroissant.
+   *
+   * Le téléphone convertit le mieux mais demande le plus d'effort ; WhatsApp
+   * lève la barrière de l'appel, ce qui compte pour une prestation qu'on fait
+   * entrer chez soi et sur laquelle on veut poser trois questions avant de
+   * s'engager. L'email reste le recours de ceux qui écrivent le soir.
+   *
+   * Le lien `wa.me` n'exige aucune application Meta : il ouvre une
+   * conversation dans WhatsApp Business, gratuitement. Une app n'est
+   * nécessaire que pour l'API, donc pour automatiser des réponses.
+   */
+  whatsappUrl: "https://wa.me/33684363862",
+  /** Page Facebook existante. Renseigner l'URL exacte avant publication. */
+  facebookUrl: null as string | null,
+
+  /** Adresse postale du siège, telle qu'immatriculée. */
   address: {
-    street: null as string | null,
+    street: "2 ter rue Camille Desmoulins" as string | null,
     postalCode: HEADQUARTERS.postalCode,
     city: HEADQUARTERS.name,
     region: "Nouvelle-Aquitaine",
@@ -72,9 +107,9 @@ export const SITE = {
     lng: HEADQUARTERS.lng,
   },
 
-  /** Date de création de l'entreprise, au format ISO. Page /a-propos et JSON-LD. */
-  foundingDate: null as string | null,
-  founder: null as string | null,
+  /** Date de création de la société, au format ISO. Page /a-propos et JSON-LD. */
+  foundingDate: "2021-04-08" as string | null,
+  founder: "Paul Duchateau" as string | null,
 
   /** Fuseau d'affichage. La base stocke exclusivement en UTC. */
   timezone: "Europe/Paris",
@@ -93,7 +128,27 @@ export const PENDING_IDENTITY_FIELDS: readonly string[] = [
   ...(SITE.foundingDate === null ? ["date de création"] : []),
   ...(SITE.founder === null ? ["fondateur"] : []),
   ...(SITE.sapDeclarationNumber === null ? ["numéro de déclaration SAP"] : []),
+  ...(SITE.facebookUrl === null ? ["URL exacte de la page Facebook"] : []),
 ];
+
+/**
+ * Profils publics rattachés à l'entreprise, pour le champ `sameAs` du JSON-LD.
+ *
+ * Ils confirment aux moteurs qu'un même établissement se retrouve sur
+ * plusieurs surfaces : c'est l'un des signaux de cohérence les plus directs du
+ * référencement local, au même titre que la NAP.
+ */
+export const SOCIAL_PROFILES: readonly string[] = [SITE.facebookUrl].filter(
+  (url): url is string => url !== null,
+);
+
+/** Message pré-rempli d'un contact WhatsApp, depuis une commune donnée. */
+export function whatsappLink(communeName?: string): string {
+  const message = communeName
+    ? `Bonjour, je souhaite un ménage à domicile à ${communeName}.`
+    : "Bonjour, je souhaite un ménage à domicile.";
+  return `${SITE.whatsappUrl}?text=${encodeURIComponent(message)}`;
+}
 
 /** URL absolue à partir d'un chemin, pour les canonicals et le JSON-LD. */
 export function absoluteUrl(path: string): string {

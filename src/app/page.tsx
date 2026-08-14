@@ -1,8 +1,9 @@
-import { CheckIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { CheckIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
+import { ContactChannels } from "@/components/contact-channels";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { publishedCommunes } from "@/lib/communes-content";
@@ -83,21 +84,13 @@ export default function Home() {
               {SITE.description}
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a
-                href={`tel:${SITE.phoneE164}`}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground"
-              >
-                <PhoneIcon className="size-4" aria-hidden />
-                {SITE.phone}
-              </a>
-              <Link
-                href="/tarifs"
-                className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-6 py-3 font-medium"
-              >
-                Voir les tarifs
+            <ContactChannels className="mt-8 [&>div]:sm:justify-start" />
+
+            <p className="mt-6">
+              <Link href="/tarifs" className="text-primary underline">
+                Voir le détail des tarifs
               </Link>
-            </div>
+            </p>
 
             <p className="mt-4 text-sm text-muted-foreground">
               À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)},

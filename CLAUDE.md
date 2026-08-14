@@ -92,6 +92,37 @@ proximité.
 - Assurance : Hiscox, indemnisation plafonnée à 1 000 €, franchise 200 €,
   vétusté de 10 % par an dans la limite de 50 %.
 
+## Structure juridique
+
+LéoClean est exploitée par **PAPER PLANE**, SASU immatriculée le 8 avril 2021,
+SIREN 898 228 705, siège 2 ter rue Camille Desmoulins à Léognan (33850),
+président Paul Duchateau. Le siège se trouvant déjà dans la commune annoncée,
+la NAP est cohérente et l'antériorité locale réelle.
+
+**Réserve à lever avant toute communication sur le crédit d'impôt.** Le code
+APE de la société est 70.22Z, « conseil pour les affaires et autres conseils de
+gestion ». Or la déclaration Services à la personne est soumise à une
+**condition d'activité exclusive** : un organisme déclaré ne peut en principe
+exercer que des activités de services à la personne. Exploiter LéoClean depuis
+une société de conseil compromettrait donc la déclaration — et avec elle le
+crédit d'impôt, qui est le premier argument de conversion face à Wecasa. Deux
+issues possibles, à trancher avec la DDETS ou un conseil : créer une structure
+dédiée, ou vérifier qu'une dérogation s'applique.
+
+`NEXT_PUBLIC_SAP_DECLARED` reste donc à `false`, et rien n'est affiché sur
+l'avantage fiscal.
+
+## Canaux de conversion
+
+Trois portes, par ordre d'engagement décroissant : téléphone, WhatsApp, email.
+Le lien `wa.me` n'exige **aucune application Meta** — il ouvre une conversation
+dans WhatsApp Business gratuitement ; une app n'est nécessaire que pour l'API,
+donc pour automatiser des réponses.
+
+La page Facebook existe mais son URL exacte reste à fournir : elle alimentera
+le champ `sameAs` du JSON-LD, l'un des signaux de cohérence les plus directs du
+référencement local.
+
 ## Conventions
 
 **Langue.** Le domaine est français : identifiants métier, contenus, messages

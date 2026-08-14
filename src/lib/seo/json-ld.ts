@@ -1,4 +1,4 @@
-import { SITE, absoluteUrl } from "@/lib/site";
+import { SITE, SOCIAL_PROFILES, absoluteUrl } from "@/lib/site";
 import { COMMUNES, coverageRadiusKm } from "@/lib/territory";
 
 /**
@@ -95,6 +95,7 @@ export function organizationJsonLd(): JsonLd {
       ? { founder: { "@type": "Person", name: SITE.founder } }
       : {}),
     ...(SITE.siret ? { taxID: SITE.siret } : {}),
+    ...(SOCIAL_PROFILES.length > 0 ? { sameAs: SOCIAL_PROFILES } : {}),
     currenciesAccepted: SITE.currency,
     paymentAccepted: "Carte bancaire",
     /**

@@ -40,10 +40,24 @@ describe("identité publique", () => {
     expect(SITE.phoneE164).toBe(`+33${SITE.phone.replace(/\s/g, "").slice(1)}`);
   });
 
-  it("recense les champs de NAP encore manquants", () => {
-    // Ce test documente l'état : il est mis à jour au fur et à mesure que
-    // LéoClean fournit ses informations légales.
-    expect(PENDING_IDENTITY_FIELDS).not.toContain("numéro de téléphone local");
-    expect(PENDING_IDENTITY_FIELDS).toContain("SIRET");
+  it("porte une identité légale vérifiable", () => {
+    // Ces valeurs proviennent du registre du commerce. Elles alimentent le
+    // JSON-LD et la page à propos, que les modèles de langage citent pour
+    // décrire l'entreprise : une approximation y serait reprise telle quelle.
+    expect(SITE.siret).toMatch(/^\d{14}$/);
+    expect(SITE.siret?.startsWith(SITE.siren)).toBe(true);
+    expect(SITE.foundingDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("situe le siège social dans la commune annoncée", () => {
+    // Une adresse d'immatriculation hors zone affaiblirait tout le
+    // positionnement local, et la cohérence NAP avec Google Business Profile.
+    expect(SITE.address.city).toBe("Léognan");
+    expect(SITE.address.street).not.toBeNull();
+  });
+
+  it("recense les champs encore manquants", () => {
+    expect(PENDING_IDENTITY_FIELDS).not.toContain("SIRET");
+    expect(PENDING_IDENTITY_FIELDS).toContain("numéro de déclaration SAP");
   });
 });

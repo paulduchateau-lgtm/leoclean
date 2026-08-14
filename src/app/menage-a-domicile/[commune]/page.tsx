@@ -1,9 +1,10 @@
-import { CheckIcon, ClockIcon, MapPinIcon, PhoneIcon } from "lucide-react";
+import { CheckIcon, ClockIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SiteFooter } from "@/components/site-footer";
+import { ContactChannels } from "@/components/contact-channels";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { clientEnv } from "@/lib/env";
@@ -316,16 +317,12 @@ export default async function CommunePage({
               Un ménage à {commune.name} ?
             </h2>
             <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
-              Appelez-nous, nous répondons nous-mêmes. Pas de standard, pas de
-              formulaire sans réponse.
+              Appelez, écrivez sur WhatsApp ou envoyez un email : c&apos;est
+              nous qui répondons. Pas de standard, pas de message resté sans
+              réponse.
             </p>
-            <a
-              href={`tel:${SITE.phoneE164}`}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground"
-            >
-              <PhoneIcon className="size-4" aria-hidden />
-              {SITE.phone}
-            </a>
+            <ContactChannels communeName={commune.name} className="mt-6" />
+
             <p className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <ClockIcon className="size-4" aria-hidden />
               Du lundi au vendredi de 8 h à 19 h, le samedi de 9 h à 13 h
