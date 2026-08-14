@@ -1,4 +1,7 @@
+import { publishedArticles } from "@/lib/blog";
 import { publishedCommunes } from "@/lib/communes-content";
+import { clientEnv } from "@/lib/env";
+import { fillTemplate, publishedIntentionPages } from "@/lib/intentions";
 import { formatHourlyRate } from "@/lib/pricing";
 import {
   MINIMUM_BILLABLE_MINUTES,
@@ -42,6 +45,20 @@ export function GET(): Response {
         `- [Ménage à domicile à ${commune.name}](${absoluteUrl(`/menage-a-domicile/${commune.slug}`)}) : ` +
         `${commune.population.toLocaleString("fr-FR")} habitants, ` +
         `${commune.isHeadquarters ? "commune siège" : `${content.driveMinutesFromLeognan} minutes de route depuis Léognan`}.`,
+    )
+    .join("\n");
+
+  const intentionLinks = publishedIntentionPages()
+    .map(
+      ({ intention, commune }) =>
+        `- [${fillTemplate(intention.titleTemplate, commune.name)}](${absoluteUrl(`/${intention.slug}/${commune.slug}`)})`,
+    )
+    .join("\n");
+
+  const articleLinks = publishedArticles(clientEnv.NEXT_PUBLIC_SAP_DECLARED)
+    .map(
+      (article) =>
+        `- [${article.title}](${absoluteUrl(`/blog/${article.slug}`)}) : ${article.description}`,
     )
     .join("\n");
 
@@ -92,6 +109,14 @@ la personne de 50 %, sous réserve que le prestataire soit déclaré.
 ## Pages par commune
 
 ${communeLinks}
+
+## Pages par prestation et commune
+
+${intentionLinks}
+
+## Articles de conseil
+
+${articleLinks}
 
 ## Contact
 

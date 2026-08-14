@@ -9,6 +9,7 @@ import { LeadForm } from "@/components/lead-form";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { clientEnv } from "@/lib/env";
+import { fillTemplate, publishedIntentionPages } from "@/lib/intentions";
 import {
   PUBLISHED_COMMUNE_SLUGS,
   getPublishedCommune,
@@ -93,6 +94,9 @@ export default async function CommunePage({
   const path = `/menage-a-domicile/${commune.slug}`;
   const others = publishedCommunes().filter(
     (entry) => entry.commune.slug !== commune.slug,
+  );
+  const siblingIntentions = publishedIntentionPages().filter(
+    (entry) => entry.commune.slug === commune.slug,
   );
 
   const showTaxCredit = clientEnv.NEXT_PUBLIC_SAP_DECLARED;
@@ -337,6 +341,26 @@ export default async function CommunePage({
             </p>
           </div>
         </section>
+
+        {siblingIntentions.length > 0 ? (
+          <section className="mx-auto w-full max-w-4xl px-6 pt-12">
+            <h2 className="font-heading text-xl font-semibold tracking-tight">
+              Autres prestations à {commune.name}
+            </h2>
+            <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+              {siblingIntentions.map(({ intention }) => (
+                <li key={intention.slug}>
+                  <Link
+                    href={`/${intention.slug}/${commune.slug}`}
+                    className="text-primary hover:underline"
+                  >
+                    {fillTemplate(intention.titleTemplate, commune.name)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className="mx-auto w-full max-w-4xl px-6 py-12">
           <h2 className="font-heading text-xl font-semibold tracking-tight">

@@ -109,8 +109,7 @@ export const SITE = {
    */
   facebookUrl:
     "https://www.facebook.com/people/L%C3%A9o-Clean-M%C3%A9nage-%C3%A0-domicile/61565009514966/" as
-      | string
-      | null,
+      string | null,
 
   /** Adresse postale du siège, telle qu'immatriculée. */
   address: {

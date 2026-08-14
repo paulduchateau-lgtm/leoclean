@@ -203,6 +203,48 @@ export function faqJsonLd(entries: readonly FaqEntry[]): JsonLd {
   };
 }
 
+export interface ArticleJsonLdInput {
+  headline: string;
+  description: string;
+  path: string;
+  datePublished: string;
+  dateModified: string;
+  /** Nombre de mots, que Google utilise pour jauger la profondeur du contenu. */
+  wordCount: number;
+}
+
+/**
+ * Article éditorial.
+ *
+ * L'auteur déclaré est l'entreprise, pas une personne : LéoClean n'a pas de
+ * rédaction, et attribuer un article à un auteur fictif pour cocher une case
+ * serait exactement le genre de signal que ce balisage sert à vérifier.
+ */
+export function articleJsonLd(input: ArticleJsonLdInput): JsonLd {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": absoluteUrl(`${input.path}#article`),
+    headline: input.headline,
+    description: input.description,
+    datePublished: input.datePublished,
+    dateModified: input.dateModified,
+    wordCount: input.wordCount,
+    inLanguage: "fr-FR",
+    author: { "@id": ORGANIZATION_ID },
+    publisher: { "@id": ORGANIZATION_ID },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": absoluteUrl(input.path),
+    },
+    about: {
+      "@type": "Service",
+      serviceType: "Ménage à domicile",
+      areaServed: areaServed(),
+    },
+  };
+}
+
 export interface ReviewEntry {
   author: string;
   rating: number;

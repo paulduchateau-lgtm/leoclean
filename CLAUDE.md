@@ -267,13 +267,42 @@ contrainte produit et non une optimisation tardive.
 **Une page par commune ne vaut que si elle dit ce que les autres ne disent
 pas.** `src/lib/communes-content.ts` porte le contenu éditorial, avec une règle
 de rédaction : rien de ce qui s'y trouve ne doit pouvoir être écrit pour une
-autre commune. Les temps de trajet sont mesurés par calcul d'itinéraire routier
-depuis Léognan, pas estimés. Un test de bout en bout vérifie que titres,
-descriptions et corps de page diffèrent réellement d'une commune à l'autre.
+autre commune. `src/lib/communes-content.test.ts` en fait une contrainte
+exécutable — aucune phrase en double, chaque intro nomme sa commune, et les
+superlatifs de distance n'appartiennent qu'à la commune qui les mérite. Un test
+de bout en bout vérifie en plus que titres, descriptions et corps de page
+diffèrent réellement.
 
-**Le déploiement est progressif.** Neuf communes publiées sur seize, couvrant
-90 % de la population desservie. Neuf pages denses valent mieux que seize pages
-minces, que Google traite en pages satellites.
+**Les seize communes sont publiées.**
+
+**Les temps de trajet sont mesurés de mairie à mairie**, par calcul
+d'itinéraire routier depuis Léognan. Le premier jeu visait le *centroïde* de
+chaque commune, ce qui produit des valeurs fausses sur les communes
+forestières : le centroïde de Cestas tombe en pleine pinède, à 24 minutes de
+route, alors que Cestas-Bourg est à 11. Le bourg est aussi ce qu'un client
+comprend quand il demande « vous êtes à combien de chez moi ». Le test qui
+compare distance routière et distance orthodromique rattraperait une rechute.
+
+**Les intentions secondaires sont un déploiement volontairement restreint.**
+`src/lib/intentions.ts` porte `/femme-de-menage/<commune>` et
+`/repassage/<commune>` : six communes chacune, et pas les mêmes. « Femme de
+ménage à X » ne cherche pas une prestation à acheter mais à comprendre qui
+emploie qui ; le repassage est une autre prestation, avec ses propres unités.
+Multiplier seize communes par deux intentions donnerait trente-deux pages dont
+la plupart n'auraient rien à dire — un test borne le nombre de communes par
+intention et exige que les deux ensembles diffèrent.
+
+**Le blog répond aux intentions sans nom de ville.** `src/lib/blog.ts` :
+articles en blocs typés, jamais en HTML — rien de ce qui est rédigé ne peut
+produire une balise. Aucun prix n'y est écrit en dur, tout est dérivé de la
+grille publique, et un test refuse tout montant présenté comme un tarif horaire
+qui n'en viendrait pas. Toute règle de droit est citée avec son texte.
+
+**L'article sur le crédit d'impôt existe mais n'est pas publié.** Son drapeau
+`requiresSapDeclaration` le retire du site, du sitemap, de `llms.txt` et de
+`generateStaticParams` tant que `NEXT_PUBLIC_SAP_DECLARED` est faux ; son URL
+renvoie 404. Communiquer sur l'avantage fiscal avant la déclaration SAP
+reviendrait à promettre un droit que les prestations n'ouvrent pas encore.
 
 **Le cadre narratif est « le sud de Bordeaux »**, pas l'intercommunalité :
 Gradignan, Villenave-d'Ornon et Cestas n'appartiennent pas à la Communauté de
@@ -329,7 +358,10 @@ src/
     db.ts              client Prisma et cloisonnement multi-tenant
     env.ts             variables d'environnement validées par Zod
     site.ts            NAP et identité publique — source unique
-    territory.ts       les 13 communes (INSEE, CP, population, centroïde)
+    territory.ts       les 16 communes (INSEE, CP, population, centroïde)
+    communes-content.ts contenu éditorial des 16 pages locales
+    intentions.ts      /femme-de-menage et /repassage, par commune
+    blog.ts            articles de conseil, en blocs typés
     time.ts            conversions Europe/Paris <-> UTC
     actions.ts         constructeurs de server actions (validation + autorisation)
     action-result.ts   forme du résultat et traduction des erreurs (pur)
@@ -434,11 +466,12 @@ cloné.
 - [x] **Phase 3 — Catalogue et tarification.** Moteur pur surface → durée →
       deux factures → crédit d'impôt → reste à charge, barème d'annulation à
       six paliers, catalogue cloisonné avec tarifs historisés.
-- [~] **Phase 4 — Site public, SEO local et GEO/AEO.** Six communes publiées
-  (69 % de la population), JSON-LD complet, robots/sitemap/llms.txt, API
-  publique, pages tarifs et à propos. **Restent à faire** : les 7 autres
-  communes, les intentions « femme de ménage » et « repassage », le blog,
-  le formulaire de pré-réservation, et la refonte de la page d'accueil.
+- [x] **Phase 4 — Site public, SEO local et GEO/AEO.** Les 16 communes
+      publiées, 12 pages d'intention secondaire (`/femme-de-menage/<commune>`,
+      `/repassage/<commune>`), 5 articles de conseil dont un retenu jusqu'à la
+      déclaration SAP, JSON-LD complet (dont `Article`),
+      robots/sitemap/llms.txt, API publique, pages tarifs et à propos,
+      formulaire de rappel, système de design appliqué. 49 pages prérendues.
 - [ ] Phase 5 — Moteur de disponibilité
 - [ ] Phase 6 — Tunnel de réservation
 - [ ] Phase 7 — Paiement Stripe
@@ -455,10 +488,16 @@ Bloquant à terme, pas immédiatement. Les champs concernés valent `null` dans
 `src/lib/site.ts` et sont masqués à l'affichage plutôt que remplis d'un
 espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalisée.
 
-- Raison sociale, SIRET, adresse du siège, date de création, fondateur
-- Numéro de téléphone local
 - Numéro de déclaration SAP, pour LéoClean **et** pour chaque intervenant :
-  la facturation en deux lignes suppose deux organismes déclarés
+  la facturation en deux lignes suppose deux organismes déclarés. C'est le
+  seul champ qui bloque encore du contenu écrit — l'article sur le crédit
+  d'impôt est prêt et attend la déclaration pour être publié.
+- Code APE : 70.22Z (conseil) contre la condition d'activité exclusive des
+  services à la personne. Arbitrage non tranché.
+- Le nom de la page Facebook est « Léo Clean - Ménage à domicile », en deux
+  mots, quand la marque s'écrit « LéoClean ». À aligner avant toute campagne :
+  la cohérence du nom entre site, Facebook et Google Business Profile est un
+  signal de classement local direct.
 - Les CGU emploient `bonjour@leoclean.com` : à reprendre, le domaine retenu
   est **leoclean.fr**
 - L'accord de coresponsabilité de traitement nomme encore Wecasa et

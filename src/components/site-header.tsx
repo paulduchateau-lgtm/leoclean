@@ -17,7 +17,10 @@ export function SiteHeader() {
           <Link href="/tarifs" className="hover:text-primary">
             Tarifs
           </Link>
-          {/* Masqué sur mobile : l'espace revient au numéro, qui convertit. */}
+          {/* Masqués sur mobile : l'espace revient au numéro, qui convertit. */}
+          <Link href="/blog" className="hidden hover:text-primary sm:inline">
+            Conseils
+          </Link>
           <Link
             href="/a-propos"
             className="hidden hover:text-primary sm:inline"

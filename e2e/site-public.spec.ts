@@ -157,3 +157,67 @@ test.describe("fichiers machine", () => {
     }
   });
 });
+
+test.describe("blog", () => {
+  test("liste les articles et les rend lisibles", async ({ page }) => {
+    await page.goto("/blog");
+    const links = page.locator('main a[href^="/blog/"]');
+    await expect(links.first()).toBeVisible();
+
+    await page.goto("/blog/prix-menage-a-domicile-sud-bordeaux");
+    await expect(page.locator("h1")).toContainText("Combien coûte");
+    await expect(page.locator("table").first()).toBeVisible();
+  });
+
+  test("balise les articles en Article et FAQPage", async ({ page }) => {
+    await page.goto("/blog/duree-menage-maison-100m2");
+
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .innerText();
+    const types = (JSON.parse(raw) as { "@type": string }[]).map(
+      (entry) => entry["@type"],
+    );
+
+    expect(types).toContain("Article");
+    expect(types).toContain("FAQPage");
+    expect(types).toContain("BreadcrumbList");
+  });
+
+  test("garde hors ligne l'article sur le crédit d'impôt", async ({ page }) => {
+    // Tant que la déclaration SAP n'est pas obtenue, l'article n'existe pas —
+    // ni dans la liste, ni à son URL propre.
+    await page.goto("/blog");
+    await expect(page.getByText("Crédit d'impôt")).toHaveCount(0);
+
+    const response = await page.goto("/blog/credit-impot-menage-a-domicile");
+    expect(response?.status()).toBe(404);
+  });
+});
+
+test.describe("intentions secondaires", () => {
+  test("répond à une autre question que la page commune", async ({ page }) => {
+    await page.goto("/menage-a-domicile/leognan");
+    const commune = await page.locator("main").innerText();
+
+    await page.goto("/femme-de-menage/leognan");
+    const femme = await page.locator("main").innerText();
+    await expect(page.locator("h1")).toContainText("Femme de ménage à Léognan");
+
+    await page.goto("/repassage/leognan");
+    const repassage = await page.locator("main").innerText();
+    await expect(page.locator("h1")).toContainText("Repassage");
+
+    // Trois pages sur la même commune : trois contenus réellement distincts.
+    expect(new Set([commune, femme, repassage]).size).toBe(3);
+    expect(femme).toContain("CESU");
+    expect(repassage).toContain("corbeille");
+  });
+
+  test("renvoie 404 là où l'intention n'est pas publiée", async ({ page }) => {
+    // Le déploiement est volontairement restreint : une commune sans contenu
+    // propre ne doit pas produire une page vide, mais rien du tout.
+    const response = await page.goto("/repassage/isle-saint-georges");
+    expect(response?.status()).toBe(404);
+  });
+});

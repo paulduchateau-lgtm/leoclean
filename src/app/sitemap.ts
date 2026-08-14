@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 
+import { publishedArticles } from "@/lib/blog";
 import { publishedCommunes } from "@/lib/communes-content";
+import { clientEnv } from "@/lib/env";
+import { publishedIntentionPages } from "@/lib/intentions";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -33,6 +36,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly" as const,
       priority: 0.9,
     })),
+    // Intentions secondaires : même valeur commerciale, volume plus faible.
+    ...publishedIntentionPages().map(({ intention, commune }) => ({
+      url: absoluteUrl(`/${intention.slug}/${commune.slug}`),
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
     {
       url: absoluteUrl("/etre-rappele"),
       lastModified,
@@ -45,6 +55,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: absoluteUrl("/blog"),
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    // Les articles portent leur propre date de révision plutôt que celle du
+    // build : annoncer une modification qui n'a pas eu lieu use la confiance
+    // que le sitemap sert précisément à établir.
+    ...publishedArticles(clientEnv.NEXT_PUBLIC_SAP_DECLARED).map((article) => ({
+      url: absoluteUrl(`/blog/${article.slug}`),
+      lastModified: new Date(article.updatedAt),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
     {
       url: absoluteUrl("/a-propos"),
       lastModified,

@@ -88,20 +88,27 @@ export default function CommunesHubPage() {
           ))}
         </ul>
 
-        <h2 className="mt-12 font-heading text-xl font-semibold tracking-tight">
-          Également desservies
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          Nous intervenons dans ces communes aux mêmes conditions. Leur page
-          dédiée est en cours de rédaction — appelez-nous en attendant.
-        </p>
-        <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
-          {upcoming.map((commune) => (
-            <li key={commune.slug}>
-              {commune.name} ({commune.postalCode})
-            </li>
-          ))}
-        </ul>
+        {/* Les seize communes ont leur page. Ce bloc reste pour le jour où le
+            territoire s'étendra : une commune desservie sans page dédiée doit
+            être annoncée, pas passée sous silence. */}
+        {upcoming.length > 0 ? (
+          <>
+            <h2 className="mt-12 font-heading text-xl font-semibold tracking-tight">
+              Également desservies
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Nous intervenons dans ces communes aux mêmes conditions. Leur page
+              dédiée est en cours de rédaction — appelez-nous en attendant.
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-muted-foreground">
+              {upcoming.map((commune) => (
+                <li key={commune.slug}>
+                  {commune.name} ({commune.postalCode})
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
       </main>
 
       <SiteFooter />
