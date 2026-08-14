@@ -114,7 +114,23 @@ l'avantage fiscal.
 
 ## Canaux de conversion
 
-Trois portes, par ordre d'engagement décroissant : téléphone, WhatsApp, email.
+Quatre portes. Le formulaire de rappel (`/etre-rappele`, également intégré à
+chaque page commune avec la commune pré-sélectionnée) est le seul point de
+conversion autonome tant que le tunnel de réservation n'est pas ouvert. Les
+trois autres sont directes, par ordre d'engagement décroissant : téléphone,
+WhatsApp, email.
+
+Le formulaire accepte les numéros tels que les gens les écrivent —
+`+33 6.84.36.38.62` comme `06 84 36 38 62` — parce que refuser une forme
+valide ferait perdre une demande pour une raison incompréhensible. La
+protection anti-robot repose sur un champ piège et un délai minimal de trois
+secondes, sans service tiers ni captcha : un envoi automatisé reçoit la même
+confirmation qu'un envoi légitime, sans être enregistré, pour ne rien apprendre
+au robot.
+
+L'organisation de rattachement est résolue côté serveur et jamais transmise par
+le navigateur : une valeur envoyée par le client ne doit pas déterminer dans
+quelle organisation une donnée atterrit.
 Le lien `wa.me` n'exige **aucune application Meta** — il ouvre une conversation
 dans WhatsApp Business gratuitement ; une app n'est nécessaire que pour l'API,
 donc pour automatiser des réponses.

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { SiteFooter } from "@/components/site-footer";
 import { ContactChannels } from "@/components/contact-channels";
+import { LeadForm } from "@/components/lead-form";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { clientEnv } from "@/lib/env";
@@ -322,6 +323,13 @@ export default async function CommunePage({
               réponse.
             </p>
             <ContactChannels communeName={commune.name} className="mt-6" />
+
+            <div className="mx-auto mt-10 max-w-xl text-left">
+              <p className="mb-5 text-center text-sm text-muted-foreground">
+                Ou laissez-nous votre numéro, nous vous rappelons.
+              </p>
+              <LeadForm defaultCommuneInsee={commune.insee} sourcePath={path} />
+            </div>
 
             <p className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <ClockIcon className="size-4" aria-hidden />
