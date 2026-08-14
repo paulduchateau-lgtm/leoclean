@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/brand/logo";
+
 import { publishedCommunes } from "@/lib/communes-content";
 import { SITE } from "@/lib/site";
 import { MONTESQUIEU_COMMUNES, TERRITORY_POPULATION } from "@/lib/territory";
@@ -12,7 +14,7 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-4xl px-6 py-12">
         <div className="grid gap-8 sm:grid-cols-2">
           <div>
-            <p className="font-heading text-lg font-semibold">{SITE.name}</p>
+            <Logo href={null} />
             <p className="mt-2 text-sm text-muted-foreground">
               Ménage à domicile à {SITE.address.city} ({SITE.address.postalCode}
               ), dans les {MONTESQUIEU_COMMUNES.length} communes de la

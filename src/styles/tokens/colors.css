@@ -1,0 +1,82 @@
+:root {
+  /* --- Brand: Vert Léo (fraicheur, éco, propreté) --- */
+  --leaf-50: #f1f7f3;
+  --leaf-100: #dfebe3;
+  --leaf-200: #bfd8c8;
+  --leaf-300: #95c1a9;
+  --leaf-400: #6fa98a;
+  --leaf-500: #4f906e;
+  --leaf-600: #3d7c60;
+  --leaf-700: #2e5f4a;
+  --leaf-800: #234938;
+  --leaf-900: #1b3a2d;
+  --leaf-mint: #4ccd99; /* vert du logo fourni */
+  /* --- Brand: Terre (chaleur humaine, local) --- */
+  --clay-50: #fdf3ee;
+  --clay-100: #fae4d9;
+  --clay-200: #f4cdb9;
+  --clay-300: #ebae91;
+  --clay-400: #de8862;
+  --clay-500: #d0663f;
+  --clay-600: #b85430;
+  --clay-700: #984224;
+  --clay-800: #7c351c;
+  --clay-900: #63290f;
+  /* --- Neutres chauds: Lin & Encre --- */
+  --linen-0: #ffffff;
+  --linen-50: #fbf9f5;
+  --linen-100: #f4f1ea;
+  --linen-200: #e7e2d8;
+  --linen-300: #d5cfc2;
+  --linen-400: #b3ac9d;
+  --ink-400: #8b867c;
+  --ink-500: #6e6a61;
+  --ink-600: #57534b;
+  --ink-700: #46433c;
+  --ink-800: #332f2a;
+  --ink-900: #23211d;
+  /* --- Ciel (accents frais, données) --- */
+  --sky-100: #e4f0f4;
+  --sky-300: #9fc9d6;
+  --sky-500: #4e93a8;
+  --sky-700: #2f6e8f;
+  /* --- Sémantique --- */
+  --color-success: #3d7c60;
+  --color-success-surface: #e4f0e8;
+  --color-warning: #c98a21;
+  --color-warning-surface: #fbf0da;
+  --color-danger: #b5432f;
+  --color-danger-surface: #fae7e3;
+  --color-info: #2f6e8f;
+  --color-info-surface: #e4f0f4;
+  /* --- Alias sémantiques --- */
+  --text-body: var(--ink-700);
+  --text-strong: var(--ink-900);
+  --text-muted: var(--ink-500);
+  --text-subtle: var(--ink-400);
+  --text-on-dark: var(--linen-50);
+  --text-brand: var(--leaf-700);
+  --text-accent: var(--clay-600);
+  --surface-page: var(--linen-50);
+  --surface-card: var(--linen-0);
+  --surface-sunken: var(--linen-100);
+  --surface-raised: var(--linen-0);
+  --surface-brand: var(--leaf-700);
+  --surface-brand-soft: var(--leaf-50);
+  --surface-accent: var(--clay-500);
+  --surface-accent-soft: var(--clay-50);
+  --surface-dark: var(--ink-900);
+  --border-subtle: var(--linen-200);
+  --border-default: var(--linen-300);
+  --border-strong: var(--ink-400);
+  --border-brand: var(--leaf-600);
+  --focus-ring: var(--leaf-400);
+  --overlay-scrim: rgba(35, 33, 29, 0.48);
+  --action-primary-bg: var(--leaf-700);
+  --action-primary-bg-hover: var(--leaf-800);
+  --action-primary-bg-active: var(--leaf-900);
+  --action-primary-fg: var(--linen-50);
+  --action-accent-bg: var(--clay-500);
+  --action-accent-bg-hover: var(--clay-600);
+  --action-accent-fg: #ffffff;
+}

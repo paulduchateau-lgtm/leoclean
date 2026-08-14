@@ -2,6 +2,24 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/*
+ * Tokens du design system LéoClean.
+ *
+ * Ils sont importés tels quels, sans être recopiés : le système fait foi, et
+ * une valeur dupliquée finirait par diverger. Les variables sémantiques de
+ * shadcn/ui sont ensuite câblées dessus, plus bas, de sorte que les composants
+ * héritent de l'identité sans qu'aucun d'eux n'ait à la connaître.
+ *
+ * `fonts.css` n'est volontairement pas importé : il charge les polices depuis
+ * Google Fonts par `@import`, ce qui bloque le rendu. Elles sont chargées par
+ * `next/font` dans `layout.tsx`, qui les auto-héberge et les précharge.
+ */
+@import "../styles/tokens/colors.css";
+@import "../styles/tokens/typography.css";
+@import "../styles/tokens/spacing.css";
+@import "../styles/tokens/radius-shadow.css";
+@import "../styles/tokens/motion.css";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -43,6 +61,38 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+
+  /* Palettes de marque, accessibles en `bg-leaf-700`, `text-clay-600`… */
+  --color-leaf-50: var(--leaf-50);
+  --color-leaf-100: var(--leaf-100);
+  --color-leaf-200: var(--leaf-200);
+  --color-leaf-300: var(--leaf-300);
+  --color-leaf-400: var(--leaf-400);
+  --color-leaf-500: var(--leaf-500);
+  --color-leaf-600: var(--leaf-600);
+  --color-leaf-700: var(--leaf-700);
+  --color-leaf-800: var(--leaf-800);
+  --color-leaf-900: var(--leaf-900);
+  --color-leaf-mint: var(--leaf-mint);
+  --color-clay-100: var(--clay-100);
+  --color-clay-300: var(--clay-300);
+  --color-clay-500: var(--clay-500);
+  --color-clay-600: var(--clay-600);
+  --color-linen-100: var(--linen-100);
+  --color-linen-200: var(--linen-200);
+  --color-ink-500: var(--ink-500);
+  --color-ink-900: var(--ink-900);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+
+  --tracking-overline: var(--tracking-overline);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -53,99 +103,149 @@
 }
 
 /*
- * Identité LéoClean.
+ * Câblage de shadcn/ui sur le design system.
  *
- * Vert des Graves (primaire) : le territoire, la confiance, jamais le bleu
- * clinique des plateformes de services. Terre cuite (accent) : la chaleur,
- * réservée aux appels à l'action et aux prix. Fond crème plutôt que blanc pur :
- * on entre chez les gens, l'interface doit être douce, pas hospitalière.
- * Arrondis généreux (0.875rem) pour la même raison.
+ * Aucun composant ne connaît la marque : ils consomment `--primary`,
+ * `--background`, `--border`… qui sont ici branchés sur les alias sémantiques
+ * du système. Changer l'identité se fait donc dans un seul fichier.
  */
 :root {
-  --background: oklch(0.99 0.006 95);
-  --foreground: oklch(0.24 0.022 165);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.022 165);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.022 165);
-  --primary: oklch(0.47 0.085 163);
-  --primary-foreground: oklch(0.985 0.008 95);
-  --secondary: oklch(0.955 0.014 95);
-  --secondary-foreground: oklch(0.32 0.04 165);
-  --muted: oklch(0.962 0.009 95);
-  --muted-foreground: oklch(0.49 0.021 165);
-  --accent: oklch(0.74 0.135 55);
-  --accent-foreground: oklch(0.24 0.05 45);
-  --success: oklch(0.56 0.11 155);
-  --success-foreground: oklch(0.985 0.008 95);
-  --warning: oklch(0.78 0.14 78);
-  --warning-foreground: oklch(0.28 0.05 60);
-  --destructive: oklch(0.55 0.2 27.3);
-  --border: oklch(0.905 0.012 95);
-  --input: oklch(0.905 0.012 95);
-  --ring: oklch(0.47 0.085 163);
-  --chart-1: oklch(0.47 0.085 163);
-  --chart-2: oklch(0.74 0.135 55);
-  --chart-3: oklch(0.62 0.07 200);
-  --chart-4: oklch(0.78 0.14 78);
-  --chart-5: oklch(0.56 0.11 155);
-  --radius: 0.875rem;
-  --sidebar: oklch(0.972 0.01 95);
-  --sidebar-foreground: oklch(0.24 0.022 165);
-  --sidebar-primary: oklch(0.47 0.085 163);
-  --sidebar-primary-foreground: oklch(0.985 0.008 95);
-  --sidebar-accent: oklch(0.94 0.016 95);
-  --sidebar-accent-foreground: oklch(0.32 0.04 165);
-  --sidebar-border: oklch(0.905 0.012 95);
-  --sidebar-ring: oklch(0.47 0.085 163);
+  --background: var(--surface-page);
+  --foreground: var(--text-body);
+  --card: var(--surface-card);
+  --card-foreground: var(--text-strong);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--text-strong);
+
+  --primary: var(--action-primary-bg);
+  --primary-foreground: var(--action-primary-fg);
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--ink-800);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--action-accent-bg);
+  --accent-foreground: var(--action-accent-fg);
+
+  --success: var(--color-success);
+  --success-foreground: var(--linen-0);
+  --warning: var(--color-warning);
+  --warning-foreground: var(--ink-900);
+  --destructive: var(--color-danger);
+
+  --border: var(--border-subtle);
+  --input: var(--border-default);
+  --ring: var(--focus-ring);
+
+  --chart-1: var(--leaf-600);
+  --chart-2: var(--clay-500);
+  --chart-3: var(--sky-500);
+  --chart-4: var(--color-warning);
+  --chart-5: var(--leaf-300);
+
+  /* `--radius-lg` du système, dont shadcn dérive ses autres rayons. */
+  --radius: var(--radius-lg);
+
+  --sidebar: var(--surface-sunken);
+  --sidebar-foreground: var(--text-body);
+  --sidebar-primary: var(--action-primary-bg);
+  --sidebar-primary-foreground: var(--action-primary-fg);
+  --sidebar-accent: var(--linen-200);
+  --sidebar-accent-foreground: var(--ink-800);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--focus-ring);
 }
 
+/*
+ * Thème sombre.
+ *
+ * Le design system n'en définit pas. Celui-ci en est une dérivation : les
+ * rôles sont inversés en conservant les mêmes familles — encre profonde en
+ * fond, vert éclairci pour rester lisible sur sombre, lin pour le texte. À
+ * revoir si le système en fournit un.
+ */
 .dark {
-  --background: oklch(0.2 0.018 165);
-  --foreground: oklch(0.965 0.008 95);
-  --card: oklch(0.245 0.02 165);
-  --card-foreground: oklch(0.965 0.008 95);
-  --popover: oklch(0.245 0.02 165);
-  --popover-foreground: oklch(0.965 0.008 95);
-  --primary: oklch(0.73 0.11 163);
-  --primary-foreground: oklch(0.18 0.03 165);
-  --secondary: oklch(0.3 0.024 165);
-  --secondary-foreground: oklch(0.965 0.008 95);
-  --muted: oklch(0.3 0.024 165);
-  --muted-foreground: oklch(0.72 0.018 95);
-  --accent: oklch(0.76 0.13 55);
-  --accent-foreground: oklch(0.2 0.04 45);
-  --success: oklch(0.7 0.12 155);
-  --success-foreground: oklch(0.18 0.03 165);
-  --warning: oklch(0.82 0.13 78);
-  --warning-foreground: oklch(0.22 0.04 60);
-  --destructive: oklch(0.7 0.19 22.2);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.73 0.11 163);
-  --chart-1: oklch(0.73 0.11 163);
-  --chart-2: oklch(0.76 0.13 55);
-  --chart-3: oklch(0.68 0.07 200);
-  --chart-4: oklch(0.82 0.13 78);
-  --chart-5: oklch(0.7 0.12 155);
-  --sidebar: oklch(0.245 0.02 165);
-  --sidebar-foreground: oklch(0.965 0.008 95);
-  --sidebar-primary: oklch(0.73 0.11 163);
-  --sidebar-primary-foreground: oklch(0.18 0.03 165);
-  --sidebar-accent: oklch(0.3 0.024 165);
-  --sidebar-accent-foreground: oklch(0.965 0.008 95);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.73 0.11 163);
+  --background: var(--ink-900);
+  --foreground: var(--linen-100);
+  --card: var(--ink-800);
+  --card-foreground: var(--linen-50);
+  --popover: var(--ink-800);
+  --popover-foreground: var(--linen-50);
+
+  --primary: var(--leaf-300);
+  --primary-foreground: var(--ink-900);
+  --secondary: var(--ink-700);
+  --secondary-foreground: var(--linen-100);
+  --muted: var(--ink-700);
+  --muted-foreground: var(--linen-400);
+  --accent: var(--clay-300);
+  --accent-foreground: var(--ink-900);
+
+  --success: var(--leaf-300);
+  --success-foreground: var(--ink-900);
+  --warning: var(--color-warning);
+  --warning-foreground: var(--ink-900);
+  --destructive: var(--clay-300);
+
+  --border: color-mix(in oklab, var(--linen-400) 28%, transparent);
+  --input: color-mix(in oklab, var(--linen-400) 36%, transparent);
+  --ring: var(--leaf-400);
+
+  --sidebar: var(--ink-800);
+  --sidebar-foreground: var(--linen-100);
+  --sidebar-primary: var(--leaf-300);
+  --sidebar-primary-foreground: var(--ink-900);
+  --sidebar-accent: var(--ink-700);
+  --sidebar-accent-foreground: var(--linen-100);
+  --sidebar-border: color-mix(in oklab, var(--linen-400) 28%, transparent);
+  --sidebar-ring: var(--leaf-400);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    line-height: var(--leading-relaxed);
+  }
+
+  /* Les titres emploient la police d'affichage et son interlettrage serré. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading-family);
+    color: var(--text-strong);
+    letter-spacing: var(--tracking-heading);
+    line-height: var(--leading-snug);
+  }
+
+  ::selection {
+    background: var(--leaf-200);
+    color: var(--ink-900);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /*
+   * Surtitre : le seul usage de capitales complètes du système, avec un
+   * interlettrage large. « SUD BORDEAUX · DEPUIS 2021 ».
+   */
+  .overline {
+    font-size: var(--text-overline);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-overline);
+    text-transform: uppercase;
+    color: var(--text-muted);
   }
 }

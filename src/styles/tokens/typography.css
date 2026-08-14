@@ -1,0 +1,27 @@
+:root {
+  --text-display-1: clamp(2.75rem, 5.4vw, 4.25rem);
+  --text-display-2: clamp(2.25rem, 4vw, 3.25rem);
+  --text-h1: 2.25rem;
+  --text-h2: 1.75rem;
+  --text-h3: 1.375rem;
+  --text-h4: 1.125rem;
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.9375rem;
+  --text-caption: 0.8125rem;
+  --text-overline: 0.75rem;
+  --leading-tight: 1.06;
+  --leading-snug: 1.22;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.62;
+  --tracking-display: -0.028em;
+  --tracking-heading: -0.016em;
+  --tracking-body: 0;
+  --tracking-overline: 0.13em;
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --font-display: var(--font-display);
+}

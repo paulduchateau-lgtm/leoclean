@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2Icon, Loader2Icon, SendIcon } from "lucide-react";
-import { useActionState, useMemo } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 import { submitLead } from "@/app/etre-rappele/actions";
 import type { ActionResult } from "@/lib/action-result";
@@ -39,9 +39,15 @@ export function LeadForm({
     null,
   );
 
-  // Horodatage figé au premier rendu : il sert à écarter les envois trop
-  // rapides pour être humains.
-  const renderedAt = useMemo(() => Date.now(), []);
+  /**
+   * Horodatage d'affichage, relevé après le montage plutôt que pendant le
+   * rendu : lire l'horloge pendant un rendu le rend impur, et React peut
+   * rejouer un rendu, ce qui produirait une valeur instable.
+   */
+  const renderedAt = useRef<number>(0);
+  useEffect(() => {
+    renderedAt.current = Date.now();
+  }, []);
 
   if (state?.ok) {
     return (
@@ -74,7 +80,16 @@ export function LeadForm({
   return (
     <form action={formAction} className="space-y-5" noValidate>
       <input type="hidden" name="sourcePath" value={sourcePath ?? ""} />
-      <input type="hidden" name="renderedAt" value={renderedAt} />
+      {/* Renseigné à la soumission depuis la référence, jamais au rendu. */}
+      <input
+        type="hidden"
+        name="renderedAt"
+        ref={(node) => {
+          if (node) {
+            node.value = String(renderedAt.current);
+          }
+        }}
+      />
 
       {/* Champ piège : invisible pour un humain, rempli par un robot. */}
       <div aria-hidden className="absolute h-0 w-0 overflow-hidden">

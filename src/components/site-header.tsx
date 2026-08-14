@@ -1,14 +1,14 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/brand/logo";
+
 import { SITE } from "@/lib/site";
 
 export function SiteHeader() {
   return (
     <header className="border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-4">
-        <Link href="/" className="font-heading text-xl font-semibold">
-          {SITE.name}
-        </Link>
+        <Logo />
 
         <nav
           aria-label="Navigation principale"
@@ -17,11 +17,18 @@ export function SiteHeader() {
           <Link href="/tarifs" className="hover:text-primary">
             Tarifs
           </Link>
+          {/* Masqué sur mobile : l'espace revient au numéro, qui convertit. */}
           <Link
             href="/a-propos"
             className="hidden hover:text-primary sm:inline"
           >
             À propos
+          </Link>
+          <Link
+            href="/etre-rappele"
+            className="hidden hover:text-primary sm:inline"
+          >
+            Être rappelé
           </Link>
           <a
             href={`tel:${SITE.phoneE164}`}

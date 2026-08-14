@@ -360,14 +360,46 @@ ne doit être ressaisie en dur dans une page.
 
 ## Design
 
-Vert des Graves en primaire, terre cuite en accent, fond crème plutôt que
-blanc, arrondis à 0.875rem. Titres en Fraunces (serif humaniste), interface en
-Inter. On fait entrer quelqu'un chez soi : le registre est local et chaleureux,
-jamais corporate ni clinique. Mobile d'abord — c'est là que se prennent les
-réservations.
+Le design system LéoClean fait foi. Ses tokens vivent dans
+`src/styles/tokens/` et sont **importés tels quels**, jamais recopiés : une
+valeur dupliquée finit toujours par diverger.
 
-Les tokens sont définis dans `src/app/globals.css`. Ne pas écrire de couleur en
-dur dans un composant.
+`globals.css` câble ensuite les variables sémantiques de shadcn/ui dessus —
+`--primary` sur `--action-primary-bg`, `--background` sur `--surface-page`, et
+ainsi de suite. Aucun composant ne connaît la marque, ce qui permet de changer
+l'identité en un seul fichier. **Ne jamais écrire de couleur en dur.**
+
+Palettes : **vert Léo** (leaf) pour la fraîcheur et l'éco-responsabilité,
+**terre** (clay) pour la chaleur humaine, **lin et encre** en neutres chauds,
+**ciel** (sky) pour les accents de données. Titres en **Epilogue**, texte en
+**Figtree**, chargés par `next/font` plutôt que par l'`@import` Google Fonts du
+système, qui bloquerait le rendu.
+
+Le thème sombre n'est pas défini par le système : celui du projet en est une
+dérivation, à revoir si le système en fournit un.
+
+**Ton éditorial**, repris du système : vouvoiement du client, « nous » pour ce
+que l'entreprise organise, intervenants nommés par prénom. Phrases courtes, une
+idée par phrase, titres de 3 à 7 mots. Capitale de phrase uniquement — les
+capitales complètes sont réservées aux surtitres, avec la classe `.overline`.
+Typographie française : espace insécable avant les unités et la ponctuation
+double.
+
+### Divergences avec le système, à arbitrer
+
+Le document du design system décrit un périmètre et des tarifs qui ne
+correspondent pas aux décisions prises depuis :
+
+- il cite « Talence, Bègles, Villenave-d'Ornon, Gradignan, Cadaujac » quand la
+  zone retenue est de 16 communes sans Talence ni Bègles ;
+- il emploie « 23 € / h » dans ses exemples de ton, quand la grille est à
+  29 €/h ;
+- il décrit LéoClean comme déclarant à l'Urssaf pour le client, ce qui suppose
+  la déclaration SAP, non encore obtenue.
+
+Ce sont des exemples de rédaction, pas des tokens : le code suit les décisions
+du projet. À reprendre dans le document si le système doit rester la
+référence.
 
 ## Commandes
 

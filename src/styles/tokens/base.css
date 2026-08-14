@@ -1,0 +1,41 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--text-strong);
+  letter-spacing: var(--tracking-heading);
+  line-height: var(--leading-snug);
+  margin: 0;
+}
+a {
+  color: var(--leaf-700);
+  text-decoration-color: var(--leaf-200);
+  text-underline-offset: 3px;
+}
+a:hover {
+  color: var(--leaf-800);
+  text-decoration-color: var(--leaf-500);
+}
+::selection {
+  background: var(--leaf-200);
+  color: var(--ink-900);
+}
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

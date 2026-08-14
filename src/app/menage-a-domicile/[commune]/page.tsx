@@ -28,7 +28,7 @@ import {
   serializeJsonLd,
   serviceJsonLd,
 } from "@/lib/seo/json-ld";
-import { SITE, absoluteUrl } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
 import { COMMUNES } from "@/lib/territory";
 
 /**
