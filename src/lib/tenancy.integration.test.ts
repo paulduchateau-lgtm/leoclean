@@ -105,8 +105,9 @@ async function createOrganization(
       grossAmountCents: 8700,
       taxCreditAmountCents: 4350,
       netAmountCents: 4350,
-      commissionRateBp: 2500,
-      commissionAmountCents: 2175,
+      professionalAmountCents: 5400,
+      platformFeeAmountCents: 3300,
+      commissionRateBp: 3800,
     },
   });
 

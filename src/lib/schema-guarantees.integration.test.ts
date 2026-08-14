@@ -34,8 +34,9 @@ async function createBooking(start: string, end: string): Promise<string> {
       grossAmountCents: 5800,
       taxCreditAmountCents: 2900,
       netAmountCents: 2900,
-      commissionRateBp: 2500,
-      commissionAmountCents: 1450,
+      professionalAmountCents: 3600,
+      platformFeeAmountCents: 2200,
+      commissionRateBp: 3800,
     },
   });
   return booking.id;
@@ -304,8 +305,59 @@ describe("cohérence des montants", () => {
           taxCreditAmountCents: 2900,
           // Incohérent : devrait valoir 2900.
           netAmountCents: 5800,
-          commissionRateBp: 2500,
-          commissionAmountCents: 1450,
+          professionalAmountCents: 3600,
+          platformFeeAmountCents: 2200,
+          commissionRateBp: 3800,
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("refuse un total client qui ne recompose pas les deux factures", async () => {
+    // Le client voit un prix ; il reçoit deux factures. Leur somme doit être
+    // exactement ce prix, sans quoi l'écart devient un litige — et un rejet de
+    // l'avance immédiate côté URSSAF.
+    await expect(
+      forOrganization(organizationId).booking.create({
+        data: {
+          organizationId,
+          clientProfileId,
+          addressId,
+          serviceId,
+          scheduledStart: new Date("2026-09-02T07:00:00Z"),
+          scheduledEnd: new Date("2026-09-02T09:00:00Z"),
+          durationMinutes: 120,
+          hourlyRateCents: 2900,
+          grossAmountCents: 5800,
+          taxCreditAmountCents: 2900,
+          netAmountCents: 2900,
+          // 3600 + 2000 = 5600, et non 5800.
+          professionalAmountCents: 3600,
+          platformFeeAmountCents: 2000,
+          commissionRateBp: 3800,
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("refuse une rémunération d'intervenant négative", async () => {
+    await expect(
+      forOrganization(organizationId).booking.create({
+        data: {
+          organizationId,
+          clientProfileId,
+          addressId,
+          serviceId,
+          scheduledStart: new Date("2026-09-03T07:00:00Z"),
+          scheduledEnd: new Date("2026-09-03T09:00:00Z"),
+          durationMinutes: 120,
+          hourlyRateCents: 2900,
+          grossAmountCents: 5800,
+          taxCreditAmountCents: 2900,
+          netAmountCents: 2900,
+          professionalAmountCents: -200,
+          platformFeeAmountCents: 6000,
+          commissionRateBp: 10345,
         },
       }),
     ).rejects.toThrow();

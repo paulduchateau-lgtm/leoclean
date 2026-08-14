@@ -100,8 +100,9 @@ async function createOrg(slug: string, name: string): Promise<Org> {
       grossAmountCents: 5800,
       taxCreditAmountCents: 2900,
       netAmountCents: 2900,
+      professionalAmountCents: 5104,
+      platformFeeAmountCents: 696,
       commissionRateBp: 1200,
-      commissionAmountCents: 696,
     },
   });
 

@@ -23,22 +23,71 @@ fichiers du voisin.
 
 Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 
-| Sujet                   | Décision                                                                                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                   |
-| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                      |
-| Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.              |
-| Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.               |
-| SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines. |
-| Statut des intervenants | Auto-entrepreneurs (`PRESTATAIRE`). Le mode `MANDATAIRE` (CESU) est modélisé mais non implémenté.          |
-| Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                          |
+| Sujet                   | Décision                                                                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                 |
+| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                    |
+| Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                            |
+| Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                             |
+| SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                               |
+| Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté. |
+| Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                        |
+
+## Modèle juridique et facturation
+
+Relevé des CGU LéoClean rédigées par le porteur du projet, et confirmé par le
+fonctionnement observé chez Wecasa.
+
+**La plateforme est un opérateur de mise en relation, pas un prestataire.**
+LéoClean n'est pas chargée de la réalisation des prestations. L'intervenant
+vend la sienne pour son propre compte.
+
+**Une prestation produit deux factures**, émises par deux entités distinctes :
+celle de l'intervenant pour le ménage, celle de LéoClean pour sa coordination.
+Leur somme est le prix annoncé au client, et chacune ouvre droit au crédit
+d'impôt pour sa part. Trois raisons, toutes structurantes :
+
+- cela évite à la plateforme de devenir prestataire au sens de l'article
+  L7232-6, avec la responsabilité de la prestation et le risque de
+  requalification de la relation en contrat de travail ;
+- cela rend la marge de coordination elle-même éligible au crédit d'impôt, à
+  condition que la plateforme soit déclarée SAP pour cette activité ;
+- cela évite de gonfler le chiffre d'affaires de l'intervenant : à 29 € payés
+  par le client dont 18 € pour lui, il atteint le plafond de la micro-entreprise
+  un tiers plus tard que si la totalité transitait par sa facture.
+
+L'avance immédiate impose de toute façon ce découpage : elle fonctionne par
+demande de paiement déposée par chaque organisme déclaré, avec son SIRET.
+
+**La rémunération de l'intervenant est un montant proposé qu'il accepte avant
+de prendre la mission**, pas un pourcentage appliqué après coup. D'où
+`professionalAmountCents` en base ; `commissionRateBp` n'est que le taux
+effectif, conservé pour l'audit.
+
+**Côté Stripe**, cela exclut le _destination charge_ avec commission prélevée :
+il faut des _separate charges and transfers_, un paiement client se répartissant
+entre deux bénéficiaires.
 
 ### Valeurs par défaut à confirmer
 
 Elles vivent en base (`PricingRule`) et non en dur, mais alimentent le seed et
-les contenus : 32 €/h TTC ponctuel, 29 €/h mensuel ou quinzaine, 27 €/h
-hebdomadaire ; durée estimée à 25 m²/h, minimum 2 h ; +30 min par option ;
-commission plateforme 25 % ; annulation gratuite jusqu'à H-24 puis 50 % retenus.
+les contenus. Wecasa affiche 28,90 €/h en régulier et 32,90 €/h en ponctuel,
+minimum 2 h, sans frais d'abonnement.
+
+- Tarifs : **29 €/h en régulier, 33 €/h en ponctuel**, minimum 2 h, estimation
+  à 25 m²/h, +30 min par option.
+- Marge de coordination : **38 %** — 29 € payés, 18 € pour l'intervenant, 11 €
+  de coordination, conformément à l'exemple des CGU.
+- Barème d'annulation des CGU, à six paliers plafonnés : gratuit au-delà de
+  24 h, 5 € entre 8 et 24 h, 10 € entre 4 et 8 h, 50 % (max 20 €) entre 2 et
+  4 h, 80 % (max 30 €) en deçà de 2 h, 100 % (max 40 €) en cas d'absence.
+- Paiement : **préautorisation à H-24, prélèvement à H+24**. Ce n'est pas une
+  empreinte prise à la réservation : une autorisation Stripe expire au bout de
+  sept jours, ce qui la rendrait caduque sur toute réservation prise à
+  l'avance. La préautorisation est donc un travail planifié.
+- Reversement aux intervenants : hebdomadaire, avec huit jours de décalage.
+- Assurance : Hiscox, indemnisation plafonnée à 1 000 €, franchise 200 €,
+  vétusté de 10 % par an dans la limite de 50 %.
 
 ## Conventions
 
@@ -250,5 +299,10 @@ espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalis
 
 - Raison sociale, SIRET, adresse du siège, date de création, fondateur
 - Numéro de téléphone local
-- Numéro de déclaration SAP (conditionne toute communication sur le crédit d'impôt)
+- Numéro de déclaration SAP, pour LéoClean **et** pour chaque intervenant :
+  la facturation en deux lignes suppose deux organismes déclarés
+- Arbitrage entre `leoclean.fr` et `leoclean.com` : les CGU emploient
+  `bonjour@leoclean.com`, le code retient `.fr`
+- L'accord de coresponsabilité de traitement nomme encore Wecasa et
+  `bonjour@wecasa.fr` : à reprendre avant toute publication
 - Accès : base Neon ou Supabase, projet Google Cloud, Stripe, Resend, Inngest, nom de domaine

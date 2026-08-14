@@ -45,7 +45,17 @@ enum OrganizationType {
 /// autre contrat, une autre facturation et une autre responsabilité juridique.
 /// Modélisé dès maintenant, non implémenté tant que le cadre n'est pas validé.
 enum EngagementMode {
+  /// L'organisation vend la prestation et en porte la responsabilité.
+  /// C'est le mode des sociétés de ménage clientes du SaaS.
   PRESTATAIRE
+  /// La plateforme met en relation ; l'intervenant vend sa prestation pour son
+  /// propre compte et la facture lui-même. LéoClean n'est pas chargée de la
+  /// réalisation et facture séparément sa coordination. C'est le mode de la
+  /// marketplace, conformément aux CGU.
+  MISE_EN_RELATION
+  /// Le client devient l'employeur (CESU), l'organisation gère le placement et
+  /// les formalités. Autre contrat, autre facturation, autre responsabilité
+  /// juridique. Modélisé, non implémenté.
   MANDATAIRE
 }
 
@@ -322,6 +332,7 @@ model CleanerProfile {
   assignments            Assignment[]
   payouts                Payout[]
   reviews                Review[]
+  issuedInvoices         Invoice[]
   preferredForSubscriptions Subscription[]       @relation("PreferredCleaner")
 
   @@unique([organizationId, userId])
@@ -568,13 +579,37 @@ model Booking {
 
   /// Montants figés à la création. Un changement de tarif ou de commission ne
   /// réécrit jamais une réservation existante.
-  hourlyRateCents      Int
-  grossAmountCents     Int
+  hourlyRateCents Int
+
+  /// Total réglé par le client, somme des deux lignes ci-dessous.
+  grossAmountCents Int
+
+  /// Décomposition en deux factures distinctes, émises par deux entités.
+  ///
+  /// En mise en relation, l'intervenant vend sa prestation pour son propre
+  /// compte et la facture ; la plateforme facture séparément sa coordination.
+  /// Ce n'est pas une présentation : c'est ce qui évite que la plateforme
+  /// devienne prestataire au sens de l'article L7232-6, c'est ce qui permet
+  /// aux deux lignes d'ouvrir droit au crédit d'impôt, et c'est ce qui évite
+  /// de gonfler artificiellement le chiffre d'affaires de l'intervenant au
+  /// regard du plafond de la micro-entreprise.
+  ///
+  /// `professionalAmountCents` est le montant que l'intervenant a accepté
+  /// avant de prendre la mission : c'est une rémunération proposée, pas un
+  /// pourcentage appliqué après coup.
+  professionalAmountCents Int
+  platformFeeAmountCents  Int
+  /// Taux effectif de la marge plateforme au moment de la réservation, figé
+  /// pour l'audit. Il découle des deux montants ci-dessus.
+  commissionRateBp        Int
+
+  /// Crédit d'impôt services à la personne, calculé sur le total des deux
+  /// lignes. Il est stocké en toutes circonstances, mais n'est affiché que si
+  /// la déclaration SAP a été obtenue.
   taxCreditRateBp      Int @default(5000)
   taxCreditAmountCents Int
   netAmountCents       Int
-  commissionRateBp     Int
-  commissionAmountCents Int
+
   cancellationFeeCents Int @default(0)
 
   clientNotes   String?
@@ -1000,11 +1035,16 @@ model Payout {
 }
 
 enum InvoiceType {
-  /// Prestation facturée au client.
+  /// Prestation facturée au client par l'intervenant, pour son propre compte.
   CLIENT_SERVICE
-  /// Commission prélevée par LéoClean à l'intervenant.
-  PLATFORM_COMMISSION
-  /// Abonnement SaaS d'une société.
+  /// Coordination facturée au client par LéoClean.
+  ///
+  /// Deuxième ligne de la même réservation, émise par une autre entité. Le
+  /// client voit donc deux factures, et deux lignes dans son espace URSSAF :
+  /// l'avance immédiate fonctionne par demande de paiement déposée par chaque
+  /// organisme déclaré, avec son propre SIRET.
+  CLIENT_COORDINATION
+  /// Abonnement SaaS d'une société cliente de la plateforme.
   ORG_SUBSCRIPTION
 }
 
@@ -1027,9 +1067,14 @@ model Invoice {
 
   createdAt DateTime @default(now())
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  booking      Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  /// Émetteur, lorsque la facture est celle d'un intervenant vendant pour son
+  /// propre compte. Nul pour les factures émises par l'organisation.
+  issuedByCleanerProfileId String?
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  subscription Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  issuedBy     CleanerProfile? @relation(fields: [issuedByCleanerProfileId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, number])
   @@index([organizationId, issuedAt])

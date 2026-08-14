@@ -349,7 +349,9 @@ const ORGANIZATIONS: OrganizationSeed[] = [
     description:
       "LéoClean met en relation des particuliers de la Communauté de communes de Montesquieu avec des intervenants indépendants qui habitent le territoire.",
     commune: communeBySlug("leognan"),
-    commissionRateBp: 2500,
+    // Marge relevée des CGU : 29 € payés par le client, 18 € pour
+    // l'intervenant, soit 11 € de coordination.
+    commissionRateBp: 3800,
     cleanerCount: 8,
     clientCount: 26,
     isPubliclyBookable: true,
@@ -472,6 +474,8 @@ async function main(): Promise<void> {
         name: orgSeed.name,
         type: orgSeed.type,
         status: "ACTIVE",
+        engagementMode:
+          orgSeed.type === "MARKETPLACE" ? "MISE_EN_RELATION" : "PRESTATAIRE",
         legalName: orgSeed.legalName,
         tagline: orgSeed.tagline,
         description: orgSeed.description,
@@ -893,9 +897,15 @@ async function main(): Promise<void> {
         const taxCreditAmountCents = Math.round(
           (grossAmountCents * TAX_CREDIT_RATE_BP) / 10000,
         );
-        const commissionAmountCents = Math.round(
+        // La rémunération de l'intervenant est un montant qu'il accepte avant
+        // de prendre la mission, pas un pourcentage appliqué après coup. La
+        // marge de la plateforme en est la différence, et c'est elle qui est
+        // facturée séparément au client.
+        const platformFeeAmountCents = Math.round(
           (grossAmountCents * organization.commissionRateBp) / 10000,
         );
+        const professionalAmountCents =
+          grossAmountCents - platformFeeAmountCents;
 
         const status = pickStatus(offset, random());
         const scheduledStart = parisDayMinuteToUtc(day, slot.start);
@@ -927,6 +937,10 @@ async function main(): Promise<void> {
             subscriptionId: subscription?.id ?? null,
             status,
             source: orgSeed.type === "MARKETPLACE" ? "LEOCLEAN" : "ORG_PAGE",
+            engagementMode:
+              orgSeed.type === "MARKETPLACE"
+                ? "MISE_EN_RELATION"
+                : "PRESTATAIRE",
             scheduledStart,
             scheduledEnd,
             durationMinutes,
@@ -937,8 +951,9 @@ async function main(): Promise<void> {
             taxCreditRateBp: TAX_CREDIT_RATE_BP,
             taxCreditAmountCents,
             netAmountCents: grossAmountCents - taxCreditAmountCents,
+            professionalAmountCents,
+            platformFeeAmountCents,
             commissionRateBp: organization.commissionRateBp,
-            commissionAmountCents,
             cancellationFeeCents:
               status === "CANCELLED_BY_CLIENT" && random() < 0.5
                 ? Math.round(grossAmountCents / 2)
@@ -1022,15 +1037,32 @@ async function main(): Promise<void> {
               capturedAt: scheduledEnd,
             },
           });
+          // Deux factures pour une même prestation : celle de l'intervenant,
+          // émise pour son propre compte, et celle de la coordination émise par
+          // l'organisation. Leur somme est le prix annoncé au client, et
+          // chacune ouvre droit au crédit d'impôt pour sa part.
+          const year = new Date().getFullYear();
           await prisma.invoice.create({
             data: {
               organizationId: organization.id,
               bookingId: booking.id,
               type: "CLIENT_SERVICE",
-              number: `${new Date().getFullYear()}-${String(bookingsCreated).padStart(5, "0")}`,
+              number: `${year}-P-${String(bookingsCreated).padStart(5, "0")}`,
+              issuedByCleanerProfileId: assignedCleanerId,
               issuedAt: scheduledEnd,
-              totalCents: grossAmountCents,
-              taxCreditEligibleCents: grossAmountCents,
+              totalCents: professionalAmountCents,
+              taxCreditEligibleCents: professionalAmountCents,
+            },
+          });
+          await prisma.invoice.create({
+            data: {
+              organizationId: organization.id,
+              bookingId: booking.id,
+              type: "CLIENT_COORDINATION",
+              number: `${year}-C-${String(bookingsCreated).padStart(5, "0")}`,
+              issuedAt: scheduledEnd,
+              totalCents: platformFeeAmountCents,
+              taxCreditEligibleCents: platformFeeAmountCents,
             },
           });
 
