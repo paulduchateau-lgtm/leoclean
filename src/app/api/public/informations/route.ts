@@ -38,13 +38,15 @@ export function GET(): Response {
         pays: SITE.address.country,
       },
       zoneIntervention: {
-        nom: "Communauté de communes de Montesquieu",
+        nom: "Sud de Bordeaux",
+        intercommunalitePrincipale: "Communauté de communes de Montesquieu",
         departement: "Gironde",
         nombreCommunes: COMMUNES.length,
         populationDesservie: TERRITORY_POPULATION,
         communes: COMMUNES.map((commune) => ({
           nom: commune.name,
           codeInsee: commune.insee,
+          communauteDeCommunesDeMontesquieu: commune.inMontesquieu,
           codePostal: commune.postalCode,
           population: commune.population,
           latitude: commune.lat,

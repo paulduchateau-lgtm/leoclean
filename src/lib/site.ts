@@ -1,4 +1,8 @@
-import { COMMUNES, HEADQUARTERS, TERRITORY_POPULATION } from "./territory";
+import {
+  HEADQUARTERS,
+  MONTESQUIEU_COMMUNES,
+  TERRITORY_POPULATION,
+} from "./territory";
 
 /**
  * Identité publique de LéoClean — source de vérité unique du NAP
@@ -35,8 +39,9 @@ export const SITE = {
    */
   description:
     `LéoClean est un service de ménage à domicile qui intervient à Léognan (33850), ` +
-    `à La Brède et dans les ${COMMUNES.length - 2} autres communes de la Communauté de ` +
-    `communes de Montesquieu, en Gironde, au sud de Bordeaux.`,
+    `dans les ${MONTESQUIEU_COMMUNES.length} communes de la Communauté de communes de ` +
+    `Montesquieu, ainsi qu'à Gradignan, Villenave-d'Ornon et Cestas, en Gironde, ` +
+    `au sud de Bordeaux.`,
 
   /**
    * Coordonnées de contact.

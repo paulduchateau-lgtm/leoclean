@@ -11,12 +11,16 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
-import { COMMUNES, TERRITORY_POPULATION } from "@/lib/territory";
+import {
+  COMMUNES,
+  MONTESQUIEU_COMMUNES,
+  TERRITORY_POPULATION,
+} from "@/lib/territory";
 
 export const metadata: Metadata = {
-  title: "Ménage à domicile en Communauté de communes de Montesquieu",
+  title: "Ménage à domicile au sud de Bordeaux",
   description:
-    "LéoClean fait le ménage à domicile dans les 13 communes de la Communauté de communes de Montesquieu, en Gironde, à partir de 29 €/h.",
+    "LéoClean fait le ménage à domicile dans 16 communes du sud de Bordeaux, de Villenave-d'Ornon à Saucats, à partir de 29 €/h.",
   alternates: { canonical: "/menage-a-domicile" },
 };
 
@@ -48,13 +52,14 @@ export default function CommunesHubPage() {
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
         <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Ménage à domicile en Communauté de communes de Montesquieu
+          Ménage à domicile au sud de Bordeaux
         </h1>
         <p className="mt-5 max-w-prose text-lg text-pretty text-muted-foreground">
-          LéoClean intervient dans les {COMMUNES.length} communes de la
-          Communauté de communes de Montesquieu, en Gironde, soit{" "}
-          {TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants au sud de
-          Bordeaux, à partir de{" "}
+          LéoClean intervient dans {COMMUNES.length} communes du sud de Bordeaux
+          : les {MONTESQUIEU_COMMUNES.length} communes de la Communauté de
+          communes de Montesquieu, ainsi que Gradignan, Villenave-d&apos;Ornon
+          et Cestas. Soit {TERRITORY_POPULATION.toLocaleString("fr-FR")}{" "}
+          habitants desservis, à partir de{" "}
           {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}.
         </p>
 

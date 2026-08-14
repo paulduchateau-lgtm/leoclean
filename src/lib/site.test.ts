@@ -9,7 +9,8 @@ describe("identité publique", () => {
     for (const entity of [
       "Léognan",
       "33850",
-      "La Brède",
+      "Gradignan",
+      "Cestas",
       "Gironde",
       "Montesquieu",
       "Bordeaux",

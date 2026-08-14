@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { publishedCommunes } from "@/lib/communes-content";
 import { SITE } from "@/lib/site";
-import { COMMUNES, TERRITORY_POPULATION } from "@/lib/territory";
+import { MONTESQUIEU_COMMUNES, TERRITORY_POPULATION } from "@/lib/territory";
 
 export function SiteFooter() {
   const published = publishedCommunes();
@@ -15,8 +15,9 @@ export function SiteFooter() {
             <p className="font-heading text-lg font-semibold">{SITE.name}</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Ménage à domicile à {SITE.address.city} ({SITE.address.postalCode}
-              ) et dans les {COMMUNES.length} communes de la Communauté de
-              communes de Montesquieu, en {SITE.address.department}.
+              ), dans les {MONTESQUIEU_COMMUNES.length} communes de la
+              Communauté de communes de Montesquieu, ainsi qu&apos;à Gradignan,
+              Villenave-d&apos;Ornon et Cestas.
             </p>
             <p className="mt-4 text-sm">
               <a href={`tel:${SITE.phoneE164}`} className="font-medium">

@@ -1,8 +1,16 @@
 /**
- * Référentiel des 13 communes couvertes par LéoClean.
+ * Référentiel des communes couvertes par LéoClean.
  *
- * Constante du projet : la zone d'intervention est la Communauté de communes
- * de Montesquieu (Gironde, Nouvelle-Aquitaine), siège à Léognan.
+ * La zone d'intervention réunit deux ensembles : les 13 communes de la
+ * Communauté de communes de Montesquieu (Gironde, Nouvelle-Aquitaine), siège à
+ * Léognan, et trois communes limitrophes au nord et à l'ouest — Gradignan,
+ * Villenave-d'Ornon et Cestas — qui n'appartiennent pas à cette
+ * intercommunalité mais sont plus proches du siège que certaines de ses
+ * communes membres.
+ *
+ * La distinction est portée par `inMontesquieu` : elle n'a pas d'incidence
+ * opérationnelle, mais les contenus publics ne doivent pas laisser croire que
+ * ces trois communes font partie de l'intercommunalité.
  *
  * Données factuelles (code INSEE, code postal, population légale, centroïde)
  * issues de l'API Découpage administratif de l'État (geo.api.gouv.fr).
@@ -23,7 +31,10 @@ export type CommuneSlug =
   | "saint-medard-d-eyrans"
   | "saint-morillon"
   | "saint-selve"
-  | "saucats";
+  | "saucats"
+  | "gradignan"
+  | "villenave-d-ornon"
+  | "cestas";
 
 export interface Commune {
   /** Segment d'URL, sans accent ni apostrophe. */
@@ -40,6 +51,14 @@ export interface Commune {
   readonly lng: number;
   /** Léognan, siège de LéoClean. */
   readonly isHeadquarters: boolean;
+  /**
+   * Membre de la Communauté de communes de Montesquieu.
+   *
+   * Faux pour Gradignan, Villenave-d'Ornon et Cestas, desservies aux mêmes
+   * conditions mais rattachées à d'autres intercommunalités. Écrire le
+   * contraire dans un contenu public serait inexact.
+   */
+  readonly inMontesquieu: boolean;
 }
 
 export const COMMUNES: readonly Commune[] = [
@@ -52,6 +71,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.7027,
     lng: -0.4857,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "beautiran",
@@ -62,6 +82,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.7035,
     lng: -0.4604,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "cabanac-et-villagrains",
@@ -72,6 +93,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.5889,
     lng: -0.5412,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "cadaujac",
@@ -82,6 +104,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.7468,
     lng: -0.5316,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "castres-gironde",
@@ -92,6 +115,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.6866,
     lng: -0.4566,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "isle-saint-georges",
@@ -102,6 +126,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.7277,
     lng: -0.4755,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "la-brede",
@@ -112,6 +137,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.6777,
     lng: -0.5396,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "leognan",
@@ -122,6 +148,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.7236,
     lng: -0.6172,
     isHeadquarters: true,
+    inMontesquieu: true,
   },
   {
     slug: "martillac",
@@ -132,6 +159,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.7176,
     lng: -0.558,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "saint-medard-d-eyrans",
@@ -142,6 +170,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.714,
     lng: -0.5125,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "saint-morillon",
@@ -152,6 +181,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.6387,
     lng: -0.5232,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "saint-selve",
@@ -162,6 +192,7 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.6574,
     lng: -0.4726,
     isHeadquarters: false,
+    inMontesquieu: true,
   },
   {
     slug: "saucats",
@@ -172,8 +203,54 @@ export const COMMUNES: readonly Commune[] = [
     lat: 44.6476,
     lng: -0.6377,
     isHeadquarters: false,
+    inMontesquieu: true,
+  },
+
+  // --- Communes limitrophes, hors Communauté de communes de Montesquieu ---
+  {
+    slug: "gradignan",
+    name: "Gradignan",
+    insee: "33192",
+    postalCode: "33170",
+    population: 26952,
+    lat: 44.7681,
+    lng: -0.6163,
+    isHeadquarters: false,
+    inMontesquieu: false,
+  },
+  {
+    slug: "villenave-d-ornon",
+    name: "Villenave-d'Ornon",
+    insee: "33550",
+    postalCode: "33140",
+    population: 42545,
+    lat: 44.7736,
+    lng: -0.5523,
+    isHeadquarters: false,
+    inMontesquieu: false,
+  },
+  {
+    slug: "cestas",
+    name: "Cestas",
+    insee: "33122",
+    postalCode: "33610",
+    population: 16666,
+    lat: 44.7274,
+    lng: -0.7349,
+    isHeadquarters: false,
+    inMontesquieu: false,
   },
 ] as const;
+
+/** Les 13 communes de la Communauté de communes de Montesquieu. */
+export const MONTESQUIEU_COMMUNES: readonly Commune[] = COMMUNES.filter(
+  (commune) => commune.inMontesquieu,
+);
+
+/** Communes desservies hors intercommunalité de Montesquieu. */
+export const ADJACENT_COMMUNES: readonly Commune[] = COMMUNES.filter(
+  (commune) => !commune.inMontesquieu,
+);
 
 /** Population cumulée de la zone couverte. */
 export const TERRITORY_POPULATION: number = COMMUNES.reduce(

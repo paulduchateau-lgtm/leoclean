@@ -120,7 +120,7 @@ test.describe("fichiers machine", () => {
 
     expect(body).toContain("29 €/h");
     expect(body).toContain("33 €/h");
-    expect(body).toContain("13 communes");
+    expect(body).toContain("16 communes");
     expect(body).toContain("06 84 36 38 62");
   });
 
@@ -129,8 +129,8 @@ test.describe("fichiers machine", () => {
     expect(response.ok()).toBe(true);
 
     const data = await response.json();
-    expect(data.zoneIntervention.nombreCommunes).toBe(13);
-    expect(data.zoneIntervention.populationDesservie).toBe(47671);
+    expect(data.zoneIntervention.nombreCommunes).toBe(16);
+    expect(data.zoneIntervention.populationDesservie).toBe(133834);
     expect(data.tarifs.formules[0].tarifHoraireEuros).toBe(29);
   });
 

@@ -14,6 +14,7 @@ import { PENDING_IDENTITY_FIELDS, SITE } from "@/lib/site";
 import {
   COMMUNES,
   COMMUNES_BY_POPULATION,
+  MONTESQUIEU_COMMUNES,
   TERRITORY_POPULATION,
 } from "@/lib/territory";
 
@@ -46,7 +47,7 @@ export default function AProposPage() {
     },
     {
       label: "Zone d'intervention",
-      value: `${COMMUNES.length} communes de la Communauté de communes de Montesquieu`,
+      value: `${COMMUNES.length} communes du sud de Bordeaux, dont les ${MONTESQUIEU_COMMUNES.length} de la Communauté de communes de Montesquieu`,
     },
     {
       label: "Population desservie",
@@ -125,15 +126,16 @@ export default function AProposPage() {
         </p>
 
         <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
-          Pourquoi seulement 13 communes
+          Pourquoi une zone restreinte
         </h2>
         <p className="mt-3 text-pretty text-muted-foreground">
-          Le territoire couvre environ 330 km². Se limiter à la Communauté de
-          communes de Montesquieu permet de garder des temps de trajet courts
-          entre deux interventions — de 8 minutes entre Léognan et Martillac à
-          25 minutes entre Léognan et Saint-Selve. C&apos;est ce qui rend
-          possible d&apos;affecter durablement le même intervenant à un même
-          client, plutôt que de recomposer un planning chaque semaine.
+          LéoClean s&apos;interdit d&apos;intervenir au-delà d&apos;une
+          vingtaine de minutes de route de Léognan. Cette contrainte garde les
+          trajets courts entre deux interventions — 8 minutes jusqu&apos;à
+          Martillac, 10 jusqu&apos;à Gradignan, 24 jusqu&apos;à Cestas — et
+          c&apos;est elle qui rend possible d&apos;affecter durablement le même
+          intervenant à un même client, plutôt que de recomposer un planning
+          chaque semaine.
         </p>
 
         <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">

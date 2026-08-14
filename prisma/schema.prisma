@@ -129,6 +129,9 @@ model Organization {
   cleanerDocuments     CleanerDocument[]
   leads                Lead[]
   auditLogs            AuditLog[]
+  referralCodes        ReferralCode[]
+  referrals            Referral[]
+  referralRewards      ReferralReward[]
 
   @@index([type, status])
 }
@@ -172,6 +175,8 @@ model User {
   sentMessages     Message[]        @relation("MessageSender")
   receivedMessages Message[]        @relation("MessageRecipient")
   verifiedDocuments CleanerDocument[] @relation("DocumentVerifier")
+  referralCodes     ReferralCode[]
+  referredBy        Referral?
 }
 
 model Membership {
@@ -1078,6 +1083,7 @@ model Invoice {
 
   @@unique([organizationId, number])
   @@index([organizationId, issuedAt])
+  @@index([issuedByCleanerProfileId])
 }
 
 // ===========================================================================
@@ -1172,6 +1178,138 @@ model Lead {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, status, createdAt])
+}
+
+
+// ===========================================================================
+// Parrainage et cooptation
+// ===========================================================================
+
+enum ReferrerKind {
+  CLIENT
+  CLEANER
+}
+
+enum ReferralStatus {
+  PENDING
+  QUALIFIED
+  EXPIRED
+  CANCELLED
+}
+
+/// Code de parrainage d'un membre.
+///
+/// Un code par personne et par organisation. Le code est unique globalement :
+/// il circule par SMS et de vive voix, et deux codes identiques dans deux
+/// organisations rendraient toute saisie ambiguë.
+model ReferralCode {
+  id             String       @id @default(cuid())
+  organizationId String
+  ownerUserId    String
+  kind           ReferrerKind
+  code           String       @unique
+  isActive       Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner        User         @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  referrals    Referral[]
+
+  @@unique([organizationId, ownerUserId, kind])
+  @@index([organizationId, isActive])
+}
+
+/// Parrainage d'une personne par une autre.
+///
+/// Un seul niveau : aucune colonne ne rattache un parrainage à un autre, ce
+/// qui rend structurellement impossible de rémunérer les filleuls d'un filleul.
+/// La contrainte d'unicité sur `refereeUserId` empêche qu'un même compte soit
+/// parrainé deux fois — la fraude la plus évidente.
+model Referral {
+  id             String         @id @default(cuid())
+  organizationId String
+  referralCodeId String
+  refereeUserId  String
+  status         ReferralStatus @default(PENDING)
+
+  /// Prestations du filleul terminées et payées, qui conditionnent le
+  /// déclenchement. Le gain suit l'activité, jamais le recrutement.
+  completedBookings Int @default(0)
+
+  qualifiedAt DateTime?
+  expiresAt   DateTime
+  cancelledAt DateTime?
+  cancellationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  referralCode ReferralCode     @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+  referee      User             @relation(fields: [refereeUserId], references: [id], onDelete: Cascade)
+  rewards      ReferralReward[]
+
+  /// Une personne n'est parrainée qu'une fois, définitivement.
+  @@unique([refereeUserId])
+  @@index([organizationId, status])
+  @@index([referralCodeId])
+  @@index([expiresAt])
+}
+
+enum ReferralRewardKind {
+  /// Avoir sur ses propres prestations : remise commerciale, non imposable.
+  CREDIT
+  /// Versement en espèces : revenu, déclaré par son bénéficiaire.
+  CASH
+}
+
+enum ReferralRewardStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+/// Récompense acquise au titre d'un parrainage.
+///
+/// Une ligne par versement : une seule pour un parrainage client, une par mois
+/// pour la cooptation d'un intervenant. Conserver le détail plutôt qu'un solde
+/// permet de répondre à « d'où vient ce montant ? », question qui se pose
+/// nécessairement dès le premier litige.
+model ReferralReward {
+  id             String               @id @default(cuid())
+  organizationId String
+  referralId     String
+  kind           ReferralRewardKind
+  status         ReferralRewardStatus @default(PENDING)
+
+  amountCents Int
+
+  /// Mois de rattachement, pour les commissions récurrentes. Nul pour une
+  /// récompense unique.
+  periodStart DateTime?
+  periodEnd   DateTime?
+  /// Chiffre d'affaires du filleul ayant servi de base au calcul.
+  basisAmountCents Int?
+  /// Le plafond mensuel a rogné le montant dû.
+  cappedByMonthlyLimit Boolean @default(false)
+
+  paidAt DateTime?
+  /// Reversement Stripe portant cette récompense, pour les versements en
+  /// espèces.
+  payoutId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  referral     Referral     @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  /// Une seule commission par parrainage et par mois : garde-fou contre un
+  /// double versement en cas de rejeu du traitement mensuel.
+  @@unique([referralId, periodStart])
+  @@index([organizationId, status])
 }
 
 // ===========================================================================

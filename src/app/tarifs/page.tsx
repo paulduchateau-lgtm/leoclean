@@ -24,7 +24,7 @@ import { COMMUNES } from "@/lib/territory";
 export const metadata: Metadata = {
   title: "Tarifs du ménage à domicile",
   description:
-    "Ménage à domicile à partir de 29 €/h en formule régulière, 33 €/h en ponctuel. Minimum 2 heures. Tarifs identiques dans les 13 communes de la Communauté de communes de Montesquieu.",
+    "Ménage à domicile à partir de 29 €/h en formule régulière, 33 €/h en ponctuel. Minimum 2 heures. Tarifs identiques dans les 16 communes desservies au sud de Bordeaux.",
   alternates: { canonical: "/tarifs" },
 };
 
@@ -52,7 +52,7 @@ const FAQ = [
   {
     question: "Le tarif est-il le même dans toutes les communes ?",
     answer:
-      "Oui. Le tarif horaire est identique dans les treize communes de la Communauté de communes de Montesquieu, quelle que soit la distance depuis Léognan.",
+      "Oui. Le tarif horaire est identique dans les seize communes desservies, quelle que soit la distance depuis Léognan.",
   },
   {
     question: "Que se passe-t-il si j'annule ?",
@@ -77,7 +77,7 @@ export default function TarifsPage() {
             organizationJsonLd(),
             serviceJsonLd(
               "Ménage à domicile",
-              "Entretien régulier ou ponctuel du logement, dans les 13 communes de la Communauté de communes de Montesquieu.",
+              "Entretien régulier ou ponctuel du logement, dans 16 communes du sud de Bordeaux.",
               PUBLIC_RATES.map((rate) => ({
                 name: rate.label,
                 description: rate.description,

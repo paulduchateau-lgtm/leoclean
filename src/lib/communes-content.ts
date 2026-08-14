@@ -13,9 +13,9 @@ import { type Commune, getCommuneBySlug } from "./territory";
  * d'itinéraire routier depuis Léognan, les voies proviennent de la Base Adresse
  * Nationale, les populations de l'INSEE. Aucune affirmation n'est décorative.
  *
- * Le déploiement est progressif : six communes d'abord, celles qui rassemblent
- * 69 % de la population du territoire. Publier treize pages minces vaut moins
- * que six pages denses, et l'ordre de publication suit l'audience réelle.
+ * Le déploiement est progressif et suit l'audience réelle : neuf communes
+ * publiées sur seize, qui rassemblent 90 % de la population desservie. Publier
+ * seize pages minces vaut moins que neuf pages denses.
  */
 
 export interface CommuneContent {
@@ -43,6 +43,9 @@ export interface CommuneContent {
  * Les sept autres suivront, une fois leur contenu écrit avec la même exigence.
  */
 export const PUBLISHED_COMMUNE_SLUGS = [
+  "villenave-d-ornon",
+  "gradignan",
+  "cestas",
   "leognan",
   "cadaujac",
   "la-brede",
@@ -52,6 +55,88 @@ export const PUBLISHED_COMMUNE_SLUGS = [
 ] as const;
 
 const CONTENT: Record<string, CommuneContent> = {
+  "villenave-d-ornon": {
+    slug: "villenave-d-ornon",
+    driveMinutesFromLeognan: 15,
+    driveKmFromLeognan: 10.3,
+    intro:
+      "LéoClean fait le ménage à domicile à Villenave-d'Ornon, commune de 42 545 habitants située à 15 minutes de route de Léognan. C'est la commune la plus peuplée de notre zone d'intervention.",
+    housing:
+      "Villenave-d'Ornon s'étend de la Garonne aux coteaux et mêle des quartiers très différents : résidences récentes le long du tramway, maisons de ville anciennes, lotissements pavillonnaires et fermes rénovées. Les appartements y sont plus nombreux que dans le reste de notre zone, et se traitent en général en deux à trois heures.",
+    landmarks: [
+      "les quartiers desservis par le tramway",
+      "le bourg de Villenave et ses maisons de ville",
+      "les secteurs résidentiels vers Sarcignan et Chambéry",
+    ],
+    faq: [
+      {
+        question: "Intervenez-vous en appartement à Villenave-d'Ornon ?",
+        answer:
+          "Oui. Villenave-d'Ornon compte davantage d'appartements que le reste de notre zone. Un T3 d'environ 65 m² demande environ trois heures d'entretien, soit 87 € en formule régulière.",
+      },
+      {
+        question:
+          "Villenave-d'Ornon fait-elle partie de la Communauté de communes de Montesquieu ?",
+        answer:
+          "Non. Villenave-d'Ornon appartient à Bordeaux Métropole. LéoClean y intervient néanmoins aux mêmes conditions et aux mêmes tarifs, la commune étant à quinze minutes de son siège de Léognan.",
+      },
+    ],
+  },
+
+  gradignan: {
+    slug: "gradignan",
+    driveMinutesFromLeognan: 10,
+    driveKmFromLeognan: 6.2,
+    intro:
+      "LéoClean fait le ménage à domicile à Gradignan, commune de 26 952 habitants située à 10 minutes de route de Léognan. Gradignan est plus proche de notre siège que la plupart des communes de la Communauté de communes de Montesquieu.",
+    housing:
+      "Gradignan est une commune résidentielle boisée, où dominent les maisons individuelles sur terrain arboré, complétées par des résidences et quelques logements étudiants liés à la proximité du campus. Les maisons y sont souvent de 100 à 130 m² : comptez trois heures à trois heures et demie.",
+    landmarks: [
+      "le centre-ville et le parc de Mandavit",
+      "le quartier de Cayac",
+      "les secteurs résidentiels vers Malartic",
+    ],
+    faq: [
+      {
+        question: "Quel est le délai d'intervention à Gradignan ?",
+        answer:
+          "Gradignan est à dix minutes de route du siège de LéoClean. C'est l'une des communes où les créneaux se libèrent le plus vite, généralement sous 48 à 72 heures.",
+      },
+      {
+        question: "Proposez-vous un ménage de fin de bail à Gradignan ?",
+        answer:
+          "Oui, au tarif de 33 € de l'heure. La demande est fréquente à Gradignan compte tenu de la proximité du campus universitaire, avec des états des lieux concentrés en juin et en septembre.",
+      },
+    ],
+  },
+
+  cestas: {
+    slug: "cestas",
+    driveMinutesFromLeognan: 24,
+    driveKmFromLeognan: 14.9,
+    intro:
+      "LéoClean fait le ménage à domicile à Cestas, commune de 16 666 habitants située à 24 minutes de route de Léognan. Cestas est l'une des communes les plus étendues de Gironde, ce qui rend le regroupement des interventions particulièrement utile.",
+    housing:
+      "Cestas ne forme pas un bourg unique mais plusieurs pôles distants les uns des autres, séparés par la forêt. L'habitat est très majoritairement pavillonnaire, souvent sur de grandes parcelles, avec des surfaces supérieures à la moyenne de notre zone.",
+    landmarks: [
+      "Cestas-Bourg",
+      "le quartier de Gazinet",
+      "les secteurs boisés vers Toctoucau",
+    ],
+    faq: [
+      {
+        question: "L'éloignement de Cestas change-t-il le tarif ?",
+        answer:
+          "Non. Le tarif horaire est identique dans les seize communes desservies. Cestas étant à vingt-quatre minutes de Léognan, LéoClean privilégie en revanche les journées où un intervenant est déjà sur le secteur.",
+      },
+      {
+        question: "Intervenez-vous à Gazinet et à Toctoucau ?",
+        answer:
+          "Oui, dans toute la commune de Cestas. Ces quartiers étant éloignés du bourg, les interventions d'un même secteur sont regroupées sur une même journée, ce qui permet de proposer davantage de créneaux.",
+      },
+    ],
+  },
+
   leognan: {
     slug: "leognan",
     driveMinutesFromLeognan: 0,

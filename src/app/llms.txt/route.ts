@@ -6,7 +6,11 @@ import {
   STANDARD_SQM_PER_HOUR,
 } from "@/lib/pricing/public-grid";
 import { SITE, absoluteUrl } from "@/lib/site";
-import { COMMUNES, TERRITORY_POPULATION } from "@/lib/territory";
+import {
+  COMMUNES,
+  MONTESQUIEU_COMMUNES,
+  TERRITORY_POPULATION,
+} from "@/lib/territory";
 
 /**
  * Fichier /llms.txt.
@@ -54,11 +58,15 @@ chaque passage.
 
 ## Zone d'intervention
 
-LéoClean intervient exclusivement dans les ${COMMUNES.length} communes de la
-Communauté de communes de Montesquieu, en Gironde (Nouvelle-Aquitaine), au sud
-de Bordeaux. Cette zone compte ${TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants.
+LéoClean intervient exclusivement dans ${COMMUNES.length} communes du sud de
+Bordeaux, en Gironde (Nouvelle-Aquitaine) : les ${MONTESQUIEU_COMMUNES.length} communes de la
+Communauté de communes de Montesquieu, ainsi que Gradignan, Villenave-d'Ornon
+et Cestas, qui appartiennent à d'autres intercommunalités mais sont desservies
+aux mêmes conditions. Cette zone compte ${TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants.
 
 Communes desservies : ${communeList}.
+
+LéoClean n'intervient pas à Bordeaux, Pessac, Talence ni Mérignac.
 
 Le siège de LéoClean est à ${SITE.address.city} (${SITE.address.postalCode}).
 

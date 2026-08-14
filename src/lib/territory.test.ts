@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ADJACENT_COMMUNES,
   COMMUNES,
+  MONTESQUIEU_COMMUNES,
   HEADQUARTERS,
   TERRITORY_POPULATION,
   TERRITORY_POSTAL_CODES,
@@ -13,8 +15,23 @@ import {
 } from "./territory";
 
 describe("référentiel des communes", () => {
-  it("couvre exactement les 13 communes de la CC de Montesquieu", () => {
-    expect(COMMUNES).toHaveLength(13);
+  it("couvre 16 communes, dont les 13 de la CC de Montesquieu", () => {
+    expect(COMMUNES).toHaveLength(16);
+    expect(MONTESQUIEU_COMMUNES).toHaveLength(13);
+    expect(ADJACENT_COMMUNES.map((c) => c.name)).toEqual([
+      "Gradignan",
+      "Villenave-d'Ornon",
+      "Cestas",
+    ]);
+  });
+
+  it("n'attribue pas les communes limitrophes à l'intercommunalité", () => {
+    // Écrire que Gradignan appartient à la Communauté de communes de
+    // Montesquieu serait factuellement faux, et repris tel quel par les
+    // moteurs comme par les modèles de langage.
+    for (const commune of ADJACENT_COMMUNES) {
+      expect(commune.inMontesquieu).toBe(false);
+    }
   });
 
   it("expose Léognan comme unique siège", () => {
@@ -46,18 +63,28 @@ describe("référentiel des communes", () => {
     for (const commune of COMMUNES) {
       expect(commune.lat).toBeGreaterThan(44.5);
       expect(commune.lat).toBeLessThan(44.85);
-      expect(commune.lng).toBeGreaterThan(-0.7);
+      // Cestas, à l'ouest, est le point le plus éloigné en longitude.
+      expect(commune.lng).toBeGreaterThan(-0.75);
       expect(commune.lng).toBeLessThan(-0.4);
     }
   });
 
-  it("totalise la population annoncée sur le site (~47 000 habitants)", () => {
-    expect(TERRITORY_POPULATION).toBe(47671);
+  it("totalise la population annoncée sur le site", () => {
+    expect(TERRITORY_POPULATION).toBe(133_834);
+    const montesquieu = MONTESQUIEU_COMMUNES.reduce(
+      (sum, c) => sum + c.population,
+      0,
+    );
+    expect(montesquieu).toBe(47_671);
   });
 
-  it("ne connaît que trois codes postaux, dont deux partagés", () => {
+  it("connaît six codes postaux, dont plusieurs partagés", () => {
+    // Cadaujac et Villenave-d'Ornon partagent le 33140 : une raison de plus de
+    // ne jamais résoudre une commune par son code postal.
     expect(TERRITORY_POSTAL_CODES).toEqual([
       "33140",
+      "33170",
+      "33610",
       "33640",
       "33650",
       "33850",
@@ -87,6 +114,12 @@ describe("contrôle de couverture", () => {
   it("accepte les communes de la zone", () => {
     expect(isCoveredInsee("33238")).toBe(true);
     expect(isCoveredInsee("33501")).toBe(true);
+  });
+
+  it("accepte désormais les communes limitrophes desservies", () => {
+    expect(isCoveredInsee("33192")).toBe(true); // Gradignan
+    expect(isCoveredInsee("33550")).toBe(true); // Villenave-d'Ornon
+    expect(isCoveredInsee("33122")).toBe(true); // Cestas
   });
 
   it("refuse Bordeaux, Pessac et Mérignac, limitrophes mais hors zone", () => {
