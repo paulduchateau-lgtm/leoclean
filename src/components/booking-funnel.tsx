@@ -4,17 +4,17 @@ import { CheckIcon, Loader2Icon, MapPinIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 
-import {
-  confirmBooking,
-  getQuote,
-  getSlots,
-  searchAddress,
-} from "@/app/reserver/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import type {
+  AddressChoice,
+  BookingBackend,
+  Frequency,
+  QuoteView,
+} from "@/lib/booking/backend";
 import { formatDuration, formatEuros } from "@/lib/pricing";
 import { MINIMUM_BILLABLE_MINUTES } from "@/lib/pricing/public-grid";
 import { SITE } from "@/lib/site";
@@ -32,29 +32,6 @@ import { SITE } from "@/lib/site";
  * au serveur, qui est le seul à savoir ce qu'il facturera. Un prix calculé dans
  * le navigateur finit toujours par diverger de celui qu'on enregistre.
  */
-
-type Frequency = "ONE_OFF" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
-
-interface AddressChoice {
-  banId: string;
-  label: string;
-  street: string;
-  postalCode: string;
-  cityName: string;
-  inseeCode: string;
-  lat: number;
-  lng: number;
-  isCovered: boolean;
-  isPreciseToHouseNumber: boolean;
-}
-
-interface Quote {
-  durationMinutes: number;
-  hourlyRateCents: number;
-  grossAmountCents: number;
-  taxCreditAmountCents: number;
-  netAmountCents: number;
-}
 
 const FREQUENCIES: { value: Frequency; label: string; hint: string }[] = [
   {
@@ -100,9 +77,16 @@ export interface CommuneOption {
 }
 
 export function BookingFunnel({
+  backend,
   communes,
   defaultQuery = "",
 }: {
+  /**
+   * Les quatre opérations dont le tunnel a besoin. En production ce sont les
+   * server actions ; sur la vitrine statique, un calcul dans le navigateur.
+   * L'écran ne fait pas la différence, et c'est le but.
+   */
+  backend: BookingBackend;
   /**
    * Communes desservies, pour la saisie manuelle. Transmises par le serveur
    * plutôt qu'importées ici : le référentiel complet n'a pas à voyager dans le
@@ -118,7 +102,7 @@ export function BookingFunnel({
   const [address, setAddress] = useState<AddressChoice | null>(null);
   const [surfaceSqm, setSurfaceSqm] = useState(80);
   const [frequency, setFrequency] = useState<Frequency>("BIWEEKLY");
-  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quote, setQuote] = useState<QuoteView | null>(null);
   const [slots, setSlots] = useState<{ start: string; end: string }[]>([]);
   const [chosenSlot, setChosenSlot] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{
@@ -135,11 +119,11 @@ export function BookingFunnel({
   }
 
   /**
-   * Demande le devis au serveur.
+   * Demande le devis au backend.
    *
-   * Aucun montant n'est calculé dans le navigateur, jamais : un prix calculé
-   * ici finirait par diverger de celui qu'on enregistre, et c'est le genre
-   * d'écart qu'on ne découvre qu'à la facture.
+   * Aucun montant n'est calculé dans cet écran, jamais : un prix calculé au
+   * fil du rendu finirait par diverger de celui qu'on enregistre, et c'est le
+   * genre d'écart qu'on ne découvre qu'à la facture.
    */
   function refreshQuote(nextSurface: number, nextFrequency: Frequency) {
     setSurfaceSqm(nextSurface);
@@ -150,7 +134,7 @@ export function BookingFunnel({
     setChosenSlot(null);
 
     startTransition(async () => {
-      const result = await getQuote({
+      const result = await backend.getQuote({
         surfaceSqm: nextSurface,
         frequency: nextFrequency,
         optionSlugs: [],
@@ -183,6 +167,7 @@ export function BookingFunnel({
 
       {step === 0 ? (
         <AddressStep
+          backend={backend}
           communes={communes}
           defaultQuery={defaultQuery}
           selected={address}
@@ -208,7 +193,7 @@ export function BookingFunnel({
           onNext={() => {
             if (!quote || !address) return;
             startTransition(async () => {
-              const result = await getSlots({
+              const result = await backend.getSlots({
                 lat: address.lat,
                 lng: address.lng,
                 inseeCode: address.inseeCode,
@@ -246,7 +231,7 @@ export function BookingFunnel({
           onBack={() => goTo(2)}
           onSubmit={(contact) => {
             startTransition(async () => {
-              const result = await confirmBooking({
+              const result = await backend.confirmBooking({
                 ...contact,
                 banId: address.banId,
                 street: address.street,
@@ -320,11 +305,13 @@ function Steps({ current }: { current: number }) {
 }
 
 function AddressStep({
+  backend,
   communes,
   defaultQuery,
   selected,
   onSelect,
 }: {
+  backend: BookingBackend;
   communes: readonly CommuneOption[];
   defaultQuery: string;
   selected: AddressChoice | null;
@@ -351,7 +338,7 @@ function AddressStep({
     // pas un rythme de requêtes raisonnable.
     const timer = setTimeout(async () => {
       setSearching(true);
-      const result = await searchAddress({ query });
+      const result = await backend.searchAddress({ query });
       // Une réponse arrivée après que la saisie a changé est périmée :
       // l'appliquer ferait clignoter des résultats sans rapport.
       if (latestQuery.current === query) {
@@ -366,7 +353,7 @@ function AddressStep({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [backend, query]);
 
   const visible = query.trim().length >= 3 ? results : [];
   const outsideOnly =
@@ -579,7 +566,7 @@ function HousingStep({
 }: {
   surfaceSqm: number;
   frequency: Frequency;
-  quote: Quote | null;
+  quote: QuoteView | null;
   pending: boolean;
   onChange: (surface: number, frequency: Frequency) => void;
   onBack: () => void;
@@ -657,7 +644,7 @@ function QuoteSummary({
   quote,
   pending,
 }: {
-  quote: Quote | null;
+  quote: QuoteView | null;
   pending: boolean;
 }) {
   if (!quote) {
@@ -787,7 +774,7 @@ function ContactStep({
   onSubmit,
 }: {
   address: AddressChoice;
-  quote: Quote;
+  quote: QuoteView;
   startAt: string;
   pending: boolean;
   onBack: () => void;

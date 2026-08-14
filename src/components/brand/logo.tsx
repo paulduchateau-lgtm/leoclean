@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { assetPath } from "@/lib/asset-path";
 import { SITE } from "@/lib/site";
 
 /**
@@ -22,7 +23,7 @@ export function Logo({
   const content = (
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       <Image
-        src="/brand/symbol-vert.svg"
+        src={assetPath("/brand/symbol-vert.svg")}
         alt=""
         width={28}
         height={28}

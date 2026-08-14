@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Epilogue, Figtree } from "next/font/google";
 
+import { DemoBanner } from "@/components/demo-banner";
 import { Toaster } from "@/components/ui/sonner";
+import { clientEnv } from "@/lib/env";
 import { SITE } from "@/lib/site";
 
 import "./globals.css";
@@ -41,7 +43,15 @@ export const metadata: Metadata = {
     siteName: SITE.name,
     url: SITE.url,
   },
-  robots: { index: true, follow: true },
+  /**
+   * La vitrine statique est un double intégral du futur site : seize pages
+   * communes, douze pages d'intention, quatre articles, tous rédigés pour se
+   * classer sur les mêmes requêtes. Laissée indexable, elle concurrencerait
+   * `leoclean.fr` sur les requêtes mêmes qu'elle sert à gagner.
+   */
+  robots: clientEnv.NEXT_PUBLIC_DEMO_STATIQUE
+    ? { index: false, follow: false }
+    : { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -59,6 +69,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sans.variable} ${heading.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        {clientEnv.NEXT_PUBLIC_DEMO_STATIQUE ? <DemoBanner /> : null}
         {children}
         <Toaster position="top-center" />
       </body>

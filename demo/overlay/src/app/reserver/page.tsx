@@ -1,13 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import {
-  confirmBooking,
-  getQuote,
-  getSlots,
-  searchAddress,
-} from "@/app/reserver/actions";
-import { BookingFunnel } from "@/components/booking-funnel";
+import { BookingFunnelDemo } from "@/components/booking-funnel-demo";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -16,50 +10,30 @@ import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
 } from "@/lib/pricing/public-grid";
-import {
-  breadcrumbJsonLd,
-  organizationJsonLd,
-  serializeJsonLd,
-} from "@/lib/seo/json-ld";
 import { COMMUNES, COMMUNES_BY_POPULATION } from "@/lib/territory";
 
 /**
- * Tunnel de réservation.
+ * Tunnel de réservation — variante de la vitrine statique.
  *
- * La page est servie dynamiquement : les créneaux dépendent du planning réel et
- * n'ont aucun sens mis en cache. C'est la seule page publique dans ce cas, et
- * elle n'a pas vocation à être indexée pour elle-même — ce sont les pages
- * communes qui l'alimentent.
+ * Ce fichier remplace la page de production le temps de l'export : il ne
+ * connaît aucune server action, ce qui est la condition pour que Next puisse
+ * produire un site de fichiers.
+ *
+ * Le parcours est complet et les calculs sont réels — mêmes moteurs de
+ * tarification et de disponibilité qu'en production, exécutés dans le
+ * navigateur. Seule l'écriture manque, et l'écran de confirmation le dit.
  */
 
 export const metadata: Metadata = {
   title: "Réserver un ménage à domicile",
   description:
-    "Réservez un ménage à domicile au sud de Bordeaux en quelques minutes : votre adresse, votre logement, votre créneau. Prix affiché avant de réserver, sans paiement immédiat.",
-  alternates: { canonical: "/reserver" },
-  // Un tunnel n'apporte rien en résultat de recherche : il n'a de sens qu'après
-  // la page qui a convaincu.
-  robots: { index: false, follow: true },
+    "Démonstration du tunnel de réservation Léo Clean : adresse, devis, créneau. Aucune réservation n'est enregistrée.",
+  robots: { index: false, follow: false },
 };
-
-export const dynamic = "force-dynamic";
 
 export default function ReserverPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: serializeJsonLd([
-            organizationJsonLd(),
-            breadcrumbJsonLd([
-              { name: "Accueil", path: "/" },
-              { name: "Réserver", path: "/reserver" },
-            ]),
-          ]),
-        }}
-      />
-
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
@@ -69,15 +43,30 @@ export default function ReserverPage() {
         <p className="mt-4 max-w-prose text-pretty text-muted-foreground">
           À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, dans
           les {COMMUNES.length} communes du sud de Bordeaux. Minimum{" "}
-          {MINIMUM_BILLABLE_MINUTES / 60} heures. Rien à payer maintenant.
+          {MINIMUM_BILLABLE_MINUTES / 60} heures.
         </p>
 
+        <div className="mt-8 rounded-xl border border-clay-500/40 bg-clay-500/5 p-5">
+          <p className="font-heading font-semibold">Démonstration</p>
+          <p className="mt-2 text-pretty text-muted-foreground">
+            Le parcours ci-dessous fonctionne réellement : la recherche
+            d&apos;adresse interroge la Base Adresse Nationale, le prix sort du
+            moteur de tarification et les créneaux du moteur de disponibilité,
+            qui tiennent compte des temps de route. Ils tournent ici dans votre
+            navigateur, sur une équipe d&apos;intervenants fictive.
+          </p>
+          <p className="mt-2 text-pretty text-muted-foreground">
+            Rien n&apos;est enregistré, et personne ne vous rappellera. Pour une
+            vraie demande, appelez le{" "}
+            <a href="tel:+33684363862" className="text-primary">
+              06 84 36 38 62
+            </a>
+            .
+          </p>
+        </div>
+
         <div className="mt-10">
-          {/* Les server actions sont passées en props : c'est ce qui permet au
-              même écran de tourner au-dessus d'un serveur ou, sur la vitrine
-              statique, d'un calcul dans le navigateur. */}
-          <BookingFunnel
-            backend={{ searchAddress, getQuote, getSlots, confirmBooking }}
+          <BookingFunnelDemo
             communes={COMMUNES_BY_POPULATION.map((commune) => ({
               slug: commune.slug,
               name: commune.name,

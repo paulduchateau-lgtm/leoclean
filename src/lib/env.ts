@@ -78,6 +78,24 @@ const clientSchema = z.object({
     .transform((value) => value === "true"),
 
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_").optional(),
+
+  /**
+   * Vitrine statique de démonstration.
+   *
+   * Le site est alors exporté en fichiers statiques, sans serveur ni base :
+   * les moteurs de tarification et de disponibilité, qui sont purs, tournent
+   * dans le navigateur, et rien n'est enregistré. Cette variante existe pour
+   * être montrée, pas pour être utilisée.
+   *
+   * Elle entraîne deux conséquences non négociables, appliquées ailleurs dans
+   * le code : toutes les pages sont en `noindex`, et un bandeau annonce la
+   * démonstration. Un double du site indexé ferait concurrence au domaine
+   * réel sur les requêtes mêmes qu'il cherche à gagner.
+   */
+  NEXT_PUBLIC_DEMO_STATIQUE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
@@ -112,6 +130,7 @@ const rawClientEnv = {
   NEXT_PUBLIC_SAP_DECLARED: process.env.NEXT_PUBLIC_SAP_DECLARED,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+  NEXT_PUBLIC_DEMO_STATIQUE: process.env.NEXT_PUBLIC_DEMO_STATIQUE,
 };
 
 export const clientEnv: ClientEnv = skipValidation

@@ -17,7 +17,20 @@ import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
  * passer « la Brede » et refuser « La Brède ».
  */
 
-const BAN_ENDPOINT = "https://api-adresse.data.gouv.fr/search/";
+/**
+ * Point d'entrée du géocodage.
+ *
+ * L'ancienne adresse `api-adresse.data.gouv.fr` répond encore, mais par une
+ * redirection assortie d'un avertissement de décommissionnement : elle est
+ * remplacée par la Géoplateforme. On appelle donc directement la nouvelle, ce
+ * qui économise une redirection et évite de dépendre d'un hôte annoncé comme
+ * temporaire. Le contrat de réponse est identique.
+ *
+ * Le service répond avec `Access-Control-Allow-Origin: *`, ce qui permet de
+ * l'interroger aussi depuis le navigateur — c'est ce dont se sert la vitrine
+ * statique, qui n'a pas de serveur pour relayer.
+ */
+const BAN_ENDPOINT = "https://data.geopf.fr/geocodage/search/";
 
 /**
  * Réponse de la BAN, réduite à ce dont on se sert.
