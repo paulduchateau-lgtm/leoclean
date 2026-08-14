@@ -19,9 +19,11 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const nextConfig: NextConfig = {
   /**
-   * Léo Clean vit dans un sous-dossier d'un dépôt qui héberge une autre
-   * application. Sans cette ancre, Next.js remonte au lockfile parent et
-   * compile les fichiers de l'application voisine.
+   * Ancre la racine du workspace sur ce dossier. Next.js la déduit sinon du
+   * lockfile le plus proche en remontant l'arborescence — ce qui vise juste
+   * tant que le projet est seul, mais le désignait au voisin du temps où il
+   * vivait dans un sous-dossier du dépôt `famille`. L'ancre coûte une ligne
+   * et retire la question.
    */
   turbopack: {
     root: path.resolve(import.meta.dirname),

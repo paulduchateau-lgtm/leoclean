@@ -13,12 +13,13 @@ les deux diverger en silence.
 
 ## Où vit le projet
 
-Léo Clean occupe le sous-dossier `leoclean/` d'un dépôt qui héberge par
-ailleurs une application sans rapport (`famille`, un tableau de bord
-financier). Les deux applications sont indépendantes : dépendances, base de
-données et déploiement séparés. `turbopack.root` est ancré sur ce dossier dans
-`next.config.ts`, sans quoi Next.js remonte au lockfile parent et compile les
-fichiers du voisin.
+Léo Clean occupe la racine de son propre dépôt, `paulduchateau-lgtm/leoclean`.
+
+Il a d'abord vécu dans le sous-dossier `leoclean/` du dépôt `famille`, un
+tableau de bord financier sans rapport. Les dix-neuf commits de cette période
+ont été promus à la racine par `git subtree split` : l'historique est complet,
+mais les chemins d'avant la promotion portent encore le préfixe `leoclean/`.
+Le dossier a été retiré de `famille`, où rien ne subsiste du projet.
 
 ## Décisions structurantes
 
