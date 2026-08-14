@@ -289,6 +289,82 @@ describe("faisabilité d'un créneau", () => {
     ).toBeNull();
   });
 
+  it("ignore les missions des autres journées", () => {
+    // Régression. Une mission située un autre jour n'appartient pas à la
+    // tournée : la traiter comme « étape suivante » fait calculer un trajet
+    // entre deux adresses que personne n'enchaîne — et si les deux adresses
+    // coïncident, un trajet nul.
+    //
+    // Le cas réel : une intervenante disponible le samedi de 9 h à 13 h se
+    // voyait proposer 9 h 30 pour une mission de 3 h 30 à Léognan, parce
+    // qu'elle avait le lundi suivant une mission à cette même adresse. Le
+    // trajet de retour valait donc zéro, et le créneau paraissait tenir.
+    const lundi: RoundStop = {
+      start: parisWallClockToUtc({
+        year: 2026,
+        month: 1,
+        day: 19,
+        hour: 9,
+        minute: 0,
+      }),
+      end: parisWallClockToUtc({
+        year: 2026,
+        month: 1,
+        day: 19,
+        hour: 12,
+        minute: 0,
+      }),
+      point: point("leognan"),
+    };
+
+    const cleaner = schedule({
+      homePoint: point("cabanac-et-villagrains"),
+      availability: computeAvailability({
+        window: DAY,
+        rules: [
+          {
+            weekday: 2,
+            startMinute: 9 * 60,
+            endMinute: 13 * 60,
+            validFrom: ALWAYS,
+            validUntil: null,
+          },
+        ],
+      }),
+      stops: [lundi],
+    });
+
+    // Mardi 9 h 30 → 13 h : la mission tient dans les heures déclarées, mais
+    // pas le retour vers Cabanac. Elle doit être refusée.
+    expect(
+      evaluateSlot(
+        cleaner,
+        { window: DAY, durationMinutes: 210, destination: point("leognan") },
+        paris(13, 9, 30).getTime(),
+      ),
+    ).toBeNull();
+  });
+
+  it("chaîne bien deux missions d'une même journée", () => {
+    // Le pendant du test précédent : la restriction à la journée ne doit pas
+    // faire perdre l'enchaînement réel entre deux missions du même jour.
+    const cleaner = schedule({
+      homePoint: point("cabanac-et-villagrains"),
+      stops: [stop(14, 16, "leognan")],
+    });
+
+    const candidate = evaluateSlot(
+      cleaner,
+      { window: DAY, durationMinutes: 120, destination: point("leognan") },
+      paris(13, 11).getTime(),
+    );
+
+    expect(candidate).not.toBeNull();
+    // L'étape suivante est à la même adresse : le trajet de sortie est nul,
+    // et c'est cette fois parfaitement exact.
+    expect(candidate!.travelMinutesAfter).toBe(0);
+  });
+
   it("arrondit les tampons de trajet au pas de cinq minutes", () => {
     const candidate = evaluateSlot(
       schedule({ homePoint: point("martillac") }),

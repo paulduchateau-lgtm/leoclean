@@ -114,11 +114,12 @@ l'avantage fiscal.
 
 ## Canaux de conversion
 
-Quatre portes. Le formulaire de rappel (`/etre-rappele`, également intégré à
-chaque page commune avec la commune pré-sélectionnée) est le seul point de
-conversion autonome tant que le tunnel de réservation n'est pas ouvert. Les
-trois autres sont directes, par ordre d'engagement décroissant : téléphone,
-WhatsApp, email.
+Cinq portes. Le **tunnel de réservation** (`/reserver`) est la principale : le
+client choisit son adresse, voit son prix, choisit son heure et repart avec un
+rendez-vous ferme. Le formulaire de rappel (`/etre-rappele`, également intégré à
+chaque page commune avec la commune pré-sélectionnée) reste pour ceux qui ne
+veulent pas réserver seuls. Les trois autres sont directes, par ordre
+d'engagement décroissant : téléphone, WhatsApp, email.
 
 Le formulaire accepte les numéros tels que les gens les écrivent —
 `+33 6.84.36.38.62` comme `06 84 36 38 62` — parce que refuser une forme
@@ -376,6 +377,51 @@ finirait par assécher son propre vivier.
 qu'un créneau par heure de départ, accompagné de l'intervenant que le score
 désigne.
 
+**Une tournée est une journée.** Les étapes prises en compte pour calculer les
+trajets amont et aval sont celles du même jour civil français, et d'elles
+seules. C'est une correction, pas une évidence : traiter comme « étape
+suivante » une mission située trois jours plus tard fait calculer un trajet
+entre deux adresses que personne n'enchaîne, et si les deux adresses coïncident,
+un trajet nul. Le bug réel : un samedi de 9 h 30 à 13 h proposé à une
+intervenante dont les heures s'arrêtent à 13 h, parce qu'elle avait le lundi
+suivant une mission à la même adresse. Deux tests protègent les deux sens.
+
+## Réservation
+
+`src/lib/booking/create.ts` fait trois choses ensemble ou pas du tout : la
+réservation, ses lignes facturables, et l'affectation de l'intervenant. Une
+réservation sans affectation est un client qui attend quelqu'un qui ne viendra
+pas ; une affectation sans réservation est une heure bloquée pour rien.
+
+**Le verrou anti-double-réservation n'est pas dans ce code.** Il est en base.
+Vérifier la disponibilité avant d'écrire ne sert qu'à donner un bon message :
+entre la vérification et l'écriture, une autre requête peut passer. Le code sait
+donc qu'il peut échouer, et traduit `23P01` en `SlotTakenError`.
+
+**Sur refus, on essaie le candidat suivant.** Sans cela, deux réservations
+simultanées désigneraient toutes deux le mieux classé, la seconde échouerait, et
+le client s'entendrait dire que le créneau est pris alors qu'une autre
+intervenante était libre — la lecture des disponibilités ne voit pas les
+transactions en cours, seule l'écriture les rencontre. C'est un test
+d'intégration à deux réservations concurrentes qui a révélé le manque.
+
+**Rien de ce que renvoie le navigateur n'est cru sur parole.** Le prix est
+recalculé côté serveur à la confirmation, jamais repris du formulaire, et
+l'organisation est résolue côté serveur.
+
+**Le compte se crée à la réservation, pas avant.** Exiger une inscription pour
+obtenir un prix est le moyen le plus sûr de perdre un client sur un service
+qu'il n'a jamais essayé.
+
+**La complétion d'adresse est un confort, pas une dépendance.** La Base Adresse
+Nationale est un service public qui limite son débit et renvoie parfois 503 ;
+quand elle ne rend rien, le tunnel bascule sur une saisie manuelle dont la
+commune est choisie dans notre référentiel — ce qui rend structurellement
+impossible une réservation hors zone. Les coordonnées retenues sont alors celles
+du centre de la commune : les temps de trajet sont moins justes, donc les
+créneaux un peu plus prudents. C'est ce chemin que teste le parcours de bout en
+bout, précisément pour ne pas dépendre d'un service tiers.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
@@ -422,6 +468,9 @@ src/
       session.ts       vérifications d'accès côté serveur
   proxy.ts             redirection optimiste (ex-middleware.ts)
     catalogue.ts       lecture du catalogue et devis, sur client cloisonné
+    booking/           création de réservation, transactionnelle (server-only)
+    geo/ban.ts         Base Adresse Nationale, géocodage et couverture
+    phone.ts           normalisation des numéros français
     pricing/           moteur de tarification, pur et testé
     scheduling/        disponibilité, trajets, créneaux et score — pur
       repository.ts    chargement de l'instantané de planning (server-only)
@@ -531,7 +580,11 @@ cloné.
       d'attribution explicable, cache de trajets en base. 78 tests unitaires et
       11 tests d'intégration, dont l'accord entre le moteur et la contrainte
       d'exclusion.
-- [ ] Phase 6 — Tunnel de réservation
+- [x] **Phase 6 — Tunnel de réservation.** Complétion d'adresse BAN avec repli
+      en saisie manuelle, devis serveur, choix du créneau, création
+      transactionnelle avec attribution automatique et repli sur le candidat
+      suivant. 8 tests de bout en bout, 10 tests d'intégration dont la
+      concurrence sur un même créneau.
 - [ ] Phase 7 — Paiement Stripe
 - [ ] Phase 8 — Espace intervenant _(mise en production visée ici)_
 - [ ] Phase 9 — Synchronisation d'agenda externe

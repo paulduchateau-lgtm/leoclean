@@ -322,10 +322,18 @@ export default async function CommunePage({
               Un ménage à {commune.name} ?
             </h2>
             <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
-              Appelez, écrivez sur WhatsApp ou envoyez un email : c&apos;est
-              nous qui répondons. Pas de standard, pas de message resté sans
-              réponse.
+              Réservez en ligne en choisissant votre créneau, ou appelez-nous :
+              c&apos;est nous qui répondons. Pas de standard, pas de message
+              resté sans réponse.
             </p>
+
+            <Link
+              href="/reserver"
+              className="mt-6 inline-flex items-center rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Voir les créneaux à {commune.name}
+            </Link>
+
             <ContactChannels communeName={commune.name} className="mt-6" />
 
             <div className="mx-auto mt-10 max-w-xl text-left">

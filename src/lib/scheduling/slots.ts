@@ -7,6 +7,7 @@ import {
   geometricTravelMatrix,
   roundTravelBuffer,
 } from "./travel";
+import { parisDayKey } from "../time";
 
 /**
  * Recherche de créneaux réservables.
@@ -118,13 +119,31 @@ export function insertionCostMinutes(
   return Math.max(0, newLegs - existingLeg);
 }
 
-/** Dernière étape terminée avant l'instant donné. */
+/**
+ * Étapes appartenant à la même tournée que la mission envisagée.
+ *
+ * Une tournée est une **journée**, et rien d'autre. Traiter comme « étape
+ * suivante » une mission située trois jours plus tard ferait calculer un temps
+ * de trajet entre deux adresses que personne n'enchaîne — et, si les deux
+ * adresses coïncident, un trajet nul qui rendrait faisable un créneau où
+ * l'intervenant ne peut pas rentrer chez lui.
+ *
+ * Ce n'est pas une hypothèse théorique : c'est le bug qui a fait proposer un
+ * samedi de 9 h 30 à 13 h à une intervenante dont les heures s'arrêtent à 13 h,
+ * parce qu'elle avait le lundi suivant une mission à la même adresse.
+ */
+function sameRound(stops: readonly RoundStop[], instant: number): RoundStop[] {
+  const day = parisDayKey(new Date(instant));
+  return stops.filter((stop) => parisDayKey(stop.start) === day);
+}
+
+/** Dernière étape de la journée terminée avant l'instant donné. */
 function stopBefore(
   stops: readonly RoundStop[],
   instant: number,
 ): RoundStop | undefined {
   let found: RoundStop | undefined;
-  for (const stop of stops) {
+  for (const stop of sameRound(stops, instant)) {
     if (stop.end.getTime() <= instant) {
       found = stop;
     }
@@ -132,12 +151,14 @@ function stopBefore(
   return found;
 }
 
-/** Première étape commençant après l'instant donné. */
+/** Première étape de la journée commençant après l'instant donné. */
 function stopAfter(
   stops: readonly RoundStop[],
   instant: number,
 ): RoundStop | undefined {
-  return stops.find((stop) => stop.start.getTime() >= instant);
+  return sameRound(stops, instant).find(
+    (stop) => stop.start.getTime() >= instant,
+  );
 }
 
 /**

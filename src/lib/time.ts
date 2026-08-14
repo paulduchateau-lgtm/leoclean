@@ -146,6 +146,22 @@ export function parisIsoWeekday(instant: Date): number {
   return day === 0 ? 7 : day;
 }
 
+/**
+ * Clé de la journée civile française — « 2026-08-15 ».
+ *
+ * Sert à regrouper ce qui appartient à une même journée de travail. Comparer
+ * des instants à 24 heures d'écart ne suffit pas : les deux nuits de
+ * changement d'heure en durent 23 et 25.
+ */
+export function parisDayKey(instant: Date): string {
+  const wall = utcToParisWallClock(instant);
+  return (
+    `${wall.year}-` +
+    `${String(wall.month).padStart(2, "0")}-` +
+    `${String(wall.day).padStart(2, "0")}`
+  );
+}
+
 /** Minutes écoulées depuis minuit, heure locale française. */
 export function parisMinuteOfDay(instant: Date): number {
   const wall = utcToParisWallClock(instant);

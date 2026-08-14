@@ -33,6 +33,12 @@ export function SiteHeader() {
           >
             Être rappelé
           </Link>
+          <Link
+            href="/reserver"
+            className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground"
+          >
+            Réserver
+          </Link>
           <a
             href={`tel:${SITE.phoneE164}`}
             className="font-medium text-primary"

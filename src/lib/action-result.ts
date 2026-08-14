@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ForbiddenError, UnauthenticatedError } from "@/lib/auth/permissions";
+import { BusinessError } from "@/lib/booking/errors";
 
 /**
  * Forme du résultat d'une Server Action, et traduction des erreurs.
@@ -22,7 +23,13 @@ export type ActionResult<T> =
       error: string;
       /** Erreurs par champ, pour les afficher à côté des saisies. */
       fieldErrors?: Record<string, string[]>;
-      code: "VALIDATION" | "UNAUTHENTICATED" | "FORBIDDEN" | "UNEXPECTED";
+      code:
+        | "VALIDATION"
+        | "UNAUTHENTICATED"
+        | "FORBIDDEN"
+        /** Refus prévu par le métier — créneau pris, hors zone. */
+        | "BUSINESS"
+        | "UNEXPECTED";
     };
 
 /** Traduit une exception en résultat affichable. */
@@ -45,6 +52,13 @@ export function toResult(error: unknown): ActionResult<never> {
 
   if (error instanceof ForbiddenError) {
     return { ok: false, code: "FORBIDDEN", error: error.message };
+  }
+
+  // Un refus métier est écrit pour être lu : « ce créneau vient d'être
+  // réservé » est une réponse, pas une panne. Le remplacer par un message
+  // générique laisserait le client sans rien comprendre.
+  if (error instanceof BusinessError) {
+    return { ok: false, code: "BUSINESS", error: error.message };
   }
 
   // Une erreur inattendue est journalisée intégralement côté serveur, et
