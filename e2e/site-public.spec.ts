@@ -9,13 +9,28 @@ import { expect, test } from "@playwright/test";
  * balisage exploitable, et des fichiers machine cohérents avec les pages.
  */
 
+/**
+ * Les seize communes desservies. La liste est recopiée plutôt qu'importée :
+ * un test de bout en bout qui lirait la même constante que la page ne
+ * détecterait pas une page manquante, seulement une incohérence interne.
+ */
 const COMMUNES = [
+  "villenave-d-ornon",
+  "gradignan",
+  "cestas",
   "leognan",
   "cadaujac",
   "la-brede",
   "saint-selve",
   "martillac",
   "saucats",
+  "saint-medard-d-eyrans",
+  "castres-gironde",
+  "beautiran",
+  "cabanac-et-villagrains",
+  "saint-morillon",
+  "ayguemorte-les-graves",
+  "isle-saint-georges",
 ];
 
 test.describe("pages par commune", () => {
@@ -45,12 +60,12 @@ test.describe("pages par commune", () => {
   }) => {
     await page.goto("/menage-a-domicile/martillac");
     const martillac = await page.locator("main").innerText();
-    await page.goto("/menage-a-domicile/saucats");
-    const saucats = await page.locator("main").innerText();
+    await page.goto("/menage-a-domicile/isle-saint-georges");
+    const isle = await page.locator("main").innerText();
 
     expect(martillac).toContain("8 min");
-    expect(saucats).toContain("14 min");
-    expect(martillac).not.toBe(saucats);
+    expect(isle).toContain("18 min");
+    expect(martillac).not.toBe(isle);
   });
 
   test("expose un balisage structuré exploitable", async ({ page }) => {

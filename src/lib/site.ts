@@ -92,8 +92,25 @@ export const SITE = {
    * nécessaire que pour l'API, donc pour automatiser des réponses.
    */
   whatsappUrl: "https://wa.me/33684363862",
-  /** Page Facebook existante. Renseigner l'URL exacte avant publication. */
-  facebookUrl: null as string | null,
+
+  /**
+   * Page Facebook de l'entreprise.
+   *
+   * L'URL enregistrée est la destination canonique du lien de partage fourni,
+   * résolue une fois pour toutes et débarrassée de ses paramètres de suivi
+   * (`mibextid`, `rdid`, `share_url`) : ceux-ci sont propres à la session qui a
+   * généré le partage et n'ont rien à faire dans un `sameAs`.
+   *
+   * Réserve : la page s'intitule « Léo Clean - Ménage à domicile », en deux
+   * mots, alors que la marque s'écrit ici « LéoClean ». La cohérence du nom
+   * entre le site, Facebook et Google Business Profile est un signal de
+   * référencement local direct — il faudra aligner les deux, dans un sens ou
+   * dans l'autre, avant toute campagne d'acquisition.
+   */
+  facebookUrl:
+    "https://www.facebook.com/people/L%C3%A9o-Clean-M%C3%A9nage-%C3%A0-domicile/61565009514966/" as
+      | string
+      | null,
 
   /** Adresse postale du siège, telle qu'immatriculée. */
   address: {

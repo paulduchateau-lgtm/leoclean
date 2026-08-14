@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { PENDING_IDENTITY_FIELDS, SITE, absoluteUrl } from "@/lib/site";
+import {
+  PENDING_IDENTITY_FIELDS,
+  SITE,
+  SOCIAL_PROFILES,
+  absoluteUrl,
+} from "@/lib/site";
 
 describe("identité publique", () => {
   it("ancre la description sur des entités géographiques nommées", () => {
@@ -59,5 +64,16 @@ describe("identité publique", () => {
   it("recense les champs encore manquants", () => {
     expect(PENDING_IDENTITY_FIELDS).not.toContain("SIRET");
     expect(PENDING_IDENTITY_FIELDS).toContain("numéro de déclaration SAP");
+  });
+
+  it("expose la page Facebook dans les profils sociaux", () => {
+    // `sameAs` ne vaut que si l'URL est stable : un lien de partage porte des
+    // paramètres de session qui changent à chaque partage, et que les moteurs
+    // traiteraient comme autant d'URL distinctes.
+    expect(SOCIAL_PROFILES).toContain(SITE.facebookUrl);
+    for (const profile of SOCIAL_PROFILES) {
+      expect(profile).toMatch(/^https:\/\//);
+      expect(profile).not.toMatch(/[?&](mibextid|rdid|share_url|fbclid)=/);
+    }
   });
 });
