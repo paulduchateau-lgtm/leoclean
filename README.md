@@ -11,17 +11,24 @@ et un **SaaS** pour les sociétés de ménage locales qui gèrent leurs propres
 
 ## Démarrage
 
-Prérequis : Node.js 22+, PostgreSQL 15+ avec les extensions **PostGIS** et
-**btree_gist**.
+Prérequis : Node.js 22+, et un PostgreSQL 15+ portant les extensions
+**PostGIS** et **btree_gist**. `compose.yml` en fournit un — c'est l'image des
+tests d'intégration, aux mêmes identifiants que `.env.example`.
 
 ```bash
-cd leoclean
 npm install
-cp .env.example .env      # puis compléter DATABASE_URL et AUTH_SECRET
+cp .env.example .env      # puis compléter AUTH_SECRET
+docker compose up -d      # PostgreSQL + PostGIS ; ou votre propre instance
 npx prisma migrate deploy # crée le schéma
 npm run db:seed           # jeu de données de développement
 npm run dev
 ```
+
+Aucun service externe n'est nécessaire pour parcourir l'application. Sans
+`RESEND_API_KEY`, les liens de connexion sont écrits dans la console du serveur
+plutôt qu'envoyés par email : le parcours d'authentification complet est
+praticable hors ligne. La complétion d'adresse interroge la Base Adresse
+Nationale quand elle répond, et bascule sinon sur une saisie manuelle.
 
 Le seed monte un territoire crédible : trois organisations concurrentes
 (la marketplace Léo Clean et deux sociétés de ménage locales), douze

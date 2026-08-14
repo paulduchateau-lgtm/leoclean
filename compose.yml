@@ -1,0 +1,38 @@
+# PostgreSQL de développement, avec PostGIS et btree_gist.
+#
+# Le schéma ne se contente pas d'un Postgres nu : `Address.geog` est une colonne
+# générée par PostGIS, et la contrainte `Assignment_no_overlap` est une
+# contrainte d'exclusion qui a besoin de btree_gist. Une base sans ces deux
+# extensions échoue dès la première migration.
+#
+# C'est la même image que celle des tests d'intégration en CI, pour que ce qui
+# passe ici passe là-bas.
+#
+#   docker compose up -d
+#   npx prisma migrate deploy
+#   npm run db:seed
+#   npm run dev
+#
+# Les identifiants reprennent ceux de `.env.example` : un `cp .env.example .env`
+# suffit, sans rien y changer.
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: leoclean
+      POSTGRES_PASSWORD: leoclean
+      POSTGRES_DB: leoclean
+    ports: ["5432:5432"]
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      # `prisma migrate deploy` lancé trop tôt échoue sur une connexion
+      # refusée : la sonde dit quand la base accepte vraiment les requêtes.
+      test: ["CMD-SHELL", "pg_isready -U leoclean -d leoclean"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db:
