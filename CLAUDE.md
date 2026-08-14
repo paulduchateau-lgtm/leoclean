@@ -209,6 +209,38 @@ options qui coûtent en fournitures.
 Le seed passe par ce moteur au lieu de refaire le calcul : le jeu de données ne
 peut donc pas diverger des règles du produit.
 
+## Site public
+
+Toutes les pages publiques sont prérendues, avec revalidation quotidienne :
+l'acquisition passe par le référencement, ce qui fait de la vitesse une
+contrainte produit et non une optimisation tardive.
+
+**Une page par commune ne vaut que si elle dit ce que les autres ne disent
+pas.** `src/lib/communes-content.ts` porte le contenu éditorial, avec une règle
+de rédaction : rien de ce qui s'y trouve ne doit pouvoir être écrit pour une
+autre commune. Les temps de trajet sont mesurés par calcul d'itinéraire routier
+depuis Léognan, pas estimés. Un test de bout en bout vérifie que titres,
+descriptions et corps de page diffèrent réellement d'une commune à l'autre.
+
+**Le déploiement est progressif.** Six communes d'abord — celles qui rassemblent
+69 % de la population. Six pages denses valent mieux que treize pages minces,
+que Google traite en pages satellites.
+
+**`src/lib/pricing/public-grid.ts` est la source unique des prix affichés.**
+Les pages publiques ne lisent pas la base : un tarif marketing n'a pas à
+dépendre d'une connexion. `PricingRule` reste la source opérationnelle, propre
+à chaque organisation ; le seed importe la même grille pour que les deux ne
+divergent pas.
+
+**Le JSON-LD n'invente rien.** Les champs inconnus sont omis plutôt que remplis.
+La note agrégée n'est émise que s'il existe des avis réels — la déclarer à vide
+est un motif de sanction manuelle. Le balisage est échappé à la sérialisation :
+un avis contenant `</script>` refermerait la balise.
+
+**Les robots des modèles de langage sont explicitement autorisés.** Être cité
+en réponse à « qui fait du ménage à Léognan ? » vaut davantage qu'un contenu
+verrouillé que personne ne reprend.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
@@ -315,7 +347,11 @@ cloné.
 - [x] **Phase 3 — Catalogue et tarification.** Moteur pur surface → durée →
       deux factures → crédit d'impôt → reste à charge, barème d'annulation à
       six paliers, catalogue cloisonné avec tarifs historisés.
-- [ ] Phase 4 — Site public, SEO local et GEO/AEO
+- [~] **Phase 4 — Site public, SEO local et GEO/AEO.** Six communes publiées
+  (69 % de la population), JSON-LD complet, robots/sitemap/llms.txt, API
+  publique, pages tarifs et à propos. **Restent à faire** : les 7 autres
+  communes, les intentions « femme de ménage » et « repassage », le blog,
+  le formulaire de pré-réservation, et la refonte de la page d'accueil.
 - [ ] Phase 5 — Moteur de disponibilité
 - [ ] Phase 6 — Tunnel de réservation
 - [ ] Phase 7 — Paiement Stripe

@@ -1,0 +1,37 @@
+import Link from "next/link";
+
+import { SITE } from "@/lib/site";
+
+export function SiteHeader() {
+  return (
+    <header className="border-b border-border bg-background/90 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-6 py-4">
+        <Link href="/" className="font-heading text-xl font-semibold">
+          {SITE.name}
+        </Link>
+
+        <nav
+          aria-label="Navigation principale"
+          className="flex items-center gap-5 text-sm"
+        >
+          <Link href="/tarifs" className="hover:text-primary">
+            Tarifs
+          </Link>
+          <Link
+            href="/a-propos"
+            className="hidden hover:text-primary sm:inline"
+          >
+            À propos
+          </Link>
+          <a
+            href={`tel:${SITE.phoneE164}`}
+            className="font-medium text-primary"
+            aria-label={`Appeler LéoClean au ${SITE.phone}`}
+          >
+            {SITE.phone}
+          </a>
+        </nav>
+      </div>
+    </header>
+  );
+}
