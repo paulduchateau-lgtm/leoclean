@@ -325,6 +325,57 @@ un avis contenant `</script>` refermerait la balise.
 en réponse à « qui fait du ménage à Léognan ? » vaut davantage qu'un contenu
 verrouillé que personne ne reprend.
 
+## Moteur de disponibilité
+
+`src/lib/scheduling/` est **pur** : aucune lecture de base, aucun appel réseau,
+aucune horloge implicite. Le chargement des données vit à côté, dans
+`repository.ts`, marqué `server-only`. C'est cette séparation qui permet de
+tester en quelques millisecondes une nuit de changement d'heure ou une tournée
+impossible de vingt minutes.
+
+**Une seule formule, appliquée partout :**
+
+```
+disponibilité = heures déclarées + ouvertures exceptionnelles
+              − absences − agenda externe − missions, tampons de trajet compris
+```
+
+Trois arbitrages sont figés et documentés dans le code :
+
+- **Bornes `[start, end)`.** Une mission qui finit à 12 h laisse 12 h libre.
+  Sans cette convention, chaque frontière produirait un conflit d'une
+  milliseconde.
+- **Une absence l'emporte sur une ouverture exceptionnelle.** Poser une absence
+  est un acte délibéré ; une ouverture peut n'être qu'un reliquat.
+- **Les tampons de trajet ne se franchissent pas.** C'est la même grandeur que
+  celle protégée par `Assignment_no_overlap` — et un test d'intégration vérifie
+  que les deux sont d'accord. Si le moteur proposait un créneau que la base
+  refuse, la réservation échouerait après paiement.
+
+**Le temps de trajet est une dépendance remplaçable**, jamais calculé au fil du
+code. Trois niveaux : calculateur d'itinéraire réel derrière un cache en base,
+puis le cache seul, puis une estimation géométrique qui ne tombe jamais en
+panne. Le repli n'est pas un détail : un service d'itinéraire indisponible doit
+dégrader la précision, pas fermer la réservation.
+
+L'estimation géométrique — `minutes = 3,45 + 1,249 × distance à vol d'oiseau` —
+est une régression calibrée sur les quinze itinéraires routiers reliant Léognan
+aux quinze autres communes. Erreur absolue moyenne 1,4 minute, maximale 4,2. Un
+test la compare aux mesures ; elle n'est valable que sur ce territoire.
+
+**Le score d'attribution est explicable.** Cinq composantes ramenées à `[0, 1]`
+et pondérées — trajet 0,40, continuité 0,25, note 0,15, acceptation 0,10,
+équité 0,10 — dont la décomposition est conservée dans
+`Assignment.scoreBreakdown`. Le trajet domine parce que c'est la seule
+composante qui coûte de l'argent et de la fatigue à quelqu'un ; la continuité
+suit parce que « le même intervenant chaque semaine » est la promesse centrale.
+L'équité pèse peu mais n'est pas nulle : sans elle, un score qui s'auto-renforce
+finirait par assécher son propre vivier.
+
+**Le client choisit une heure, jamais une personne.** `findSlots` ne renvoie
+qu'un créneau par heure de départ, accompagné de l'intervenant que le score
+désigne.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
@@ -372,7 +423,9 @@ src/
   proxy.ts             redirection optimiste (ex-middleware.ts)
     catalogue.ts       lecture du catalogue et devis, sur client cloisonné
     pricing/           moteur de tarification, pur et testé
-    scheduling/        moteur de disponibilité et de trajets (phase 5)
+    scheduling/        disponibilité, trajets, créneaux et score — pur
+      repository.ts    chargement de l'instantané de planning (server-only)
+      travel-cache.ts  cache des temps de trajet en base (server-only)
 prisma/
   schema.prisma        31 modèles, tous cloisonnés sauf exception justifiée
   migrations/          migrations versionnées, SQL PostGIS écrit à la main
@@ -472,7 +525,12 @@ cloné.
       déclaration SAP, JSON-LD complet (dont `Article`),
       robots/sitemap/llms.txt, API publique, pages tarifs et à propos,
       formulaire de rappel, système de design appliqué. 49 pages prérendues.
-- [ ] Phase 5 — Moteur de disponibilité
+- [x] **Phase 5 — Moteur de disponibilité et de tournée.** Algèbre
+      d'intervalles, disponibilité comme source de vérité unique, temps de
+      trajet calibré sur des itinéraires réels, coût d'insertion, score
+      d'attribution explicable, cache de trajets en base. 78 tests unitaires et
+      11 tests d'intégration, dont l'accord entre le moteur et la contrainte
+      d'exclusion.
 - [ ] Phase 6 — Tunnel de réservation
 - [ ] Phase 7 — Paiement Stripe
 - [ ] Phase 8 — Espace intervenant _(mise en production visée ici)_
