@@ -1,0 +1,91 @@
+name: Vitrine de démonstration
+
+# Construit la vitrine statique, et la publie sur GitHub Pages.
+#
+# Ce n'est pas un déploiement de production : la vitrine n'a ni serveur ni base,
+# le tunnel de réservation y tourne dans le navigateur et n'enregistre rien.
+# Elle sert à montrer et à faire relire le travail. Toutes ses pages sont en
+# `noindex` et son `robots.txt` interdit tout — un double indexé
+# concurrencerait `leoclean.fr` sur les requêtes mêmes qu'il sert à gagner.
+#
+# **La publication demande un réglage manuel, une seule fois** : Settings →
+# Pages → Source : « GitHub Actions ». Le jeton d'un workflow n'a pas le droit
+# d'activer Pages lui-même, et sur un dépôt privé la fonctionnalité suppose un
+# plan payant. Tant que ce n'est pas fait, le site reste téléchargeable en
+# artefact : c'est l'objet du premier téléversement ci-dessous, qui ne dépend
+# de rien.
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Construire la vitrine
+    runs-on: ubuntu-latest
+    env:
+      # La vitrine n'ouvre aucune connexion : ni le générateur Prisma, ni le
+      # build statique n'interrogent la base. Mais `prisma.config.ts` exige que
+      # la variable existe, et un fichier de configuration n'a pas à deviner
+      # qu'on ne s'en servira pas. On la fournit donc, pointée nulle part.
+      DATABASE_URL: postgresql://inutilise@localhost:5432/inutilise
+      SKIP_ENV_VALIDATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Le client Prisma est importé par des modules du graphe : sans lui, la
+      # compilation échoue avant même d'atteindre les pages.
+      - run: npx prisma generate
+
+      # Le segment d'URL et l'origine sont déduits du dépôt plutôt que demandés
+      # à `configure-pages` : le build ne doit pas dépendre de l'activation de
+      # Pages, sans quoi on ne pourrait même pas produire le site à télécharger.
+      - name: Construire l'export statique
+        env:
+          NEXT_PUBLIC_SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          node scripts/build-demo-statique.mjs \
+            --base-path "/${{ github.event.repository.name }}"
+
+      # Téléchargeable depuis l'onglet Actions, que Pages soit actif ou non.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vitrine-leoclean
+          path: out
+          retention-days: 30
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    name: Publier sur GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    # Tant que Pages n'est pas activé sur le dépôt, cette étape ne peut pas
+    # aboutir. On ne veut pas pour autant qu'elle fasse échouer une
+    # construction par ailleurs réussie : l'artefact, lui, est bien là.
+    continue-on-error: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

@@ -1,0 +1,102 @@
+name: CI
+
+# Le dépôt ne contient plus que Léo Clean : tout push et toute pull request
+# concernent le projet, il n'y a donc plus de filtre de chemins à appliquer.
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: Typecheck, lint et tests unitaires
+    runs-on: ubuntu-latest
+    env:
+      # Le socle n'atteint aucune ressource externe : la validation complète de
+      # l'environnement est vérifiée par le job de build, pas ici.
+      SKIP_ENV_VALIDATION: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run format:check
+
+  integration:
+    name: Tests d'intégration (PostgreSQL + PostGIS)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # PostGIS est indispensable : la migration initiale crée une colonne
+        # géographique générée et un index GIST.
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: leoclean
+          POSTGRES_PASSWORD: leoclean
+          POSTGRES_DB: leoclean_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://leoclean:leoclean@localhost:5432/leoclean_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration
+      # Le seed doit rester exécutable : il est le premier consommateur du
+      # schéma et détecte les régressions que les tests ne couvrent pas.
+      - run: npm run db:seed
+
+  e2e:
+    name: Tests de bout en bout
+    runs-on: ubuntu-latest
+    services:
+      # Le parcours de connexion lit et écrit en base — comptes, sessions,
+      # jetons de vérification. Les tests de bout en bout ne peuvent donc plus
+      # s'exécuter à vide.
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: leoclean
+          POSTGRES_PASSWORD: leoclean
+          POSTGRES_DB: leoclean_e2e
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://leoclean:leoclean@localhost:5432/leoclean_e2e
+      AUTH_SECRET: secret-de-ci-au-moins-trente-deux-caracteres
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
+      NEXT_PUBLIC_SAP_DECLARED: "false"
+      # RESEND_API_KEY volontairement absente : les liens de connexion sont
+      # alors écrits dans la console, ce qui est le comportement voulu ici.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run e2e:install
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
