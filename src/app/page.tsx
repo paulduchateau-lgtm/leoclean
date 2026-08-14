@@ -52,6 +52,10 @@ const PROMISES = [
 
 export default function Home() {
   const published = publishedCommunes();
+  const unpublished = COMMUNES_BY_POPULATION.filter(
+    (commune) =>
+      !published.some((entry) => entry.commune.slug === commune.slug),
+  );
 
   return (
     <>
@@ -153,18 +157,18 @@ export default function Home() {
               ))}
             </ul>
 
-            <p className="mt-6 text-sm text-muted-foreground">
-              Également desservies :{" "}
-              {COMMUNES_BY_POPULATION.filter(
-                (commune) =>
-                  !published.some(
-                    (entry) => entry.commune.slug === commune.slug,
-                  ),
-              )
-                .map((commune) => commune.name)
-                .join(", ")}
-              .
-            </p>
+            {/* Les seize communes ont leur page : cette phrase n'a rien à
+                annoncer aujourd'hui, et sans la garde elle s'affichait vide,
+                réduite à « Également desservies : . ». Le bloc reste pour le
+                jour où le territoire s'étendra — une commune desservie sans
+                page dédiée doit être annoncée, pas passée sous silence. C'est
+                la garde que porte déjà `/menage-a-domicile`. */}
+            {unpublished.length > 0 && (
+              <p className="mt-6 text-sm text-muted-foreground">
+                Également desservies :{" "}
+                {unpublished.map((commune) => commune.name).join(", ")}.
+              </p>
+            )}
           </div>
         </section>
       </main>
