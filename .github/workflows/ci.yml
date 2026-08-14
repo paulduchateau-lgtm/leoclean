@@ -14,6 +14,10 @@ jobs:
       # Le socle n'atteint aucune ressource externe : la validation complète de
       # l'environnement est vérifiée par le job de build, pas ici.
       SKIP_ENV_VALIDATION: "1"
+      # `prisma generate` charge `prisma.config.ts`, qui lit `DATABASE_URL` par
+      # `env()` et échoue si elle manque. Rien ne s'y connecte : la génération
+      # ne lit que le schéma. On la pointe donc nulle part.
+      DATABASE_URL: postgresql://inutilise@localhost:5432/inutilise
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,6 +25,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Sans le client généré, `tsc` ne voit ni `Prisma` ni les types des
+      # modèles : le typecheck échoue avant d'avoir rien vérifié. Prisma 7 ne
+      # génère plus à l'installation, il faut donc le demander.
+      - run: npx prisma generate
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run test
@@ -53,6 +61,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx prisma generate
       - run: npm run test:integration
       # Le seed doit rester exécutable : il est le premier consommateur du
       # schéma et détecte les régressions que les tests ne couvrent pas.
@@ -91,6 +100,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npx prisma generate
       - run: npx prisma migrate deploy
       - run: npm run e2e:install
       - run: npm run e2e

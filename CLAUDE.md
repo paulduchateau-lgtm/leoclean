@@ -25,16 +25,16 @@ Le dossier a été retiré de `famille`, où rien ne subsiste du projet.
 
 Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 
-| Sujet                   | Décision                                                                                                                                                 |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                 |
-| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                    |
-| Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                            |
-| Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                             |
-| Positionnement          | « Sud Bordeaux » : 16 communes, dont les 13 de la Communauté de communes de Montesquieu. Même grille tarifaire partout.                                  |
-| SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                               |
-| Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté. |
-| Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                        |
+| Sujet                   | Décision                                                                                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                                                                     |
+| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                                                                        |
+| Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                                                                                |
+| Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                                                                                 |
+| Positionnement          | « Sud Bordeaux » : 16 communes, dont les 13 de la Communauté de communes de Montesquieu. Même grille tarifaire partout.                                                                                      |
+| SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                                                                                   |
+| Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté.                                                     |
+| Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                                                                            |
 | Écriture de la marque   | **« Léo Clean », en deux mots**, partout où un humain la lit. Les identifiants techniques restent en un mot et sans accent : `leoclean.fr`, `bonjour@leoclean.fr`, le slug `leoclean`, le dossier du projet. |
 
 ## Modèle juridique et facturation
@@ -279,7 +279,7 @@ diffèrent réellement.
 **Les seize communes sont publiées.**
 
 **Les temps de trajet sont mesurés de mairie à mairie**, par calcul
-d'itinéraire routier depuis Léognan. Le premier jeu visait le *centroïde* de
+d'itinéraire routier depuis Léognan. Le premier jeu visait le _centroïde_ de
 chaque commune, ce qui produit des valeurs fausses sur les communes
 forestières : le centroïde de Cestas tombe en pleine pinède, à 24 minutes de
 route, alors que Cestas-Bourg est à 11. Le bourg est aussi ce qu'un client
