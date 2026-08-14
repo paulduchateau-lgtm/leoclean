@@ -47,3 +47,10 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Surcharge Docker locale (port de la base), propre à la machine.
+compose.override.yml
+
+# Autorisations d'outillage propres à un poste. `.claude/launch.json`, lui,
+# décrit comment démarrer l'application : il est partagé.
+.claude/settings.local.json
