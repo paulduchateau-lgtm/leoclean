@@ -2,8 +2,9 @@
 
 # LéoClean — guide du dépôt
 
-Plateforme de ménage à domicile hyperlocale couvrant Léognan et les
-13 communes de la Communauté de communes de Montesquieu (Gironde).
+Plateforme de ménage à domicile hyperlocale couvrant 16 communes du sud de
+Bordeaux (Gironde) : les 13 de la Communauté de communes de Montesquieu, plus
+Gradignan, Villenave-d'Ornon et Cestas.
 
 Ce fichier est la référence des conventions et des décisions. Il est tenu à
 jour à chaque fin de phase. En cas de contradiction entre ce document et le
@@ -29,6 +30,7 @@ Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 | Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                    |
 | Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                            |
 | Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                             |
+| Positionnement          | « Sud Bordeaux » : 16 communes, dont les 13 de la Communauté de communes de Montesquieu. Même grille tarifaire partout.                                  |
 | SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                               |
 | Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté. |
 | Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                        |
@@ -222,9 +224,15 @@ autre commune. Les temps de trajet sont mesurés par calcul d'itinéraire routie
 depuis Léognan, pas estimés. Un test de bout en bout vérifie que titres,
 descriptions et corps de page diffèrent réellement d'une commune à l'autre.
 
-**Le déploiement est progressif.** Six communes d'abord — celles qui rassemblent
-69 % de la population. Six pages denses valent mieux que treize pages minces,
-que Google traite en pages satellites.
+**Le déploiement est progressif.** Neuf communes publiées sur seize, couvrant
+90 % de la population desservie. Neuf pages denses valent mieux que seize pages
+minces, que Google traite en pages satellites.
+
+**Le cadre narratif est « le sud de Bordeaux »**, pas l'intercommunalité :
+Gradignan, Villenave-d'Ornon et Cestas n'appartiennent pas à la Communauté de
+communes de Montesquieu. Celle-ci reste nommée — c'est une entité que les
+moteurs connaissent — mais elle ne peut plus servir à décrire la zone entière.
+Le champ `inMontesquieu` porte la distinction et un test l'impose.
 
 **`src/lib/pricing/public-grid.ts` est la source unique des prix affichés.**
 Les pages publiques ne lisent pas la base : un tarif marketing n'a pas à

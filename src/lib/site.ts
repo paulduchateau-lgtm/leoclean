@@ -1,4 +1,5 @@
 import {
+  COMMUNES,
   HEADQUARTERS,
   MONTESQUIEU_COMMUNES,
   TERRITORY_POPULATION,
@@ -38,10 +39,10 @@ export const SITE = {
    * par un modèle de langage : factuelle, autonome, ancrée géographiquement.
    */
   description:
-    `LéoClean est un service de ménage à domicile qui intervient à Léognan (33850), ` +
-    `dans les ${MONTESQUIEU_COMMUNES.length} communes de la Communauté de communes de ` +
-    `Montesquieu, ainsi qu'à Gradignan, Villenave-d'Ornon et Cestas, en Gironde, ` +
-    `au sud de Bordeaux.`,
+    `LéoClean est un service de ménage à domicile qui intervient dans ${COMMUNES.length} communes ` +
+    `du sud de Bordeaux, en Gironde : Villenave-d'Ornon, Gradignan, Cestas, ainsi que ` +
+    `Léognan (33850) et les ${MONTESQUIEU_COMMUNES.length - 1} autres communes de la Communauté de ` +
+    `communes de Montesquieu.`,
 
   /**
    * Coordonnées de contact.

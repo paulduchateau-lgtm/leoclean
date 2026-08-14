@@ -1,7 +1,8 @@
 # LéoClean
 
-Plateforme de ménage à domicile hyperlocale, à Léognan et dans les 13 communes
-de la Communauté de communes de Montesquieu (Gironde, au sud de Bordeaux).
+Plateforme de ménage à domicile hyperlocale, dans 16 communes du sud de
+Bordeaux (Gironde) : les 13 de la Communauté de communes de Montesquieu, plus
+Gradignan, Villenave-d'Ornon et Cestas. 133 834 habitants desservis.
 
 Deux modèles cohabitent sur la même plateforme : une **marketplace**
 d'intervenants indépendants à qui les missions sont attribuées automatiquement,
