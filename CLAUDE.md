@@ -68,11 +68,12 @@ effectif, conservé pour l'audit.
 il faut des _separate charges and transfers_, un paiement client se répartissant
 entre deux bénéficiaires.
 
-### Valeurs par défaut à confirmer
+### Grille retenue
 
-Elles vivent en base (`PricingRule`) et non en dur, mais alimentent le seed et
-les contenus. Wecasa affiche 28,90 €/h en régulier et 32,90 €/h en ponctuel,
-minimum 2 h, sans frais d'abonnement.
+Elle vit en base (`PricingRule`) et non en dur. Wecasa affiche 28,90 €/h en
+régulier et 32,90 €/h en ponctuel, minimum 2 h, sans frais d'abonnement : la
+parité est délibérée, l'avantage de LéoClean n'étant pas le prix mais la
+proximité.
 
 - Tarifs : **29 €/h en régulier, 33 €/h en ponctuel**, minimum 2 h, estimation
   à 25 m²/h, +30 min par option.
@@ -178,6 +179,36 @@ traduction des erreurs — pour rester testable sans Auth.js.
 Sans `RESEND_API_KEY`, les liens de connexion sont écrits dans la console : le
 parcours complet est praticable en développement sans service externe.
 
+## Tarification
+
+`src/lib/pricing/` est pur : pas de base, pas d'horloge, pas de session. Il
+produit ce que le client paie, ce que l'intervenant perçoit et la base du
+crédit d'impôt — d'où une couverture de tests exhaustive.
+
+**Une répartition additionne toujours exactement au total.** On ne calcule
+jamais deux parts indépendamment en espérant qu'elles retombent juste : on
+calcule l'une et on déduit l'autre. Un test le vérifie sur des milliers de
+combinaisons montant/taux.
+
+**Le crédit d'impôt est calculé facture par facture, pas sur le total.** Chaque
+organisme déclaré émet sa propre attestation fiscale sur son propre montant.
+Conséquence assumée : quand les deux arrondis tombent du même côté, le crédit
+dépasse d'un centime celui qu'un calcul global aurait donné. L'écart profite au
+client, et vaut mieux que des attestations dont la somme ne retombe pas juste.
+
+**La durée est arrondie au pas de trente minutes supérieur**, jamais au plus
+proche : mieux vaut trente minutes de trop que de mettre l'intervenant en
+retard sur la mission suivante, ce qui pénaliserait toute sa tournée. Une
+intervention est plafonnée à six heures — au-delà, il faut proposer deux
+passages plutôt que vendre une mission intenable.
+
+**Les options allongent la durée plutôt que le taux horaire.** Le temps est
+facturé une seule fois ; un supplément forfaitaire reste possible pour les
+options qui coûtent en fournitures.
+
+Le seed passe par ce moteur au lieu de refaire le calcul : le jeu de données ne
+peut donc pas diverger des règles du produit.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
@@ -220,6 +251,8 @@ src/
       permissions.ts   capacités par rôle
       session.ts       vérifications d'accès côté serveur
   proxy.ts             redirection optimiste (ex-middleware.ts)
+    catalogue.ts       lecture du catalogue et devis, sur client cloisonné
+    pricing/           moteur de tarification, pur et testé
     scheduling/        moteur de disponibilité et de trajets (phase 5)
 prisma/
   schema.prisma        31 modèles, tous cloisonnés sauf exception justifiée
@@ -279,7 +312,9 @@ cloné.
       sessions en base, capacités explicites par rôle, cloisonnement vérifié à
       chaque appel, enveloppe de server action, journalisation des accès
       transverses.
-- [ ] Phase 3 — Catalogue et tarification
+- [x] **Phase 3 — Catalogue et tarification.** Moteur pur surface → durée →
+      deux factures → crédit d'impôt → reste à charge, barème d'annulation à
+      six paliers, catalogue cloisonné avec tarifs historisés.
 - [ ] Phase 4 — Site public, SEO local et GEO/AEO
 - [ ] Phase 5 — Moteur de disponibilité
 - [ ] Phase 6 — Tunnel de réservation
@@ -301,8 +336,8 @@ espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalis
 - Numéro de téléphone local
 - Numéro de déclaration SAP, pour LéoClean **et** pour chaque intervenant :
   la facturation en deux lignes suppose deux organismes déclarés
-- Arbitrage entre `leoclean.fr` et `leoclean.com` : les CGU emploient
-  `bonjour@leoclean.com`, le code retient `.fr`
+- Les CGU emploient `bonjour@leoclean.com` : à reprendre, le domaine retenu
+  est **leoclean.fr**
 - L'accord de coresponsabilité de traitement nomme encore Wecasa et
   `bonjour@wecasa.fr` : à reprendre avant toute publication
 - Accès : base Neon ou Supabase, projet Google Cloud, Stripe, Resend, Inngest, nom de domaine

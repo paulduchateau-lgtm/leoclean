@@ -24,6 +24,7 @@ import {
 } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+import { quote } from "../src/lib/pricing";
 import { STREETS_BY_INSEE, type SeedStreet } from "./fixtures/streets";
 import { COMMUNES, type Commune } from "../src/lib/territory";
 import { parisDayMinuteToUtc, utcToParisWallClock } from "../src/lib/time";
@@ -268,13 +269,19 @@ const CATALOGUE: ServiceSeed[] = [
   },
 ];
 
-/** Tarif horaire en centimes, par fréquence. Voir CLAUDE.md. */
+/**
+ * Tarif horaire en centimes, par fréquence.
+ *
+ * Grille retenue : 29 € en régulier, 33 € en ponctuel. Wecasa affiche 28,90 €
+ * et 32,90 € — la parité est délibérée, l'avantage de LéoClean n'étant pas le
+ * prix mais la proximité.
+ */
 const HOURLY_RATES: Record<
   "ONE_OFF" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
   number
 > = {
-  ONE_OFF: 3200,
-  WEEKLY: 2700,
+  ONE_OFF: 3300,
+  WEEKLY: 2900,
   BIWEEKLY: 2900,
   MONTHLY: 2900,
 };
@@ -878,10 +885,6 @@ async function main(): Promise<void> {
           : cleaners[created % cleaners.length]!.id;
 
         const surface = randomInt(45, 175);
-        const durationMinutes = Math.max(
-          service.minDurationMinutes,
-          Math.round(((surface / service.sqmPerHour) * 60) / 30) * 30,
-        );
         const frequency = subscription ? "WEEKLY" : "ONE_OFF";
         const rule = await prisma.pricingRule.findFirstOrThrow({
           where: {
@@ -891,21 +894,31 @@ async function main(): Promise<void> {
           },
         });
 
-        const grossAmountCents = Math.round(
-          (rule.hourlyRateCents * durationMinutes) / 60,
-        );
-        const taxCreditAmountCents = Math.round(
-          (grossAmountCents * TAX_CREDIT_RATE_BP) / 10000,
-        );
-        // La rémunération de l'intervenant est un montant qu'il accepte avant
-        // de prendre la mission, pas un pourcentage appliqué après coup. La
-        // marge de la plateforme en est la différence, et c'est elle qui est
-        // facturée séparément au client.
-        const platformFeeAmountCents = Math.round(
-          (grossAmountCents * organization.commissionRateBp) / 10000,
-        );
-        const professionalAmountCents =
-          grossAmountCents - platformFeeAmountCents;
+        // Le seed passe par le moteur de tarification plutôt que de refaire le
+        // calcul : c'est ce qui garantit que le jeu de données reste conforme
+        // aux règles du produit, contraintes de cohérence comprises.
+        const priced = quote({
+          service: {
+            slug: service.slug,
+            name: service.slug,
+            sqmPerHour: service.sqmPerHour,
+            minDurationMinutes: service.minDurationMinutes,
+          },
+          options: [],
+          surfaceSqm: surface,
+          frequency,
+          hourlyRateCents: rule.hourlyRateCents,
+          commissionRateBp: organization.commissionRateBp,
+          taxCreditRateBp: rule.taxCreditRateBp,
+        });
+
+        const {
+          durationMinutes,
+          grossAmountCents,
+          taxCreditAmountCents,
+          professionalAmountCents,
+          platformFeeAmountCents,
+        } = priced;
 
         const status = pickStatus(offset, random());
         const scheduledStart = parisDayMinuteToUtc(day, slot.start);
@@ -948,12 +961,12 @@ async function main(): Promise<void> {
             frequency,
             hourlyRateCents: rule.hourlyRateCents,
             grossAmountCents,
-            taxCreditRateBp: TAX_CREDIT_RATE_BP,
+            taxCreditRateBp: priced.taxCreditRateBp,
             taxCreditAmountCents,
-            netAmountCents: grossAmountCents - taxCreditAmountCents,
+            netAmountCents: priced.netAmountCents,
             professionalAmountCents,
             platformFeeAmountCents,
-            commissionRateBp: organization.commissionRateBp,
+            commissionRateBp: priced.commissionRateBp,
             cancellationFeeCents:
               status === "CANCELLED_BY_CLIENT" && random() < 0.5
                 ? Math.round(grossAmountCents / 2)
