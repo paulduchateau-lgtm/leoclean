@@ -37,7 +37,7 @@ export async function sendEmail({
   text,
 }: SendEmailOptions): Promise<void> {
   const resend = getClient();
-  const from = process.env.EMAIL_FROM ?? "LéoClean <bonjour@leoclean.fr>";
+  const from = process.env.EMAIL_FROM ?? "Léo Clean <bonjour@leoclean.fr>";
 
   if (!resend) {
     // Pas de `catch` silencieux ici : l'absence de clé est un mode de

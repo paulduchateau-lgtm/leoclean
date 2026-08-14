@@ -41,7 +41,7 @@ export interface ScoreBreakdown {
  * heure vendable perdue pour la plateforme.
  *
  * La continuité vient juste après, parce que « le même intervenant chaque
- * semaine » est la promesse commerciale centrale de LéoClean : la rompre pour
+ * semaine » est la promesse commerciale centrale de Léo Clean : la rompre pour
  * gagner cinq minutes de route serait un mauvais échange.
  *
  * L'équité de charge pèse peu mais n'est pas nulle. Sans elle, les mieux notés

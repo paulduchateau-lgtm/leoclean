@@ -80,7 +80,7 @@ export const OBSERVED_AVERAGE_SPEED_KMH = 43.7;
  * courts, ceux-là mêmes qui structurent une tournée dense.
  *
  * Le modèle n'est valable que dans ce territoire et pour ces distances. Sur un
- * trajet de cinquante kilomètres il n'a aucun sens — mais LéoClean n'en fait
+ * trajet de cinquante kilomètres il n'a aucun sens — mais Léo Clean n'en fait
  * pas.
  */
 const BASE_MINUTES = 3.45;

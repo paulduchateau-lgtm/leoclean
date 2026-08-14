@@ -10,7 +10,7 @@ import { COMMUNES, coverageRadiusKm } from "@/lib/territory";
  * la page est pénalisée, et une note agrégée déclarée sans avis réels expose à
  * une sanction manuelle.
  *
- * Rien n'est inventé ici. Les champs dont LéoClean ne dispose pas encore sont
+ * Rien n'est inventé ici. Les champs dont Léo Clean ne dispose pas encore sont
  * omis plutôt que remplis d'un espace réservé.
  */
 
@@ -99,7 +99,7 @@ export function organizationJsonLd(): JsonLd {
     currenciesAccepted: SITE.currency,
     paymentAccepted: "Carte bancaire",
     /**
-     * Horaires de joignabilité, pas d'ouverture d'un local : LéoClean n'a pas
+     * Horaires de joignabilité, pas d'ouverture d'un local : Léo Clean n'a pas
      * de guichet. On décrit quand on répond au téléphone.
      */
     openingHoursSpecification: [
@@ -216,7 +216,7 @@ export interface ArticleJsonLdInput {
 /**
  * Article éditorial.
  *
- * L'auteur déclaré est l'entreprise, pas une personne : LéoClean n'a pas de
+ * L'auteur déclaré est l'entreprise, pas une personne : Léo Clean n'a pas de
  * rédaction, et attribuer un article à un auteur fictif pour cocher une case
  * serait exactement le genre de signal que ce balisage sert à vérifier.
  */

@@ -29,7 +29,9 @@ export function Logo({
         priority
         aria-hidden
       />
-      <span className="font-heading text-xl font-semibold tracking-[-0.016em]">
+      {/* Le nom s'écrit en deux mots : `whitespace-nowrap` empêche la marque
+          de se couper en deux lignes dans un en-tête étroit. */}
+      <span className="font-heading text-xl font-semibold tracking-[-0.016em] whitespace-nowrap">
         {SITE.name}
       </span>
     </span>

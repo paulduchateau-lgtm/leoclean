@@ -20,7 +20,7 @@ import {
 export const metadata: Metadata = {
   title: "Ménage à domicile au sud de Bordeaux",
   description:
-    "LéoClean fait le ménage à domicile dans 16 communes du sud de Bordeaux, de Villenave-d'Ornon à Saucats, à partir de 29 €/h.",
+    "Léo Clean fait le ménage à domicile dans 16 communes du sud de Bordeaux, de Villenave-d'Ornon à Saucats, à partir de 29 €/h.",
   alternates: { canonical: "/menage-a-domicile" },
 };
 
@@ -55,12 +55,12 @@ export default function CommunesHubPage() {
           Ménage à domicile au sud de Bordeaux
         </h1>
         <p className="mt-5 max-w-prose text-lg text-pretty text-muted-foreground">
-          LéoClean intervient dans {COMMUNES.length} communes du sud de Bordeaux
-          : les {MONTESQUIEU_COMMUNES.length} communes de la Communauté de
-          communes de Montesquieu, ainsi que Gradignan, Villenave-d&apos;Ornon
-          et Cestas. Soit {TERRITORY_POPULATION.toLocaleString("fr-FR")}{" "}
-          habitants desservis, à partir de{" "}
-          {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}.
+          Léo Clean intervient dans {COMMUNES.length} communes du sud de
+          Bordeaux : les {MONTESQUIEU_COMMUNES.length} communes de la Communauté
+          de communes de Montesquieu, ainsi que Gradignan,
+          Villenave-d&apos;Ornon et Cestas. Soit{" "}
+          {TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants desservis, à
+          partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}.
         </p>
 
         <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">

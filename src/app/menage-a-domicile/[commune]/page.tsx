@@ -67,7 +67,7 @@ export async function generateMetadata({
   return {
     title: `Ménage à domicile à ${commune.name} (${commune.postalCode})`,
     description:
-      `LéoClean fait le ménage à domicile à ${commune.name} à partir de ` +
+      `Léo Clean fait le ménage à domicile à ${commune.name} à partir de ` +
       `${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, avec un intervenant attitré ` +
       `qui habite le secteur. ${content.driveMinutesFromLeognan > 0 ? `À ${content.driveMinutesFromLeognan} minutes de notre siège de Léognan.` : "Notre commune siège."}`,
     alternates: { canonical: path },

@@ -42,12 +42,12 @@ const FAQ = [
   {
     question: "Combien coûte une femme de ménage à Léognan ?",
     answer:
-      "Chez LéoClean, le ménage à domicile coûte 29 € de l'heure en formule régulière et 33 € de l'heure pour une intervention ponctuelle, avec un minimum de deux heures. Un logement de 80 m² demande environ 3 h 30, soit 101,50 € en formule régulière.",
+      "Chez Léo Clean, le ménage à domicile coûte 29 € de l'heure en formule régulière et 33 € de l'heure pour une intervention ponctuelle, avec un minimum de deux heures. Un logement de 80 m² demande environ 3 h 30, soit 101,50 € en formule régulière.",
   },
   {
     question: "Y a-t-il des frais d'abonnement ou de dossier ?",
     answer:
-      "Non. LéoClean ne facture ni frais d'inscription, ni abonnement, ni frais de gestion mensuels. Vous ne payez que les heures réalisées.",
+      "Non. Léo Clean ne facture ni frais d'inscription, ni abonnement, ni frais de gestion mensuels. Vous ne payez que les heures réalisées.",
   },
   {
     question: "Le tarif est-il le même dans toutes les communes ?",
@@ -110,7 +110,7 @@ export default function TarifsPage() {
         <div className="mt-10 overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <caption className="sr-only">
-              Tarifs horaires du ménage à domicile LéoClean
+              Tarifs horaires du ménage à domicile Léo Clean
             </caption>
             <thead>
               <tr className="border-b border-border">

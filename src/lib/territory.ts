@@ -1,5 +1,5 @@
 /**
- * Référentiel des communes couvertes par LéoClean.
+ * Référentiel des communes couvertes par Léo Clean.
  *
  * La zone d'intervention réunit deux ensembles : les 13 communes de la
  * Communauté de communes de Montesquieu (Gironde, Nouvelle-Aquitaine), siège à
@@ -49,7 +49,7 @@ export interface Commune {
   /** Centroïde de la commune, WGS84. */
   readonly lat: number;
   readonly lng: number;
-  /** Léognan, siège de LéoClean. */
+  /** Léognan, siège de Léo Clean. */
   readonly isHeadquarters: boolean;
   /**
    * Membre de la Communauté de communes de Montesquieu.

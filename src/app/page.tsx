@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 86_400;
 
-/** Ce qui distingue LéoClean d'une plateforme nationale. */
+/** Ce qui distingue Léo Clean d'une plateforme nationale. */
 const PROMISES = [
   {
     title: "Le même intervenant, chaque semaine",
@@ -102,7 +102,7 @@ export default function Home() {
 
         <section className="mx-auto w-full max-w-4xl px-6 py-16">
           <h2 className="font-heading text-2xl font-semibold tracking-tight">
-            Pourquoi LéoClean plutôt qu&apos;une plateforme nationale
+            Pourquoi Léo Clean plutôt qu&apos;une plateforme nationale
           </h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
             {PROMISES.map((promise) => (

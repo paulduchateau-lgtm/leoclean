@@ -76,7 +76,7 @@ beforeEach(async () => {
   const leoclean = await prisma.organization.create({
     data: {
       slug: "leoclean",
-      name: "LéoClean",
+      name: "Léo Clean",
       type: "MARKETPLACE",
       status: "ACTIVE",
       engagementMode: "MISE_EN_RELATION",

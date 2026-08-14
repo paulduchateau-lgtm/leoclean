@@ -34,14 +34,14 @@ export function MagicLinkEmail({
   return (
     <Html lang="fr">
       <Head />
-      <Preview>Votre lien de connexion à LéoClean</Preview>
+      <Preview>Votre lien de connexion à Léo Clean</Preview>
       <Body style={body}>
         <Container style={container}>
-          <Heading style={heading}>LéoClean</Heading>
+          <Heading style={heading}>Léo Clean</Heading>
 
           <Text style={text}>Bonjour,</Text>
           <Text style={text}>
-            Voici votre lien de connexion à LéoClean. Il est valable{" "}
+            Voici votre lien de connexion à Léo Clean. Il est valable{" "}
             {expiresInMinutes} minutes et ne fonctionne qu&apos;une fois.
           </Text>
 

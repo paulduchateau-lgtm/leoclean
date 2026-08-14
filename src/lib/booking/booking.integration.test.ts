@@ -49,7 +49,7 @@ async function seed({ cleaners = 1, clients = 2 } = {}): Promise<Fixture> {
   const organization = await prisma.organization.create({
     data: {
       slug: "leoclean",
-      name: "LéoClean",
+      name: "Léo Clean",
       type: "MARKETPLACE",
       status: "ACTIVE",
       commissionRateBp: 2500,

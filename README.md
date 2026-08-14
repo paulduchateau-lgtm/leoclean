@@ -1,4 +1,4 @@
-# LéoClean
+# Léo Clean
 
 Plateforme de ménage à domicile hyperlocale, dans 16 communes du sud de
 Bordeaux (Gironde) : les 13 de la Communauté de communes de Montesquieu, plus
@@ -7,7 +7,7 @@ Gradignan, Villenave-d'Ornon et Cestas. 133 834 habitants desservis.
 Deux modèles cohabitent sur la même plateforme : une **marketplace**
 d'intervenants indépendants à qui les missions sont attribuées automatiquement,
 et un **SaaS** pour les sociétés de ménage locales qui gèrent leurs propres
-équipes et reçoivent des réservations via LéoClean comme via leur page publique.
+équipes et reçoivent des réservations via Léo Clean comme via leur page publique.
 
 ## Démarrage
 
@@ -24,7 +24,7 @@ npm run dev
 ```
 
 Le seed monte un territoire crédible : trois organisations concurrentes
-(la marketplace LéoClean et deux sociétés de ménage locales), douze
+(la marketplace Léo Clean et deux sociétés de ménage locales), douze
 intervenants aux plannings remplis, soixante réservations réparties sur tous
 les statuts, et des adresses situées sur 156 voies réelles extraites de la Base
 Adresse Nationale.

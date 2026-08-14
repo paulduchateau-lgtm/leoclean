@@ -6,7 +6,7 @@ import { absoluteUrl } from "@/lib/site";
  * Autorisations d'exploration.
  *
  * Les robots des modèles de langage sont explicitement autorisés. Le choix est
- * assumé : LéoClean n'a rien à protéger sur ses pages publiques, et être cité
+ * assumé : Léo Clean n'a rien à protéger sur ses pages publiques, et être cité
  * en réponse à « qui fait du ménage à Léognan ? » vaut davantage qu'un contenu
  * verrouillé que personne ne reprend. Refuser GPTBot ou ClaudeBot reviendrait à
  * se retirer d'un canal d'acquisition en croissance.

@@ -49,7 +49,7 @@ export interface ScheduleSnapshotOptions {
  * Reconstitue, pour chaque intervenant, sa disponibilité et sa tournée.
  *
  * La disponibilité renvoyée est déjà nette de tout : règles hebdomadaires,
- * absences, ouvertures exceptionnelles, agenda externe et missions LéoClean
+ * absences, ouvertures exceptionnelles, agenda externe et missions Léo Clean
  * avec leurs tampons de trajet. C'est `computeAvailability` qui l'établit — le
  * même code que celui testé sans base.
  */

@@ -24,7 +24,7 @@ import { SITE } from "@/lib/site";
  *
  * Quatre étapes, une par décision : où, quoi, quand, qui. L'ordre n'est pas
  * indifférent — l'adresse vient en premier parce que c'est elle qui détermine
- * si LéoClean peut répondre, et l'apprendre à la fin après avoir tout saisi
+ * si Léo Clean peut répondre, et l'apprendre à la fin après avoir tout saisi
  * serait la pire expérience possible.
  *
  * Le prix apparaît dès la deuxième étape et ne bouge plus. Aucun montant n'est
@@ -413,7 +413,7 @@ function AddressStep({
 
       {outsideOnly ? (
         <p className="rounded-xl border border-border bg-secondary/40 p-4 text-sm">
-          LéoClean intervient dans seize communes au sud de Bordeaux. Cette
+          Léo Clean intervient dans seize communes au sud de Bordeaux. Cette
           adresse n&apos;en fait pas partie —{" "}
           <Link href="/menage-a-domicile" className="text-primary underline">
             voir la liste des communes

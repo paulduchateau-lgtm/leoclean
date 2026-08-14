@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 /** Libellés destinés aux personnes, pas aux développeurs. */
 const ROLE_LABELS: Record<string, string> = {
-  PLATFORM_ADMIN: "Administration LéoClean",
+  PLATFORM_ADMIN: "Administration Léo Clean",
   ORG_OWNER: "Responsable",
   ORG_MANAGER: "Gestion",
   CLEANER: "Intervenant",

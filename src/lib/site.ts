@@ -6,7 +6,7 @@ import {
 } from "./territory";
 
 /**
- * Identité publique de LéoClean — source de vérité unique du NAP
+ * Identité publique de Léo Clean — source de vérité unique du NAP
  * (Name, Address, Phone).
  *
  * La cohérence stricte de ces valeurs entre le site, Google Business Profile
@@ -14,7 +14,7 @@ import {
  * ce bloc ne doit être ressaisi en dur dans une page : JSON-LD, pied de page,
  * mentions légales, llms.txt et emails lisent tous ici.
  *
- * Les champs à `null` sont des informations que LéoClean n'a pas encore
+ * Les champs à `null` sont des informations que Léo Clean n'a pas encore
  * fournies. Les composants qui les consomment doivent les masquer proprement
  * plutôt qu'afficher un espace réservé : une NAP incomplète est neutre, une
  * NAP inexacte est pénalisante.
@@ -24,20 +24,20 @@ const url =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://leoclean.fr";
 
 export const SITE = {
-  name: "LéoClean",
+  name: "Léo Clean",
 
   /**
    * Structure juridique exploitante.
    *
    * PAPER PLANE, SASU immatriculée le 8 avril 2021, dont le siège est déjà à
-   * Léognan — ce qui donne à LéoClean une antériorité locale réelle et une
+   * Léognan — ce qui donne à Léo Clean une antériorité locale réelle et une
    * adresse vérifiable, deux signaux que Google Business Profile valorise.
    *
    * Réserve importante : le code APE de la société est 70.22Z, « conseil pour
    * les affaires et autres conseils de gestion ». La déclaration Services à la
    * personne est soumise à une condition d'activité exclusive : un organisme
    * déclaré ne peut, en principe, exercer que des activités de services à la
-   * personne. Exploiter LéoClean depuis une société de conseil compromettrait
+   * personne. Exploiter Léo Clean depuis une société de conseil compromettrait
    * donc la déclaration — et avec elle le crédit d'impôt, principal argument
    * de conversion. À faire trancher avec la DDETS ou un conseil avant de
    * communiquer sur l'avantage fiscal.
@@ -58,7 +58,7 @@ export const SITE = {
    * par un modèle de langage : factuelle, autonome, ancrée géographiquement.
    */
   description:
-    `LéoClean est un service de ménage à domicile qui intervient dans ${COMMUNES.length} communes ` +
+    `Léo Clean est un service de ménage à domicile qui intervient dans ${COMMUNES.length} communes ` +
     `du sud de Bordeaux, en Gironde : Villenave-d'Ornon, Gradignan, Cestas, ainsi que ` +
     `Léognan (33850) et les ${MONTESQUIEU_COMMUNES.length - 1} autres communes de la Communauté de ` +
     `communes de Montesquieu.`,
@@ -101,11 +101,10 @@ export const SITE = {
    * (`mibextid`, `rdid`, `share_url`) : ceux-ci sont propres à la session qui a
    * généré le partage et n'ont rien à faire dans un `sameAs`.
    *
-   * Réserve : la page s'intitule « Léo Clean - Ménage à domicile », en deux
-   * mots, alors que la marque s'écrit ici « LéoClean ». La cohérence du nom
-   * entre le site, Facebook et Google Business Profile est un signal de
-   * référencement local direct — il faudra aligner les deux, dans un sens ou
-   * dans l'autre, avant toute campagne d'acquisition.
+   * La page s'intitule « Léo Clean - Ménage à domicile », et la marque s'écrit
+   * bien « Léo Clean », en deux mots : le site, Facebook et Google Business
+   * Profile disent donc le même nom. Cette cohérence est un signal de
+   * référencement local direct, et elle ne doit pas se défaire.
    */
   facebookUrl:
     "https://www.facebook.com/people/L%C3%A9o-Clean-M%C3%A9nage-%C3%A0-domicile/61565009514966/" as

@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
-   * LéoClean vit dans un sous-dossier d'un dépôt qui héberge une autre
+   * Léo Clean vit dans un sous-dossier d'un dépôt qui héberge une autre
    * application. Sans cette ancre, Next.js remonte au lockfile parent et
    * compile les fichiers de l'application voisine.
    */

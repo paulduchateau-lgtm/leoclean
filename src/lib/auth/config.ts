@@ -52,14 +52,14 @@ export const authConfig: NextAuthConfig = {
       // le message part par notre couche email, avec notre gabarit React Email
       // et le repli console lorsque aucune clé n'est configurée.
       apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM ?? "LéoClean <bonjour@leoclean.fr>",
+      from: process.env.EMAIL_FROM ?? "Léo Clean <bonjour@leoclean.fr>",
       maxAge: MAGIC_LINK_MINUTES * 60,
 
       async sendVerificationRequest({ identifier, url }) {
         const host = new URL(url).host;
         await sendEmail({
           to: identifier,
-          subject: "Votre lien de connexion à LéoClean",
+          subject: "Votre lien de connexion à Léo Clean",
           react: MagicLinkEmail({
             url,
             expiresInMinutes: MAGIC_LINK_MINUTES,
@@ -68,7 +68,7 @@ export const authConfig: NextAuthConfig = {
           text: [
             "Bonjour,",
             "",
-            `Voici votre lien de connexion à LéoClean. Il est valable ${MAGIC_LINK_MINUTES} minutes et ne fonctionne qu'une fois.`,
+            `Voici votre lien de connexion à Léo Clean. Il est valable ${MAGIC_LINK_MINUTES} minutes et ne fonctionne qu'une fois.`,
             "",
             url,
             "",

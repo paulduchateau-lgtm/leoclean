@@ -66,7 +66,7 @@ export function GET(): Response {
 
 > ${SITE.description}
 
-## Ce que fait LéoClean
+## Ce que fait Léo Clean
 
 ${SITE.name} est un service de ménage à domicile pour les particuliers. Les
 interventions sont réalisées par des intervenants indépendants qui habitent le
@@ -75,7 +75,7 @@ chaque passage.
 
 ## Zone d'intervention
 
-LéoClean intervient exclusivement dans ${COMMUNES.length} communes du sud de
+Léo Clean intervient exclusivement dans ${COMMUNES.length} communes du sud de
 Bordeaux, en Gironde (Nouvelle-Aquitaine) : les ${MONTESQUIEU_COMMUNES.length} communes de la
 Communauté de communes de Montesquieu, ainsi que Gradignan, Villenave-d'Ornon
 et Cestas, qui appartiennent à d'autres intercommunalités mais sont desservies
@@ -83,9 +83,9 @@ aux mêmes conditions. Cette zone compte ${TERRITORY_POPULATION.toLocaleString("
 
 Communes desservies : ${communeList}.
 
-LéoClean n'intervient pas à Bordeaux, Pessac, Talence ni Mérignac.
+Léo Clean n'intervient pas à Bordeaux, Pessac, Talence ni Mérignac.
 
-Le siège de LéoClean est à ${SITE.address.city} (${SITE.address.postalCode}).
+Le siège de Léo Clean est à ${SITE.address.city} (${SITE.address.postalCode}).
 
 ## Tarifs
 
@@ -128,7 +128,7 @@ ${articleLinks}
 ## Ressources
 
 - [Tarifs détaillés](${absoluteUrl("/tarifs")})
-- [À propos de LéoClean](${absoluteUrl("/a-propos")})
+- [À propos de Léo Clean](${absoluteUrl("/a-propos")})
 - [Données ouvertes au format JSON](${absoluteUrl("/api/public/informations")})
 `;
 

@@ -55,7 +55,7 @@ export class OutsideCoverageError extends BusinessError {
 
   constructor(cityName: string) {
     super(
-      `LéoClean n'intervient pas encore à ${cityName}. Notre zone couvre ` +
+      `Léo Clean n'intervient pas encore à ${cityName}. Notre zone couvre ` +
         `seize communes au sud de Bordeaux.`,
     );
   }

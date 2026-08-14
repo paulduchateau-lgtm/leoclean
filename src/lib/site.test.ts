@@ -8,9 +8,27 @@ import {
 } from "@/lib/site";
 
 describe("identité publique", () => {
+  it("écrit la marque en deux mots", () => {
+    // La page Facebook s'intitule « Léo Clean », et Google Business Profile
+    // dira la même chose : la cohérence du nom entre ces trois surfaces est un
+    // signal de classement local direct. Une variante recollée en un mot
+    // suffirait à la rompre, et rien à l'écran ne le signalerait.
+    expect(SITE.name).toBe("Léo Clean");
+    expect(SITE.description.startsWith("Léo Clean ")).toBe(true);
+  });
+
+  it("garde les identifiants techniques en un mot", () => {
+    // Le domaine, l'adresse email et les slugs ne suivent pas la typographie
+    // de la marque : ils s'écrivent sans accent ni espace, et les changer
+    // casserait des liens et des comptes.
+    expect(SITE.url).toContain("leoclean.fr");
+    expect(SITE.email).toBe("bonjour@leoclean.fr");
+    expect(SITE.whatsappUrl).not.toContain(" ");
+  });
+
   it("ancre la description sur des entités géographiques nommées", () => {
     // Ces ancrages sont ce sur quoi s'appuient les moteurs et les modèles de
-    // langage pour rattacher LéoClean à un territoire.
+    // langage pour rattacher Léo Clean à un territoire.
     for (const entity of [
       "Léognan",
       "33850",

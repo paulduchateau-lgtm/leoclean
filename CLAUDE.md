@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# LéoClean — guide du dépôt
+# Léo Clean — guide du dépôt
 
 Plateforme de ménage à domicile hyperlocale couvrant 16 communes du sud de
 Bordeaux (Gironde) : les 13 de la Communauté de communes de Montesquieu, plus
@@ -13,7 +13,7 @@ les deux diverger en silence.
 
 ## Où vit le projet
 
-LéoClean occupe le sous-dossier `leoclean/` d'un dépôt qui héberge par
+Léo Clean occupe le sous-dossier `leoclean/` d'un dépôt qui héberge par
 ailleurs une application sans rapport (`famille`, un tableau de bord
 financier). Les deux applications sont indépendantes : dépendances, base de
 données et déploiement séparés. `turbopack.root` est ancré sur ce dossier dans
@@ -34,18 +34,19 @@ Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 | SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                               |
 | Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté. |
 | Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                        |
+| Écriture de la marque   | **« Léo Clean », en deux mots**, partout où un humain la lit. Les identifiants techniques restent en un mot et sans accent : `leoclean.fr`, `bonjour@leoclean.fr`, le slug `leoclean`, le dossier du projet. |
 
 ## Modèle juridique et facturation
 
-Relevé des CGU LéoClean rédigées par le porteur du projet, et confirmé par le
+Relevé des CGU Léo Clean rédigées par le porteur du projet, et confirmé par le
 fonctionnement observé chez Wecasa.
 
 **La plateforme est un opérateur de mise en relation, pas un prestataire.**
-LéoClean n'est pas chargée de la réalisation des prestations. L'intervenant
+Léo Clean n'est pas chargée de la réalisation des prestations. L'intervenant
 vend la sienne pour son propre compte.
 
 **Une prestation produit deux factures**, émises par deux entités distinctes :
-celle de l'intervenant pour le ménage, celle de LéoClean pour sa coordination.
+celle de l'intervenant pour le ménage, celle de Léo Clean pour sa coordination.
 Leur somme est le prix annoncé au client, et chacune ouvre droit au crédit
 d'impôt pour sa part. Trois raisons, toutes structurantes :
 
@@ -74,7 +75,7 @@ entre deux bénéficiaires.
 
 Elle vit en base (`PricingRule`) et non en dur. Wecasa affiche 28,90 €/h en
 régulier et 32,90 €/h en ponctuel, minimum 2 h, sans frais d'abonnement : la
-parité est délibérée, l'avantage de LéoClean n'étant pas le prix mais la
+parité est délibérée, l'avantage de Léo Clean n'étant pas le prix mais la
 proximité.
 
 - Tarifs : **29 €/h en régulier, 33 €/h en ponctuel**, minimum 2 h, estimation
@@ -94,7 +95,7 @@ proximité.
 
 ## Structure juridique
 
-LéoClean est exploitée par **PAPER PLANE**, SASU immatriculée le 8 avril 2021,
+Léo Clean est exploitée par **PAPER PLANE**, SASU immatriculée le 8 avril 2021,
 SIREN 898 228 705, siège 2 ter rue Camille Desmoulins à Léognan (33850),
 président Paul Duchateau. Le siège se trouvant déjà dans la commune annoncée,
 la NAP est cohérente et l'antériorité locale réelle.
@@ -103,7 +104,7 @@ la NAP est cohérente et l'antériorité locale réelle.
 APE de la société est 70.22Z, « conseil pour les affaires et autres conseils de
 gestion ». Or la déclaration Services à la personne est soumise à une
 **condition d'activité exclusive** : un organisme déclaré ne peut en principe
-exercer que des activités de services à la personne. Exploiter LéoClean depuis
+exercer que des activités de services à la personne. Exploiter Léo Clean depuis
 une société de conseil compromettrait donc la déclaration — et avec elle le
 crédit d'impôt, qui est le premier argument de conversion face à Wecasa. Deux
 issues possibles, à trancher avec la DDETS ou un conseil : créer une structure
@@ -494,7 +495,7 @@ ne doit être ressaisie en dur dans une page.
 
 ## Design
 
-Le design system LéoClean fait foi. Ses tokens vivent dans
+Le design system Léo Clean fait foi. Ses tokens vivent dans
 `src/styles/tokens/` et sont **importés tels quels**, jamais recopiés : une
 valeur dupliquée finit toujours par diverger.
 
@@ -528,7 +529,7 @@ correspondent pas aux décisions prises depuis :
   zone retenue est de 16 communes sans Talence ni Bègles ;
 - il emploie « 23 € / h » dans ses exemples de ton, quand la grille est à
   29 €/h ;
-- il décrit LéoClean comme déclarant à l'Urssaf pour le client, ce qui suppose
+- il décrit Léo Clean comme déclarant à l'Urssaf pour le client, ce qui suppose
   la déclaration SAP, non encore obtenue.
 
 Ce sont des exemples de rédaction, pas des tokens : le code suit les décisions
@@ -599,16 +600,12 @@ Bloquant à terme, pas immédiatement. Les champs concernés valent `null` dans
 `src/lib/site.ts` et sont masqués à l'affichage plutôt que remplis d'un
 espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalisée.
 
-- Numéro de déclaration SAP, pour LéoClean **et** pour chaque intervenant :
+- Numéro de déclaration SAP, pour Léo Clean **et** pour chaque intervenant :
   la facturation en deux lignes suppose deux organismes déclarés. C'est le
   seul champ qui bloque encore du contenu écrit — l'article sur le crédit
   d'impôt est prêt et attend la déclaration pour être publié.
 - Code APE : 70.22Z (conseil) contre la condition d'activité exclusive des
   services à la personne. Arbitrage non tranché.
-- Le nom de la page Facebook est « Léo Clean - Ménage à domicile », en deux
-  mots, quand la marque s'écrit « LéoClean ». À aligner avant toute campagne :
-  la cohérence du nom entre site, Facebook et Google Business Profile est un
-  signal de classement local direct.
 - Les CGU emploient `bonjour@leoclean.com` : à reprendre, le domaine retenu
   est **leoclean.fr**
 - L'accord de coresponsabilité de traitement nomme encore Wecasa et

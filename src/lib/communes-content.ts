@@ -74,7 +74,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 11,
     driveKmFromLeognan: 7.6,
     intro:
-      "LéoClean fait le ménage à domicile à Villenave-d'Ornon, commune de 42 545 habitants située à 11 minutes de route de Léognan. C'est la commune la plus peuplée de notre zone d'intervention.",
+      "Léo Clean fait le ménage à domicile à Villenave-d'Ornon, commune de 42 545 habitants située à 11 minutes de route de Léognan. C'est la commune la plus peuplée de notre zone d'intervention.",
     housing:
       "Villenave-d'Ornon s'étend de la Garonne aux coteaux et mêle des quartiers très différents : résidences récentes le long du tramway, maisons de ville anciennes, lotissements pavillonnaires et fermes rénovées. Les appartements y sont plus nombreux que dans le reste de notre zone, et se traitent en général en deux à trois heures.",
     landmarks: [
@@ -92,7 +92,7 @@ const CONTENT: Record<string, CommuneContent> = {
         question:
           "Villenave-d'Ornon fait-elle partie de la Communauté de communes de Montesquieu ?",
         answer:
-          "Non. Villenave-d'Ornon appartient à Bordeaux Métropole. LéoClean y intervient néanmoins aux mêmes conditions et aux mêmes tarifs, la commune étant à onze minutes de son siège de Léognan.",
+          "Non. Villenave-d'Ornon appartient à Bordeaux Métropole. Léo Clean y intervient néanmoins aux mêmes conditions et aux mêmes tarifs, la commune étant à onze minutes de son siège de Léognan.",
       },
     ],
   },
@@ -102,7 +102,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 12,
     driveKmFromLeognan: 7.0,
     intro:
-      "LéoClean fait le ménage à domicile à Gradignan, commune de 26 952 habitants située à 12 minutes de route de Léognan. C'est la deuxième commune la plus peuplée de notre zone d'intervention, et la plus dense après Villenave-d'Ornon.",
+      "Léo Clean fait le ménage à domicile à Gradignan, commune de 26 952 habitants située à 12 minutes de route de Léognan. C'est la deuxième commune la plus peuplée de notre zone d'intervention, et la plus dense après Villenave-d'Ornon.",
     housing:
       "Gradignan est une commune résidentielle boisée, où dominent les maisons individuelles sur terrain arboré, complétées par des résidences et quelques logements étudiants liés à la proximité du campus. Les maisons y sont souvent de 100 à 130 m² : comptez trois heures à trois heures et demie.",
     landmarks: [
@@ -114,7 +114,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Gradignan fait-elle partie de la zone d'intervention ?",
         answer:
-          "Oui, aux mêmes tarifs que les treize communes de la Communauté de communes de Montesquieu, dont Gradignan ne fait pas partie : elle relève de Bordeaux Métropole. Elle est à douze minutes du siège de LéoClean, soit plus près que huit des douze autres communes de cette intercommunalité.",
+          "Oui, aux mêmes tarifs que les treize communes de la Communauté de communes de Montesquieu, dont Gradignan ne fait pas partie : elle relève de Bordeaux Métropole. Elle est à douze minutes du siège de Léo Clean, soit plus près que huit des douze autres communes de cette intercommunalité.",
       },
       {
         question: "Proposez-vous un ménage de fin de bail à Gradignan ?",
@@ -129,7 +129,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 11,
     driveKmFromLeognan: 7.9,
     intro:
-      "LéoClean fait le ménage à domicile à Cestas, commune de 16 666 habitants dont le bourg est à 11 minutes de route de Léognan. Avec près de 100 km², Cestas est de loin la commune la plus étendue de notre zone d'intervention.",
+      "Léo Clean fait le ménage à domicile à Cestas, commune de 16 666 habitants dont le bourg est à 11 minutes de route de Léognan. Avec près de 100 km², Cestas est de loin la commune la plus étendue de notre zone d'intervention.",
     housing:
       "Cestas ne forme pas un bourg unique mais plusieurs pôles distants les uns des autres, séparés par la forêt. L'habitat est très majoritairement pavillonnaire, souvent sur de grandes parcelles, avec des surfaces supérieures à la moyenne de notre zone.",
     landmarks: [
@@ -141,7 +141,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "L'étendue de Cestas change-t-elle le tarif ?",
         answer:
-          "Non. Le tarif horaire est identique dans les seize communes desservies. En revanche, il faut jusqu'à vingt minutes pour traverser Cestas d'un quartier à l'autre : LéoClean regroupe donc les interventions d'un même secteur sur une même journée.",
+          "Non. Le tarif horaire est identique dans les seize communes desservies. En revanche, il faut jusqu'à vingt minutes pour traverser Cestas d'un quartier à l'autre : Léo Clean regroupe donc les interventions d'un même secteur sur une même journée.",
       },
       {
         question: "Intervenez-vous à Gazinet et à Toctoucau ?",
@@ -156,7 +156,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 0,
     driveKmFromLeognan: 0,
     intro:
-      "LéoClean a son siège à Léognan, commune de 10 670 habitants et la plus peuplée de la Communauté de communes de Montesquieu. C'est ici que vivent la plupart de nos intervenants, et c'est la commune où nos délais d'intervention sont les plus courts.",
+      "Léo Clean a son siège à Léognan, commune de 10 670 habitants et la plus peuplée de la Communauté de communes de Montesquieu. C'est ici que vivent la plupart de nos intervenants, et c'est la commune où nos délais d'intervention sont les plus courts.",
     housing:
       "Léognan mêle un bourg ancien, des lotissements pavillonnaires des années 1980 et 1990, et de grandes propriétés viticoles de l'appellation Pessac-Léognan. La majorité des logements sont des maisons individuelles avec jardin, souvent de 90 à 140 m² : comptez trois heures à trois heures et demie pour un entretien complet.",
     landmarks: [
@@ -168,7 +168,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Sous quel délai peut-on avoir un ménage à Léognan ?",
         answer:
-          "Léognan est la commune où LéoClean dispose du plus grand nombre d'intervenants disponibles. Une première intervention peut généralement être programmée sous 48 à 72 heures.",
+          "Léognan est la commune où Léo Clean dispose du plus grand nombre d'intervenants disponibles. Une première intervention peut généralement être programmée sous 48 à 72 heures.",
       },
       {
         question: "Intervenez-vous dans les propriétés viticoles ?",
@@ -183,7 +183,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 11,
     driveKmFromLeognan: 7.0,
     intro:
-      "LéoClean intervient à Cadaujac, deuxième commune de la Communauté de communes de Montesquieu avec 6 909 habitants, située à 11 minutes de route de Léognan. C'est aussi, avec 449 habitants au kilomètre carré, la commune la plus densément peuplée de cette intercommunalité.",
+      "Léo Clean intervient à Cadaujac, deuxième commune de la Communauté de communes de Montesquieu avec 6 909 habitants, située à 11 minutes de route de Léognan. C'est aussi, avec 449 habitants au kilomètre carré, la commune la plus densément peuplée de cette intercommunalité.",
     housing:
       "Cadaujac s'étire entre la route de Toulouse et les bords de Garonne. L'habitat y est majoritairement pavillonnaire, avec une forte proportion de familles et de maisons de plain-pied. La commune a beaucoup construit ces vingt dernières années : nombre de logements sont récents, faciles à entretenir, et se traitent en deux heures et demie à trois heures.",
     landmarks: [
@@ -195,7 +195,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Le même intervenant vient-il à chaque fois à Cadaujac ?",
         answer:
-          "Oui. Sur un abonnement hebdomadaire ou bimensuel, LéoClean attribue un intervenant attitré, que vous retrouvez à chaque passage. En cas d'absence, un remplaçant est proposé et vous en êtes informé à l'avance.",
+          "Oui. Sur un abonnement hebdomadaire ou bimensuel, Léo Clean attribue un intervenant attitré, que vous retrouvez à chaque passage. En cas d'absence, un remplaçant est proposé et vous en êtes informé à l'avance.",
       },
       {
         question: "Cadaujac est-il couvert aux mêmes tarifs que Léognan ?",
@@ -210,7 +210,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 13,
     driveKmFromLeognan: 8.8,
     intro:
-      "LéoClean intervient à La Brède, commune de 4 386 habitants située à 13 minutes de route de Léognan. La Brède est le chef-lieu de canton et concentre une partie des services de la Communauté de communes de Montesquieu, dont elle porte le nom du plus illustre habitant : Montesquieu y est né en 1689.",
+      "Léo Clean intervient à La Brède, commune de 4 386 habitants située à 13 minutes de route de Léognan. La Brède est le chef-lieu de canton et concentre une partie des services de la Communauté de communes de Montesquieu, dont elle porte le nom du plus illustre habitant : Montesquieu y est né en 1689.",
     housing:
       "Le bâti de La Brède est contrasté : maisons de bourg anciennes autour du centre, lotissements récents en périphérie, et quelques propriétés de caractère. Les maisons anciennes demandent plus de temps — sols en tomettes, hauteurs sous plafond, menuiseries à petits carreaux — et nous les estimons plutôt à 20 m² par heure qu'à 25.",
     landmarks: [
@@ -237,7 +237,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 20,
     driveKmFromLeognan: 14.4,
     intro:
-      "LéoClean intervient à Saint-Selve, commune de 3 746 habitants située à 20 minutes de route de Léognan. Aucune route directe ne relie les deux bourgs : l'itinéraire passe par La Brède, ce qui allonge le trajet bien au-delà des neuf kilomètres qui les séparent à vol d'oiseau.",
+      "Léo Clean intervient à Saint-Selve, commune de 3 746 habitants située à 20 minutes de route de Léognan. Aucune route directe ne relie les deux bourgs : l'itinéraire passe par La Brède, ce qui allonge le trajet bien au-delà des neuf kilomètres qui les séparent à vol d'oiseau.",
     housing:
       "Saint-Selve est une commune résidentielle étendue, où l'habitat pavillonnaire domine largement, souvent sur de grandes parcelles. Les maisons y sont généralement spacieuses, de 100 à 150 m², avec garage et buanderie : le repassage y est demandé plus souvent qu'ailleurs sur le territoire.",
     landmarks: [
@@ -249,7 +249,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Le détour par La Brède change-t-il le prix à Saint-Selve ?",
         answer:
-          "Non. Le tarif est le même que dans les quinze autres communes. En revanche, les créneaux proposés à Saint-Selve tiennent compte du temps de route : LéoClean privilégie les journées où un intervenant est déjà sur le secteur.",
+          "Non. Le tarif est le même que dans les quinze autres communes. En revanche, les créneaux proposés à Saint-Selve tiennent compte du temps de route : Léo Clean privilégie les journées où un intervenant est déjà sur le secteur.",
       },
       {
         question: "Proposez-vous le repassage à domicile ?",
@@ -264,7 +264,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 8,
     driveKmFromLeognan: 5.2,
     intro:
-      "LéoClean intervient à Martillac, commune de 3 659 habitants située à 8 minutes de route de Léognan. C'est la commune la plus proche de notre siège, et celle où nous pouvons proposer les créneaux les plus souples.",
+      "Léo Clean intervient à Martillac, commune de 3 659 habitants située à 8 minutes de route de Léognan. C'est la commune la plus proche de notre siège, et celle où nous pouvons proposer les créneaux les plus souples.",
     housing:
       "Martillac associe un bourg viticole, des lotissements récents et le parc d'activités de Bordeaux Technowest. L'habitat est essentiellement pavillonnaire, avec une part notable de jeunes ménages actifs : les demandes portent surtout sur des entretiens hebdomadaires de deux à trois heures, programmés en journée.",
     landmarks: [
@@ -281,7 +281,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Quel est le délai d'intervention à Martillac ?",
         answer:
-          "Martillac est à huit minutes du siège de LéoClean, la distance la plus courte de toute la zone. C'est, avec Léognan, la commune où les créneaux se libèrent le plus vite, généralement sous 48 heures.",
+          "Martillac est à huit minutes du siège de Léo Clean, la distance la plus courte de toute la zone. C'est, avec Léognan, la commune où les créneaux se libèrent le plus vite, généralement sous 48 heures.",
       },
     ],
   },
@@ -291,7 +291,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 10,
     driveKmFromLeognan: 9.1,
     intro:
-      "LéoClean intervient à Saucats, commune de 3 548 habitants dont le bourg est à 10 minutes de route de Léognan. Avec 89 km² pour 3 548 habitants, Saucats est la deuxième commune la plus étendue du territoire après Cestas, et l'une des plus faiblement peuplées au kilomètre carré.",
+      "Léo Clean intervient à Saucats, commune de 3 548 habitants dont le bourg est à 10 minutes de route de Léognan. Avec 89 km² pour 3 548 habitants, Saucats est la deuxième commune la plus étendue du territoire après Cestas, et l'une des plus faiblement peuplées au kilomètre carré.",
     housing:
       "Saucats est une commune forestière à l'habitat dispersé : maisons individuelles sur grands terrains, hameaux éloignés du bourg, quelques constructions récentes en lotissement. Les surfaces y sont souvent supérieures à la moyenne du territoire, et le nettoyage des terrasses et abords est une demande fréquente.",
     landmarks: [
@@ -303,7 +303,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Intervenez-vous dans les hameaux éloignés du bourg ?",
         answer:
-          "Oui, dans toute la commune. Saucats étant très étendue, LéoClean regroupe autant que possible les interventions d'un même secteur sur une même journée, ce qui permet de proposer davantage de créneaux.",
+          "Oui, dans toute la commune. Saucats étant très étendue, Léo Clean regroupe autant que possible les interventions d'un même secteur sur une même journée, ce qui permet de proposer davantage de créneaux.",
       },
       {
         question: "Le nettoyage de la terrasse est-il compris ?",
@@ -318,7 +318,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 12,
     driveKmFromLeognan: 8.3,
     intro:
-      "LéoClean intervient à Saint-Médard-d'Eyrans, commune de 3 409 habitants située à 12 minutes de route de Léognan. La commune partage avec Léognan l'appellation viticole Pessac-Léognan, et sa halte TER met le centre de Bordeaux à une vingtaine de minutes.",
+      "Léo Clean intervient à Saint-Médard-d'Eyrans, commune de 3 409 habitants située à 12 minutes de route de Léognan. La commune partage avec Léognan l'appellation viticole Pessac-Léognan, et sa halte TER met le centre de Bordeaux à une vingtaine de minutes.",
     housing:
       "Saint-Médard-d'Eyrans s'est bâtie en hameaux avant de devenir périurbaine : entre 1858 et 1888, neuf croix de mission y ont été érigées, une par hameau, et ce semis d'origine se lit encore dans le parcellaire. Aux fermes et maisons anciennes se sont ajoutés des lotissements récents autour de la halte ferroviaire, habités par des ménages qui travaillent à Bordeaux — d'où une forte demande de créneaux en journée, en l'absence des occupants.",
     landmarks: [
@@ -348,7 +348,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 18,
     driveKmFromLeognan: 15.4,
     intro:
-      "LéoClean intervient à Castres-Gironde, commune de 2 695 habitants située à 18 minutes de route de Léognan, sur la rive gauche de la Garonne. Il s'agit bien de la commune girondine, appelée localement Castres-sur-Gironde, et non de la ville de Castres dans le Tarn.",
+      "Léo Clean intervient à Castres-Gironde, commune de 2 695 habitants située à 18 minutes de route de Léognan, sur la rive gauche de la Garonne. Il s'agit bien de la commune girondine, appelée localement Castres-sur-Gironde, et non de la ville de Castres dans le Tarn.",
     housing:
       "Sur ses 7 km², Castres-Gironde est boisée pour moitié et plantée de vignes AOC Graves pour un tiers, exploitées par une dizaine de châteaux : l'habitat se concentre donc sur une bande étroite le long de la D1113, l'ancienne route nationale 113. Cette proximité de la route a une conséquence très concrète sur le ménage — les appuis de fenêtre et les vitrages côté rue s'encrassent nettement plus vite que dans les communes forestières du territoire.",
     landmarks: [
@@ -376,7 +376,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 18,
     driveKmFromLeognan: 15.5,
     intro:
-      "LéoClean intervient à Beautiran, commune de 2 488 habitants située à 18 minutes de route de Léognan, au confluent de la Garonne et du Gat Mort. Avec près de 400 habitants au kilomètre carré sur à peine 6,3 km², c'est l'une des communes les plus resserrées du territoire.",
+      "Léo Clean intervient à Beautiran, commune de 2 488 habitants située à 18 minutes de route de Léognan, au confluent de la Garonne et du Gat Mort. Avec près de 400 habitants au kilomètre carré sur à peine 6,3 km², c'est l'une des communes les plus resserrées du territoire.",
     housing:
       "Beautiran tient dans 6 km² et s'organise autour de sa gare, ouverte en 1855 sur la ligne Bordeaux-Saint-Jean – Sète. Le bourg ancien, resserré, est complété par des lotissements aux noms bien identifiés — Domaine de Calens, Domaine des Acacias — construits pour des ménages qui font la navette vers Bordeaux. Les logements y sont plus compacts qu'ailleurs sur le territoire : deux heures à deux heures et demie suffisent souvent, contre trois pour une maison de Léognan.",
     landmarks: [
@@ -404,7 +404,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 19,
     driveKmFromLeognan: 16.6,
     intro:
-      "LéoClean intervient à Cabanac-et-Villagrains, commune de 2 400 habitants dont la mairie est à 19 minutes de route de Léognan. La commune est née en 1811 de la réunion de deux villages distincts, Cabanac au nord et Villagrains à 5,6 kilomètres au sud-ouest, encore séparés aujourd'hui par la forêt.",
+      "Léo Clean intervient à Cabanac-et-Villagrains, commune de 2 400 habitants dont la mairie est à 19 minutes de route de Léognan. La commune est née en 1811 de la réunion de deux villages distincts, Cabanac au nord et Villagrains à 5,6 kilomètres au sud-ouest, encore séparés aujourd'hui par la forêt.",
     housing:
       "Avec 69 km² pour 2 400 habitants, Cabanac-et-Villagrains est la commune la moins densément peuplée du territoire, devant Saucats : 35 habitants au kilomètre carré, contre 386 à Castres-Gironde. L'habitat est fait de maisons sur grands terrains et de hameaux dispersés dans la pinède, dont l'exploitation fait vivre la commune depuis le XVIIIe siècle. La conséquence pratique est constante : aiguilles de pin sur les terrasses, résine sur les menuiseries extérieures, et des trajets d'une adresse à l'autre qui dépassent parfois dix minutes à l'intérieur même de la commune.",
     landmarks: [
@@ -432,7 +432,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 21,
     driveKmFromLeognan: 13.5,
     intro:
-      "LéoClean intervient à Saint-Morillon, commune de 1 834 habitants située dans le vignoble des Graves, sur le Gat Mort. C'est la commune la plus longue à rejoindre depuis Léognan : 21 minutes pour seulement 13,5 kilomètres, faute d'axe direct entre les deux bourgs.",
+      "Léo Clean intervient à Saint-Morillon, commune de 1 834 habitants située dans le vignoble des Graves, sur le Gat Mort. C'est la commune la plus longue à rejoindre depuis Léognan : 21 minutes pour seulement 13,5 kilomètres, faute d'axe direct entre les deux bourgs.",
     housing:
       "Saint-Morillon compte 90 habitants au kilomètre carré, à mi-chemin entre les communes de bourg de la vallée de la Garonne et les communes forestières du sud du territoire. L'habitat se répartit entre un centre resserré autour de l'église Saint-Maurille et des maisons isolées entre vignes et bois. Le bâti ancien y est bien représenté, avec les contraintes qui vont avec : tomettes, plinthes moulurées et escaliers en bois, qui demandent un traitement à part et allongent l'intervention.",
     landmarks: [
@@ -446,7 +446,7 @@ const CONTENT: Record<string, CommuneContent> = {
         question:
           "L'éloignement de Saint-Morillon limite-t-il les créneaux disponibles ?",
         answer:
-          "Il les concentre plutôt qu'il ne les limite. Saint-Morillon étant la commune la plus longue à rejoindre, LéoClean y programme les interventions sur des journées dédiées au sud du territoire, partagées avec Saint-Selve et Cabanac-et-Villagrains. Le tarif, lui, reste identique.",
+          "Il les concentre plutôt qu'il ne les limite. Saint-Morillon étant la commune la plus longue à rejoindre, Léo Clean y programme les interventions sur des journées dédiées au sud du territoire, partagées avec Saint-Selve et Cabanac-et-Villagrains. Le tarif, lui, reste identique.",
       },
       {
         question: "Entretenez-vous les sols anciens et les parquets ?",
@@ -461,7 +461,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 16,
     driveKmFromLeognan: 11.2,
     intro:
-      "LéoClean intervient à Ayguemorte-les-Graves, commune de 1 425 habitants située à 16 minutes de route de Léognan, sur le Saucats. Son nom vient du latin aqua mortua, « eau stagnante » : la commune est en partie bâtie sur des terrains alluvionnaires et fait l'objet d'un plan de prévention du risque inondation.",
+      "Léo Clean intervient à Ayguemorte-les-Graves, commune de 1 425 habitants située à 16 minutes de route de Léognan, sur le Saucats. Son nom vient du latin aqua mortua, « eau stagnante » : la commune est en partie bâtie sur des terrains alluvionnaires et fait l'objet d'un plan de prévention du risque inondation.",
     housing:
       "Ayguemorte-les-Graves tient dans 6,3 km² et compte 225 habitants au kilomètre carré. Le sol humide n'est pas une anecdote toponymique : au XIXe siècle, l'église romane a dû être remplacée parce que l'instabilité des terrains marécageux l'avait rendue insalubre. Dans les logements de plain-pied du bourg, cela se traduit chaque hiver par de la condensation sur les vitrages, des traces au bas des murs et des joints qui noircissent — trois points que nos intervenants traitent en priorité entre novembre et mars.",
     landmarks: [
@@ -479,7 +479,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "La commune est-elle facile d'accès depuis l'autoroute ?",
         answer:
-          "Oui, l'échangeur n° 1.1 de l'A62, dit « de La Brède », se trouve sur le territoire communal. Pour LéoClean, l'itinéraire depuis Léognan passe toutefois par la route départementale : 16 minutes pour 11,2 kilomètres.",
+          "Oui, l'échangeur n° 1.1 de l'A62, dit « de La Brède », se trouve sur le territoire communal. Pour Léo Clean, l'itinéraire depuis Léognan passe toutefois par la route départementale : 16 minutes pour 11,2 kilomètres.",
       },
     ],
   },
@@ -489,7 +489,7 @@ const CONTENT: Record<string, CommuneContent> = {
     driveMinutesFromLeognan: 18,
     driveKmFromLeognan: 12.4,
     intro:
-      "LéoClean intervient à Isle-Saint-Georges, commune de 502 habitants située à 18 minutes de route de Léognan, au confluent de la Garonne et du Saucats. C'est la plus petite commune de notre zone d'intervention, en population comme en superficie : 4,4 km².",
+      "Léo Clean intervient à Isle-Saint-Georges, commune de 502 habitants située à 18 minutes de route de Léognan, au confluent de la Garonne et du Saucats. C'est la plus petite commune de notre zone d'intervention, en population comme en superficie : 4,4 km².",
     housing:
       "Isle-Saint-Georges est un bourg compact posé dans les palus de la Garonne, sur un site occupé depuis le VIIIe siècle avant notre ère : le gué en faisait un carrefour de la voie antique vers Burdigala. Le bâti se lit dans les noms de rues relevés à la Base Adresse Nationale — rue du Lavoir, rue du Puits, rue du Port, rue des Gravettes. Ce sont pour l'essentiel des maisons de bourg mitoyennes, avec des pièces de taille modeste et souvent un étage : le ménage y prend deux à deux heures et demie, escalier compris.",
     landmarks: [

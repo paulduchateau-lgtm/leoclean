@@ -8,7 +8,7 @@ import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
  * `api-adresse.data.gouv.fr` est le référentiel officiel des adresses
  * françaises : gratuit, sans clé, sans quota commercial. On s'en sert pour deux
  * choses que le client ne doit pas avoir à faire lui-même — écrire son adresse
- * sans faute, et savoir si LéoClean intervient chez lui.
+ * sans faute, et savoir si Léo Clean intervient chez lui.
  *
  * **Le code INSEE est le seul identifiant de couverture.** Plusieurs communes du
  * territoire partagent un code postal — 33640 en couvre quatre, 33650 six — et

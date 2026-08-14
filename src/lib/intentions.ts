@@ -52,7 +52,7 @@ const INTENTIONS: readonly Intention[] = [
     slug: "femme-de-menage",
     titleTemplate: "Femme de ménage à {commune} : comment en trouver une",
     descriptionTemplate:
-      "Trouver une femme de ménage à {commune} : emploi direct, mandataire ou prestation, ce que chaque solution implique. LéoClean intervient à {commune} à partir de 29 €/h, sans lien d'employeur.",
+      "Trouver une femme de ménage à {commune} : emploi direct, mandataire ou prestation, ce que chaque solution implique. Léo Clean intervient à {commune} à partir de 29 €/h, sans lien d'employeur.",
     lede: "« Femme de ménage » est le mot que tout le monde emploie, et le métier est très majoritairement exercé par des femmes. Il recouvre pourtant trois situations juridiques différentes, qui n'engagent pas du tout la même chose de votre part. Savoir laquelle vous cherchez évite la plupart des mauvaises surprises.",
     sections: [
       {
@@ -60,7 +60,7 @@ const INTENTIONS: readonly Intention[] = [
         paragraphs: [
           "Recruter quelqu'un directement et le déclarer au CESU fait de vous un employeur. Vous rédigez un contrat, vous appliquez la convention collective des particuliers employeurs, vous décomptez des congés payés, et vous conduisez une procédure de licenciement le jour où la relation s'arrête. C'est la solution la moins chère à l'heure, et la plus exigeante à tenir.",
           "Passer par un organisme mandataire allège la gestion sans transférer la responsabilité : l'organisme recrute et édite les bulletins de paie, mais le contrat de travail vous lie toujours directement à la personne. C'est le point qu'on découvre souvent au mauvais moment.",
-          "Réserver une prestation, enfin, ne fait de vous l'employeur de personne. C'est le modèle de LéoClean : des intervenants indépendants, qui choisissent leurs clients et leurs horaires, et à qui vous achetez un travail fait — pas un temps de travail.",
+          "Réserver une prestation, enfin, ne fait de vous l'employeur de personne. C'est le modèle de Léo Clean : des intervenants indépendants, qui choisissent leurs clients et leurs horaires, et à qui vous achetez un travail fait — pas un temps de travail.",
         ],
       },
       {
@@ -74,7 +74,7 @@ const INTENTIONS: readonly Intention[] = [
         heading: "Le même intervenant, à chaque passage",
         paragraphs: [
           "Une femme de ménage qu'on retrouve chaque semaine finit par connaître la maison : où sont les produits, quel sol supporte quoi, ce qu'il ne faut pas déplacer. Ce savoir-là ne se transmet pas dans une fiche de mission, et c'est lui qui fait la différence entre un logement nettoyé et un logement entretenu.",
-          "C'est pourquoi une formule régulière chez LéoClean est attribuée à un intervenant attitré, et non au premier disponible. En cas d'absence, un remplaçant est proposé et annoncé à l'avance.",
+          "C'est pourquoi une formule régulière chez Léo Clean est attribuée à un intervenant attitré, et non au premier disponible. En cas d'absence, un remplaçant est proposé et annoncé à l'avance.",
         ],
       },
     ],
@@ -87,7 +87,7 @@ const INTENTIONS: readonly Intention[] = [
       {
         question: "Dit-on encore « femme de ménage » ?",
         answer:
-          "C'est le terme d'usage, et celui que les clients emploient. Les intitulés officiels parlent d'agent d'entretien ou d'assistant ménager, et le métier reste exercé à plus de 90 % par des femmes. LéoClean recrute sans distinction de genre.",
+          "C'est le terme d'usage, et celui que les clients emploient. Les intitulés officiels parlent d'agent d'entretien ou d'assistant ménager, et le métier reste exercé à plus de 90 % par des femmes. Léo Clean recrute sans distinction de genre.",
       },
     ],
     communes: {
@@ -98,7 +98,7 @@ const INTENTIONS: readonly Intention[] = [
             question:
               "Combien de temps pour trouver quelqu'un à Villenave-d'Ornon ?",
             answer:
-              "C'est la commune où LéoClean dispose du plus grand nombre d'intervenants après Léognan. Une première intervention est généralement programmée sous 48 à 72 heures, y compris en appartement.",
+              "C'est la commune où Léo Clean dispose du plus grand nombre d'intervenants après Léognan. Une première intervention est généralement programmée sous 48 à 72 heures, y compris en appartement.",
           },
         ],
       },
@@ -123,7 +123,7 @@ const INTENTIONS: readonly Intention[] = [
         ],
       },
       leognan: {
-        text: "Léognan est la commune où vivent la plupart des intervenants LéoClean, ce qui change concrètement deux choses : les délais y sont les plus courts du territoire, et l'intervenant qui vient chez vous est souvent quelqu'un que vous croisez au marché. Ce n'est pas un argument sentimental — c'est ce qui explique qu'un rendez-vous soit rarement annulé ici.",
+        text: "Léognan est la commune où vivent la plupart des intervenants Léo Clean, ce qui change concrètement deux choses : les délais y sont les plus courts du territoire, et l'intervenant qui vient chez vous est souvent quelqu'un que vous croisez au marché. Ce n'est pas un argument sentimental — c'est ce qui explique qu'un rendez-vous soit rarement annulé ici.",
         faq: [
           {
             question:
@@ -166,7 +166,7 @@ const INTENTIONS: readonly Intention[] = [
       {
         heading: "À domicile plutôt qu'en atelier",
         paragraphs: [
-          "LéoClean repasse chez vous. Le linge ne quitte pas la maison, ne se mélange pas à celui d'autres foyers, et ne se perd pas. Vous n'avez rien à déposer ni à récupérer, et vous voyez ce qui est fait.",
+          "Léo Clean repasse chez vous. Le linge ne quitte pas la maison, ne se mélange pas à celui d'autres foyers, et ne se perd pas. Vous n'avez rien à déposer ni à récupérer, et vous voyez ce qui est fait.",
           "La contrepartie est matérielle : il faut une table et un fer en état de marche, et un endroit où poser ce qui est repassé. C'est le seul équipement que nous ne fournissons pas, pour la même raison que les produits d'entretien — vous savez ce qui convient à votre linge.",
         ],
       },
@@ -194,7 +194,7 @@ const INTENTIONS: readonly Intention[] = [
       {
         question: "Faut-il fournir le fer et la table à repasser ?",
         answer:
-          "Oui. LéoClean repasse à votre domicile, avec votre matériel : une table à repasser et un fer en état de marche sont nécessaires. Une centrale vapeur divise le temps par deux environ sur le linge de lit.",
+          "Oui. Léo Clean repasse à votre domicile, avec votre matériel : une table à repasser et un fer en état de marche sont nécessaires. Une centrale vapeur divise le temps par deux environ sur le linge de lit.",
       },
       {
         question: "Le repassage coûte-t-il plus cher que le ménage ?",

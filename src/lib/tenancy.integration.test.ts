@@ -14,7 +14,7 @@ import {
  * une organisation ne voit pas les données d'une autre, et ce n'est pas la
  * discipline de l'appelant qui le garantit mais le data layer.
  *
- * Le scénario monte deux organisations réellement concurrentes — LéoClean et
+ * Le scénario monte deux organisations réellement concurrentes — Léo Clean et
  * une société de ménage locale — chacune avec son client, son adresse, son
  * intervenant et ses réservations.
  */
@@ -125,7 +125,7 @@ let leoclean: Fixture;
 let concurrent: Fixture;
 
 beforeEach(async () => {
-  leoclean = await createOrganization("leoclean", "LéoClean", {
+  leoclean = await createOrganization("leoclean", "Léo Clean", {
     insee: "33238",
     postalCode: "33850",
     city: "Léognan",

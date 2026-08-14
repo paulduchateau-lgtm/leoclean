@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
  * Résolution de l'organisation marketplace.
  *
  * Les formulaires publics ne portent aucun identifiant d'organisation : ils
- * s'adressent à LéoClean, pas à une société cliente du SaaS. Le rattachement se
+ * s'adressent à Léo Clean, pas à une société cliente du SaaS. Le rattachement se
  * fait donc côté serveur, ce qui évite qu'une valeur envoyée par le navigateur
  * ne détermine dans quelle organisation une donnée atterrit.
  */

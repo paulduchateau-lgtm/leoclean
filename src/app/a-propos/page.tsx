@@ -23,13 +23,13 @@ import {
  *
  * C'est la page que les modèles de langage utilisent pour décrire une
  * entreprise. Elle est donc écrite en énoncés autonomes et vérifiables plutôt
- * qu'en discours : « LéoClean intervient dans 16 communes » se cite, « nous
+ * qu'en discours : « Léo Clean intervient dans 16 communes » se cite, « nous
  * sommes à votre écoute depuis toujours » ne se cite pas.
  */
 export const metadata: Metadata = {
-  title: "À propos de LéoClean",
+  title: "À propos de Léo Clean",
   description:
-    "LéoClean est un service de ménage à domicile basé à Léognan, qui intervient dans 16 communes du sud de Bordeaux, en Gironde, dont les 13 de la Communauté de communes de Montesquieu.",
+    "Léo Clean est un service de ménage à domicile basé à Léognan, qui intervient dans 16 communes du sud de Bordeaux, en Gironde, dont les 13 de la Communauté de communes de Montesquieu.",
   alternates: { canonical: "/a-propos" },
 };
 
@@ -107,13 +107,13 @@ export default function AProposPage() {
         </dl>
 
         <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
-          Comment LéoClean fonctionne
+          Comment Léo Clean fonctionne
         </h2>
         <p className="mt-3 text-pretty text-muted-foreground">
-          LéoClean met en relation des particuliers avec des intervenants
+          Léo Clean met en relation des particuliers avec des intervenants
           indépendants qui habitent la Communauté de communes de Montesquieu.
           Chaque intervenant travaille pour son propre compte et facture sa
-          prestation ; LéoClean facture séparément sa coordination. Sur une
+          prestation ; Léo Clean facture séparément sa coordination. Sur une
           formule régulière, le client retrouve le même intervenant à chaque
           passage.
         </p>
@@ -129,7 +129,7 @@ export default function AProposPage() {
           Pourquoi une zone restreinte
         </h2>
         <p className="mt-3 text-pretty text-muted-foreground">
-          LéoClean s&apos;interdit d&apos;intervenir au-delà d&apos;une
+          Léo Clean s&apos;interdit d&apos;intervenir au-delà d&apos;une
           vingtaine de minutes de route de Léognan. Cette contrainte garde les
           trajets courts entre deux interventions — 8 minutes jusqu&apos;à
           Martillac, 10 jusqu&apos;à Gradignan, 24 jusqu&apos;à Cestas — et
@@ -162,7 +162,7 @@ export default function AProposPage() {
 
         {PENDING_IDENTITY_FIELDS.length > 0 ? (
           <p className="mt-12 rounded-xl border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
-            Les informations légales de LéoClean seront publiées ici dès
+            Les informations légales de Léo Clean seront publiées ici dès
             l&apos;immatriculation de la société. Nous préférons ne rien
             afficher plutôt qu&apos;afficher une information approximative.
           </p>

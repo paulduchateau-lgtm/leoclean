@@ -20,7 +20,7 @@ import { parisDayMinuteToUtc, utcToParisWallClock } from "../time";
  *               + ouvertures exceptionnelles
  *               − absences déclarées
  *               − occupations d'agenda externe
- *               − missions LéoClean, tampons de trajet compris
+ *               − missions Léo Clean, tampons de trajet compris
  * ```
  *
  * La fonction est pure : elle reçoit un instantané déjà chargé et ne lit rien.

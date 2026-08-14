@@ -55,7 +55,7 @@ export interface Article {
   /** Date de dernière révision de fond, ISO. */
   updatedAt: string;
   /**
-   * L'article suppose que LéoClean est déclaré organisme de services à la
+   * L'article suppose que Léo Clean est déclaré organisme de services à la
    * personne. Tant que ce n'est pas le cas, il n'est pas publié.
    */
   requiresSapDeclaration: boolean;
@@ -80,7 +80,7 @@ const ARTICLES: readonly Article[] = [
     metaTitle: "Prix d'une femme de ménage dans le sud de Bordeaux (2026)",
     description:
       `Une heure de ménage à domicile coûte ${formatHourlyRate(REGULIER.hourlyRateCents)} en formule régulière ` +
-      `et ${formatHourlyRate(PONCTUEL.hourlyRateCents)} en intervention ponctuelle chez LéoClean, dans les seize communes ` +
+      `et ${formatHourlyRate(PONCTUEL.hourlyRateCents)} en intervention ponctuelle chez Léo Clean, dans les seize communes ` +
       `du sud de Bordeaux. Détail des prix, des durées et de ce qui les fait varier.`,
     publishedAt: "2026-08-14",
     updatedAt: "2026-08-14",
@@ -90,7 +90,7 @@ const ARTICLES: readonly Article[] = [
       {
         type: "paragraph",
         text:
-          `Chez LéoClean, une heure de ménage à domicile est facturée ` +
+          `Chez Léo Clean, une heure de ménage à domicile est facturée ` +
           `${formatHourlyRate(REGULIER.hourlyRateCents)} TTC en formule régulière et ` +
           `${formatHourlyRate(PONCTUEL.hourlyRateCents)} TTC en intervention ponctuelle, dans les seize ` +
           `communes desservies au sud de Bordeaux. Le tarif ne dépend ni de la commune, ` +
@@ -115,7 +115,7 @@ const ARTICLES: readonly Article[] = [
       {
         type: "table",
         caption:
-          "Prix indicatif d'une intervention selon la surface, aux tarifs LéoClean",
+          "Prix indicatif d'une intervention selon la surface, aux tarifs Léo Clean",
         columns: [
           "Surface",
           "Durée estimée",
@@ -234,14 +234,14 @@ const ARTICLES: readonly Article[] = [
       {
         type: "paragraph",
         text:
-          `LéoClean relève de la troisième colonne : vous réservez une prestation, ` +
+          `Léo Clean relève de la troisième colonne : vous réservez une prestation, ` +
           `sans lien de subordination ni obligation d'employeur.`,
       },
     ],
     faq: [
       {
         question: "Le tarif change-t-il selon la commune ?",
-        answer: `Non. Le tarif horaire de LéoClean est identique dans les seize communes desservies, de Villenave-d'Ornon à Cabanac-et-Villagrains, quelle que soit la distance depuis Léognan. L'éloignement influence les créneaux proposés, jamais le prix.`,
+        answer: `Non. Le tarif horaire de Léo Clean est identique dans les seize communes desservies, de Villenave-d'Ornon à Cabanac-et-Villagrains, quelle que soit la distance depuis Léognan. L'éloignement influence les créneaux proposés, jamais le prix.`,
       },
       {
         question: "Faut-il payer le déplacement de l'intervenant ?",
@@ -249,7 +249,7 @@ const ARTICLES: readonly Article[] = [
       },
       {
         question: "Y a-t-il un supplément le samedi ?",
-        answer: `Non. Les interventions du samedi matin, entre 9 h et 13 h, sont facturées au même tarif horaire que celles de la semaine. LéoClean n'intervient pas le dimanche ni les jours fériés.`,
+        answer: `Non. Les interventions du samedi matin, entre 9 h et 13 h, sont facturées au même tarif horaire que celles de la semaine. Léo Clean n'intervient pas le dimanche ni les jours fériés.`,
       },
       {
         question: "Quel est le montant minimum d'une intervention ?",
@@ -273,7 +273,7 @@ const ARTICLES: readonly Article[] = [
         type: "paragraph",
         text:
           `Un entretien courant de 100 m² demande environ quatre heures. Ce chiffre ` +
-          `vient d'une règle simple, celle que LéoClean applique pour construire ses ` +
+          `vient d'une règle simple, celle que Léo Clean applique pour construire ses ` +
           `devis : ${STANDARD_SQM_PER_HOUR} m² traités par heure, sols, sanitaires, cuisine et ` +
           `poussières compris.`,
       },
@@ -326,7 +326,7 @@ const ARTICLES: readonly Article[] = [
         text:
           `Une intervention de plus de six heures d'affilée se termine moins bien ` +
           `qu'elle ne commence : la fatigue se lit dans le résultat. Au-delà de ` +
-          `150 m², LéoClean organise deux passages plutôt qu'une journée entière, ` +
+          `150 m², Léo Clean organise deux passages plutôt qu'une journée entière, ` +
           `pour le même nombre d'heures et le même prix.`,
       },
       { type: "heading", text: "Grand ménage : compter le double" },
@@ -346,7 +346,7 @@ const ARTICLES: readonly Article[] = [
       },
       {
         question: "Peut-on faire le ménage d'une maison en deux heures ?",
-        answer: `Deux heures permettent de traiter environ 50 m² en entretien courant, ou de faire l'essentiel — cuisine, sanitaires, sols des pièces de vie — dans un logement plus grand. C'est aussi la durée minimale facturée par LéoClean.`,
+        answer: `Deux heures permettent de traiter environ 50 m² en entretien courant, ou de faire l'essentiel — cuisine, sanitaires, sols des pièces de vie — dans un logement plus grand. C'est aussi la durée minimale facturée par Léo Clean.`,
       },
       {
         question: "Le repassage est-il compris dans ces durées ?",
@@ -422,7 +422,7 @@ const ARTICLES: readonly Article[] = [
       {
         type: "paragraph",
         text:
-          `LéoClean traite ces interventions au tarif ponctuel de ` +
+          `Léo Clean traite ces interventions au tarif ponctuel de ` +
           `${formatHourlyRate(PONCTUEL.hourlyRateCents)} TTC. Sur le territoire, la demande se concentre en ` +
           `juin et en septembre, à Gradignan et Villenave-d'Ornon notamment, où la ` +
           `proximité du campus rythme les entrées et les sorties.`,
@@ -523,7 +523,7 @@ const ARTICLES: readonly Article[] = [
           `Une plateforme met en relation un particulier et un intervenant ` +
           `indépendant, le plus souvent auto-entrepreneur. Personne n'est salarié : ` +
           `l'intervenant facture sa prestation, la plateforme facture son service de ` +
-          `mise en relation et d'organisation. C'est le modèle de LéoClean.`,
+          `mise en relation et d'organisation. C'est le modèle de Léo Clean.`,
       },
       {
         type: "note",
@@ -534,7 +534,7 @@ const ARTICLES: readonly Article[] = [
           `la relation peut être requalifiée en contrat de travail par le juge : ` +
           `c'est le lien de subordination qui fait l'emploi, pas l'intitulé du ` +
           `contrat. Une plateforme sérieuse s'interdit donc d'imposer un créneau à ` +
-          `un intervenant — chez LéoClean, aucun rôle d'administration ne peut ` +
+          `un intervenant — chez Léo Clean, aucun rôle d'administration ne peut ` +
           `inscrire une disponibilité à la place d'un intervenant.`,
       },
       { type: "heading", text: "Comment choisir" },
@@ -575,8 +575,8 @@ const ARTICLES: readonly Article[] = [
         answer: `Oui. Un organisme mandataire recrute et gère l'administratif pour votre compte, mais le contrat de travail vous lie directement à l'intervenant. En cas de litige prud'homal, c'est vous qui êtes mis en cause.`,
       },
       {
-        question: "Faut-il un contrat de travail avec LéoClean ?",
-        answer: `Non. LéoClean met en relation des particuliers et des intervenants indépendants : vous réservez une prestation, sans devenir employeur. Aucun contrat de travail, aucun bulletin de paie, aucune procédure de rupture à conduire.`,
+        question: "Faut-il un contrat de travail avec Léo Clean ?",
+        answer: `Non. Léo Clean met en relation des particuliers et des intervenants indépendants : vous réservez une prestation, sans devenir employeur. Aucun contrat de travail, aucun bulletin de paie, aucune procédure de rupture à conduire.`,
       },
     ],
   },
@@ -589,7 +589,7 @@ const ARTICLES: readonly Article[] = [
     publishedAt: "2026-08-14",
     updatedAt: "2026-08-14",
     // Publier cet article avant d'être déclaré organisme de services à la
-    // personne laisserait entendre que les prestations LéoClean y ouvrent
+    // personne laisserait entendre que les prestations Léo Clean y ouvrent
     // droit. Tant que la déclaration n'est pas obtenue, il reste hors ligne.
     requiresSapDeclaration: true,
     relatedCommuneSlugs: ["leognan", "cadaujac", "la-brede"],

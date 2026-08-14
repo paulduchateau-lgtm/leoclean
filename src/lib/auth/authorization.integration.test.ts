@@ -278,7 +278,7 @@ describe("administration de la plateforme", () => {
     const platform = await prisma.organization.create({
       data: {
         slug: "leoclean",
-        name: "LéoClean",
+        name: "Léo Clean",
         type: "MARKETPLACE",
         status: "ACTIVE",
       },

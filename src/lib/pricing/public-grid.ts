@@ -1,5 +1,5 @@
 /**
- * Grille tarifaire publique de LéoClean.
+ * Grille tarifaire publique de Léo Clean.
  *
  * Source unique des prix affichés sur le site, dans les fichiers destinés aux
  * modèles de langage, et dans le seed. Les pages publiques ne lisent pas la

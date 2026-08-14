@@ -74,6 +74,14 @@ export function SiteFooter() {
                 Conseils ménage
               </Link>
             </li>
+            {/* L'en-tête ne porte plus ce lien depuis qu'il cède la place au
+                bouton de réservation ; la page reste atteignable ici, sans quoi
+                elle serait orpheline tout en figurant au sitemap. */}
+            <li>
+              <Link href="/etre-rappele" className="hover:text-primary">
+                Être rappelé
+              </Link>
+            </li>
           </ul>
         </nav>
 

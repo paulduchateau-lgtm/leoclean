@@ -273,7 +273,7 @@ const CATALOGUE: ServiceSeed[] = [
  * Tarif horaire en centimes, par fréquence.
  *
  * Grille retenue : 29 € en régulier, 33 € en ponctuel. Wecasa affiche 28,90 €
- * et 32,90 € — la parité est délibérée, l'avantage de LéoClean n'étant pas le
+ * et 32,90 € — la parité est délibérée, l'avantage de Léo Clean n'étant pas le
  * prix mais la proximité.
  */
 const HOURLY_RATES: Record<
@@ -349,12 +349,12 @@ function communeBySlug(slug: string): Commune {
 const ORGANIZATIONS: OrganizationSeed[] = [
   {
     slug: "leoclean",
-    name: "LéoClean",
+    name: "Léo Clean",
     type: "MARKETPLACE",
-    legalName: "LéoClean SAS",
+    legalName: "Léo Clean SAS",
     tagline: "Le ménage à domicile, par des gens d'ici",
     description:
-      "LéoClean met en relation des particuliers de la Communauté de communes de Montesquieu avec des intervenants indépendants qui habitent le territoire.",
+      "Léo Clean met en relation des particuliers de la Communauté de communes de Montesquieu avec des intervenants indépendants qui habitent le territoire.",
     commune: communeBySlug("leognan"),
     // Marge relevée des CGU : 29 € payés par le client, 18 € pour
     // l'intervenant, soit 11 € de coordination.
