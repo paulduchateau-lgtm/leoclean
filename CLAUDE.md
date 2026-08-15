@@ -36,7 +36,7 @@ Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 | SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                                                                                                                                                  |
 | Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté.                                                                                                                    |
 | Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                                                                                                                                           |
-| Écriture de la marque   | **« Léo Clean », en deux mots**, partout où un humain la lit. Les identifiants techniques restent en un mot et sans accent : `leoclean.fr`, `bonjour@leoclean.fr`, le slug `leoclean`, le dossier du projet.                                                                |
+| Écriture de la marque   | **« Léo Clean », en deux mots**, partout où un humain la lit. Les identifiants techniques restent en un mot et sans accent : `leoclean.fr`, `menage@leoclean.fr`, le slug `leoclean`, le dossier du projet.                                                                 |
 
 ## Modèle juridique et facturation
 
@@ -678,8 +678,8 @@ espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalis
   d'impôt est prêt et attend la déclaration pour être publié.
 - Code APE : 70.22Z (conseil) contre la condition d'activité exclusive des
   services à la personne. Arbitrage non tranché.
-- Les CGU emploient `bonjour@leoclean.com` : à reprendre, le domaine retenu
-  est **leoclean.fr**
+- Les CGU emploient `bonjour@leoclean.com` : à reprendre deux fois, le domaine
+  retenu étant **leoclean.fr** et l'adresse de contact **menage@leoclean.fr**
 - L'accord de coresponsabilité de traitement nomme encore Wecasa et
   `bonjour@wecasa.fr` : à reprendre avant toute publication
 - Accès : base Neon ou Supabase, projet Google Cloud, Stripe, Resend, Inngest, nom de domaine

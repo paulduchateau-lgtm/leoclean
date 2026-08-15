@@ -22,7 +22,7 @@ describe("identité publique", () => {
     // de la marque : ils s'écrivent sans accent ni espace, et les changer
     // casserait des liens et des comptes.
     expect(SITE.url).toContain("leoclean.fr");
-    expect(SITE.email).toBe("bonjour@leoclean.fr");
+    expect(SITE.email).toBe("menage@leoclean.fr");
     expect(SITE.whatsappUrl).not.toContain(" ");
   });
 

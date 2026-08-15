@@ -29,4 +29,4 @@ export function isEmailSender(value: string): boolean {
 }
 
 /** Expéditeur par défaut, employé tant qu'`EMAIL_FROM` n'est pas renseignée. */
-export const DEFAULT_EMAIL_SENDER = "Léo Clean <bonjour@leoclean.fr>";
+export const DEFAULT_EMAIL_SENDER = "Léo Clean <menage@leoclean.fr>";

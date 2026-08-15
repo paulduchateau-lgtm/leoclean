@@ -77,7 +77,7 @@ export const SITE = {
    */
   phone: "06 84 36 38 62",
   phoneE164: "+33684363862",
-  email: "bonjour@leoclean.fr",
+  email: "menage@leoclean.fr",
 
   /**
    * Canaux de contact, par ordre d'engagement décroissant.

@@ -6,6 +6,7 @@ import Resend from "next-auth/providers/resend";
 
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { DEFAULT_EMAIL_SENDER } from "@/lib/email-sender";
 
 import { MagicLinkEmail } from "./magic-link-email";
 
@@ -52,7 +53,7 @@ export const authConfig: NextAuthConfig = {
       // le message part par notre couche email, avec notre gabarit React Email
       // et le repli console lorsque aucune clé n'est configurée.
       apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM ?? "Léo Clean <bonjour@leoclean.fr>",
+      from: process.env.EMAIL_FROM ?? DEFAULT_EMAIL_SENDER,
       maxAge: MAGIC_LINK_MINUTES * 60,
 
       async sendVerificationRequest({ identifier, url }) {
