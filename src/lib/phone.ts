@@ -26,3 +26,21 @@ export function normalizePhone(input: string): string {
 export function isValidFrenchPhone(value: string): boolean {
   return /^0[1-9]\d{8}$/.test(value);
 }
+
+/**
+ * Numéro tel qu'on le lit : « 06 12 34 56 78 ».
+ *
+ * La base stocke la forme normalisée, sans espaces, parce que c'est elle qui
+ * se compare. Un humain qui relit ses coordonnées, lui, n'y reconnaît pas son
+ * numéro : dix chiffres collés se vérifient mal, et c'est précisément ce
+ * qu'on lui demande de faire au récapitulatif.
+ */
+export function formatFrenchPhone(value: string): string {
+  const normalized = normalizePhone(value);
+  if (!isValidFrenchPhone(normalized)) {
+    // Une forme inattendue est rendue telle quelle : mieux vaut un affichage
+    // brut qu'un découpage qui inventerait des groupes.
+    return value;
+  }
+  return normalized.replace(/(\d{2})(?=\d)/g, "$1 ").trim();
+}

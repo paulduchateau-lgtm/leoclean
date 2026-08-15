@@ -399,7 +399,17 @@ pas ; une affectation sans réservation est une heure bloquée pour rien.
 **Le verrou anti-double-réservation n'est pas dans ce code.** Il est en base.
 Vérifier la disponibilité avant d'écrire ne sert qu'à donner un bon message :
 entre la vérification et l'écriture, une autre requête peut passer. Le code sait
-donc qu'il peut échouer, et traduit `23P01` en `SlotTakenError`.
+donc qu'il peut échouer, et traduit le refus de la base en `SlotTakenError`.
+
+**Deux codes PostgreSQL signalent ce refus, pas un.** `23P01` est la violation
+de la contrainte d'exclusion ; `40P01` est l'interblocage, qui survient dans
+exactement la même situation — deux transactions écrivent réservation, lignes
+puis affectation, se croisent, et la base en sacrifie une. Ne reconnaître que
+le premier laissait remonter une erreur Prisma brute au client. `nativeErrorCodes`
+cherche le code natif où qu'il soit : Prisma l'a déplacé de `code` à `meta.code`
+puis à `meta.driverAdapterError.cause.code`, le message n'étant plus qu'un
+« Database error. ». Chercher à un seul endroit revient à ne plus rien
+reconnaître.
 
 **Sur refus, on essaie le candidat suivant.** Sans cela, deux réservations
 simultanées désigneraient toutes deux le mieux classé, la seconde échouerait, et
@@ -635,10 +645,15 @@ cloné.
       non-régression dans `docs/FEATURES-FREEZE.md`.
 - [ ] Phase 7 — Paiement Stripe _(bloquée : aucune clé Stripe)_
 - [ ] Phase 8 — Espace intervenant _(mise en production visée ici)_
-- [ ] Phase 8 bis — Tunnel pour utilisateur connu : lecture de session, profil
-      et carnet d'adresses, préremplissage des coordonnées et de la dernière
-      adresse. Issue de la refonte UX — sans elle, un client déjà venu retape
-      les six mêmes champs.
+- [x] **Phase 8 bis — Tunnel pour utilisateur connu.** `known-client.ts` lit le
+      profil, le carnet d'adresses dédoublonné et le dernier choix, sur un
+      client cloisonné et sans jamais désigner le profil lu ; le tunnel
+      propose les adresses en un geste, présélectionne le dernier logement et
+      le dernier rythme, affiche le prix dès le premier écran et résume les
+      coordonnées au lieu de les redemander. Six taps depuis l'accueil au lieu
+      de onze. Un client de la marketplace n'ayant pas de `Membership`,
+      l'autorisation ne peut pas passer par `requireOrganization` — la raison
+      est écrite dans le module.
 - [ ] Phase 9 — Synchronisation d'agenda externe
 - [ ] Phase 10 — Optimisation des temps de trajet
 - [ ] Phase 11 — Page `/pro/[slug]`

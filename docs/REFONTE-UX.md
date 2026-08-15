@@ -10,7 +10,7 @@ celle de l'audit, inchangée.
 | ----- | ---------------------------------------------------- | -------------------------------------------------------------------------- |
 | 0     | Audit                                                | ✅                                                                         |
 | 1     | Restructuration du tunnel (L1–L7)                    | ✅                                                                         |
-| 2     | Microcopy et défauts intelligents (L4, L5, L15, L16) | ✅ **partiel** — L16 bloquée                                               |
+| 2     | Microcopy et défauts intelligents (L4, L5, L15, L16) | ✅ — L16 levée par la phase produit 8 bis                                  |
 | 3     | Latence perçue et états (L8–L10, L21, L22)           | ✅                                                                         |
 | 4     | Navigation et reprise (L11–L14)                      | ✅                                                                         |
 | 5     | Espace client                                        | ⛔ **bloquée** — les fonctionnalités n'existent pas                        |
@@ -35,17 +35,17 @@ produit terminé. La phase 5 reprendra après les phases 7 à 12 du plan produit
 Conséquence mesurable : le parcours « modifier ou annuler une réservation »
 reste inatteignable, et sa cible de 4 taps sans objet.
 
-### ⛔ Cible de 8 taps du parcours « utilisateur connu » (L16)
+### ✅ Cible de 8 taps du parcours « utilisateur connu » (L16) — levée
 
-Le tunnel ne lit pas la session. Le préremplissage — profil, dernière adresse —
-exige une lecture serveur authentifiée qui n'existe pas. Décision retenue :
-l'intégrer au plan de développement produit plutôt qu'à la refonte. Inscrit
-comme **phase 8 bis** ci-dessous.
+Elle était bloquée faute de lecture de session. La **phase 8 bis** du plan
+produit, livrée le 15 août, l'a débloquée : `src/lib/booking/known-client.ts`
+lit le profil, le carnet d'adresses et le dernier choix, et le tunnel n'a plus
+qu'à les faire confirmer. Six taps depuis l'accueil, contre onze pour un
+inconnu.
 
-Tout le reste de la phase 2 est fait : défauts intelligents ne nécessitant
-aucune session (types de logement, rythme le plus demandé présélectionné,
-commune transmise de la page locale au tunnel), et libellés d'action sur tout
-le site.
+Le reste de la phase 2 ne dépendait d'aucune session : types de logement,
+rythme le plus demandé présélectionné, commune transmise de la page locale au
+tunnel, libellés d'action sur tout le site.
 
 ### ⏸ Phase 7 — Passe UI
 
@@ -66,8 +66,24 @@ couleur n'est écrite en dur.
 | ------------------------------------------------------------ | ---------- | ----------- | -------------- |
 | Ponctuel, nouvel utilisateur — accueil, adresse trouvée      | 13 taps    | **11 taps** | ≤ 14 ✅        |
 | Ponctuel, nouvel utilisateur — page commune, saisie manuelle | 16 taps    | **12 taps** | ≤ 14 ✅        |
-| Récurrent, utilisateur connu                                 | 16 taps    | **11 taps** | ≤ 8 ⛔ bloquée |
+| Récurrent, utilisateur connu                                 | 16 taps    | **6 taps**  | ≤ 8 ✅         |
 | Modifier ou annuler                                          | impossible | impossible  | ≤ 4 ⛔ bloquée |
+
+### Détail — parcours 2, client connecté ayant déjà réservé
+
+Mesuré dans le navigateur, session réelle, viewport 375 px.
+
+| #   | Écran         | Tap                                                                 |
+| --- | ------------- | ------------------------------------------------------------------- |
+| 1   | Accueil       | 1 · sa commune                                                      |
+| 2   | Adresse       | 2 · son adresse, sous « Vos adresses » — consignes d'accès reprises |
+| 3   | Logement      | 3 · son dernier logement, déjà sélectionné                          |
+| 4   | Rythme        | 4 · son dernier rythme, déjà sélectionné                            |
+| 5   | Créneau       | 5 · une heure                                                       |
+| 6   | Récapitulatif | 6 · « Réserver lundi 17 août à 12 h » — aucun champ à remplir       |
+
+Le prix est affiché **dès le premier écran** : le dernier logement étant connu,
+les devis partent avant la première question.
 
 ### Détail — parcours 1, entrée par l'accueil
 
@@ -240,8 +256,8 @@ Reprise du plan initial, avec l'ajout issu de la décision du 15 août.
 | Phase | Objet                                                                                               | État                                                                  |
 | ----- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | 7     | Paiement Stripe                                                                                     | ⛔ **bloquée** — aucune clé Stripe, cf. « En attente d'informations » |
-| 8     | Espace intervenant                                                                                  | prête                                                                 |
-| 8 bis | **Tunnel pour utilisateur connu** — lecture de session, profil et carnet d'adresses, préremplissage | prête, issue de la refonte                                            |
+| 8     | Espace intervenant                                                                                  | suivante                                                              |
+| 8 bis | **Tunnel pour utilisateur connu** — lecture de session, profil et carnet d'adresses, préremplissage | ✅ livrée le 15 août                                                  |
 | 9     | Synchronisation d'agenda externe                                                                    |                                                                       |
 | 10    | Optimisation des temps de trajet                                                                    |                                                                       |
 | 11    | Page `/pro/[slug]`                                                                                  |                                                                       |

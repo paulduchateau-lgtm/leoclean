@@ -28,10 +28,13 @@ import type {
   AddressChoice,
   BookingBackend,
   Frequency,
+  KnownAddress,
+  KnownClient,
   QuoteView,
   SlotView,
 } from "@/lib/booking/backend";
 import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
+import { formatFrenchPhone } from "@/lib/phone";
 import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import {
@@ -197,6 +200,15 @@ interface ContactInput {
   clientNotes: string;
 }
 
+/** Type de logement correspondant à une surface, s'il y en a un. */
+function presetLabelFor(surfaceSqm: number | undefined): string | null {
+  if (surfaceSqm === undefined) return null;
+  return (
+    HOUSING_PRESETS.find((preset) => preset.surfaceSqm === surfaceSqm)?.label ??
+    null
+  );
+}
+
 const EMPTY_CONTACT: ContactInput = {
   firstName: "",
   lastName: "",
@@ -319,6 +331,7 @@ export function BookingFunnel({
   communes,
   defaultQuery = "",
   defaultCommuneSlug,
+  knownClient = null,
 }: {
   /**
    * Les quatre opérations dont le tunnel a besoin. En production ce sont les
@@ -336,16 +349,43 @@ export function BookingFunnel({
   defaultQuery?: string;
   /** Commune d'arrivée, présélectionnée en saisie manuelle. */
   defaultCommuneSlug?: string;
+  /**
+   * Ce que la plateforme sait déjà du visiteur, lu côté serveur sur sa
+   * session. `null` pour un anonyme comme pour un compte qui n'a jamais
+   * réservé : le tunnel se comporte alors exactement comme avant.
+   */
+  knownClient?: KnownClient | null;
 }) {
   const [step, setStep] = useState<Step>("adresse");
   /** Renseigné quand une modification part du récapitulatif : on y revient. */
   const [returnToRecap, setReturnToRecap] = useState(false);
 
   const [address, setAddress] = useState<AddressChoice | null>(null);
-  const [surfaceSqm, setSurfaceSqm] = useState<number | null>(null);
-  const [housingLabel, setHousingLabel] = useState<string | null>(null);
-  const [frequency, setFrequency] = useState<Frequency>("BIWEEKLY");
-  const [contact, setContact] = useState<ContactInput>(EMPTY_CONTACT);
+  /*
+   * Un client qui revient retrouve son dernier choix déjà posé : il confirme
+   * au lieu de saisir. Rien n'est verrouillé pour autant — un logement peut
+   * changer, et les deux écrans restent des questions.
+   */
+  const [surfaceSqm, setSurfaceSqm] = useState<number | null>(
+    knownClient?.lastChoice?.surfaceSqm ?? null,
+  );
+  const [housingLabel, setHousingLabel] = useState<string | null>(
+    presetLabelFor(knownClient?.lastChoice?.surfaceSqm),
+  );
+  const [frequency, setFrequency] = useState<Frequency>(
+    knownClient?.lastChoice?.frequency ?? "BIWEEKLY",
+  );
+  const [contact, setContact] = useState<ContactInput>(
+    knownClient
+      ? {
+          ...EMPTY_CONTACT,
+          firstName: knownClient.firstName,
+          lastName: knownClient.lastName,
+          email: knownClient.email,
+          phone: knownClient.phone,
+        }
+      : EMPTY_CONTACT,
+  );
 
   const [quotes, setQuotes] = useState<Partial<Record<Frequency, QuoteView>>>(
     {},
@@ -467,6 +507,20 @@ export function BookingFunnel({
     [backend],
   );
 
+  /**
+   * Pour un client qui revient, le devis part avant même la première question.
+   *
+   * Son dernier logement est connu, donc son prix aussi : il l'a sous les yeux
+   * dès l'écran de l'adresse, au lieu d'attendre le troisième. S'il change de
+   * logement, `chooseHousing` redemandera — d'où un effet qui ne dépend que
+   * de la surface initiale, `loadQuotes` étant par ailleurs stable.
+   */
+  const initialSurfaceSqm = knownClient?.lastChoice?.surfaceSqm ?? null;
+  useEffect(() => {
+    if (initialSurfaceSqm === null) return;
+    void loadQuotes(initialSurfaceSqm);
+  }, [initialSurfaceSqm, loadQuotes]);
+
   /* --- Créneaux --------------------------------------------------------- */
 
   const loadSlots = useCallback(
@@ -572,6 +626,34 @@ export function BookingFunnel({
     // trajet : les créneaux calculés pour la précédente sont faux.
     invalidateSlots();
     advance("adresse");
+  }
+
+  /**
+   * Adresse reprise du carnet du client.
+   *
+   * Ses consignes d'accès reviennent avec elle : le digicode d'un logement ne
+   * change pas d'une réservation à l'autre, et le redemander est exactement ce
+   * qu'on cherche à supprimer. Une saisie en cours n'est jamais écrasée.
+   */
+  function chooseKnownAddress(known: KnownAddress) {
+    if (known.accessNotes && contact.accessNotes === "") {
+      setContact((current) => ({
+        ...current,
+        accessNotes: known.accessNotes ?? "",
+      }));
+    }
+    chooseAddress({
+      banId: known.banId,
+      label: known.label,
+      street: known.street,
+      postalCode: known.postalCode,
+      cityName: known.cityName,
+      inseeCode: known.inseeCode,
+      lat: known.lat,
+      lng: known.lng,
+      isCovered: true,
+      isPreciseToHouseNumber: true,
+    });
   }
 
   function chooseHousing(surface: number, label: string | null) {
@@ -700,8 +782,10 @@ export function BookingFunnel({
             communes={communes}
             defaultQuery={defaultQuery}
             originCommune={originCommune}
+            savedAddresses={knownClient?.addresses ?? []}
             selected={address}
             onSelect={chooseAddress}
+            onSelectSaved={chooseKnownAddress}
           />
         ) : null}
 
@@ -753,6 +837,7 @@ export function BookingFunnel({
             onEdit={editFromRecap}
             onSubmit={submit}
             submitting={submitting}
+            known={knownClient !== null}
           />
         ) : null}
       </div>
@@ -1005,15 +1090,19 @@ function AddressStep({
   communes,
   defaultQuery,
   originCommune,
+  savedAddresses,
   selected,
   onSelect,
+  onSelectSaved,
 }: {
   backend: BookingBackend;
   communes: readonly CommuneOption[];
   defaultQuery: string;
   originCommune: CommuneOption | null;
+  savedAddresses: readonly KnownAddress[];
   selected: AddressChoice | null;
   onSelect: (choice: AddressChoice) => void;
+  onSelectSaved: (address: KnownAddress) => void;
 }) {
   const [query, setQuery] = useState(selected?.label ?? defaultQuery);
   const [results, setResults] = useState<AddressChoice[]>([]);
@@ -1069,7 +1158,34 @@ function AddressStep({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Une adresse déjà employée se choisit d'un geste : c'est la question
+          la plus coûteuse du tunnel, et la seule dont on connaisse déjà la
+          réponse pour un client qui revient. */}
+      {savedAddresses.length > 0 ? (
+        <div>
+          <p className="text-sm font-medium">Vos adresses</p>
+          <ul className="mt-3 space-y-2">
+            {savedAddresses.map((saved) => (
+              <li key={`${saved.street}-${saved.inseeCode}`}>
+                <ChoiceCard
+                  onClick={() => onSelectSaved(saved)}
+                  title={saved.label}
+                  hint={
+                    saved.accessNotes
+                      ? "Consignes d'accès conservées"
+                      : undefined
+                  }
+                />
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Ou indiquez une autre adresse.
+          </p>
+        </div>
+      ) : null}
+
       <div>
         <Label htmlFor="address">Votre adresse</Label>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -1675,6 +1791,7 @@ function RecapStep({
   onEdit,
   onSubmit,
   submitting,
+  known,
 }: {
   address: AddressChoice;
   quote: QuoteView;
@@ -1687,10 +1804,25 @@ function RecapStep({
   onEdit: (step: Step) => void;
   onSubmit: () => void;
   submitting: boolean;
+  /** Le visiteur est connecté et a déjà réservé : ses coordonnées sont là. */
+  known: boolean;
 }) {
   const [details, setDetails] = useState(
     contact.accessNotes !== "" || contact.clientNotes !== "",
   );
+
+  /*
+   * Coordonnées déjà connues : on les résume au lieu d'étaler quatre champs
+   * remplis. L'écran redevient ce qu'il annonce — un récapitulatif — et il
+   * reste une ligne de plus à vérifier, pas quatre à relire.
+   */
+  const prefilled =
+    known &&
+    contact.firstName !== "" &&
+    contact.lastName !== "" &&
+    contact.email !== "" &&
+    contact.phone !== "";
+  const [editContact, setEditContact] = useState(!prefilled);
   const rhythm = FREQUENCIES.find((entry) => entry.value === frequency);
   const start = new Date(startAt);
 
@@ -1736,66 +1868,78 @@ function RecapStep({
         />
       </dl>
 
-      <div>
-        <h3 className="font-heading text-lg font-semibold">
-          Comment vous joindre ?
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Votre compte se crée avec ces informations — aucun mot de passe à
-          choisir.
-        </p>
+      {!editContact ? (
+        <dl className="rounded-2xl border border-border bg-card px-5 py-1">
+          <RecapLine
+            label="Vous"
+            value={`${contact.firstName} ${contact.lastName} · ${formatFrenchPhone(contact.phone)} · ${contact.email}`}
+            onEdit={() => setEditContact(true)}
+            editLabel="Modifier mes coordonnées"
+          />
+        </dl>
+      ) : (
+        <div>
+          <h3 className="font-heading text-lg font-semibold">
+            Comment vous joindre ?
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {known
+              ? "Ces coordonnées sont celles de votre compte."
+              : "Votre compte se crée avec ces informations — aucun mot de passe à choisir."}
+          </p>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="firstName">Prénom</Label>
-            <Input
-              id="firstName"
-              required
-              autoComplete="given-name"
-              value={contact.firstName}
-              onChange={(event) => set("firstName")(event.target.value)}
-              className="mt-2 min-h-12"
-            />
-          </div>
-          <div>
-            <Label htmlFor="lastName">Nom</Label>
-            <Input
-              id="lastName"
-              required
-              autoComplete="family-name"
-              value={contact.lastName}
-              onChange={(event) => set("lastName")(event.target.value)}
-              className="mt-2 min-h-12"
-            />
-          </div>
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={contact.email}
-              onChange={(event) => set("email")(event.target.value)}
-              className="mt-2 min-h-12"
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">Téléphone</Label>
-            <Input
-              id="phone"
-              type="tel"
-              required
-              autoComplete="tel"
-              inputMode="tel"
-              placeholder="06 12 34 56 78"
-              value={contact.phone}
-              onChange={(event) => set("phone")(event.target.value)}
-              className="mt-2 min-h-12"
-            />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="firstName">Prénom</Label>
+              <Input
+                id="firstName"
+                required
+                autoComplete="given-name"
+                value={contact.firstName}
+                onChange={(event) => set("firstName")(event.target.value)}
+                className="mt-2 min-h-12"
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName">Nom</Label>
+              <Input
+                id="lastName"
+                required
+                autoComplete="family-name"
+                value={contact.lastName}
+                onChange={(event) => set("lastName")(event.target.value)}
+                className="mt-2 min-h-12"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                value={contact.email}
+                onChange={(event) => set("email")(event.target.value)}
+                className="mt-2 min-h-12"
+              />
+            </div>
+            <div>
+              <Label htmlFor="phone">Téléphone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                required
+                autoComplete="tel"
+                inputMode="tel"
+                placeholder="06 12 34 56 78"
+                value={contact.phone}
+                onChange={(event) => set("phone")(event.target.value)}
+                className="mt-2 min-h-12"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Repliées : ces deux précisions sont utiles, mais les imposer dans le
           flux principal allongeait l'écran le plus décisif du parcours. */}

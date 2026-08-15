@@ -11,6 +11,7 @@ import { BookingFunnel } from "@/components/booking-funnel";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { loadKnownClient } from "@/lib/booking/known-client-session";
 import {
   breadcrumbJsonLd,
   organizationJsonLd,
@@ -54,6 +55,13 @@ export default async function ReserverPage({
     (commune) => commune.slug === candidate,
   );
 
+  /*
+   * Ce que l'on sait déjà du visiteur, lu sur sa session et jamais demandé au
+   * navigateur. `null` s'il est anonyme ou n'a jamais réservé : le tunnel se
+   * comporte alors exactement comme pour un inconnu.
+   */
+  const knownClient = await loadKnownClient();
+
   return (
     <>
       <script
@@ -94,6 +102,7 @@ export default async function ReserverPage({
               lng: commune.lng,
             }))}
             defaultCommuneSlug={origin?.slug}
+            knownClient={knownClient}
           />
         </div>
 
