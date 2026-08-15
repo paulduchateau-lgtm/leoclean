@@ -1,4 +1,6 @@
 import { render } from "@react-email/render";
+
+import { DEFAULT_EMAIL_SENDER } from "@/lib/email-sender";
 import type { ReactElement } from "react";
 import { Resend } from "resend";
 
@@ -37,7 +39,7 @@ export async function sendEmail({
   text,
 }: SendEmailOptions): Promise<void> {
   const resend = getClient();
-  const from = process.env.EMAIL_FROM ?? "Léo Clean <bonjour@leoclean.fr>";
+  const from = process.env.EMAIL_FROM ?? DEFAULT_EMAIL_SENDER;
 
   if (!resend) {
     // Pas de `catch` silencieux ici : l'absence de clé est un mode de

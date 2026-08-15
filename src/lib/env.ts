@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { DEFAULT_EMAIL_SENDER, isEmailSender } from "@/lib/email-sender";
+
 /**
  * Validation des variables d'environnement au démarrage.
  *
@@ -32,7 +34,18 @@ const serverSchema = z.object({
 
   // --- Emails transactionnels (phase 2) ----------------------------------
   RESEND_API_KEY: z.string().startsWith("re_").optional(),
-  EMAIL_FROM: z.email().default("bonjour@leoclean.fr"),
+  /**
+   * Adresse seule, ou nom affiché suivi de l'adresse. Le schéma n'acceptait
+   * jusqu'ici que la première forme — et refusait donc la valeur par défaut
+   * dont `email.ts` se servait, ce qui ne se voyait qu'au démarrage.
+   */
+  EMAIL_FROM: z
+    .string()
+    .default(DEFAULT_EMAIL_SENDER)
+    .refine(
+      isEmailSender,
+      "EMAIL_FROM doit être une adresse, éventuellement précédée d'un nom : « Léo Clean <menage@leoclean.fr> »",
+    ),
 
   // --- Paiement (phase 7) ------------------------------------------------
   STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
@@ -137,6 +150,7 @@ function parse<T extends z.ZodType>(schema: T, source: unknown, scope: string) {
  */
 const rawClientEnv = {
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SAP_DECLARED: process.env.NEXT_PUBLIC_SAP_DECLARED,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
