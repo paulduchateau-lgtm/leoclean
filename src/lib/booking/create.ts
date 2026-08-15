@@ -14,7 +14,7 @@ import { pointsOf } from "@/lib/scheduling/repository";
 import {
   NoCleanerAvailableError,
   SlotTakenError,
-  isExclusionViolation,
+  isConcurrentSlotWrite,
 } from "./errors";
 
 /**
@@ -160,7 +160,9 @@ export async function createBooking(
     try {
       return await attemptBooking(chosen);
     } catch (error) {
-      if (isExclusionViolation(error)) {
+      // Contrainte d'exclusion ou interblocage : dans les deux cas, une autre
+      // réservation écrivait ce créneau au même instant. On tente le suivant.
+      if (isConcurrentSlotWrite(error)) {
         continue;
       }
       throw error;

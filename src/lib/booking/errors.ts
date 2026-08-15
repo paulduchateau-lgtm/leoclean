@@ -72,23 +72,74 @@ export class OutsideCoverageError extends BusinessError {
  */
 export const EXCLUSION_VIOLATION_CODE = "23P01";
 
+/**
+ * Code d'erreur PostgreSQL d'un interblocage.
+ *
+ * Il apparaît dans exactement la même situation, et c'était l'angle mort : deux
+ * réservations simultanées sur le même créneau écrivent chacune une
+ * réservation, ses lignes, puis l'affectation. Quand elles se croisent, chacune
+ * attend la transaction de l'autre et PostgreSQL en sacrifie une — avec
+ * `40P01`, pas `23P01`. Le refus est le même sur le fond : quelqu'un d'autre
+ * écrivait ce créneau au même instant.
+ */
+export const DEADLOCK_CODE = "40P01";
+
+/**
+ * Codes natifs portés par une erreur, où qu'ils se trouvent.
+ *
+ * Prisma n'expose plus le code PostgreSQL au même endroit selon la version et
+ * l'adaptateur : il a été dans `code`, puis dans `meta.code`, et il est
+ * aujourd'hui enfoui dans `meta.driverAdapterError.cause.code`, le message
+ * n'étant plus qu'un laconique « Database error. ». Chercher à un seul endroit
+ * revenait à ne plus rien reconnaître — et à rendre au client une trace
+ * technique là où le produit promet une phrase lisible.
+ */
+function nativeErrorCodes(
+  value: unknown,
+  depth = 0,
+  found: Set<string> = new Set(),
+): Set<string> {
+  if (depth > 6 || value === null || typeof value !== "object") {
+    return found;
+  }
+
+  const record = value as Record<string, unknown>;
+  for (const key of ["code", "originalCode"]) {
+    const candidate = record[key];
+    if (typeof candidate === "string") {
+      found.add(candidate);
+    }
+  }
+  // Le message reste inspecté : sur certains chemins, c'est là qu'il figure.
+  if (typeof record.message === "string") {
+    for (const code of [EXCLUSION_VIOLATION_CODE, DEADLOCK_CODE]) {
+      if (record.message.includes(code)) {
+        found.add(code);
+      }
+    }
+  }
+
+  for (const key of ["cause", "meta", "driverAdapterError", "error"]) {
+    nativeErrorCodes(record[key], depth + 1, found);
+  }
+
+  return found;
+}
+
 /** Vraie si l'erreur est le refus de la contrainte anti-chevauchement. */
 export function isExclusionViolation(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) {
-    return false;
-  }
-  // On ne teste pas `instanceof PrismaClientKnownRequestError` : selon le
-  // chemin d'erreur, Prisma expose le code natif dans `meta.code` plutôt que
-  // dans `code`, et le message brut le contient toujours.
-  const candidate = error as {
-    code?: unknown;
-    meta?: { code?: unknown };
-    message?: unknown;
-  };
-  return (
-    candidate.code === EXCLUSION_VIOLATION_CODE ||
-    candidate.meta?.code === EXCLUSION_VIOLATION_CODE ||
-    (typeof candidate.message === "string" &&
-      candidate.message.includes(EXCLUSION_VIOLATION_CODE))
-  );
+  return nativeErrorCodes(error).has(EXCLUSION_VIOLATION_CODE);
+}
+
+/**
+ * Vraie si la base a refusé l'écriture parce qu'une autre transaction
+ * réservait le même créneau au même instant.
+ *
+ * Les deux codes se traitent identiquement : on essaie l'intervenant suivant,
+ * et s'il n'y en a plus, le créneau est réellement parti. La transaction est
+ * déjà annulée dans les deux cas — rien n'est resté à moitié écrit.
+ */
+export function isConcurrentSlotWrite(error: unknown): boolean {
+  const codes = nativeErrorCodes(error);
+  return codes.has(EXCLUSION_VIOLATION_CODE) || codes.has(DEADLOCK_CODE);
 }
