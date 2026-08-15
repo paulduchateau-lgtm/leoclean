@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { canonicalHost, hostOf } from "@/lib/hosting";
+
 /**
  * Redirection optimiste des espaces connectés.
  *
@@ -34,8 +36,37 @@ const SESSION_COOKIES = [
   "__Secure-authjs.session-token",
 ];
 
+/**
+ * Origines de production, figées à la construction.
+ *
+ * Les variables `NEXT_PUBLIC_*` sont remplacées littéralement au build : elles
+ * sont donc lisibles ici, où `process.env` n'est pas celui d'un serveur Node.
+ */
+const HOSTS = {
+  site: hostOf(process.env.NEXT_PUBLIC_SITE_URL),
+  app: hostOf(process.env.NEXT_PUBLIC_APP_URL),
+};
+
 export function proxy(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
+
+  /*
+   * Chaque chemin est servi par un seul des deux domaines : la vitrine porte
+   * ce qui se référence, l'application ce qui se fait. La redirection est
+   * permanente et conserve la méthode — une action de formulaire arrivée du
+   * mauvais côté ne perdrait pas son corps de requête.
+   */
+  const destination = canonicalHost(
+    HOSTS,
+    request.headers.get("host") ?? "",
+    pathname,
+  );
+  if (destination) {
+    const target = new URL(request.url);
+    target.host = destination;
+    target.port = "";
+    return NextResponse.redirect(target, 308);
+  }
 
   const isProtected = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
@@ -59,11 +90,13 @@ export function proxy(request: NextRequest): NextResponse {
   return NextResponse.redirect(signInUrl);
 }
 
+/**
+ * Le filtre couvre désormais tout le site, et non les seuls espaces protégés :
+ * la répartition entre les deux domaines doit pouvoir s'appliquer à n'importe
+ * quel chemin, `robots.txt` et `sitemap.xml` compris — ils n'ont de sens que
+ * sur la vitrine. Seuls les fichiers servis par le CDN sont écartés, pour
+ * qu'aucune ressource statique ne paie le coût d'une évaluation.
+ */
 export const config = {
-  matcher: [
-    "/mon-compte/:path*",
-    "/intervenant/:path*",
-    "/gestion/:path*",
-    "/administration/:path*",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

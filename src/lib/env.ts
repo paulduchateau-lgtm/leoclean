@@ -65,6 +65,16 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.url().default("https://leoclean.fr"),
 
   /**
+   * Origine de l'application — tunnel, connexion, espaces connectés.
+   *
+   * Distincte de la vitrine en production : `leoclean.fr` porte ce qui se
+   * référence, `app.leoclean.fr` ce qui se fait. Absente, les deux vivent sur
+   * le même domaine et `src/proxy.ts` ne redirige rien — c'est le cas en
+   * développement, en prévisualisation et sur la vitrine statique.
+   */
+  NEXT_PUBLIC_APP_URL: z.url().optional(),
+
+  /**
    * Déclaration Services à la personne (SAP) obtenue auprès de la DDETS.
    *
    * Tant qu'elle vaut `false`, aucune mention du crédit d'impôt de 50 % n'est
