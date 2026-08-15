@@ -188,13 +188,28 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
         <section className="border-t border-border bg-primary/5">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
             <h2 className="font-heading text-2xl font-semibold tracking-tight">
-              Parlons-en
+              Un ménage à {commune.name} ?
             </h2>
             <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
-              Appelez, écrivez sur WhatsApp ou laissez-nous votre numéro : nous
-              vous rappelons.
+              Choisissez votre créneau en ligne, ou appelez-nous : c&apos;est
+              nous qui répondons.
             </p>
+
+            {/* Ces pages n'ouvraient sur aucune réservation : elles renvoyaient
+                au téléphone ou à un formulaire, alors que le tunnel répond
+                mieux et plus vite à qui est déjà décidé. */}
+            <Link
+              href={`/reserver?commune=${commune.slug}`}
+              className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-primary px-6 font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Voir les créneaux à {commune.name}
+            </Link>
+
             <ContactChannels communeName={commune.name} className="mt-6" />
+
+            <p className="mx-auto mt-8 max-w-prose text-sm text-muted-foreground">
+              Ou laissez-nous votre numéro, nous vous rappelons.
+            </p>
 
             <div className="mx-auto mt-10 max-w-xl text-left">
               <LeadForm defaultCommuneInsee={commune.insee} sourcePath={path} />

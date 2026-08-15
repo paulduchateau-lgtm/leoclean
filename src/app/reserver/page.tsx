@@ -11,17 +11,13 @@ import { BookingFunnel } from "@/components/booking-funnel";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { formatHourlyRate } from "@/lib/pricing";
-import {
-  MINIMUM_BILLABLE_MINUTES,
-  PUBLIC_RATES,
-} from "@/lib/pricing/public-grid";
+import { loadKnownClient } from "@/lib/booking/known-client-session";
 import {
   breadcrumbJsonLd,
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
-import { COMMUNES, COMMUNES_BY_POPULATION } from "@/lib/territory";
+import { COMMUNES_BY_POPULATION } from "@/lib/territory";
 
 /**
  * Tunnel de réservation.
@@ -44,7 +40,28 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function ReserverPage() {
+export default async function ReserverPage({
+  searchParams,
+}: PageProps<"/reserver">) {
+  /**
+   * Commune d'arrivée, transmise par le héros de l'accueil ou par une page
+   * locale. C'est un slug de notre référentiel, pas une donnée personnelle :
+   * il peut voyager dans l'URL, contrairement à une adresse.
+   */
+  const params = await searchParams;
+  const raw = params.commune;
+  const candidate = Array.isArray(raw) ? raw[0] : raw;
+  const origin = COMMUNES_BY_POPULATION.find(
+    (commune) => commune.slug === candidate,
+  );
+
+  /*
+   * Ce que l'on sait déjà du visiteur, lu sur sa session et jamais demandé au
+   * navigateur. `null` s'il est anonyme ou n'a jamais réservé : le tunnel se
+   * comporte alors exactement comme pour un inconnu.
+   */
+  const knownClient = await loadKnownClient();
+
   return (
     <>
       <script
@@ -60,19 +77,17 @@ export default function ReserverPage() {
         }}
       />
 
-      <SiteHeader />
+      <SiteHeader variant="tunnel" />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Réserver un ménage
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+        {/* Le titre de la page reste un h1 pour la structure du document, mais
+            il est discret : la question de l'écran, portée par le tunnel, est
+            ce que la personne doit lire en premier. */}
+        <h1 className="sr-only">
+          Réserver un ménage à domicile{origin ? ` à ${origin.name}` : ""}
         </h1>
-        <p className="mt-4 max-w-prose text-pretty text-muted-foreground">
-          À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, dans
-          les {COMMUNES.length} communes du sud de Bordeaux. Minimum{" "}
-          {MINIMUM_BILLABLE_MINUTES / 60} heures. Rien à payer maintenant.
-        </p>
 
-        <div className="mt-10">
+        <div>
           {/* Les server actions sont passées en props : c'est ce qui permet au
               même écran de tourner au-dessus d'un serveur ou, sur la vitrine
               statique, d'un calcul dans le navigateur. */}
@@ -86,6 +101,8 @@ export default function ReserverPage() {
               lat: commune.lat,
               lng: commune.lng,
             }))}
+            defaultCommuneSlug={origin?.slug}
+            knownClient={knownClient}
           />
         </div>
 

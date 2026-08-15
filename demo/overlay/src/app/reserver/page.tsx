@@ -5,12 +5,7 @@ import { BookingFunnelDemo } from "@/components/booking-funnel-demo";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { formatHourlyRate } from "@/lib/pricing";
-import {
-  MINIMUM_BILLABLE_MINUTES,
-  PUBLIC_RATES,
-} from "@/lib/pricing/public-grid";
-import { COMMUNES, COMMUNES_BY_POPULATION } from "@/lib/territory";
+import { COMMUNES_BY_POPULATION } from "@/lib/territory";
 
 /**
  * Tunnel de réservation — variante de la vitrine statique.
@@ -34,19 +29,12 @@ export const metadata: Metadata = {
 export default function ReserverPage() {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader variant="tunnel" />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-          Réserver un ménage
-        </h1>
-        <p className="mt-4 max-w-prose text-pretty text-muted-foreground">
-          À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, dans
-          les {COMMUNES.length} communes du sud de Bordeaux. Minimum{" "}
-          {MINIMUM_BILLABLE_MINUTES / 60} heures.
-        </p>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+        <h1 className="sr-only">Réserver un ménage à domicile</h1>
 
-        <div className="mt-8 rounded-xl border border-clay-500/40 bg-clay-500/5 p-5">
+        <div className="rounded-2xl border border-clay-500/40 bg-clay-500/5 p-5">
           <p className="font-heading font-semibold">Démonstration</p>
           <p className="mt-2 text-pretty text-muted-foreground">
             Le parcours ci-dessous fonctionne réellement : la recherche
@@ -65,7 +53,7 @@ export default function ReserverPage() {
           </p>
         </div>
 
-        <div className="mt-10">
+        <div className="mt-8">
           <BookingFunnelDemo
             communes={COMMUNES_BY_POPULATION.map((commune) => ({
               slug: commune.slug,

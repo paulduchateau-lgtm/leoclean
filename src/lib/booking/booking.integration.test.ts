@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBooking, responseDeadline } from "@/lib/booking/create";
-import { SlotTakenError } from "@/lib/booking/errors";
+import { BusinessError } from "@/lib/booking/errors";
 import { forOrganization, prisma } from "@/lib/db";
 import { travelMatrixFrom } from "@/lib/scheduling/travel";
 import { getCommuneBySlug } from "@/lib/territory";
@@ -281,7 +281,22 @@ describe("concurrence sur un même créneau", () => {
 
     expect(fulfilled).toHaveLength(1);
     expect(rejected).toHaveLength(1);
-    expect(rejected[0]!.reason).toBeInstanceOf(SlotTakenError);
+
+    /*
+     * Le perdant reçoit l'un ou l'autre des deux refus, et les deux sont
+     * justes : selon que la première transaction a déjà été validée quand la
+     * seconde lit les disponibilités, celle-ci ne voit plus aucune
+     * intervenante libre — « aucun intervenant disponible » — ou la voit
+     * encore et se fait arrêter par la contrainte d'exclusion — « créneau
+     * pris ». Exiger la seconde forme rendait ce test dépendant d'un ordre
+     * d'exécution que rien ne garantit.
+     *
+     * Ce qui doit être vrai dans les deux cas, et qui est vérifié : c'est une
+     * erreur métier, donc un message écrit pour être lu, et non une trace
+     * technique.
+     */
+    expect(rejected[0]!.reason).toBeInstanceOf(BusinessError);
+    expect(rejected[0]!.reason).not.toBeInstanceOf(TypeError);
 
     // Et la base ne porte qu'une affectation : rien n'a été écrit à moitié.
     const assignments = await forOrganization(

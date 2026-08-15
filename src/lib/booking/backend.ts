@@ -49,6 +49,40 @@ export interface ConfirmationView {
 
 export type Frequency = "ONE_OFF" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
 
+/**
+ * Ce que le tunnel sait déjà d'un client connecté.
+ *
+ * Ces types vivent ici, avec le reste du contrat du tunnel, et non dans le
+ * module serveur qui les remplit : l'écran doit pouvoir les typer sans
+ * importer quoi que ce soit de `server-only`.
+ *
+ * Rien n'y est déduit du navigateur. L'ensemble est lu côté serveur, sur la
+ * session, et transmis à l'écran — c'est la même règle que pour
+ * l'organisation.
+ */
+export interface KnownAddress {
+  banId: string;
+  label: string;
+  street: string;
+  postalCode: string;
+  cityName: string;
+  inseeCode: string;
+  lat: number;
+  lng: number;
+  accessNotes: string | null;
+}
+
+export interface KnownClient {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  /** Adresses déjà employées, dédoublonnées, de la plus récente à la plus ancienne. */
+  addresses: KnownAddress[];
+  /** Dernier logement et dernier rythme réservés, s'il y en a un. */
+  lastChoice: { surfaceSqm: number; frequency: Frequency } | null;
+}
+
 export interface ConfirmBookingInput {
   firstName: string;
   lastName: string;

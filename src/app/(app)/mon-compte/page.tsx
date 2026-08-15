@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -41,10 +42,20 @@ export default async function AccountPage() {
         <h2 className="font-heading text-lg font-semibold">Mes accès</h2>
 
         {memberships.length === 0 ? (
-          <p className="mt-3 rounded-xl border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
-            Votre compte n&apos;est rattaché à aucun espace pour l&apos;instant.
-            Il le sera à votre première réservation.
-          </p>
+          /* Un état vide sans issue est un bug : celui-ci dit ce qui manque et
+             donne le geste qui le comble. */
+          <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-5">
+            <p className="text-sm text-muted-foreground">
+              Votre compte n&apos;est rattaché à aucun espace pour
+              l&apos;instant. Il le sera à votre première réservation.
+            </p>
+            <Link
+              href="/reserver"
+              className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary px-5 font-medium text-primary-foreground"
+            >
+              Réserver un ménage
+            </Link>
+          </div>
         ) : (
           <ul className="mt-4 space-y-3">
             {memberships.map((membership) => (

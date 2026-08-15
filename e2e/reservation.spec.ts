@@ -15,59 +15,162 @@ import { expect, test } from "@playwright/test";
  * client le jour où la BAN sera indisponible.
  */
 
+/** Saisie manuelle de l'adresse, point de départ commun à tous les tests. */
+async function saisirAdresseManuelle(
+  page: import("@playwright/test").Page,
+  commune = "leognan",
+) {
+  await page
+    .getByRole("button", { name: "Saisir mon adresse manuellement" })
+    .click();
+  await page.fill("#manual-street", "12 rue des Vignes");
+  await page.selectOption("#manual-commune", commune);
+  await page.getByRole("button", { name: "Décrire mon logement" }).click();
+}
+
 test.describe("réservation", () => {
-  // Le parcours complet enchaîne quatre allers-retours serveur, dont une
+  // Le parcours complet enchaîne plusieurs allers-retours serveur, dont une
   // recherche de créneaux sur trois semaines : il dépasse le budget par défaut.
   test.setTimeout(120_000);
 
   test("mène de l'adresse à la confirmation", async ({ page }) => {
     await page.goto("/reserver");
-    await expect(page.locator("h1")).toContainText("Réserver un ménage");
 
-    // 1. Adresse — saisie manuelle, commune choisie dans notre référentiel.
-    await page
-      .getByRole("button", { name: "Saisir mon adresse manuellement" })
-      .click();
-    await page.fill("#manual-street", "12 rue des Vignes");
-    await page.selectOption("#manual-commune", "leognan");
-    await page.getByRole("button", { name: "Continuer" }).click();
+    // 1. Adresse. Le prix d'appel est annoncé avant même le premier choix :
+    // la barre basse n'est jamais vide.
+    await expect(
+      page.getByRole("heading", { name: "Où intervenons-nous ?" }),
+    ).toBeVisible();
+    await expect(page.getByText(/À partir de 29/)).toBeVisible();
 
-    // 2. Logement — le devis vient du serveur, jamais du navigateur.
-    await expect(page.getByText("Durée estimée")).toBeVisible({
-      timeout: 20_000,
+    await saisirAdresseManuelle(page);
+
+    // 2. Logement — un type de logement, pas une surface à saisir.
+    await expect(
+      page.getByRole("heading", { name: /taille de votre logement/ }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /T3 ou petite maison/ }).click();
+
+    // 3. Rythme — chaque formule porte son propre prix, calculé par le
+    // serveur. 70 m² à 25 m²/h font 3 h, à 29 €/h en formule régulière.
+    await expect(
+      page.getByRole("heading", { name: /À quel rythme/ }),
+    ).toBeVisible();
+    const biweekly = page.getByRole("button", {
+      name: /Tous les quinze jours/,
     });
-    const quote = await page.locator("dl").first().innerText();
-    // 80 m² à 25 m²/h font 3 h 30, à 29 €/h en formule régulière.
-    expect(quote).toContain("3 h 30");
-    expect(quote.replace(/[  ]/g, " ")).toContain("101,50 €");
+    await expect(biweekly).toContainText("87,00", { timeout: 20_000 });
+    await biweekly.click();
 
-    await page.getByRole("button", { name: "Voir les créneaux" }).click();
+    // 4. Créneau — le prix reste affiché pendant qu'on choisit son jour.
+    await expect(
+      page.getByRole("heading", { name: /Quand voulez-vous/ }),
+    ).toBeVisible();
+    const slot = page.locator("main ul li button", {
+      hasText: /^\d{2}:\d{2}$/,
+    });
+    await expect(slot.first()).toBeVisible({ timeout: 45_000 });
+    const chosenTime = await slot.first().innerText();
+    await expect(page.getByText(/par intervention/)).toContainText("3 h");
+    await slot.first().click();
 
-    // 3. Créneau — regroupé par journée, en heure locale.
-    const slot = page.locator("main ul li button").first();
-    await expect(slot).toBeVisible({ timeout: 30_000 });
-    const chosenTime = await slot.innerText();
-    expect(chosenTime).toMatch(/^\d{2}:\d{2}$/);
-    await slot.click();
+    // 5. Récapitulatif — chaque ligne est modifiable, les coordonnées sont
+    // demandées une fois la valeur visible.
+    await expect(
+      page.getByRole("heading", { name: "Voilà ce qu'on a prévu" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Modifier le créneau" }),
+    ).toBeVisible();
 
-    // 4. Coordonnées — le compte se crée à la réservation, pas avant.
-    await expect(page.locator("#firstName")).toBeVisible();
     const email = `e2e-${Date.now()}@leoclean.test`;
     await page.fill("#firstName", "Camille");
     await page.fill("#lastName", "Durand");
     await page.fill("#email", email);
     await page.fill("#phone", "06 12 34 56 78");
+
+    // Les précisions d'accès sont repliées : elles n'encombrent pas l'écran
+    // le plus décisif, mais restent atteignables.
+    await page
+      .getByRole("button", { name: /Ajouter l'accès au logement/ })
+      .click();
     await page.fill("#accessNotes", "Digicode 1234, portail vert");
 
-    await page.getByRole("button", { name: "Réserver" }).click();
+    await page.getByRole("button", { name: /^Réserver / }).click();
 
     await expect(page.getByText("C'est réservé.")).toBeVisible({
       timeout: 30_000,
     });
     // Le récapitulatif reprend l'heure choisie et le montant du devis.
+    // Les montants portent une espace fine insécable avant l'euro : on
+    // normalise toutes les espaces Unicode plutôt que d'en énumérer deux.
     const main = await page.locator("main").innerText();
-    expect(main).toContain(chosenTime);
-    expect(main.replace(/[  ]/g, " ")).toContain("101,50 €");
+    expect(main.replace(/\s+/g, " ")).toContain("87,00 €");
+    expect(chosenTime).toMatch(/^\d{2}:\d{2}$/);
+  });
+
+  test("garde la saisie quand on revient en arrière", async ({ page }) => {
+    // Revenir changer un choix ne doit rien détruire : c'est le retour le plus
+    // probable du parcours, et il vidait les six champs déjà remplis.
+    await page.goto("/reserver");
+    await saisirAdresseManuelle(page);
+    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await page
+      .getByRole("button", { name: /Tous les quinze jours/ })
+      .click({ timeout: 30_000 });
+
+    const slot = page.locator("main ul li button", {
+      hasText: /^\d{2}:\d{2}$/,
+    });
+    await expect(slot.first()).toBeVisible({ timeout: 45_000 });
+    await slot.first().click();
+
+    await page.fill("#firstName", "Camille");
+    await page.fill("#email", "camille@exemple.fr");
+
+    // Depuis le récapitulatif, on va changer le rythme puis on revient.
+    await page.getByRole("button", { name: "Modifier le rythme" }).click();
+    await page.getByRole("button", { name: /Une seule fois/ }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Voilà ce qu'on a prévu" }),
+    ).toBeVisible();
+    await expect(page.locator("#firstName")).toHaveValue("Camille");
+    await expect(page.locator("#email")).toHaveValue("camille@exemple.fr");
+  });
+
+  test("propose de reprendre un parcours interrompu", async ({ page }) => {
+    await page.goto("/reserver");
+    await saisirAdresseManuelle(page);
+    await page.getByRole("button", { name: /Maison familiale/ }).click();
+
+    await page.reload();
+
+    await expect(
+      page.getByText(/Vous réserviez un ménage à Léognan/),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /Reprendre où j'en étais/ }).click();
+    await expect(
+      page.getByRole("heading", { name: /À quel rythme/ }),
+    ).toBeVisible();
+  });
+
+  test("accepte une surface exacte, repliée par défaut", async ({ page }) => {
+    await page.goto("/reserver");
+    await saisirAdresseManuelle(page);
+
+    await expect(page.locator("#surface")).toHaveCount(0);
+    await page
+      .getByRole("button", { name: /Je connais ma surface exacte/ })
+      .click();
+    await page.fill("#surface", "80");
+    await page.getByRole("button", { name: "Choisir mon rythme" }).click();
+
+    // 80 m² à 25 m²/h font 3 h 30, à 29 €/h en formule régulière.
+    await expect(
+      page.getByRole("button", { name: /Tous les quinze jours/ }),
+    ).toContainText("101,50", { timeout: 20_000 });
+    await expect(page.getByText(/par intervention/)).toContainText("3 h 30");
   });
 
   test("ne propose que des communes desservies en saisie manuelle", async ({
@@ -86,6 +189,17 @@ test.describe("réservation", () => {
     expect(options).toHaveLength(16);
     expect(options.join(" ")).toContain("Léognan (33850)");
     expect(options.join(" ")).not.toContain("Bordeaux (33000)");
+  });
+
+  test("présélectionne la commune d'où l'on vient", async ({ page }) => {
+    // Le lien des pages locales transmet la commune : on ne retape pas la
+    // ville dont on vient de lire la page entière.
+    await page.goto("/reserver?commune=gradignan");
+    await page
+      .getByRole("button", { name: "Saisir mon adresse manuellement" })
+      .click();
+
+    await expect(page.locator("#manual-commune")).toHaveValue("gradignan");
   });
 
   test("reste utilisable quand la recherche d'adresse ne rend rien", async ({

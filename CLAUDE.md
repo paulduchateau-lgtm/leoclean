@@ -25,17 +25,18 @@ Le dossier a été retiré de `famille`, où rien ne subsiste du projet.
 
 Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 
-| Sujet                   | Décision                                                                                                                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                                                                     |
-| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                                                                        |
-| Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                                                                                |
-| Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                                                                                 |
-| Positionnement          | « Sud Bordeaux » : 16 communes, dont les 13 de la Communauté de communes de Montesquieu. Même grille tarifaire partout.                                                                                      |
-| SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                                                                                   |
-| Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté.                                                     |
-| Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                                                                            |
-| Écriture de la marque   | **« Léo Clean », en deux mots**, partout où un humain la lit. Les identifiants techniques restent en un mot et sans accent : `leoclean.fr`, `bonjour@leoclean.fr`, le slug `leoclean`, le dossier du projet. |
+| Sujet                   | Décision                                                                                                                                                                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                                                                                                                                    |
+| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                                                                                                                                       |
+| Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                                                                                                                                               |
+| Promesse de récurrence  | Le tunnel vend un **tarif**, pas un abonnement : `createBooking` n'écrit pas de `Subscription`. On annonce que les passages suivants sont calés avec le client après le premier ménage, ce qui est le fonctionnement réel. À reprendre le jour où les abonnements existent. |
+| Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                                                                                                                                                |
+| Positionnement          | « Sud Bordeaux » : 16 communes, dont les 13 de la Communauté de communes de Montesquieu. Même grille tarifaire partout.                                                                                                                                                     |
+| SEO                     | Remonté en phase 4, avant le moteur de réservation : l'indexation d'un domaine neuf prend 4 à 12 semaines.                                                                                                                                                                  |
+| Statut des intervenants | Auto-entrepreneurs. La marketplace opère en `MISE_EN_RELATION`, les sociétés en `PRESTATAIRE`. Le mode `MANDATAIRE` (CESU) est modélisé, non implémenté.                                                                                                                    |
+| Crédit d'impôt          | Toujours calculé et stocké. Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED=true`.                                                                                                                                                                                           |
+| Écriture de la marque   | **« Léo Clean », en deux mots**, partout où un humain la lit. Les identifiants techniques restent en un mot et sans accent : `leoclean.fr`, `bonjour@leoclean.fr`, le slug `leoclean`, le dossier du projet.                                                                |
 
 ## Modèle juridique et facturation
 
@@ -398,7 +399,17 @@ pas ; une affectation sans réservation est une heure bloquée pour rien.
 **Le verrou anti-double-réservation n'est pas dans ce code.** Il est en base.
 Vérifier la disponibilité avant d'écrire ne sert qu'à donner un bon message :
 entre la vérification et l'écriture, une autre requête peut passer. Le code sait
-donc qu'il peut échouer, et traduit `23P01` en `SlotTakenError`.
+donc qu'il peut échouer, et traduit le refus de la base en `SlotTakenError`.
+
+**Deux codes PostgreSQL signalent ce refus, pas un.** `23P01` est la violation
+de la contrainte d'exclusion ; `40P01` est l'interblocage, qui survient dans
+exactement la même situation — deux transactions écrivent réservation, lignes
+puis affectation, se croisent, et la base en sacrifie une. Ne reconnaître que
+le premier laissait remonter une erreur Prisma brute au client. `nativeErrorCodes`
+cherche le code natif où qu'il soit : Prisma l'a déplacé de `code` à `meta.code`
+puis à `meta.driverAdapterError.cause.code`, le message n'étant plus qu'un
+« Database error. ». Chercher à un seul endroit revient à ne plus rien
+reconnaître.
 
 **Sur refus, on essaie le candidat suivant.** Sans cela, deux réservations
 simultanées désigneraient toutes deux le mieux classé, la seconde échouerait, et
@@ -624,13 +635,36 @@ cloné.
       transactionnelle avec attribution automatique et repli sur le candidat
       suivant. 8 tests de bout en bout, 10 tests d'intégration dont la
       concurrence sur un même créneau.
-- [ ] Phase 7 — Paiement Stripe
+- [x] **Refonte UX, phases 1 à 4 et 6.** Tunnel redécoupé en cinq écrans, une
+      décision par écran ; barre de prix permanente ; devis des quatre rythmes
+      chargés ensemble ; créneaux préchargés et journées complètes affichées
+      barrées ; retour arrière non destructif et reprise de parcours ;
+      récapitulatif dont chaque ligne est modifiable ; entrée du tunnel depuis
+      l'accueil, les tarifs, l'index des communes et les pages d'intention.
+      Journal et fiches d'évidence dans `docs/REFONTE-UX.md`, contrat de
+      non-régression dans `docs/FEATURES-FREEZE.md`.
+- [ ] Phase 7 — Paiement Stripe _(bloquée : aucune clé Stripe)_
 - [ ] Phase 8 — Espace intervenant _(mise en production visée ici)_
+- [x] **Phase 8 bis — Tunnel pour utilisateur connu.** `known-client.ts` lit le
+      profil, le carnet d'adresses dédoublonné et le dernier choix, sur un
+      client cloisonné et sans jamais désigner le profil lu ; le tunnel
+      propose les adresses en un geste, présélectionne le dernier logement et
+      le dernier rythme, affiche le prix dès le premier écran et résume les
+      coordonnées au lieu de les redemander. Six taps depuis l'accueil au lieu
+      de onze. Un client de la marketplace n'ayant pas de `Membership`,
+      l'autorisation ne peut pas passer par `requireOrganization` — la raison
+      est écrite dans le module.
 - [ ] Phase 9 — Synchronisation d'agenda externe
 - [ ] Phase 10 — Optimisation des temps de trajet
 - [ ] Phase 11 — Page `/pro/[slug]`
 - [ ] Phase 12 — Back-office plateforme
 - [ ] Phase 13 — Durcissement et conformité
+- [ ] Refonte UX, phase 5 — espace client (réservations, modification,
+      annulation, notation, adresses, moyens de paiement, parrainage). **Ne
+      peut pas précéder les fonctionnalités qu'elle refond** : à traiter une
+      fois le périmètre produit terminé, après la phase 12.
+- [ ] Refonte UX, phase 7 — passe UI. Reportée : elle impliquerait une refonte
+      du design system lui-même, pas un placage de palette.
 
 ## En attente d'informations
 

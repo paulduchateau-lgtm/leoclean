@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CommuneStart } from "@/components/commune-start";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { publishedCommunes } from "@/lib/communes-content";
@@ -109,6 +110,8 @@ export default function CommunesHubPage() {
             </ul>
           </>
         ) : null}
+
+        <CommuneStart className="mt-14" />
       </main>
 
       <SiteFooter />
