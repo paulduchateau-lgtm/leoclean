@@ -29,21 +29,21 @@ session.
 
 ### 1a. Entrée par l'accueil, recherche d'adresse fonctionnelle
 
-| # | Écran | Tap |
-|---|---|---|
-| 1 | Accueil | 1 · bouton `Réserver` de l'en-tête |
-| 2 | Tunnel · Adresse | 2 · champ adresse + saisie |
-| | | 3 · résultat proposé |
-| 3 | Tunnel · Logement | 4-5 · champ surface (valeur 80 à corriger) |
-| | | 6 · fréquence `Une seule fois` |
-| | | 7 · `Voir les créneaux` |
-| 4 | Tunnel · Créneau | 8 · un créneau |
-| 5 | Tunnel · Coordonnées | 9 · prénom |
-| | | 10 · nom |
-| | | 11 · email |
-| | | 12 · téléphone |
-| | | 13 · `Réserver` |
-| 6 | Confirmation | — |
+| #   | Écran                | Tap                                        |
+| --- | -------------------- | ------------------------------------------ |
+| 1   | Accueil              | 1 · bouton `Réserver` de l'en-tête         |
+| 2   | Tunnel · Adresse     | 2 · champ adresse + saisie                 |
+|     |                      | 3 · résultat proposé                       |
+| 3   | Tunnel · Logement    | 4-5 · champ surface (valeur 80 à corriger) |
+|     |                      | 6 · fréquence `Une seule fois`             |
+|     |                      | 7 · `Voir les créneaux`                    |
+| 4   | Tunnel · Créneau     | 8 · un créneau                             |
+| 5   | Tunnel · Coordonnées | 9 · prénom                                 |
+|     |                      | 10 · nom                                   |
+|     |                      | 11 · email                                 |
+|     |                      | 12 · téléphone                             |
+|     |                      | 13 · `Réserver`                            |
+| 6   | Confirmation         | —                                          |
 
 **13 taps, 6 écrans.** Cible : ≤ 14 taps, ≤ 6 écrans → **atteinte**, de justesse
 et dans le meilleur des cas.
@@ -53,20 +53,20 @@ et dans le meilleur des cas.
 C'est le cas réaliste : l'acquisition passe par le référencement local, donc par
 `/menage-a-domicile/<commune>`, et la Base Adresse Nationale limite son débit.
 
-| # | Écran | Tap |
-|---|---|---|
-| 1 | Page commune (après ~4 écrans de défilement) | 1 · `Voir les créneaux à Léognan` |
-| 2 | Tunnel · Adresse | 2 · `Saisir mon adresse manuellement` |
-| | | 3 · champ rue |
-| | | 4-5 · liste des communes (ouvrir, choisir) |
-| | | 6 · `Continuer` |
-| 3 | Tunnel · Logement | 7-8 · surface |
-| | | 9 · fréquence |
-| | | 10 · `Voir les créneaux` |
-| 4 | Tunnel · Créneau | 11 · un créneau |
-| 5 | Tunnel · Coordonnées | 12-15 · prénom, nom, email, téléphone |
-| | | 16 · `Réserver` |
-| 6 | Confirmation | — |
+| #   | Écran                                        | Tap                                        |
+| --- | -------------------------------------------- | ------------------------------------------ |
+| 1   | Page commune (après ~4 écrans de défilement) | 1 · `Voir les créneaux à Léognan`          |
+| 2   | Tunnel · Adresse                             | 2 · `Saisir mon adresse manuellement`      |
+|     |                                              | 3 · champ rue                              |
+|     |                                              | 4-5 · liste des communes (ouvrir, choisir) |
+|     |                                              | 6 · `Continuer`                            |
+| 3   | Tunnel · Logement                            | 7-8 · surface                              |
+|     |                                              | 9 · fréquence                              |
+|     |                                              | 10 · `Voir les créneaux`                   |
+| 4   | Tunnel · Créneau                             | 11 · un créneau                            |
+| 5   | Tunnel · Coordonnées                         | 12-15 · prénom, nom, email, téléphone      |
+|     |                                              | 16 · `Réserver`                            |
+| 6   | Confirmation                                 | —                                          |
 
 **16 taps, 6 écrans.** Cible dépassée de 2 taps — dont un `Continuer` interdit
 par les critères d'acceptation, et une commune redemandée alors qu'elle était

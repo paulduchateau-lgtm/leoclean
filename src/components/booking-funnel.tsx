@@ -269,9 +269,7 @@ function readSavedState(): SavedState | null {
       saved.chosenSlot !== null &&
       new Date(saved.chosenSlot).getTime() < Date.now();
 
-    return slotIsPast
-      ? { ...saved, step: "creneau", chosenSlot: null }
-      : saved;
+    return slotIsPast ? { ...saved, step: "creneau", chosenSlot: null } : saved;
   } catch {
     // Un stockage illisible — quota, mode privé, JSON tronqué — ne doit pas
     // empêcher de réserver. On repart de zéro, sans rien signaler.
@@ -648,8 +646,7 @@ export function BookingFunnel({
         .filter((message): message is string => Boolean(message));
 
       setError({
-        message:
-          details.length > 0 ? details.join(" ") : result.error,
+        message: details.length > 0 ? details.join(" ") : result.error,
         retry: details.length > 0 ? undefined : submit,
       });
     })();
@@ -709,10 +706,7 @@ export function BookingFunnel({
         ) : null}
 
         {step === "logement" ? (
-          <HousingStep
-            surfaceSqm={surfaceSqm}
-            onChoose={chooseHousing}
-          />
+          <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
         ) : null}
 
         {step === "rythme" ? (
@@ -1303,9 +1297,7 @@ function HousingStep({
   const matchesPreset = HOUSING_PRESETS.some(
     (preset) => preset.surfaceSqm === surfaceSqm,
   );
-  const [custom, setCustom] = useState(
-    surfaceSqm !== null && !matchesPreset,
-  );
+  const [custom, setCustom] = useState(surfaceSqm !== null && !matchesPreset);
   const [value, setValue] = useState(String(surfaceSqm ?? 80));
 
   const parsed = Number(value);

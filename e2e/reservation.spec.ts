@@ -66,7 +66,9 @@ test.describe("réservation", () => {
     await expect(
       page.getByRole("heading", { name: /Quand voulez-vous/ }),
     ).toBeVisible();
-    const slot = page.locator("main ul li button", { hasText: /^\d{2}:\d{2}$/ });
+    const slot = page.locator("main ul li button", {
+      hasText: /^\d{2}:\d{2}$/,
+    });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     const chosenTime = await slot.first().innerText();
     await expect(page.getByText(/par intervention/)).toContainText("3 h");
@@ -117,7 +119,9 @@ test.describe("réservation", () => {
       .getByRole("button", { name: /Tous les quinze jours/ })
       .click({ timeout: 30_000 });
 
-    const slot = page.locator("main ul li button", { hasText: /^\d{2}:\d{2}$/ });
+    const slot = page.locator("main ul li button", {
+      hasText: /^\d{2}:\d{2}$/,
+    });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     await slot.first().click();
 
@@ -142,7 +146,9 @@ test.describe("réservation", () => {
 
     await page.reload();
 
-    await expect(page.getByText(/Vous réserviez un ménage à Léognan/)).toBeVisible();
+    await expect(
+      page.getByText(/Vous réserviez un ménage à Léognan/),
+    ).toBeVisible();
     await page.getByRole("button", { name: /Reprendre où j'en étais/ }).click();
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),

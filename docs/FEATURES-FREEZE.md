@@ -1,7 +1,13 @@
 # Gel fonctionnel — inventaire de référence
 
-**État du dépôt au 14 août 2026**, commit `33bb013`, avant toute modification
-d'expérience.
+**État initial : dépôt au 14 août 2026**, commit `33bb013`, avant toute
+modification d'expérience.
+
+> **Mis à jour le 15 août 2026.** Les sections marquées ⟳ décrivent l'état
+> après les phases 1 à 4 et 6 de la refonte : les fonctionnalités y sont les
+> mêmes, réparties autrement. Le reste du document est inchangé, et reste la
+> référence de ce qui ne doit pas disparaître. Journal :
+> [REFONTE-UX.md](REFONTE-UX.md).
 
 Ce document est le **contrat de non-régression** de la refonte UX. Il décrit ce
 qui existe, pas ce qui devrait exister. Chaque fin de phase se relit contre lui :
@@ -26,12 +32,12 @@ retirer quelque chose, on s'arrête et on demande.
 
 ### 1.1 `/` — Accueil
 
-| | |
-|---|---|
-| Fichier | `src/app/page.tsx` |
-| Rendu | statique, `revalidate = 86 400` |
-| Entrées | aucune |
-| Appels serveur | aucun |
+|                |                                 |
+| -------------- | ------------------------------- |
+| Fichier        | `src/app/page.tsx`              |
+| Rendu          | statique, `revalidate = 86 400` |
+| Entrées        | aucune                          |
+| Appels serveur | aucun                           |
 
 Contenu à conserver :
 
@@ -48,28 +54,30 @@ Contenu à conserver :
   n'a pas de page (aujourd'hui vide, garde volontaire) ;
 - JSON-LD `Organization` + `BreadcrumbList`.
 
-> **Absent aujourd'hui** : aucun lien vers `/reserver` depuis cette page. Le
-> seul accès au tunnel est le bouton de l'en-tête. Voir l'audit, friction 1.
+> ⟳ **Corrigé le 15 août.** Le héros porte désormais le bloc `CommuneStart`,
+> première étape du tunnel : seize liens vers `/reserver?commune=<slug>`. La
+> description du site et les trois canaux de contact restent, replacés après
+> ce bloc. Le même bloc a été ajouté à `/tarifs` et `/menage-a-domicile`.
 
 ### 1.2 `/menage-a-domicile` — Index des communes
 
-| | |
-|---|---|
+|         |                                      |
+| ------- | ------------------------------------ |
 | Fichier | `src/app/menage-a-domicile/page.tsx` |
-| Rendu | statique, `revalidate = 86 400` |
-| Entrées | aucune |
+| Rendu   | statique, `revalidate = 86 400`      |
+| Entrées | aucune                               |
 
 Liste des 16 communes, liens vers les pages locales, garde sur les communes
 sans page dédiée.
 
 ### 1.3 `/menage-a-domicile/[commune]` — 16 pages locales
 
-| | |
-|---|---|
-| Fichier | `src/app/menage-a-domicile/[commune]/page.tsx` |
-| Rendu | `generateStaticParams` sur `PUBLISHED_COMMUNE_SLUGS`, `dynamicParams = false`, `revalidate = 86 400` |
-| Entrées | formulaire de rappel (voir 4.4) |
-| Appels serveur | `submitLead` |
+|                |                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| Fichier        | `src/app/menage-a-domicile/[commune]/page.tsx`                                                       |
+| Rendu          | `generateStaticParams` sur `PUBLISHED_COMMUNE_SLUGS`, `dynamicParams = false`, `revalidate = 86 400` |
+| Entrées        | formulaire de rappel (voir 4.4)                                                                      |
+| Appels serveur | `submitLead`                                                                                         |
 
 Blocs à conserver, dans l'ordre :
 
@@ -96,23 +104,23 @@ Blocs à conserver, dans l'ordre :
 
 ### 1.4 `/femme-de-menage/[commune]` et `/repassage/[commune]` — 12 pages
 
-| | |
-|---|---|
-| Fichiers | `src/app/femme-de-menage/[commune]/page.tsx`, `src/app/repassage/[commune]/page.tsx`, composant `src/components/intention-page.tsx` |
-| Rendu | statique, périmètre borné par `src/lib/intentions.ts` (6 communes par intention, ensembles différents) |
-| Entrées | formulaire de rappel |
-| Appels serveur | `submitLead` |
+|                |                                                                                                                                     |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Fichiers       | `src/app/femme-de-menage/[commune]/page.tsx`, `src/app/repassage/[commune]/page.tsx`, composant `src/components/intention-page.tsx` |
+| Rendu          | statique, périmètre borné par `src/lib/intentions.ts` (6 communes par intention, ensembles différents)                              |
+| Entrées        | formulaire de rappel                                                                                                                |
+| Appels serveur | `submitLead`                                                                                                                        |
 
 Contient : titre et intro propres à l'intention, sections éditoriales, FAQ,
 `ContactChannels`, `LeadForm` prérempli, maillage vers la page commune.
 
 ### 1.5 `/tarifs`
 
-| | |
-|---|---|
-| Fichier | `src/app/tarifs/page.tsx` |
-| Rendu | statique, `revalidate = 86 400` |
-| Entrées | aucune |
+|         |                                 |
+| ------- | ------------------------------- |
+| Fichier | `src/app/tarifs/page.tsx`       |
+| Rendu   | statique, `revalidate = 86 400` |
+| Entrées | aucune                          |
 
 À conserver : tableau des deux formules (`PUBLIC_RATES`), colonne crédit
 d'impôt conditionnée, tableau durée/prix pour 4 surfaces de référence
@@ -121,11 +129,11 @@ de 4 entrées, JSON-LD `Service` + `FAQPage`.
 
 ### 1.6 `/blog` et `/blog/[article]`
 
-| | |
-|---|---|
+|          |                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------- |
 | Fichiers | `src/app/blog/page.tsx`, `src/app/blog/[article]/page.tsx`, `src/components/article-body.tsx` |
-| Rendu | statique |
-| Entrées | aucune |
+| Rendu    | statique                                                                                      |
+| Entrées  | aucune                                                                                        |
 
 Articles en blocs typés (`src/lib/blog.ts`), rendus par `ArticleBody`. L'article
 portant `requiresSapDeclaration` est retiré des listes, du sitemap, de
@@ -139,21 +147,21 @@ Page éditoriale : histoire, méthode de recrutement, engagements, NAP.
 
 ### 1.8 `/etre-rappele`
 
-| | |
-|---|---|
-| Fichier | `src/app/etre-rappele/page.tsx` |
-| Entrées | `LeadForm` sans commune préremplie |
-| Appels serveur | `submitLead` |
+|                |                                    |
+| -------------- | ---------------------------------- |
+| Fichier        | `src/app/etre-rappele/page.tsx`    |
+| Entrées        | `LeadForm` sans commune préremplie |
+| Appels serveur | `submitLead`                       |
 
 Comprend aussi `ContactChannels` sous le formulaire.
 
 ### 1.9 `/reserver` — Tunnel de réservation
 
-| | |
-|---|---|
-| Fichiers | `src/app/reserver/page.tsx`, `src/components/booking-funnel.tsx` |
-| Rendu | `dynamic = "force-dynamic"`, `robots: noindex, follow` |
-| Appels serveur | `searchAddress`, `getQuote`, `getSlots`, `confirmBooking` |
+|                |                                                                  |
+| -------------- | ---------------------------------------------------------------- |
+| Fichiers       | `src/app/reserver/page.tsx`, `src/components/booking-funnel.tsx` |
+| Rendu          | `dynamic = "force-dynamic"`, `robots: noindex, follow`           |
+| Appels serveur | `searchAddress`, `getQuote`, `getSlots`, `confirmBooking`        |
 
 Détail écran par écran en section 3.
 
@@ -166,11 +174,11 @@ Contient aussi, sous le tunnel : section « Vous préférez en parler ? » avec
 
 ### 2.1 `/connexion`
 
-| | |
-|---|---|
-| Fichiers | `src/app/(auth)/connexion/page.tsx`, `sign-in-form.tsx` |
-| Entrées | email (`#email`) |
-| Appels serveur | `requestMagicLink` |
+|                |                                                         |
+| -------------- | ------------------------------------------------------- |
+| Fichiers       | `src/app/(auth)/connexion/page.tsx`, `sign-in-form.tsx` |
+| Entrées        | email (`#email`)                                        |
+| Appels serveur | `requestMagicLink`                                      |
 
 Comportements à conserver :
 
@@ -194,11 +202,11 @@ contact email.
 
 ### 2.4 `/mon-compte`
 
-| | |
-|---|---|
-| Fichier | `src/app/(app)/mon-compte/page.tsx` |
-| Entrées | bouton de déconnexion |
-| Appels serveur | `auth()`, `signOut()` |
+|                |                                     |
+| -------------- | ----------------------------------- |
+| Fichier        | `src/app/(app)/mon-compte/page.tsx` |
+| Entrées        | bouton de déconnexion               |
+| Appels serveur | `auth()`, `signOut()`               |
 
 Contenu **complet** aujourd'hui : adresse email de la session, liste des
 appartenances avec libellé de rôle en français, état vide « rattaché à aucun
@@ -216,67 +224,90 @@ Ne fait pas d'autorisation. Ne pas y déplacer de contrôle.
 
 ---
 
-## 3. Le tunnel, écran par écran
+## 3. Le tunnel, écran par écran ⟳
 
-Ordre actuel : **Adresse → Logement → Créneau → Coordonnées → Confirmation**.
-Barre d'étapes `Steps` en haut, libellés `["Adresse", "Logement", "Créneau",
-"Coordonnées"]`.
+Ordre depuis le 15 août : **Adresse → Logement → Rythme → Créneau →
+Récapitulatif → Confirmation**, une décision par écran. Repère de progression
+« Étape n sur 5 » et barre segmentée ; **barre de prix collante en bas, à
+toutes les étapes**.
+
+Ce qui a changé de place, sans rien perdre :
+
+| Entrée utilisateur | Avant                                  | Après                                                                |
+| ------------------ | -------------------------------------- | -------------------------------------------------------------------- |
+| Surface            | champ nombre, défaut 80                | 4 types de logement + surface exacte repliée (`#surface`, défaut 80) |
+| Fréquence          | même écran que la surface              | écran dédié, prix affiché par formule                                |
+| Créneau            | liste à plat sur 3 semaines            | pastilles de jour (journées complètes barrées) + grille d'heures     |
+| Récapitulatif      | encart en tête de l'écran coordonnées  | écran dédié, 4 lignes modifiables d'un geste                         |
+| Accès et priorités | deux champs toujours visibles          | repliés derrière « Ajouter l'accès au logement et vos priorités »    |
+| Coordonnées        | état local de l'écran, perdu au retour | état du tunnel, conservé                                             |
 
 ### Étape 1 — Adresse
 
-| Élément | Détail |
-|---|---|
-| Champ `#address` | recherche BAN, anti-rebond 300 ms, minimum 3 caractères |
-| Indicateur de recherche | icône animée dans le champ |
-| Résultats | jusqu'à 6, badge « Desservie » / « Hors zone », bouton désactivé si hors zone |
-| Mention « Précisez le numéro » | si `isPreciseToHouseNumber` est faux |
-| Message hors zone | si tous les résultats sont hors zone, avec lien `/menage-a-domicile` |
-| Bascule | bouton « Saisir mon adresse manuellement », toujours présent |
-| Saisie manuelle | `#manual-street` (min. 3 car.), `#manual-commune` (16 communes du référentiel, **jamais une saisie libre**), boutons « Rechercher plutôt » et « Continuer » |
-| Effet du choix | déclenche `getQuote` **et** passe à l'étape 2 dans le même geste |
+| Élément                        | Détail                                                                                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Champ `#address`               | recherche BAN, anti-rebond 300 ms, minimum 3 caractères                                                                                                     |
+| Indicateur de recherche        | icône animée dans le champ                                                                                                                                  |
+| Résultats                      | jusqu'à 6, badge « Desservie » / « Hors zone », bouton désactivé si hors zone                                                                               |
+| Mention « Précisez le numéro » | si `isPreciseToHouseNumber` est faux                                                                                                                        |
+| Message hors zone              | si tous les résultats sont hors zone, avec lien `/menage-a-domicile`                                                                                        |
+| Bascule                        | bouton « Saisir mon adresse manuellement », toujours présent                                                                                                |
+| Saisie manuelle                | `#manual-street` (min. 3 car.), `#manual-commune` (16 communes du référentiel, **jamais une saisie libre**), boutons « Rechercher plutôt » et « Continuer » |
+| Effet du choix                 | déclenche `getQuote` **et** passe à l'étape 2 dans le même geste                                                                                            |
 
 Invariant : la liste manuelle ne contient que des communes desservies — il est
 structurellement impossible de réserver hors zone par ce chemin. Testé.
 
-### Étape 2 — Logement
+### Étape 2 — Logement ⟳
 
-| Élément | Détail |
-|---|---|
-| Champ `#surface` | nombre, 15 à 400, pas de 5, défaut **80** |
-| Aide | « La surface habitable, hors garage et cave. » |
-| Fréquence | 4 choix : `WEEKLY`, `BIWEEKLY` (**défaut**), `MONTHLY`, `ONE_OFF`, chacun avec un sous-titre |
-| Devis | durée estimée, tarif horaire, montant par intervention, mention minimum 2 h et « sans frais de déplacement » |
-| Actions | « Retour », « Voir les créneaux » (désactivée tant que le devis manque) |
-| Effet d'un changement | vide les créneaux et le créneau choisi, redemande le devis |
+| Élément               | Détail                                                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Types de logement     | Studio ou T2 (40 m²), T3 ou petite maison (70), Maison familiale (100), Grande maison (140) — appuyer choisit et avance     |
+| Champ `#surface`      | replié derrière « Je connais ma surface exacte » ; nombre, 15 à 400, pas de 5, défaut **80**, action « Choisir mon rythme » |
+| Aide                  | « La surface habitable, hors garage et cave. »                                                                              |
+| Effet d'un changement | vide les créneaux et le créneau choisi, redemande les devis                                                                 |
 
-### Étape 3 — Créneau
+### Étape 3 — Rythme ⟳
 
-| Élément | Détail |
-|---|---|
-| Regroupement | par journée civile française, en-tête au format `lundi 17 août` |
-| Créneaux | heure de début seule, format `HH:MM`, un seul intervenant par heure |
-| État vide | « Aucun créneau sur les trois prochaines semaines » + numéro de téléphone cliquable |
-| Actions | tap sur un créneau = passage à l'étape 4 ; bouton « Retour » |
+| Élément   | Détail                                                                                                        |
+| --------- | ------------------------------------------------------------------------------------------------------------- |
+| Fréquence | 4 choix : `WEEKLY`, `BIWEEKLY` (**défaut**), `MONTHLY`, `ONE_OFF`, chacun avec son sous-titre **et son prix** |
+| Devis     | les 4 sont demandés en parallèle à `getQuote` ; changer de rythme n'appelle plus le serveur                   |
+| Note      | les passages suivants sont calés après le premier ménage — la plateforme ne crée pas encore d'abonnement      |
 
-Horizon : 21 jours, 60 créneaux maximum.
+### Étape 4 — Créneau ⟳
 
-### Étape 4 — Coordonnées
+| Élément           | Détail                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| Pastilles de jour | les 21 jours de l'horizon ; **les journées sans disponibilité restent affichées, barrées et inactives** |
+| Créneaux          | heure de début seule, format `HH:MM`, un seul intervenant par heure                                     |
+| Préchargement     | lancé dès que le devis est connu, pendant l'étape « rythme »                                            |
+| État vide         | « Aucun créneau sur les trois prochaines semaines » + bouton d'appel                                    |
+| Réassurance       | annulation gratuite, dérivée de `CANCELLATION_TIERS[0]`                                                 |
 
-| Champ | Obligatoire | Notes |
-|---|---|---|
-| `#firstName` | oui | min. 2 caractères |
-| `#lastName` | oui | min. 2 caractères |
-| `#email` | oui | crée le compte |
-| `#phone` | oui | formats libres acceptés, normalisés serveur |
-| `#accessNotes` | non | « Étage, digicode, où sont les clés, présence d'un animal », max. 500 |
-| `#clientNotes` | non | « Priorités pour la première fois », max. 1000 |
+Horizon : 21 jours (`BOOKING_HORIZON_DAYS`), 60 créneaux maximum.
 
-Comprend un récapitulatif (jour, heure, adresse, durée, montant), la mention
-« Aucun paiement maintenant. Vous réglez après la prestation. », les boutons
-« Retour » et « Réserver ».
+### Étape 5 — Récapitulatif et coordonnées ⟳
 
-**Sur créneau pris (`code === "BUSINESS"`)** : retour automatique à l'étape 3 et
-message d'erreur. Ce comportement est non négociable.
+Quatre lignes modifiables — rendez-vous, adresse, logement, rythme — chacune
+renvoyant à son écran puis **revenant au récapitulatif**. Puis :
+
+| Champ          | Obligatoire | Notes                                                                            |
+| -------------- | ----------- | -------------------------------------------------------------------------------- |
+| `#firstName`   | oui         | min. 2 caractères                                                                |
+| `#lastName`    | oui         | min. 2 caractères                                                                |
+| `#email`       | oui         | crée le compte                                                                   |
+| `#phone`       | oui         | formats libres acceptés, normalisés serveur                                      |
+| `#accessNotes` | non         | ⟳ replié · « Étage, digicode, où sont les clés, présence d'un animal », max. 500 |
+| `#clientNotes` | non         | ⟳ replié · « Priorités pour la première fois », max. 1000                        |
+
+Puis trois lignes de réassurance — rien à payer aujourd'hui, annulation
+gratuite jusqu'à 24 h, intervenant vérifié — et l'action primaire, libellée
+« Réserver <jour> à <heure> ».
+
+**Sur créneau pris (`code === "BUSINESS"`)** : retour automatique au choix du
+créneau et message d'erreur, **coordonnées conservées**. Ce comportement est
+non négociable.
 
 ### Écran de confirmation
 
@@ -287,10 +318,20 @@ de confirmation avec le nom de l'intervenant, numéro de téléphone.
 
 ## 4. Composants transverses
 
-### 4.1 `SiteHeader`
+### 4.1 `SiteHeader` ⟳
 
-Logo, liens `Tarifs` / `Conseils` / `À propos` (masqués sous 640 px), bouton
-`Réserver`, téléphone (icône seule sous 640 px, intitulé accessible complet).
+Variante `site` (défaut) : logo, liens `Tarifs` / `Conseils` / `À propos`
+(masqués sous 640 px), bouton `Réserver`, téléphone (icône seule sous 640 px,
+intitulé accessible complet).
+
+Variante `tunnel`, employée sur `/reserver` : logo et téléphone seuls. Un seul
+modèle de navigation à la fois — pendant une réservation, les liens de contenu
+ne servent qu'à en sortir.
+
+### 4.1 bis `CommuneStart` ⟳
+
+Bloc « Où habitez-vous ? » : seize liens vers `/reserver?commune=<slug>`.
+Aucun code client. Présent sur `/`, `/tarifs` et `/menage-a-domicile`.
 
 ### 4.2 `SiteFooter`
 
@@ -306,13 +347,13 @@ préremplissable par commune).
 
 ### 4.4 `LeadForm`
 
-| Champ | Obligatoire |
-|---|---|
-| `#name` | oui |
-| `#phone` | oui, formats libres |
+| Champ           | Obligatoire          |
+| --------------- | -------------------- |
+| `#name`         | oui                  |
+| `#phone`        | oui, formats libres  |
 | `#communeInsee` | non, préremplissable |
-| `#email` | non |
-| `#message` | non |
+| `#email`        | non                  |
+| `#message`      | non                  |
 
 Protections à conserver **intégralement** : champ piège `website` invisible,
 horodatage `renderedAt` relevé après montage, rejet silencieux sous 3 secondes
@@ -329,14 +370,14 @@ Bandeau non fermable affiché quand `NEXT_PUBLIC_DEMO_STATIQUE` est vrai.
 
 Aucune de ces signatures ne change pendant la refonte.
 
-| Action | Fichier | Entrée | Sortie |
-|---|---|---|---|
-| `searchAddress` | `src/app/reserver/actions.ts` | `{ query: string ≥ 3 }` | `AddressChoice[]`, hors zone inclus |
-| `getQuote` | idem | `{ surfaceSqm 15–400, frequency, optionSlugs ≤ 6 }` | `{ durationMinutes, hourlyRateCents, grossAmountCents, taxCreditAmountCents, netAmountCents }` |
-| `getSlots` | idem | `{ lat, lng, inseeCode, durationMinutes 120–360 }` | `{ start, end }[]` en ISO UTC |
-| `confirmBooking` | idem | 18 champs, cf. `confirmSchema` | `{ bookingId, startAt, endAt, grossAmountCents, netAmountCents }` |
-| `submitLead` | `src/app/etre-rappele/actions.ts` | nom, téléphone, email, commune, message, source, piège, horodatage | `{ received: true }` |
-| `requestMagicLink` | `src/app/(auth)/actions.ts` | `{ email, callbackUrl }` | `{ sent: true, throttled }` |
+| Action             | Fichier                           | Entrée                                                             | Sortie                                                                                         |
+| ------------------ | --------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `searchAddress`    | `src/app/reserver/actions.ts`     | `{ query: string ≥ 3 }`                                            | `AddressChoice[]`, hors zone inclus                                                            |
+| `getQuote`         | idem                              | `{ surfaceSqm 15–400, frequency, optionSlugs ≤ 6 }`                | `{ durationMinutes, hourlyRateCents, grossAmountCents, taxCreditAmountCents, netAmountCents }` |
+| `getSlots`         | idem                              | `{ lat, lng, inseeCode, durationMinutes 120–360 }`                 | `{ start, end }[]` en ISO UTC                                                                  |
+| `confirmBooking`   | idem                              | 18 champs, cf. `confirmSchema`                                     | `{ bookingId, startAt, endAt, grossAmountCents, netAmountCents }`                              |
+| `submitLead`       | `src/app/etre-rappele/actions.ts` | nom, téléphone, email, commune, message, source, piège, horodatage | `{ received: true }`                                                                           |
+| `requestMagicLink` | `src/app/(auth)/actions.ts`       | `{ email, callbackUrl }`                                           | `{ sent: true, throttled }`                                                                    |
 
 Interface `BookingBackend` (`src/lib/booking/backend.ts`) : quatre opérations,
 deux implémentations — server actions en production, `src/lib/demo/backend.ts`
@@ -352,17 +393,17 @@ couvertes par le compteur de non-régression d'écran. Elles ne doivent pas non
 plus être supprimées, ni **recevoir une interface sans arbitrage** — ce serait
 ajouter une fonctionnalité, ce que le gel interdit.
 
-| Capacité | Où | État |
-|---|---|---|
-| Prestations `grand-menage` et `fin-de-bail` | `prisma/seed.ts`, catalogue | Le tunnel force `menage-regulier` |
-| 7 options (repassage, vitres, four, réfrigérateur, placards, terrasse, vitrerie) | catalogue, `quoteFromCatalogue` | Le tunnel envoie toujours `optionSlugs: []` |
-| Ajustement manuel de la durée | `durationOverrideMinutes` dans `quoteFromCatalogue` | Absent du schéma de `getQuote` |
-| Abonnement récurrent | modèle `Subscription` | `createBooking` n'en crée pas ; la fréquence ne sert aujourd'hui qu'à choisir le tarif |
-| Barème d'annulation | `src/lib/pricing/cancellation.ts` | Affiché sur `/tarifs`, aucune action d'annulation |
-| Parrainage | `src/lib/referral/`, modèles `ReferralCode`, `Referral`, `ReferralReward` | Aucune interface, aucune server action |
-| Avis | modèle `Review` | Aucune interface |
-| Paiement | modèles `Payment`, `Payout`, `Invoice` | Phase 7, non commencée |
-| Crédit d'impôt | calculé et stocké systématiquement | Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED` |
+| Capacité                                                                         | Où                                                                        | État                                                                                   |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Prestations `grand-menage` et `fin-de-bail`                                      | `prisma/seed.ts`, catalogue                                               | Le tunnel force `menage-regulier`                                                      |
+| 7 options (repassage, vitres, four, réfrigérateur, placards, terrasse, vitrerie) | catalogue, `quoteFromCatalogue`                                           | Le tunnel envoie toujours `optionSlugs: []`                                            |
+| Ajustement manuel de la durée                                                    | `durationOverrideMinutes` dans `quoteFromCatalogue`                       | Absent du schéma de `getQuote`                                                         |
+| Abonnement récurrent                                                             | modèle `Subscription`                                                     | `createBooking` n'en crée pas ; la fréquence ne sert aujourd'hui qu'à choisir le tarif |
+| Barème d'annulation                                                              | `src/lib/pricing/cancellation.ts`                                         | Affiché sur `/tarifs`, aucune action d'annulation                                      |
+| Parrainage                                                                       | `src/lib/referral/`, modèles `ReferralCode`, `Referral`, `ReferralReward` | Aucune interface, aucune server action                                                 |
+| Avis                                                                             | modèle `Review`                                                           | Aucune interface                                                                       |
+| Paiement                                                                         | modèles `Payment`, `Payout`, `Invoice`                                    | Phase 7, non commencée                                                                 |
+| Crédit d'impôt                                                                   | calculé et stocké systématiquement                                        | Affiché seulement si `NEXT_PUBLIC_SAP_DECLARED`                                        |
 
 ---
 
