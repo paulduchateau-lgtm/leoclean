@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { CommuneStart } from "@/components/commune-start";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { clientEnv } from "@/lib/env";
@@ -252,6 +253,10 @@ export default function TarifsPage() {
             </div>
           ))}
         </div>
+
+        {/* La page qui répond à « combien ça coûte » n'ouvrait sur rien : on
+            y lisait un prix sans pouvoir en faire quoi que ce soit. */}
+        <CommuneStart className="mt-14" />
       </main>
 
       <SiteFooter />
