@@ -126,6 +126,30 @@ type ClientEnv = z.infer<typeof clientSchema>;
 
 const skipValidation = process.env.SKIP_ENV_VALIDATION === "1";
 
+/**
+ * Une variable vide vaut une variable absente.
+ *
+ * C'est la différence entre un fichier `.env` et une interface
+ * d'hébergeur : `.env.example` déclare `DIRECT_URL=""`, `NEXT_PUBLIC_APP_URL=""`
+ * et six autres à vide pour montrer qu'elles existent, et un champ laissé vide
+ * dans Vercel produit la même chose — une chaîne vide, jamais `undefined`. Or
+ * `optional()` n'accepte que `undefined`, et `default()` ne se déclenche que
+ * sur `undefined` : sans cette normalisation, copier `.env.example` en `.env`
+ * suffit à faire échouer le démarrage, et un champ laissé vide chez
+ * l'hébergeur casse le build sur une variable qu'on croyait facultative.
+ *
+ * Le cas s'est produit en production sur `NEXT_PUBLIC_SAP_DECLARED`.
+ */
+export function withoutEmptyValues(
+  source: Record<string, string | undefined>,
+): Record<string, string | undefined> {
+  const cleaned: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(source)) {
+    cleaned[key] = value === "" ? undefined : value;
+  }
+  return cleaned;
+}
+
 function parse<T extends z.ZodType>(schema: T, source: unknown, scope: string) {
   const result = schema.safeParse(source);
   if (!result.success) {
@@ -157,9 +181,11 @@ const rawClientEnv = {
   NEXT_PUBLIC_DEMO_STATIQUE: process.env.NEXT_PUBLIC_DEMO_STATIQUE,
 };
 
+const clientSource = withoutEmptyValues(rawClientEnv);
+
 export const clientEnv: ClientEnv = skipValidation
-  ? (clientSchema.partial().parse(rawClientEnv) as ClientEnv)
-  : parse(clientSchema, rawClientEnv, "publiques");
+  ? (clientSchema.partial().parse(clientSource) as ClientEnv)
+  : parse(clientSchema, clientSource, "publiques");
 
 const isServer = typeof window === "undefined";
 
@@ -182,9 +208,12 @@ let cachedServerEnv: ServerEnv | undefined;
 
 function loadServerEnv(): ServerEnv {
   if (!cachedServerEnv) {
+    const source = withoutEmptyValues(
+      process.env as Record<string, string | undefined>,
+    );
     cachedServerEnv = skipValidation
-      ? (serverSchema.partial().parse(process.env) as ServerEnv)
-      : parse(serverSchema, process.env, "serveur");
+      ? (serverSchema.partial().parse(source) as ServerEnv)
+      : parse(serverSchema, source, "serveur");
   }
   return cachedServerEnv;
 }
