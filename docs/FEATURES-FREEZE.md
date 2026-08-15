@@ -90,7 +90,7 @@ Blocs à conserver, dans l'ordre :
 6. tableau des tarifs (colonne crédit d'impôt conditionnée à
    `NEXT_PUBLIC_SAP_DECLARED`) + exemple 80 m² ;
 7. FAQ propre à la commune (JSON-LD `FAQPage`) ;
-8. CTA `Voir les créneaux à <commune>` → `/reserver` ;
+8. CTA `Voir les créneaux à <commune>` → ⟳ `/reserver?commune=<slug>` ;
 9. `ContactChannels` avec `communeName` (préremplit l'objet du mail et le
    message WhatsApp) ;
 10. `LeadForm` avec `defaultCommuneInsee` et `sourcePath` ;
@@ -99,8 +99,9 @@ Blocs à conserver, dans l'ordre :
 13. liens vers les 15 autres communes avec leur temps de trajet ;
 14. JSON-LD `Organization`, `Service`, `BreadcrumbList`, `FAQPage`.
 
-> **Perte de contexte connue** : le CTA mène à `/reserver` sans transmettre la
-> commune, alors que `BookingFunnel` accepte `defaultQuery`. Voir friction 2.
+> ⟳ **Corrigé le 15 août.** Le CTA transmet la commune, que le tunnel emploie
+> pour présélectionner la saisie manuelle et donner l'exemple du champ
+> d'adresse. Friction 9 de l'audit.
 
 ### 1.4 `/femme-de-menage/[commune]` et `/repassage/[commune]` — 12 pages
 
@@ -112,6 +113,7 @@ Blocs à conserver, dans l'ordre :
 | Appels serveur | `submitLead`                                                                                                                        |
 
 Contient : titre et intro propres à l'intention, sections éditoriales, FAQ,
+⟳ CTA `Voir les créneaux à <commune>` → `/reserver?commune=<slug>`,
 `ContactChannels`, `LeadForm` prérempli, maillage vers la page commune.
 
 ### 1.5 `/tarifs`
