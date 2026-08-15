@@ -5,6 +5,7 @@ import { z } from "zod";
 import { publicAction } from "@/lib/action-result";
 import { createBooking, listAvailableSlots } from "@/lib/booking/create";
 import { OutsideCoverageError } from "@/lib/booking/errors";
+import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
 import { quoteFromCatalogue } from "@/lib/catalogue";
 import { forOrganization, prisma } from "@/lib/db";
 import { searchAddresses } from "@/lib/geo/ban";
@@ -25,9 +26,6 @@ import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
  * quoi il suffirait d'éditer un champ caché pour acheter trois heures de
  * ménage à un euro. De même pour l'organisation, résolue côté serveur.
  */
-
-/** Horizon de réservation, en jours. */
-const BOOKING_HORIZON_DAYS = 21;
 
 const SERVICE_SLUG = "menage-regulier";
 

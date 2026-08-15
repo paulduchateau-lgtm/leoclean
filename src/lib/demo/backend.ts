@@ -3,6 +3,7 @@ import type {
   ConfirmationView,
   Frequency,
 } from "@/lib/booking/backend";
+import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
 import { searchAddresses } from "@/lib/geo/ban";
 import { quote } from "@/lib/pricing";
 import {
@@ -29,7 +30,7 @@ import { demoSchedules } from "./roster";
  * rendez-vous a été pris.
  */
 
-const HORIZON_DAYS = 21;
+const HORIZON_DAYS = BOOKING_HORIZON_DAYS;
 
 /**
  * Marge de coordination de la grille, en points de base.

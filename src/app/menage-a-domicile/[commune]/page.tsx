@@ -327,9 +327,12 @@ export default async function CommunePage({
               resté sans réponse.
             </p>
 
+            {/* La commune voyage avec le lien : sans elle, le tunnel
+                s'ouvrait sur un champ vide et il fallait retaper la ville dont
+                on venait de lire la page entière. */}
             <Link
-              href="/reserver"
-              className="mt-6 inline-flex items-center rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              href={`/reserver?commune=${commune.slug}`}
+              className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-primary px-6 font-medium text-primary-foreground transition-opacity hover:opacity-90"
             >
               Voir les créneaux à {commune.name}
             </Link>

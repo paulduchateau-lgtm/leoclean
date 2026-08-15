@@ -2,6 +2,7 @@ import { CheckIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CommuneStart } from "@/components/commune-start";
 import { SiteFooter } from "@/components/site-footer";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteHeader } from "@/components/site-header";
@@ -73,8 +74,8 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col">
         <section className="border-b border-border bg-secondary/40">
-          <div className="mx-auto w-full max-w-4xl px-6 py-16 sm:py-24">
-            <Badge variant="secondary" className="mb-6 gap-1.5">
+          <div className="mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
+            <Badge variant="secondary" className="mb-5 gap-1.5">
               <MapPinIcon className="size-3.5" aria-hidden />
               {COMMUNES.length} communes au sud de Bordeaux
             </Badge>
@@ -84,23 +85,34 @@ export default function Home() {
               chez vous.
             </h1>
 
-            <p className="mt-6 max-w-prose text-lg text-pretty text-muted-foreground">
+            {/* La réservation commence ici, pas trois écrans plus loin — et
+                avant la description, qui sert le référencement plus qu'elle
+                n'aide à décider. La repousser sous le bloc d'action est ce qui
+                fait tenir la première étape dans un écran de 390 pixels. */}
+            <CommuneStart className="mt-8" />
+
+            <p className="mt-8 max-w-prose text-pretty text-muted-foreground">
               {SITE.description}
             </p>
 
-            <ContactChannels className="mt-8 [&>div]:sm:justify-start" />
-
-            <p className="mt-6">
+            <p className="mt-6 text-sm text-muted-foreground">
+              À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)},
+              minimum {MINIMUM_BILLABLE_MINUTES / 60} heures. Du lundi au
+              vendredi de 8 h à 19 h, le samedi de 9 h à 13 h.{" "}
               <Link href="/tarifs" className="text-primary underline">
                 Voir le détail des tarifs
               </Link>
+              .
             </p>
 
-            <p className="mt-4 text-sm text-muted-foreground">
-              À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)},
-              minimum {MINIMUM_BILLABLE_MINUTES / 60} heures. Du lundi au
-              vendredi de 8 h à 19 h, le samedi de 9 h à 13 h.
-            </p>
+            {/* Les trois canaux directs restent, en second rang : ils servent
+                ceux qui ne réserveront pas seuls, pas ceux qui le feraient. */}
+            <div className="mt-10 border-t border-border/60 pt-6">
+              <p className="mb-4 text-sm text-muted-foreground">
+                Vous préférez en parler à quelqu&apos;un ?
+              </p>
+              <ContactChannels className="[&>div]:sm:justify-start" />
+            </div>
           </div>
         </section>
 
