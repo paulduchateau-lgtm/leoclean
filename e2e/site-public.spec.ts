@@ -297,3 +297,94 @@ test.describe("cartes de partage", () => {
     );
   });
 });
+
+test.describe("maillage interne", () => {
+  /**
+   * Le pied de page exposait quarante liens depuis chaque page : l'autorité
+   * s'y répartissait en parts si petites qu'aucune page locale n'en
+   * bénéficiait. Ce qui se vérifie ici est la concentration, pas l'esthétique.
+   */
+  test("le pied de page ne dilue plus", async ({ page }) => {
+    await page.goto("/menage-a-domicile/leognan");
+    const liens = page.locator("footer a");
+    // Six communes, la page pivot, quelques pages de contenu, le téléphone et
+    // l'email : on reste très en deçà des quarante d'avant.
+    expect(await liens.count()).toBeLessThanOrEqual(15);
+
+    await expect(
+      page.getByRole("link", { name: /16 communes desservies/ }).first(),
+    ).toBeVisible();
+  });
+
+  test("chaque page commune lie vers ses voisines, pas vers les quinze autres", async ({
+    page,
+  }) => {
+    await page.goto("/menage-a-domicile/martillac");
+    const section = page.locator("main section", {
+      has: page.getByRole("heading", { name: /Autour de Martillac/ }),
+    });
+
+    const voisines = section.locator("a[href^='/menage-a-domicile/']");
+    expect(await voisines.count()).toBe(3);
+    await expect(section).toContainText("Saint-Médard-d'Eyrans");
+    await expect(section).not.toContainText("Villenave-d'Ornon");
+  });
+
+  test("la page pivot porte le maillage exhaustif", async ({ page }) => {
+    await page.goto("/zones-desservies");
+
+    const lignes = page.locator("main table tbody tr");
+    expect(await lignes.count()).toBe(16);
+
+    // Les seize communes y figurent, et celles qui ont une page y sont liées.
+    for (const commune of COMMUNES) {
+      await expect(
+        page.locator(`main a[href="/menage-a-domicile/${commune}"]`),
+      ).toHaveCount(1);
+    }
+  });
+
+  test("la page pivot est au sitemap", async ({ request }) => {
+    const body = await (await request.get("/sitemap.xml")).text();
+    expect(body).toContain("/zones-desservies");
+  });
+});
+
+test.describe("données structurées", () => {
+  test("déclare la durée minimale avec le tarif", async ({ page }) => {
+    // Un prix horaire seul laisse croire qu'une heure suffit, alors que le
+    // minimum facturé est de deux.
+    await page.goto("/tarifs");
+
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .innerText();
+    const data = JSON.parse(raw) as Record<string, unknown>[];
+
+    const service = data.find((entry) => entry["@type"] === "Service");
+    const offers = service?.offers as { eligibleQuantity?: unknown }[];
+    expect(offers.length).toBeGreaterThan(0);
+    for (const offer of offers) {
+      expect(offer.eligibleQuantity).toMatchObject({
+        "@type": "QuantitativeValue",
+        minValue: 2,
+        unitCode: "HUR",
+      });
+    }
+  });
+
+  test("annonce une fourchette de prix sur l'établissement", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .innerText();
+    const data = JSON.parse(raw) as Record<string, unknown>[];
+
+    const business = data.find(
+      (entry) => entry["@type"] === "HomeAndConstructionBusiness",
+    );
+    expect(business?.priceRange).toBe("€€");
+  });
+});

@@ -3,13 +3,30 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 
 import { publishedCommunes } from "@/lib/communes-content";
-import { publishedIntentionPages } from "@/lib/intentions";
 import { SITE } from "@/lib/site";
-import { MONTESQUIEU_COMMUNES, TERRITORY_POPULATION } from "@/lib/territory";
+import {
+  COMMUNES,
+  MONTESQUIEU_COMMUNES,
+  TERRITORY_POPULATION,
+} from "@/lib/territory";
+
+/**
+ * Communes mises en avant dans le pied de page.
+ *
+ * Six, et non seize. Le pied de page exposait quarante liens depuis chaque
+ * page du site : l'autorité s'y répartissait en parts si petites qu'aucune
+ * page locale n'en bénéficiait, et la liste ne servait de toute façon à
+ * personne. Les six retenues sont les plus peuplées du territoire — c'est là
+ * que se trouve la demande — et `/zones-desservies` porte désormais le
+ * maillage exhaustif, depuis une page unique.
+ */
+const FOOTER_COMMUNE_COUNT = 6;
 
 export function SiteFooter() {
-  const published = publishedCommunes();
-  const intentions = publishedIntentionPages();
+  const published = publishedCommunes()
+    .slice()
+    .sort((a, b) => b.commune.population - a.commune.population)
+    .slice(0, FOOTER_COMMUNE_COUNT);
 
   return (
     <footer className="mt-auto border-t border-border bg-secondary/40">
@@ -50,25 +67,25 @@ export function SiteFooter() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  href="/zones-desservies"
+                  className="font-medium text-brand hover:underline"
+                >
+                  Les {COMMUNES.length} communes desservies
+                </Link>
+              </li>
             </ul>
           </nav>
         </div>
 
-        <nav aria-label="Autres prestations" className="mt-8">
-          <p className="text-sm font-medium">Autres prestations</p>
-          <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            {intentions.map(({ intention, commune }) => (
-              <li key={`${intention.slug}-${commune.slug}`}>
-                <Link
-                  href={`/${intention.slug}/${commune.slug}`}
-                  className="hover:text-brand"
-                >
-                  {intention.slug === "repassage"
-                    ? `Repassage à ${commune.name}`
-                    : `Femme de ménage à ${commune.name}`}
-                </Link>
-              </li>
-            ))}
+        <nav aria-label="Autres pages" className="mt-8">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <li>
+              <Link href="/tarifs" className="hover:text-brand">
+                Tarifs
+              </Link>
+            </li>
             <li>
               <Link href="/blog" className="hover:text-brand">
                 Conseils ménage

@@ -1,3 +1,4 @@
+import { MINIMUM_BILLABLE_MINUTES } from "@/lib/pricing/public-grid";
 import { SITE, SOCIAL_PROFILES, absoluteUrl } from "@/lib/site";
 import { COMMUNES, coverageRadiusKm } from "@/lib/territory";
 
@@ -99,6 +100,12 @@ export function organizationJsonLd(): JsonLd {
     currenciesAccepted: SITE.currency,
     paymentAccepted: "Carte bancaire",
     /**
+     * Fourchette de prix, dans la notation que Google attend — un nombre de
+     * symboles, pas un montant. Deux symboles pour un service à 29–33 €/h :
+     * la valeur exacte vit dans les `Offer`, celle-ci n'est qu'un repère.
+     */
+    priceRange: "€€",
+    /**
      * Horaires de joignabilité, pas d'ouverture d'un local : Léo Clean n'a pas
      * de guichet. On décrit quand on répond au téléphone.
      */
@@ -155,6 +162,19 @@ export function serviceJsonLd(
         unitCode: "HUR",
         unitText: offer.unitLabel,
         valueAddedTaxIncluded: true,
+      },
+      /**
+       * Durée minimale facturée, déclarée avec l'offre.
+       *
+       * Sans elle, un prix horaire seul laisse croire qu'une heure suffit,
+       * alors que le minimum est de deux — une promesse implicite que le
+       * tunnel dément ensuite. La valeur vient de la grille publique.
+       */
+      eligibleQuantity: {
+        "@type": "QuantitativeValue",
+        minValue: MINIMUM_BILLABLE_MINUTES / 60,
+        unitCode: "HUR",
+        unitText: "heure",
       },
       availableAtOrFrom: { "@id": ORGANIZATION_ID },
     })),

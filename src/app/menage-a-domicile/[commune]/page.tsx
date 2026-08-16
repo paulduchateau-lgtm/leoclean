@@ -14,7 +14,6 @@ import { fillTemplate, publishedIntentionPages } from "@/lib/intentions";
 import {
   PUBLISHED_COMMUNE_SLUGS,
   getPublishedCommune,
-  publishedCommunes,
 } from "@/lib/communes-content";
 import { formatEuros, formatHourlyRate } from "@/lib/pricing";
 import {
@@ -31,7 +30,7 @@ import {
   serviceJsonLd,
 } from "@/lib/seo/json-ld";
 import { pageMetadata } from "@/lib/seo/metadata";
-import { COMMUNES } from "@/lib/territory";
+import { COMMUNES, nearestCommunes } from "@/lib/territory";
 
 /**
  * Page locale « ménage à domicile à <commune> ».
@@ -91,9 +90,18 @@ export default async function CommunePage({
 
   const { commune, content } = published;
   const path = `/menage-a-domicile/${commune.slug}`;
-  const others = publishedCommunes().filter(
-    (entry) => entry.commune.slug !== commune.slug,
-  );
+  /**
+   * Maillage latéral : les trois communes les plus proches, pas les quinze
+   * autres.
+   *
+   * Lier chaque page locale à toutes les autres répartit l'autorité en parts
+   * égales et n'aide personne : quelqu'un qui lit la page de Martillac ne
+   * cherche pas Villenave-d'Ornon. Le reste du territoire reste atteignable
+   * par la page `/zones-desservies`, qui est la cible du maillage exhaustif.
+   */
+  const neighbours = nearestCommunes(commune, 3)
+    .map((entry) => getPublishedCommune(entry.slug))
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== undefined);
   const siblingIntentions = publishedIntentionPages().filter(
     (entry) => entry.commune.slug === commune.slug,
   );
@@ -378,10 +386,10 @@ export default async function CommunePage({
 
         <section className="mx-auto w-full max-w-4xl px-6 py-12">
           <h2 className="text-xl font-extrabold tracking-tight">
-            Nous intervenons aussi
+            Autour de {commune.name}
           </h2>
           <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-            {others.map(({ commune: other, content: otherContent }) => (
+            {neighbours.map(({ commune: other, content: otherContent }) => (
               <li key={other.slug}>
                 <Link
                   href={`/menage-a-domicile/${other.slug}`}
@@ -399,6 +407,11 @@ export default async function CommunePage({
               </li>
             ))}
           </ul>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <Link href="/zones-desservies" className="text-brand underline">
+              Voir les {COMMUNES.length} communes desservies
+            </Link>
+          </p>
         </section>
       </main>
 

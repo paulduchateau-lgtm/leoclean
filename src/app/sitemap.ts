@@ -30,6 +30,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    // Page pivot du maillage : c'est elle qui porte la liste exhaustive
+    // depuis que le pied de page n'en montre plus que six.
+    {
+      url: absoluteUrl("/zones-desservies"),
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
     ...publishedCommunes().map(({ commune }) => ({
       url: absoluteUrl(`/menage-a-domicile/${commune.slug}`),
       lastModified,

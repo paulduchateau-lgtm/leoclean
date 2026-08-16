@@ -12,6 +12,7 @@ import {
   getCommuneBySlug,
   haversineKm,
   isCoveredInsee,
+  nearestCommunes,
 } from "./territory";
 
 describe("référentiel des communes", () => {
@@ -145,5 +146,51 @@ describe("géométrie", () => {
     const radius = coverageRadiusKm();
     expect(radius).toBeGreaterThan(10);
     expect(radius).toBeLessThan(20);
+  });
+});
+
+describe("voisinage", () => {
+  /**
+   * Le maillage latéral s'appuie sur cette fonction : chaque page locale lie
+   * vers ses voisines plutôt que vers les quinze autres. Un maillage qui
+   * expose tout depuis partout dilue la transmission d'autorité au lieu de la
+   * concentrer.
+   */
+  it("ne se compte jamais elle-même", () => {
+    for (const commune of COMMUNES) {
+      const voisines = nearestCommunes(commune, 3);
+      expect(voisines.map((entry) => entry.slug)).not.toContain(commune.slug);
+    }
+  });
+
+  it("rend exactement le nombre demandé", () => {
+    for (const commune of COMMUNES) {
+      expect(nearestCommunes(commune, 3)).toHaveLength(3);
+    }
+  });
+
+  it("les classe de la plus proche à la plus lointaine", () => {
+    for (const commune of COMMUNES) {
+      const distances = nearestCommunes(commune, 5).map((voisine) =>
+        haversineKm(commune.lat, commune.lng, voisine.lat, voisine.lng),
+      );
+      expect(distances).toEqual([...distances].sort((a, b) => a - b));
+    }
+  });
+
+  it("donne des voisinages qui se tiennent sur le terrain", () => {
+    // Martillac et Saint-Médard-d'Eyrans se touchent : chacune doit figurer
+    // dans le voisinage immédiat de l'autre.
+    const martillac = getCommuneBySlug("martillac")!;
+    expect(nearestCommunes(martillac, 3).map((c) => c.slug)).toContain(
+      "saint-medard-d-eyrans",
+    );
+
+    // Cabanac-et-Villagrains est la plus méridionale du territoire :
+    // Villenave-d'Ornon, tout au nord, n'a rien à faire dans son voisinage.
+    const cabanac = getCommuneBySlug("cabanac-et-villagrains")!;
+    const voisines = nearestCommunes(cabanac, 3).map((c) => c.slug);
+    expect(voisines).toContain("saint-morillon");
+    expect(voisines).not.toContain("villenave-d-ornon");
   });
 });

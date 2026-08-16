@@ -304,6 +304,34 @@ export function coverageRadiusKm(): number {
   return Math.ceil(Math.max(...distances));
 }
 
+/**
+ * Communes les plus proches d'une commune donnée, par distance à vol d'oiseau.
+ *
+ * Sert le maillage latéral : chaque page locale lie vers ses voisines, et non
+ * vers les quinze autres. Un pied de page ou un bloc qui expose tout le
+ * référentiel depuis chaque page dilue la transmission d'autorité au lieu de
+ * la concentrer, et n'aide personne — quelqu'un qui lit la page de Martillac ne
+ * cherche pas Villenave-d'Ornon, il cherche Saint-Médard-d'Eyrans.
+ *
+ * « Voisine » s'entend ici au sens du centre le plus proche, non de la
+ * limite administrative commune : c'est une approximation, mais elle est
+ * dérivée du référentiel plutôt que saisie à la main, donc elle ne peut pas
+ * se périmer.
+ */
+export function nearestCommunes(
+  origin: Commune,
+  count: number,
+): readonly Commune[] {
+  return COMMUNES.filter((commune) => commune.slug !== origin.slug)
+    .map((commune) => ({
+      commune,
+      km: haversineKm(origin.lat, origin.lng, commune.lat, commune.lng),
+    }))
+    .sort((a, b) => a.km - b.km)
+    .slice(0, count)
+    .map((entry) => entry.commune);
+}
+
 const EARTH_RADIUS_KM = 6371;
 
 /**
