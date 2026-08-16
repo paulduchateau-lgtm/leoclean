@@ -18,6 +18,7 @@ const PRIVATE_PATHS = [
   "/api/",
   "/connexion",
   "/mon-compte",
+  "/mon-espace",
   "/intervenant",
   "/gestion",
   "/administration",

@@ -26,6 +26,7 @@ const APP_PREFIXES = [
   "/reserver",
   "/connexion",
   "/mon-compte",
+  "/mon-espace",
   "/intervenant",
   "/gestion",
   "/administration",

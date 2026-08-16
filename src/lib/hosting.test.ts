@@ -24,6 +24,7 @@ describe("appartenance d'un chemin", () => {
     "/connexion",
     "/connexion/verification",
     "/mon-compte",
+    "/mon-espace",
     "/intervenant/missions",
     "/api/auth/callback/resend",
   ])("range « %s » du côté de l'application", (path) => {

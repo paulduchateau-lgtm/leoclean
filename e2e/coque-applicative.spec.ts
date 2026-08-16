@@ -191,3 +191,84 @@ test.describe("retour arrière dans le tunnel", () => {
     await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
   });
 });
+
+test.describe("application installable", () => {
+  /**
+   * Une icône sur l'écran d'accueil est un rappel permanent, là où un favori
+   * n'est jamais rouvert. Pour un service employé une fois par semaine, c'est
+   * la différence entre un client qui revient et un client qui recherche
+   * « ménage Léognan » et tombe sur quelqu'un d'autre.
+   */
+  test("déclare un manifeste complet", async ({ request }) => {
+    const response = await request.get("/manifest.webmanifest");
+    expect(response.ok()).toBe(true);
+
+    const manifest = await response.json();
+    expect(manifest.short_name).toBe("Léo Clean");
+    expect(manifest.display).toBe("standalone");
+    expect(manifest.theme_color).toBe("#0B1B16");
+
+    const tailles = manifest.icons.map(
+      (icon: { sizes: string; purpose: string }) =>
+        `${icon.sizes} ${icon.purpose}`,
+    );
+    expect(tailles).toContain("192x192 any");
+    expect(tailles).toContain("512x512 any");
+    // Android découpe jusqu'à 20 % de chaque bord : sans variante masquable,
+    // le symbole se ferait rogner les pointes.
+    expect(tailles).toContain("512x512 maskable");
+  });
+
+  test("sert les icônes déclarées", async ({ request }) => {
+    for (const icone of [
+      "/icone-192.png",
+      "/icone-512.png",
+      "/icone-512-masquable.png",
+      "/apple-touch-icon.png",
+    ]) {
+      const response = await request.get(icone);
+      expect(response.status(), icone).toBe(200);
+      expect(response.headers()["content-type"]).toContain("image/png");
+    }
+  });
+
+  test("le service worker ne met en cache que ce qui est versionné", async ({
+    request,
+  }) => {
+    // Servir un créneau depuis un cache ferait réserver une heure qui n'existe
+    // plus, et le site paraîtrait fautif là où il se souviendrait seulement.
+    const body = await (await request.get("/sw.js")).text();
+
+    expect(body).toContain("/_next/static/");
+    expect(body).toContain("/hors-ligne");
+    expect(body).not.toContain("/reserver");
+  });
+
+  test("la page hors ligne donne un numéro, pas un site de secours", async ({
+    page,
+  }) => {
+    await page.goto("/hors-ligne");
+    await expect(
+      page.getByRole("link", { name: /Appeler le/ }),
+    ).toHaveAttribute("href", "tel:+33684363862");
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      /noindex/,
+    );
+  });
+
+  test("l'espace client exige une session", async ({ page }) => {
+    const response = await page.goto("/mon-espace");
+    // Le proxy renvoie vers la connexion en conservant la destination.
+    expect(new URL(page.url()).pathname).toBe("/connexion");
+    expect(new URL(page.url()).searchParams.get("callbackUrl")).toBe(
+      "/mon-espace",
+    );
+    expect(response?.ok()).toBe(true);
+  });
+
+  test("l'espace client n'est pas indexable", async ({ request }) => {
+    const body = await (await request.get("/robots.txt")).text();
+    expect(body).toContain("Disallow: /mon-espace");
+  });
+});

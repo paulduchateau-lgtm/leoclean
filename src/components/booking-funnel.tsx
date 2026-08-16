@@ -22,6 +22,7 @@ import {
 import { z } from "zod";
 
 import { ContactSheet } from "@/components/contact-sheet";
+import { InstallPrompt } from "@/components/install-prompt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -2645,6 +2646,11 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
           Appeler le {SITE.phone}
         </a>
       </div>
+
+      {/* C'est ici, et nulle part avant : proposer d'installer une
+          application à quelqu'un qui vient d'arriver revient à demander un
+          engagement avant d'avoir rendu le moindre service. */}
+      <InstallPrompt />
 
       <p className="text-center text-sm text-muted-foreground">
         Un email de confirmation part maintenant. Pour modifier ou annuler,

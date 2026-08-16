@@ -36,6 +36,15 @@ export default async function AccountPage() {
       <h1 className="text-3xl font-black tracking-tight">Mon compte</h1>
       <p className="mt-2 text-muted-foreground">{session.user.email}</p>
 
+      {/* Le compte porte les accès ; les réservations vivent à côté, sur la
+          page qu'un client ouvre réellement. */}
+      <Link
+        href="/mon-espace"
+        className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+      >
+        Voir mes réservations
+      </Link>
+
       <section className="mt-10">
         <h2 className="text-lg font-extrabold">Mes accès</h2>
 

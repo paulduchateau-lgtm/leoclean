@@ -586,6 +586,35 @@ en un geste depuis l'en-tête, en deux depuis la barre d'onglets. La reprise
 n'atteint la cible que depuis les derniers écrans — reprendre au deuxième
 demande évidemment de traverser les suivants.
 
+## Application installable et espace client
+
+**Le service worker n'existe que pour rendre l'application installable**, et il
+ne met en cache que ce qui est versionné par son nom — les fichiers de
+`/_next/static/`, où une URL désigne un contenu et un seul. Ni les créneaux ni
+les prix n'y passent : servir une heure périmée depuis un cache ferait réserver
+un rendez-vous qui n'existe plus, et le site paraîtrait fautif là où il se
+souviendrait seulement. Quand le réseau manque, `/hors-ligne` donne un numéro,
+pas un site de secours.
+
+**La proposition d'installation n'apparaît qu'après une réservation
+confirmée.** Le moment est toute la décision : la demander à quelqu'un qui vient
+d'arriver, c'est réclamer un engagement avant d'avoir rendu le moindre service,
+et un refus se paie — le navigateur ne repose plus la question de sitôt.
+L'événement du navigateur est capté au niveau du module, parce qu'il arrive au
+chargement de la page, bien avant que l'écran de confirmation existe.
+
+**L'espace client passe par le lien magique existant**, pas par un jeton signé
+maison : le dépôt a tranché pour des sessions en base, révocables
+immédiatement. Un second système d'authentification à côté du premier ne serait
+pas un raccourci, ce serait une deuxième surface à sécuriser.
+
+**La replanification et l'annulation en autonomie n'y sont pas**, et c'est
+délibéré : elles supposent des transitions de statut, une notification de
+l'intervenant et une reprise du créneau libéré, qui n'existent pas encore. Un
+bouton « Annuler » qui n'annulerait rien serait pire que son absence. Le barème
+est affiché, lu depuis le module de tarification, et l'annulation se fait par
+téléphone — ce qui est le fonctionnement réel.
+
 ## Vitrine statique de démonstration
 
 `npm run build:demo -- --base-path /depot` produit dans `out/` un site de

@@ -3,6 +3,7 @@ import { Figtree, Fraunces } from "next/font/google";
 
 import { AppTabBar } from "@/components/app-tab-bar";
 import { DemoBanner } from "@/components/demo-banner";
+import { ServiceWorker } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
 import { clientEnv } from "@/lib/env";
 import { SITE } from "@/lib/site";
@@ -65,6 +66,14 @@ export const metadata: Metadata = {
    * fournit sur toutes les pages.
    */
   twitter: { card: "summary_large_image" },
+  /*
+   * Icônes de l'application, versionnées dans `public/` et produites par
+   * `scripts/generer-icones.jsx` depuis le symbole du design system.
+   */
+  icons: {
+    icon: [{ url: "/icone-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   /**
    * La vitrine statique est un double intégral du futur site : seize pages
    * communes, douze pages d'intention, quatre articles, tous rédigés pour se
@@ -103,6 +112,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* La coque applicative se pose ici, une fois pour tout le site : elle
             décide seule des écrans où elle n'a rien à faire. */}
         <AppTabBar />
+        {/* La vitrine statique n'enregistre rien : c'est un double du site,
+            servi sous un chemin de dépôt. */}
+        <ServiceWorker enabled={!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE} />
         <Toaster position="top-center" />
       </body>
     </html>

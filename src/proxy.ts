@@ -21,6 +21,7 @@ import { canonicalHost, hostOf, isIndexableHost } from "@/lib/hosting";
 /** Espaces exigeant une session, du plus général au plus spécifique. */
 const PROTECTED_PREFIXES = [
   "/mon-compte",
+  "/mon-espace",
   "/intervenant",
   "/gestion",
   "/administration",
