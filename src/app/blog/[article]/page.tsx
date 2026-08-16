@@ -59,6 +59,7 @@ export async function generateMetadata({
     path,
     title: article.metaTitle ?? article.title,
     description: article.description,
+    summary: article.description,
     openGraphTitle: article.title,
     article: {
       publishedTime: article.publishedAt,

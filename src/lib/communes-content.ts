@@ -1,3 +1,14 @@
+import {
+  estimateDuration,
+  formatDuration,
+  formatEuros,
+  formatHourlyRate,
+} from "./pricing";
+import {
+  MINIMUM_BILLABLE_MINUTES,
+  PUBLIC_RATES,
+  STANDARD_SQM_PER_HOUR,
+} from "./pricing/public-grid";
 import { type Commune, getCommuneBySlug } from "./territory";
 
 /**
@@ -46,6 +57,68 @@ export interface CommuneContent {
   landmarks: readonly string[];
   /** Questions réellement posées, avec des réponses vérifiables. */
   faq: readonly { question: string; answer: string }[];
+}
+
+/**
+ * Surface de référence des réponses chiffrées, en mètres carrés.
+ *
+ * Quatre-vingts mètres carrés : la taille qu'on donne spontanément quand on
+ * décrit un logement, et celle des exemples de la page tarifs. Une réponse
+ * citable a besoin d'un chiffre, et un chiffre a besoin d'une hypothèse
+ * énoncée.
+ */
+const REFERENCE_SURFACE_SQM = 80;
+
+/**
+ * Bloc de réponses directes, en tête de page.
+ *
+ * Trois questions et leurs réponses, chacune **autosuffisante** : entité,
+ * chiffre et lieu dans la même phrase, de sorte qu'elle reste vraie citée hors
+ * de sa page. C'est la forme que les modèles de langage reprennent le plus
+ * fidèlement, et la seule qu'ils peuvent reprendre sans se tromper.
+ *
+ * La première est engendrée depuis la grille publique plutôt qu'écrite : un
+ * tarif recopié dans seize fiches finirait par diverger de celui qu'on
+ * facture, et c'est exactement le genre d'erreur qu'un modèle propagerait. Elle
+ * porte aussi le temps de trajet propre à la commune, faute de quoi seize
+ * pages porteraient le même paragraphe.
+ *
+ * Les deux suivantes sont éditoriales et vivent dans `faq` : ce sont les
+ * questions réellement posées, celles qu'aucun gabarit ne produit.
+ */
+export function directAnswers(
+  commune: Commune,
+  content: CommuneContent,
+): readonly { question: string; answer: string }[] {
+  const { durationMinutes } = estimateDuration({
+    surfaceSqm: REFERENCE_SURFACE_SQM,
+    service: {
+      sqmPerHour: STANDARD_SQM_PER_HOUR,
+      minDurationMinutes: MINIMUM_BILLABLE_MINUTES,
+    },
+  });
+
+  const regular = PUBLIC_RATES.find((rate) => rate.key === "REGULIER")!;
+  const oneOff = PUBLIC_RATES.find((rate) => rate.key === "PONCTUEL")!;
+  const total = Math.round((regular.hourlyRateCents * durationMinutes) / 60);
+
+  const proximity = commune.isHeadquarters
+    ? `${commune.name} est notre commune siège`
+    : `${commune.name} est à ${content.driveMinutesFromLeognan} minutes de route de notre siège de Léognan`;
+
+  return [
+    {
+      question: `Combien coûte un ménage à domicile à ${commune.name} ?`,
+      answer:
+        `Chez Léo Clean, le ménage à domicile à ${commune.name} coûte ` +
+        `${formatHourlyRate(regular.hourlyRateCents)} en formule régulière et ` +
+        `${formatHourlyRate(oneOff.hourlyRateCents)} en intervention ponctuelle, ` +
+        `avec un minimum de deux heures. Un logement de ${REFERENCE_SURFACE_SQM} m² ` +
+        `à ${commune.name} demande environ ${formatDuration(durationMinutes)}, ` +
+        `soit ${formatEuros(total)} en formule régulière, et ${proximity}.`,
+    },
+    ...content.faq,
+  ];
 }
 
 /** Communes publiées, par population décroissante. */

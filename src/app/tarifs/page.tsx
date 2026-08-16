@@ -25,6 +25,7 @@ import { COMMUNES } from "@/lib/territory";
 
 export const metadata: Metadata = pageMetadata({
   path: "/tarifs",
+  summary: `Le ménage à domicile Léo Clean coûte ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)} en formule régulière et ${formatHourlyRate(PUBLIC_RATES[1]!.hourlyRateCents)} en intervention ponctuelle, minimum ${MINIMUM_BILLABLE_MINUTES / 60} heures, au même tarif dans les ${COMMUNES.length} communes du sud de Bordeaux.`,
   title: "Tarifs du ménage à domicile",
   description:
     "Ménage à domicile à partir de 29 €/h en formule régulière, 33 €/h en ponctuel. Minimum 2 heures. Tarifs identiques dans les 16 communes desservies au sud de Bordeaux.",

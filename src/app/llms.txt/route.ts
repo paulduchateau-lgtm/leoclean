@@ -130,6 +130,7 @@ ${articleLinks}
 - [Tarifs détaillés](${absoluteUrl("/tarifs")})
 - [À propos de Léo Clean](${absoluteUrl("/a-propos")})
 - [Données ouvertes au format JSON](${absoluteUrl("/api/public/informations")})
+- [Texte intégral des pages publiques](${absoluteUrl("/llms-full.txt")})
 `;
 
   return new Response(body, {

@@ -28,7 +28,10 @@ import {
   TERRITORY_POPULATION,
 } from "@/lib/territory";
 
-export const metadata: Metadata = pageMetadata({ path: "/" });
+export const metadata: Metadata = pageMetadata({
+  path: "/",
+  summary: `Léo Clean fait le ménage à domicile dans ${COMMUNES.length} communes du sud de Bordeaux, en Gironde, à partir de ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, avec un intervenant attitré qui habite le secteur.`,
+});
 
 export const revalidate = 86_400;
 

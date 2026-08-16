@@ -7,6 +7,11 @@ import {
   getIntentionPage,
   intentionPages,
 } from "@/lib/intentions";
+import { formatHourlyRate } from "@/lib/pricing";
+import {
+  MINIMUM_BILLABLE_MINUTES,
+  PUBLIC_RATES,
+} from "@/lib/pricing/public-grid";
 import { pageMetadata } from "@/lib/seo/metadata";
 
 /**
@@ -17,6 +22,8 @@ import { pageMetadata } from "@/lib/seo/metadata";
  * six communes où la demande existe réellement, qui ne sont pas les mêmes que
  * pour l'intention « femme de ménage ».
  */
+
+const INTENTION_SUMMARY = "Faire repasser son linge à";
 
 const INTENTION = "repassage";
 
@@ -50,6 +57,10 @@ export async function generateMetadata({
     path,
     title,
     description,
+    summary:
+      `${INTENTION_SUMMARY} ${page.commune.name} (${page.commune.postalCode}) : ` +
+      `Léo Clean y intervient à partir de ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, ` +
+      `sans lien d'employeur, avec un minimum de ${MINIMUM_BILLABLE_MINUTES / 60} heures.`,
     openGraphDescription: page.local.text,
     // La carte est celle de la commune : voir `opengraph-image.tsx` à côté.
     hasOwnOpenGraphImage: true,

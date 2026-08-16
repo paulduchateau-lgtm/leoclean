@@ -13,6 +13,7 @@ import { clientEnv } from "@/lib/env";
 import { fillTemplate, publishedIntentionPages } from "@/lib/intentions";
 import {
   PUBLISHED_COMMUNE_SLUGS,
+  directAnswers,
   getPublishedCommune,
 } from "@/lib/communes-content";
 import { formatEuros, formatHourlyRate } from "@/lib/pricing";
@@ -71,6 +72,11 @@ export async function generateMetadata({
       `Léo Clean fait le ménage à domicile à ${commune.name} à partir de ` +
       `${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, avec un intervenant attitré ` +
       `qui habite le secteur. ${content.driveMinutesFromLeognan > 0 ? `À ${content.driveMinutesFromLeognan} minutes de notre siège de Léognan.` : "Notre commune siège."}`,
+    summary:
+      `Léo Clean fait le ménage à domicile à ${commune.name} (${commune.postalCode}) ` +
+      `à partir de ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, minimum ` +
+      `${MINIMUM_BILLABLE_MINUTES / 60} heures` +
+      `${content.driveMinutesFromLeognan > 0 ? `, à ${content.driveMinutesFromLeognan} minutes de son siège de Léognan` : ", sa commune siège"}.`,
     openGraphTitle: `Ménage à domicile à ${commune.name}`,
     openGraphDescription: content.intro,
     // La carte est celle de la commune : voir `opengraph-image.tsx` à côté.
@@ -107,6 +113,10 @@ export default async function CommunePage({
   );
 
   const showTaxCredit = clientEnv.NEXT_PUBLIC_SAP_DECLARED;
+  /* Les mêmes trois réponses alimentent le bloc de tête et le `FAQPage` :
+     un balisage qui annoncerait autre chose que la page est une divergence
+     que Google sanctionne. */
+  const answers = directAnswers(commune, content);
 
   const structuredData = [
     organizationJsonLd(),
@@ -126,7 +136,7 @@ export default async function CommunePage({
       { name: "Ménage à domicile", path: "/menage-a-domicile" },
       { name: commune.name, path },
     ]),
-    faqJsonLd(content.faq),
+    faqJsonLd(answers),
   ];
 
   return (
@@ -209,6 +219,30 @@ export default async function CommunePage({
         </section>
 
         <StickyBookingCta communeSlug={commune.slug} />
+
+        {/* Bloc de réponses directes, en tête de contenu.
+            Chaque réponse est autosuffisante — entité, chiffre et lieu dans la
+            même phrase — de sorte qu'elle reste vraie citée hors de sa page.
+            C'est ce que reprennent les modèles de langage, et le placer après
+            trois sections revenait à le leur cacher. */}
+        <section className="mx-auto w-full max-w-4xl px-6 pb-12">
+          <h2 className="text-2xl font-black tracking-tight">
+            Questions fréquentes à {commune.name}
+          </h2>
+
+          <div className="mt-6 space-y-6">
+            {answers.map((entry) => (
+              <div key={entry.question}>
+                {/* Question en h3, réponse en paragraphe : le couple le plus
+                    fiablement extrait par les modèles de langage. */}
+                <h3 className="text-lg font-extrabold">{entry.question}</h3>
+                <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
+                  {entry.answer}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <section className="mx-auto w-full max-w-4xl px-6 pb-12">
           <h2 className="text-2xl font-black tracking-tight">
@@ -301,25 +335,6 @@ export default async function CommunePage({
               en formule régulière. Nous estimons {STANDARD_SQM_PER_HOUR} m²
               traités par heure.
             </p>
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-4xl px-6 py-12">
-          <h2 className="text-2xl font-black tracking-tight">
-            Questions fréquentes à {commune.name}
-          </h2>
-
-          <div className="mt-6 space-y-6">
-            {content.faq.map((entry) => (
-              <div key={entry.question}>
-                {/* Question en h3, réponse en paragraphe : le couple le plus
-                    fiablement extrait par les modèles de langage. */}
-                <h3 className="text-lg font-extrabold">{entry.question}</h3>
-                <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
-                  {entry.answer}
-                </p>
-              </div>
-            ))}
           </div>
         </section>
 

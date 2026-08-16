@@ -388,3 +388,103 @@ test.describe("données structurées", () => {
     expect(business?.priceRange).toBe("€€");
   });
 });
+
+test.describe("référencement par les modèles de langage", () => {
+  test("chaque page indexable porte son résumé factuel", async ({ page }) => {
+    // Un modèle n'a pas de « position 1 » : il cite la phrase qui répond, ou
+    // il ne cite rien. Le résumé doit donc porter le service, le lieu et le
+    // chiffre clé, et rester vrai hors de sa page.
+    for (const path of [
+      "/",
+      "/tarifs",
+      "/zones-desservies",
+      "/menage-a-domicile/leognan",
+      "/femme-de-menage/gradignan",
+    ]) {
+      await page.goto(path);
+      const summary = await page
+        .locator('meta[name="llm-summary"]')
+        .getAttribute("content");
+
+      expect(summary, `llm-summary manquant sur ${path}`).toBeTruthy();
+      expect(summary).toContain("Léo Clean");
+      expect(summary, `pas de chiffre dans le résumé de ${path}`).toMatch(/\d/);
+
+      // Les deux noms circulent, aucun n'est normalisé : on pose les deux.
+      await expect(page.locator('meta[name="ai:content"]')).toHaveAttribute(
+        "content",
+        summary!,
+      );
+    }
+  });
+
+  test("le bloc de réponses ouvre le contenu de la page commune", async ({
+    page,
+  }) => {
+    await page.goto("/menage-a-domicile/gradignan");
+
+    const questions = page.locator("main h3");
+    // Trois questions, la première étant celle du prix.
+    expect(await questions.count()).toBeGreaterThanOrEqual(3);
+    await expect(questions.first()).toContainText(
+      "Combien coûte un ménage à domicile à Gradignan",
+    );
+
+    // La réponse se suffit à elle-même : entité, chiffres et lieu.
+    const answer = await questions.first().locator("+ p").innerText();
+    const normalise = answer.replace(/\s+/g, " ");
+    expect(normalise).toContain("Léo Clean");
+    expect(normalise).toContain("Gradignan");
+    expect(normalise).toContain("29 €/h");
+    expect(normalise).toContain("101,50 €");
+  });
+
+  test("le même balisage FAQPage que le bloc affiché", async ({ page }) => {
+    // Un balisage qui annonce autre chose que la page est une divergence que
+    // Google sanctionne.
+    await page.goto("/menage-a-domicile/gradignan");
+
+    const raw = await page
+      .locator('script[type="application/ld+json"]')
+      .innerText();
+    const data = JSON.parse(raw) as Record<string, unknown>[];
+    const faq = data.find((entry) => entry["@type"] === "FAQPage");
+    const questions = (faq?.mainEntity as { name: string }[]).map(
+      (entry) => entry.name,
+    );
+
+    const affichees = await page.locator("main h3").allInnerTexts();
+    for (const question of questions) {
+      expect(affichees).toContain(question);
+    }
+  });
+
+  test("llms-full.txt reprend le corps des pages", async ({ request }) => {
+    const body = (await (await request.get("/llms-full.txt")).text()).replace(
+      /[  ]/g,
+      " ",
+    );
+
+    // Chaque page commune y figure avec sa source et son contenu propre.
+    for (const commune of COMMUNES) {
+      expect(body).toContain(`/menage-a-domicile/${commune}`);
+    }
+    expect(body).toContain("## Ménage à domicile à Gradignan (33170)");
+    expect(body).toContain("Femme de ménage à");
+    expect(body).toContain("29 €/h");
+
+    // Les espaces connectés n'y sont pas : ils ne répondent à rien.
+    expect(body).not.toContain("/mon-compte");
+    expect(body).not.toContain("/connexion");
+  });
+
+  test("llms.txt renvoie vers le texte intégral", async ({ request }) => {
+    const body = await (await request.get("/llms.txt")).text();
+    expect(body).toContain("/llms-full.txt");
+  });
+
+  test("robots.txt nomme Bingbot comme les autres", async ({ request }) => {
+    const body = await (await request.get("/robots.txt")).text();
+    expect(body).toContain("Bingbot");
+  });
+});

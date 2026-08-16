@@ -21,6 +21,7 @@ import {
 
 export const metadata: Metadata = pageMetadata({
   path: "/menage-a-domicile",
+  summary: `Léo Clean fait le ménage à domicile dans ${COMMUNES.length} communes du sud de Bordeaux, de Villenave-d'Ornon à Cabanac-et-Villagrains, au même tarif partout.`,
   title: "Ménage à domicile au sud de Bordeaux",
   description:
     "Léo Clean fait le ménage à domicile dans 16 communes du sud de Bordeaux, de Villenave-d'Ornon à Saucats, à partir de 29 €/h.",

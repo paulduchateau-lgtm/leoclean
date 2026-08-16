@@ -39,6 +39,7 @@ import {
 
 export const metadata: Metadata = pageMetadata({
   path: "/zones-desservies",
+  summary: `Léo Clean dessert ${COMMUNES.length} communes du sud de Bordeaux, soit ${TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants, dans un rayon de ${coverageRadiusKm()} kilomètres autour de Léognan (33850).`,
   title: `Zones desservies : les ${COMMUNES.length} communes`,
   description:
     `Léo Clean fait le ménage à domicile dans ${COMMUNES.length} communes du sud de Bordeaux, ` +

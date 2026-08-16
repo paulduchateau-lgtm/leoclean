@@ -29,6 +29,7 @@ import {
  */
 export const metadata: Metadata = pageMetadata({
   path: "/a-propos",
+  summary: `Léo Clean est un service de ménage à domicile basé à ${SITE.address.city} (${SITE.address.postalCode}), en Gironde, qui met en relation des particuliers et des intervenants indépendants dans ${COMMUNES.length} communes du sud de Bordeaux.`,
   title: "À propos de Léo Clean",
   description:
     "Léo Clean est un service de ménage à domicile basé à Léognan, qui intervient dans 16 communes du sud de Bordeaux, en Gironde, dont les 13 de la Communauté de communes de Montesquieu.",

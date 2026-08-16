@@ -53,6 +53,7 @@ export function pageMetadata({
   openGraphTitle,
   openGraphDescription,
   hasOwnOpenGraphImage = false,
+  summary,
   article,
 }: {
   /** Chemin de la page, à partir de la racine du site. */
@@ -75,6 +76,18 @@ export function pageMetadata({
    */
   hasOwnOpenGraphImage?: boolean;
   /**
+   * Résumé factuel de la page, en une phrase.
+   *
+   * Destiné aux modèles de langage, qui n'ont pas de « position 1 » : ils
+   * citent la phrase qui répond, ou ils ne citent rien. Elle doit donc contenir
+   * le service, le lieu et le chiffre clé, et rester vraie hors de sa page.
+   *
+   * Deux noms pour la même valeur — `llm-summary` et `ai:content` — parce
+   * qu'aucun n'est normalisé et que les deux circulent. Le coût est nul, et
+   * une balise ignorée ne fait de mal à personne.
+   */
+  summary?: string;
+  /**
    * Dates d'un article, si la page en est un.
    *
    * Elles font passer `og:type` de `website` à `article`, le seul type qui
@@ -91,6 +104,9 @@ export function pageMetadata({
     ...(title === undefined ? {} : { title }),
     ...(description === undefined ? {} : { description }),
     alternates: { canonical: path },
+    ...(summary === undefined
+      ? {}
+      : { other: { "llm-summary": summary, "ai:content": summary } }),
     openGraph: {
       ...(article
         ? {

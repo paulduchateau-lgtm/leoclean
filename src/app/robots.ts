@@ -37,6 +37,9 @@ const LLM_CRAWLERS = [
   "CCBot",
   "Applebot-Extended",
   "meta-externalagent",
+  // Bing alimente Copilot autant que sa propre recherche : il est nommé ici
+  // plutôt que laissé à la règle générale, pour que l'intention se lise.
+  "Bingbot",
 ];
 
 export default function robots(): MetadataRoute.Robots {

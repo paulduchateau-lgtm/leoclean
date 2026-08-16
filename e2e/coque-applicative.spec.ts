@@ -110,7 +110,7 @@ test.describe("barre de rappel", () => {
     await expect(recall).not.toBeInViewport();
 
     await page
-      .getByRole("heading", { name: /Questions fréquentes/ })
+      .getByRole("heading", { name: /Autour de Gradignan/ })
       .scrollIntoViewIfNeeded();
     await expect(recall).toBeInViewport();
     await expect(recall).toContainText("À partir de");
@@ -131,7 +131,7 @@ test.describe("barre de rappel", () => {
     // Tant qu'elle est hors champ, la barre est `inert` : ses liens ne sont
     // pas dans l'arbre d'accessibilité, et c'est voulu.
     await page
-      .getByRole("heading", { name: /Questions fréquentes/ })
+      .getByRole("heading", { name: /Autour de Cestas/ })
       .scrollIntoViewIfNeeded();
 
     await expect(
@@ -144,7 +144,7 @@ test.describe("barre de rappel", () => {
 
     await page.goto("/menage-a-domicile/gradignan");
     await page
-      .getByRole("heading", { name: /Questions fréquentes/ })
+      .getByRole("heading", { name: /Autour de Gradignan/ })
       .scrollIntoViewIfNeeded();
     await expect(page.locator(RECALL_BAR)).toBeHidden();
   });

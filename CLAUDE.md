@@ -325,6 +325,27 @@ La note agrégée n'est émise que s'il existe des avis réels — la déclarer 
 est un motif de sanction manuelle. Le balisage est échappé à la sérialisation :
 un avis contenant `</script>` refermerait la balise.
 
+**Chaque page indexable porte son résumé factuel**, sous les deux noms qui
+circulent — `llm-summary` et `ai:content`, dont aucun n'est normalisé. Un
+modèle n'a pas de « position 1 » : il cite la phrase qui répond, ou il ne cite
+rien. Le résumé porte donc le service, le lieu et le chiffre clé, et reste vrai
+hors de sa page.
+
+**Le bloc de réponses directes ouvre le contenu d'une page commune**, avant la
+typologie d'habitat et les tarifs : le placer après trois sections revenait à
+le cacher à ce qui devait le lire. Trois questions en `<h3>`, chaque réponse
+autosuffisante. La première est **engendrée** depuis la grille publique plutôt
+qu'écrite — un tarif recopié dans seize fiches finit par diverger de celui
+qu'on facture, et c'est exactement l'erreur qu'un modèle propagerait — et elle
+porte le temps de trajet propre à la commune, faute de quoi seize pages
+porteraient le même paragraphe. Les mêmes trois questions alimentent le
+`FAQPage` : un balisage qui annoncerait autre chose que la page est une
+divergence sanctionnée.
+
+**`/llms-full.txt` donne le corps des pages, `/llms.txt` leur index.** Le
+premier est engendré depuis les mêmes modules que les pages : un fichier qui
+divergerait produirait des citations fausses, et personne ne vient vérifier.
+
 **Les robots des modèles de langage sont explicitement autorisés.** Être cité
 en réponse à « qui fait du ménage à Léognan ? » vaut davantage qu'un contenu
 verrouillé que personne ne reprend.

@@ -16,6 +16,7 @@ import { COMMUNES } from "@/lib/territory";
 
 export const metadata: Metadata = pageMetadata({
   path: "/blog",
+  summary: `Les conseils Léo Clean expliquent le prix, la durée et le cadre juridique du ménage à domicile dans les ${COMMUNES.length} communes du sud de Bordeaux.`,
   title: "Conseils ménage à domicile",
   description:
     "Prix, durées, statuts, état des lieux : les réponses aux questions qu'on se pose avant de faire appel à quelqu'un pour son ménage, dans le sud de Bordeaux.",

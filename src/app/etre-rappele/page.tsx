@@ -12,10 +12,12 @@ import {
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { SITE } from "@/lib/site";
 import { COMMUNES } from "@/lib/territory";
 
 export const metadata: Metadata = pageMetadata({
   path: "/etre-rappele",
+  summary: `Léo Clean rappelle dans la journée pour organiser un ménage à domicile dans les ${COMMUNES.length} communes du sud de Bordeaux, au ${SITE.phone}.`,
   title: "Être rappelé",
   description:
     "Laissez votre numéro, nous vous rappelons dans la journée pour organiser votre ménage à domicile au sud de Bordeaux.",

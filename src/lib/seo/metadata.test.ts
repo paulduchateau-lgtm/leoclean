@@ -121,3 +121,23 @@ describe("article", () => {
     });
   });
 });
+
+describe("résumé pour les modèles de langage", () => {
+  it("pose les deux noms de balise pour une même valeur", () => {
+    // Aucun n'est normalisé, les deux circulent, et une balise ignorée ne
+    // fait de mal à personne.
+    const metadata = pageMetadata({
+      path: "/tarifs",
+      summary: "Léo Clean fait le ménage à domicile à partir de 29 €/h.",
+    });
+
+    expect(metadata.other).toEqual({
+      "llm-summary": "Léo Clean fait le ménage à domicile à partir de 29 €/h.",
+      "ai:content": "Léo Clean fait le ménage à domicile à partir de 29 €/h.",
+    });
+  });
+
+  it("n'en pose aucune quand la page n'a rien à résumer", () => {
+    expect(pageMetadata({ path: "/tarifs" })).not.toHaveProperty("other");
+  });
+});
