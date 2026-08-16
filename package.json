@@ -19,6 +19,7 @@
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:init": "tsx prisma/init.ts",
     "db:studio": "prisma studio",
     "build:demo": "node scripts/build-demo-statique.mjs"
   },

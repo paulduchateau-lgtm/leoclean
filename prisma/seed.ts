@@ -429,7 +429,42 @@ function addressData(
   };
 }
 
+/**
+ * Refus de tronquer une base qui n'est pas jetable.
+ *
+ * Ce script commence par vider **toutes** les tables. C'est légitime sur une
+ * base de développement, et catastrophique ailleurs — or rien ne distinguait
+ * les deux : une variable d'environnement mal pointée suffisait à effacer une
+ * production. Les tests d'intégration portent la même garde depuis toujours,
+ * il n'y avait aucune raison que celui-ci en soit dispensé.
+ *
+ * Une base locale est reconnue à son hôte. Pour tout le reste, il faut le dire
+ * explicitement — et l'écrire est déjà une occasion de se raviser.
+ */
+function refuserSiBaseNonJetable(): void {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error("DATABASE_URL est absente : rien à peupler.");
+  }
+
+  const hote = new URL(url).hostname;
+  const estLocale =
+    hote === "localhost" || hote === "127.0.0.1" || hote === "::1";
+
+  if (estLocale || process.env.SEED_AUTORISE_LA_PURGE === "1") {
+    return;
+  }
+
+  throw new Error(
+    `Refus de peupler « ${hote} » : ce script tronque toutes les tables.\n` +
+      `Pour installer une base distante sans rien effacer : npm run db:init\n` +
+      `Pour forcer malgré tout : SEED_AUTORISE_LA_PURGE=1 npm run db:seed`,
+  );
+}
+
 async function main(): Promise<void> {
+  refuserSiBaseNonJetable();
+
   console.log("Nettoyage des tables…");
   const tables = [
     "AuditLog",
