@@ -6,6 +6,7 @@ import { publicAction } from "@/lib/action-result";
 import type { CleanerCardView } from "@/lib/booking/backend";
 import { bookingCalendar } from "@/lib/booking/ics";
 import { createBooking, listAvailableSlots } from "@/lib/booking/create";
+import { SlotTakenError } from "@/lib/booking/errors";
 import { OutsideCoverageError } from "@/lib/booking/errors";
 import {
   BOOKING_HORIZON_DAYS,
@@ -203,6 +204,17 @@ const confirmSchema = z.object({
   frequency: z.enum(["ONE_OFF", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
   optionSlugs: z.array(z.string()).max(6).default([]),
   startAt: z.iso.datetime(),
+  /**
+   * Créneaux que le client accepte à défaut du sien, dans son ordre de
+   * préférence.
+   *
+   * Ce n'est pas un confort : entre le moment où la liste s'affiche et celui
+   * où le client confirme, une autre réservation peut prendre le créneau, et
+   * la lecture des disponibilités ne voit pas les transactions en cours —
+   * seule l'écriture les rencontre. Sans repli, ce client-là recommence tout
+   * son parcours pour une place perdue à la dernière seconde.
+   */
+  alternateStarts: z.array(z.iso.datetime()).max(4).default([]),
   clientNotes: z.string().trim().max(1000).optional(),
 });
 
@@ -327,23 +339,58 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
   });
 
   try {
-    const created = await createBooking(db, organization, {
-      organizationId,
-      clientProfileId: clientProfile.id,
-      addressId: address.id,
-      serviceSlug: SERVICE_SLUG,
-      optionSlugs: input.optionSlugs,
-      surfaceSqm: input.surfaceSqm,
-      frequency: input.frequency,
-      scheduledStart: new Date(input.startAt),
-      clientNotes: input.clientNotes ?? null,
-    });
+    /*
+     * Le créneau préféré d'abord, puis les replis dans l'ordre donné.
+     *
+     * On ne rattrape que `SlotTakenError` : c'est le seul refus qu'un autre
+     * créneau peut résoudre. Une adresse hors zone ou un devis impossible
+     * échoueraient de la même façon sur les quatre suivants, et les essayer
+     * ne ferait que retarder un message que le client doit lire tout de suite.
+     *
+     * Les doublons sont écartés, faute de quoi un client qui aurait coché son
+     * propre créneau préféré ferait tenter deux fois la même écriture.
+     */
+    const candidates = [
+      input.startAt,
+      ...input.alternateStarts.filter((start) => start !== input.startAt),
+    ];
+
+    let created: Awaited<ReturnType<typeof createBooking>> | null = null;
+    let usedStart = input.startAt;
+
+    for (const [index, start] of candidates.entries()) {
+      try {
+        created = await createBooking(db, organization, {
+          organizationId,
+          clientProfileId: clientProfile.id,
+          addressId: address.id,
+          serviceSlug: SERVICE_SLUG,
+          optionSlugs: input.optionSlugs,
+          surfaceSqm: input.surfaceSqm,
+          frequency: input.frequency,
+          scheduledStart: new Date(start),
+          clientNotes: input.clientNotes ?? null,
+        });
+        usedStart = start;
+        break;
+      } catch (error) {
+        const lastCandidate = index === candidates.length - 1;
+        if (error instanceof SlotTakenError && !lastCandidate) continue;
+        throw error;
+      }
+    }
+
+    // La boucle sort par `break` ou relance : ce cas n'arrive pas, mais le
+    // type ne le sait pas, et une assertion mentirait au prochain lecteur.
+    if (created === null) throw new SlotTakenError();
 
     const cleaner = await cleanerCard(db, created.cleanerProfileId, now);
     const addressLabel = `${input.street}, ${input.postalCode} ${input.cityName}`;
 
     return {
       bookingId: created.bookingId,
+      /** Le créneau préféré a été pris : c'est un repli qui a été retenu. */
+      usedAlternate: usedStart !== input.startAt,
       startAt: created.scheduledStart.toISOString(),
       endAt: created.scheduledEnd.toISOString(),
       grossAmountCents: created.grossAmountCents,

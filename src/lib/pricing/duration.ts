@@ -87,6 +87,68 @@ export function estimateDuration({
 }
 
 /**
+ * Surface qui produit exactement la durée demandée.
+ *
+ * Le tunnel demande désormais un nombre d'heures et suggère la surface qui va
+ * avec, plutôt que l'inverse : personne ne connaît sa surface au mètre près,
+ * alors que tout le monde sait dire « deux heures, ça devrait suffire ».
+ *
+ * Le reste de la chaîne — devis, recherche de créneaux, création de la
+ * réservation — continue de parler en surface. C'est cette fonction qui fait
+ * le pont, et elle doit être exacte : une surface qui, repassée dans
+ * `estimateDuration`, donnerait une autre durée que celle choisie ferait
+ * facturer autre chose que ce qui a été affiché.
+ *
+ * D'où le `floor` et non un arrondi : l'estimation arrondit au pas de trente
+ * minutes **supérieur**, si bien qu'il faut viser le haut de l'intervalle qui
+ * retombe sur la durée voulue. 3 h 30 vaut 87,5 m² en théorie ; 88 m²
+ * donneraient 4 h, 87 m² donnent bien 3 h 30. Un test vérifie l'aller-retour
+ * sur tous les pas de la grille.
+ */
+export function surfaceForDuration(
+  durationMinutes: number,
+  service: DurationParameters,
+): number {
+  if (durationMinutes <= 0) {
+    throw new Error("La durée doit être strictement positive.");
+  }
+  return Math.floor((durationMinutes / 60) * service.sqmPerHour);
+}
+
+/**
+ * Surface indicative affichée en face d'une durée.
+ *
+ * Ce n'est pas la valeur transmise au serveur mais celle qu'on montre : « idéal
+ * pour 75 m² » se lit mieux que « 74 m² », et l'écart d'un mètre carré qui
+ * sépare parfois les deux ne change ni la durée ni le prix, qui ne dépendent
+ * que de la durée retenue.
+ */
+export function suggestedSurfaceFor(
+  durationMinutes: number,
+  service: DurationParameters,
+): number {
+  return Math.round((durationMinutes / 60) * service.sqmPerHour);
+}
+
+/**
+ * Durées proposées d'emblée, du plancher au plafond, par pas d'une heure.
+ *
+ * Six choix au maximum : au-delà, une grille de durées devient un formulaire.
+ * Les pas intermédiaires restent accessibles par la saisie libre.
+ */
+export function wholeHourChoices(service: DurationParameters): number[] {
+  const choices: number[] = [];
+  for (
+    let minutes = Math.max(60, service.minDurationMinutes);
+    minutes <= MAX_DURATION_MINUTES;
+    minutes += 60
+  ) {
+    choices.push(minutes);
+  }
+  return choices;
+}
+
+/**
  * Durées proposées autour de l'estimation, pour que le client puisse ajuster.
  *
  * On encadre l'estimation d'un pas de part et d'autre, sans jamais descendre

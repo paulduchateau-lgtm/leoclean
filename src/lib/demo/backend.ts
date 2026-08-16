@@ -171,6 +171,9 @@ export const demoBookingBackend: BookingBackend = {
       // L'identifiant annonce ce qu'il est : personne ne doit pouvoir le
       // confondre avec une réservation réelle, ni le chercher en base.
       bookingId: "demonstration",
+      // La vitrine n'écrit rien, donc aucun créneau ne lui est jamais volé :
+      // le repli ne peut pas s'y produire.
+      usedAlternate: false,
       startAt: input.startAt,
       endAt: end.toISOString(),
       grossAmountCents: computed.grossAmountCents,

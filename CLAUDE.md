@@ -709,11 +709,56 @@ seule règle, et elle décide de tout l'ordre. Le tunnel demandait auparavant
 l'adresse complète en premier et n'affichait le prix qu'à la fin : friction
 maximale au moment où l'engagement est minimal.
 
-Six écrans : commune, logement, rythme, créneau, coordonnées, adresse. La
+Six écrans : commune, durée, rythme, créneau, coordonnées, adresse. La
 commune suffit à répondre « intervenez-vous chez moi ? » et à chercher des
 créneaux ; le prix apparaît au troisième, avant toute donnée personnelle ;
 l'adresse exacte, la plus coûteuse à donner, arrive en dernier et emporte le
 récapitulatif avec elle.
+
+**Le deuxième écran demande une durée, pas une surface.** On demandait une
+taille de logement pour en déduire des heures ; on demande les heures et on
+indique la surface qu'elles couvrent habituellement — « 3 h, idéal pour
+75 m² ». Personne ne connaît sa surface au mètre près, alors que tout le monde
+sait dire « deux heures, ça devrait suffire », et c'est la durée, non la
+surface, qui détermine le prix, la place occupée dans la tournée et donc la
+faisabilité du créneau. Demander directement la grandeur qui décide de tout
+supprime une conversion que le client faisait à l'aveugle.
+
+Le reste de la chaîne — devis, recherche de créneaux, création — continue de
+parler en surface, et `surfaceForDuration` fait le pont. Elle prend le plancher
+et non l'arrondi, parce que l'estimation arrondit au pas de trente minutes
+**supérieur** : 3 h 30 valent 87,5 m² en théorie, 88 m² donneraient 4 h,
+87 m² donnent bien 3 h 30. Un test vérifie l'aller-retour sur tous les pas de
+la grille — une surface qui rendrait une autre durée ferait facturer autre
+chose que ce qui a été affiché.
+
+**« Une fois par mois » n'est plus proposé.** À ce rythme l'entretien courant
+n'en est plus un, la durée nécessaire dérive vers le grand ménage et la
+promesse d'intervenant attitré ne tient plus. La valeur reste dans
+l'énumération et en base — des réservations la portent — mais `offeredFrequency`
+ramène au rythme par défaut tout parcours repris ou tout dernier choix qui la
+désignerait encore, faute de quoi l'écran s'afficherait sans sélection et la
+barre de prix sans prix.
+
+**Chaque montant du tunnel porte son unité.** « 116 € » sur un écran qui
+propose « chaque semaine » et « tous les quinze jours » se lit comme un prix
+mensuel : les cartes disent donc « par session ». La mention « avant crédit
+d'impôt » n'apparaît que si `canShowTaxCredit()` l'autorise — même règle que
+partout ailleurs, et tant que la déclaration SAP n'est pas obtenue, rien de ce
+qui touche au crédit d'impôt ne s'affiche, pas même le mot « avant ».
+
+**Le client désigne un créneau préféré, puis ceux qui lui iraient aussi.**
+Ce n'est pas un confort : entre l'affichage de la liste et la confirmation,
+une autre réservation peut prendre la place, la lecture des disponibilités ne
+voyant pas les transactions en cours — seule l'écriture les rencontre. Sans
+repli, ce client-là recommence tout son parcours pour une place perdue à la
+dernière seconde. `confirmBooking` essaie le préféré puis les replis dans
+l'ordre donné, et ne rattrape que `SlotTakenError` : une adresse hors zone
+échouerait de la même façon sur les quatre suivants. Quand un repli est
+retenu, `usedAlternate` le dit sur l'écran de confirmation — une heure
+différente de celle qu'on vient de choisir, découverte le jour venu, vaudrait
+un rendez-vous manqué. Les replis ne sont pas enregistrés dans le stockage
+local : ils décrivent un état du planning qui a une semaine.
 
 **Le prix n'a pas d'écran à lui.** L'écran du rythme porte les quatre formules
 avec leur montant et leur durée, et la barre basse l'annonce dès le premier
@@ -755,7 +800,7 @@ du barème des CGU.
 | Parcours                               | Cible | Mesuré |
 | -------------------------------------- | ----- | ------ |
 | Accueil → prix affiché                 | ≤ 4   | 3      |
-| Accueil → réservation confirmée        | ≤ 9   | 9      |
+| Accueil → réservation confirmée        | ≤ 9   | **10** |
 | Accueil → appel téléphonique           | ≤ 2   | 1      |
 | Reprise → confirmation (dernier écran) | ≤ 4   | 4      |
 
@@ -773,6 +818,15 @@ faudrait arrondir.
 Ce que le geste achète : un visiteur qui a compris pourquoi le rayon est court
 avant qu'on lui demande où il habite. Les seize communes ouvraient la page —
 seize choix réclamés à quelqu'un qui n'avait encore reçu aucun argument.
+
+**Un dixième geste a été ajouté depuis, et il dépasse la cible.** Choisir un
+créneau faisait avancer d'écran ; il faut désormais valider, puisque l'écran
+reste ouvert pour désigner des créneaux de repli. Ce que ce geste achète est
+une réservation qui aboutit quand le créneau préféré part pendant la saisie —
+c'est-à-dire précisément le cas où le parcours était perdu en entier. **La
+cible de neuf est donc à rediscuter, pas la mesure à arrondir** : soit on
+l'assume à dix, soit les créneaux de repli se choisissent au récapitulatif et
+le tunnel revient à neuf.
 
 L'appel se fait en un geste depuis l'en-tête, en deux depuis la barre
 d'onglets. La reprise n'atteint la cible que depuis les derniers écrans —
