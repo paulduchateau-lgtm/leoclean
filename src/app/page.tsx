@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CommuneStart } from "@/components/commune-start";
+import { ResumeBookingBanner } from "@/components/resume-booking-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteHeader } from "@/components/site-header";
@@ -93,6 +94,11 @@ export default function Home() {
           />
 
           <div className="relative mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
+            {/* Un parcours interrompu se retrouve ici, pas dans la mémoire de
+                la personne : elle revient par l'accueil, et sans ce bandeau
+                elle recommence de zéro. */}
+            <ResumeBookingBanner />
+
             <Badge variant="secondary" className="mb-5 gap-1.5">
               <MapPinIcon className="size-3.5" aria-hidden />
               {COMMUNES.length} communes au sud de Bordeaux

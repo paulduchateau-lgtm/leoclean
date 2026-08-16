@@ -53,11 +53,30 @@ export default async function ReserverPage({
    * il peut voyager dans l'URL, contrairement à une adresse.
    */
   const params = await searchParams;
-  const raw = params.commune;
-  const candidate = Array.isArray(raw) ? raw[0] : raw;
+  const first = (value: string | string[] | undefined) =>
+    Array.isArray(value) ? value[0] : value;
+
   const origin = COMMUNES_BY_POPULATION.find(
-    (commune) => commune.slug === candidate,
+    (commune) => commune.slug === first(params.commune),
   );
+
+  /*
+   * Surface et écran repris de l'URL.
+   *
+   * C'est ce qui fait qu'un lien partagé rouvre le tunnel là où il en était,
+   * et qu'un rechargement ne renvoie pas au premier écran. La lecture se fait
+   * ici, côté serveur, plutôt que dans un effet : le premier rendu est alors
+   * déjà le bon, sans écart d'hydratation ni écran qui saute.
+   *
+   * Rien de personnel n'y voyage — ni nom, ni téléphone, ni adresse. Une barre
+   * d'adresse se partage, s'enregistre en favori et se retrouve dans les
+   * journaux d'un serveur.
+   */
+  const surface = Number(first(params.surface));
+  const defaultSurfaceSqm =
+    Number.isInteger(surface) && surface >= 15 && surface <= 400
+      ? surface
+      : undefined;
 
   /*
    * Ce que l'on sait déjà du visiteur, lu sur sa session et jamais demandé au
@@ -106,6 +125,8 @@ export default async function ReserverPage({
               lng: commune.lng,
             }))}
             defaultCommuneSlug={origin?.slug}
+            defaultSurfaceSqm={defaultSurfaceSqm}
+            defaultStep={first(params.step)}
             knownClient={knownClient}
           />
         </div>

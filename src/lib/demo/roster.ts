@@ -1,3 +1,4 @@
+import type { CleanerCardView } from "@/lib/booking/backend";
 import type { WeeklyAvailabilityRule } from "@/lib/scheduling/availability";
 import { computeAvailability } from "@/lib/scheduling/availability";
 import type { CleanerSchedule } from "@/lib/scheduling/slots";
@@ -36,7 +37,11 @@ function rules(
 
 interface DemoCleaner {
   id: string;
+  /** Prénom affiché au client. Le nom complet n'est jamais publié. */
+  firstName: string;
   communeSlug: string;
+  /** Ancienneté sur la plateforme, en mois. */
+  seniorityMonths: number;
   rules: WeeklyAvailabilityRule[];
   ratingAverage: number;
   ratingCount: number;
@@ -47,6 +52,8 @@ interface DemoCleaner {
 const DEMO_CLEANERS: readonly DemoCleaner[] = [
   {
     id: "demo-leognan",
+    firstName: "Sabrina",
+    seniorityMonths: 26,
     communeSlug: "leognan",
     rules: [...rules([1, 2, 3, 4, 5], 8, 18), ...rules([6], 9, 13)],
     ratingAverage: 4.8,
@@ -56,6 +63,8 @@ const DEMO_CLEANERS: readonly DemoCleaner[] = [
   },
   {
     id: "demo-villenave",
+    firstName: "Nadia",
+    seniorityMonths: 14,
     communeSlug: "villenave-d-ornon",
     rules: rules([1, 2, 3, 4, 5], 9, 17),
     ratingAverage: 4.6,
@@ -65,6 +74,8 @@ const DEMO_CLEANERS: readonly DemoCleaner[] = [
   },
   {
     id: "demo-gradignan",
+    firstName: "Christelle",
+    seniorityMonths: 31,
     communeSlug: "gradignan",
     rules: [...rules([1, 3, 5], 8, 19), ...rules([6], 9, 13)],
     ratingAverage: 4.9,
@@ -74,6 +85,8 @@ const DEMO_CLEANERS: readonly DemoCleaner[] = [
   },
   {
     id: "demo-la-brede",
+    firstName: "Fatima",
+    seniorityMonths: 9,
     communeSlug: "la-brede",
     rules: rules([2, 3, 4, 5], 9, 18),
     ratingAverage: 4.4,
@@ -83,6 +96,8 @@ const DEMO_CLEANERS: readonly DemoCleaner[] = [
   },
   {
     id: "demo-cestas",
+    firstName: "Élodie",
+    seniorityMonths: 1,
     communeSlug: "cestas",
     // Nouvelle sur la plateforme : aucun avis, note neutre au score.
     rules: rules([1, 2, 4, 5], 8, 14),
@@ -93,6 +108,8 @@ const DEMO_CLEANERS: readonly DemoCleaner[] = [
   },
   {
     id: "demo-cabanac",
+    firstName: "Marie-Line",
+    seniorityMonths: 18,
     communeSlug: "cabanac-et-villagrains",
     rules: rules([1, 2, 3, 4, 5], 10, 17),
     ratingAverage: 4.7,
@@ -135,4 +152,25 @@ export function demoSchedules(window: {
       isPreferred: false,
     };
   });
+}
+
+/**
+ * Fiche d'un intervenant de démonstration, pour l'écran de confirmation.
+ *
+ * L'équipe est fictive et le code le dit ; ce qui compte est que la
+ * confirmation montre bien la même chose qu'en production — quelqu'un, avec un
+ * prénom et une commune, plutôt qu'une heure et un prix.
+ */
+export function demoCleanerCard(id: string): CleanerCardView | null {
+  const cleaner = DEMO_CLEANERS.find((entry) => entry.id === id);
+  if (!cleaner) return null;
+
+  return {
+    firstName: cleaner.firstName,
+    communeName: getCommuneBySlug(cleaner.communeSlug)?.name ?? null,
+    seniorityMonths: cleaner.seniorityMonths,
+    // Même règle que le JSON-LD : pas de note affichée sans avis réels.
+    ratingAverage: cleaner.ratingCount > 0 ? cleaner.ratingAverage : null,
+    ratingCount: cleaner.ratingCount,
+  };
 }

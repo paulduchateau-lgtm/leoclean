@@ -289,6 +289,8 @@ export interface AvailableSlotsInput {
   now?: Date;
   limit?: number;
   travel?: TravelMatrix;
+  /** Marge de trajet, quand la destination n'est qu'un centre de commune. */
+  travelMarginMinutes?: number;
 }
 
 /** Créneaux proposables au client, sans révéler l'identité des intervenants. */
@@ -311,6 +313,7 @@ export async function listAvailableSlots(
     durationMinutes: input.durationMinutes,
     destination: input.destination,
     travel,
+    travelMarginMinutes: input.travelMarginMinutes,
     now: input.now,
     limit: input.limit,
   }).map((slot) => ({ start: slot.start, end: slot.end }));

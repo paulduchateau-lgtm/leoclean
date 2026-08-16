@@ -502,6 +502,69 @@ du centre de la commune : les temps de trajet sont moins justes, donc les
 créneaux un peu plus prudents. C'est ce chemin que teste le parcours de bout en
 bout, précisément pour ne pas dépendre d'un service tiers.
 
+## Ordre des écrans du tunnel
+
+**Plus une information coûte à donner, plus tard on la demande.** C'est la
+seule règle, et elle décide de tout l'ordre. Le tunnel demandait auparavant
+l'adresse complète en premier et n'affichait le prix qu'à la fin : friction
+maximale au moment où l'engagement est minimal.
+
+Six écrans : commune, logement, rythme, créneau, coordonnées, adresse. La
+commune suffit à répondre « intervenez-vous chez moi ? » et à chercher des
+créneaux ; le prix apparaît au troisième, avant toute donnée personnelle ;
+l'adresse exacte, la plus coûteuse à donner, arrive en dernier et emporte le
+récapitulatif avec elle.
+
+**Le prix n'a pas d'écran à lui.** L'écran du rythme porte les quatre formules
+avec leur montant et leur durée, et la barre basse l'annonce dès le premier
+écran : un écran de plus qui ne ferait que le répéter coûterait un geste sans
+rien apprendre.
+
+**Chercher des créneaux depuis un centre de commune impose une marge de
+trajet.** `COMMUNE_TRAVEL_MARGIN_MINUTES` élargit les deux tampons de route
+tant que l'adresse exacte est inconnue : ce qui est proposé doit rester tenable
+une fois l'adresse donnée, sinon la réservation échouerait au dernier écran,
+après que tout a été rempli. La marge ne rend jamais un créneau plus facile,
+seulement plus rare — et `createBooking` réévalue de toute façon sur l'adresse
+réelle, en essayant le candidat suivant si le premier ne tient plus.
+
+**Le stockage local ne contient ni adresse ni coordonnées** — une commune, une
+surface, un rythme, une heure, sept jours durant. L'ancienne version y laissait
+l'adresse du domicile, ce que la reprise n'exige pas.
+
+**L'URL porte la commune, la surface et l'écran**, et rien d'autre : une barre
+d'adresse se partage, s'enregistre en favori et se retrouve dans les journaux
+d'un serveur. Elle est relue côté serveur au premier rendu, et l'écran est
+ramené à ce que les choix connus rendent atteignable — une URL bricolée à la
+main n'ouvre pas un écran de créneaux sans durée à chercher.
+
+**La confirmation montre quelqu'un.** `IntervenantCard` porte le prénom, la
+commune de résidence et l'ancienneté : « le même intervenant, chaque semaine »
+est la promesse centrale du service, et elle n'était incarnée nulle part. Le
+nom complet n'est jamais publié, la note ne l'est que s'il existe des avis
+réels. À défaut d'attribution, on annonce une confirmation sous 24 heures
+plutôt que d'inventer quelqu'un.
+
+`src/lib/booking/ics.ts` produit le fichier de calendrier, et il est **pur** —
+la vitrine statique émet donc exactement le même. Un rendez-vous absent d'un
+agenda est un rendez-vous oublié, et une absence coûte 100 % du prix au titre
+du barème des CGU.
+
+### Nombre de gestes, mesuré
+
+| Parcours                               | Cible | Mesuré |
+| -------------------------------------- | ----- | ------ |
+| Accueil → prix affiché                 | ≤ 4   | 2      |
+| Accueil → réservation confirmée        | ≤ 9   | 8      |
+| Accueil → appel téléphonique           | ≤ 2   | 1      |
+| Reprise → confirmation (dernier écran) | ≤ 4   | 4      |
+
+L'accueil compte pour zéro geste : le bloc « Où habitez-vous ? » y répond au
+premier écran, si bien que le tunnel s'ouvre sur le logement. L'appel se fait
+en un geste depuis l'en-tête, en deux depuis la barre d'onglets. La reprise
+n'atteint la cible que depuis les derniers écrans — reprendre au deuxième
+demande évidemment de traverser les suivants.
+
 ## Vitrine statique de démonstration
 
 `npm run build:demo -- --base-path /depot` produit dans `out/` un site de

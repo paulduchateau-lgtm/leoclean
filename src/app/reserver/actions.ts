@@ -3,9 +3,14 @@
 import { z } from "zod";
 
 import { publicAction } from "@/lib/action-result";
+import type { CleanerCardView } from "@/lib/booking/backend";
+import { bookingCalendar } from "@/lib/booking/ics";
 import { createBooking, listAvailableSlots } from "@/lib/booking/create";
 import { OutsideCoverageError } from "@/lib/booking/errors";
-import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
+import {
+  BOOKING_HORIZON_DAYS,
+  COMMUNE_TRAVEL_MARGIN_MINUTES,
+} from "@/lib/booking/horizon";
 import { quoteFromCatalogue } from "@/lib/catalogue";
 import { forOrganization, prisma } from "@/lib/db";
 import { searchAddresses } from "@/lib/geo/ban";
@@ -122,6 +127,15 @@ const slotsSchema = z.object({
     .int()
     .min(MINIMUM_BILLABLE_MINUTES)
     .max(360),
+  /**
+   * Ce que désignent `lat` et `lng`.
+   *
+   * Le tunnel demande la commune avant l'adresse : les premiers créneaux sont
+   * cherchés sur le centre de la commune, les suivants sur l'adresse exacte.
+   * En mode commune, la recherche se donne une marge de trajet — mieux vaut ne
+   * pas montrer un créneau tenable que d'en promettre un qui ne l'est pas.
+   */
+  precision: z.enum(["adresse", "commune"]).default("adresse"),
 });
 
 export const getSlots = publicAction(slotsSchema, async (input) => {
@@ -142,6 +156,8 @@ export const getSlots = publicAction(slotsSchema, async (input) => {
     destination: { lat: input.lat, lng: input.lng },
     durationMinutes: input.durationMinutes,
     window: bookingWindow(now),
+    travelMarginMinutes:
+      input.precision === "commune" ? COMMUNE_TRAVEL_MARGIN_MINUTES : 0,
     now,
     limit: 60,
   });
@@ -183,6 +199,66 @@ const confirmSchema = z.object({
   clientNotes: z.string().trim().max(1000).optional(),
 });
 
+/**
+ * Fiche de l'intervenant désigné, telle que le client la découvre.
+ *
+ * On ne publie que le prénom d'affichage et la commune de résidence : c'est
+ * ce qui rend vérifiable la promesse de proximité sans livrer l'adresse de
+ * quelqu'un. La note n'est renvoyée que s'il existe des avis réels — annoncer
+ * « 0 sur 5 » à une intervenante qui vient d'arriver serait faux et injuste.
+ *
+ * Une lecture qui échoue ne fait pas échouer la réservation : elle est déjà
+ * écrite, et le client doit repartir avec son rendez-vous. On retombe alors
+ * sur « intervenant confirmé sous 24 heures », qui est vrai dans tous les cas.
+ */
+async function cleanerCard(
+  db: ReturnType<typeof forOrganization>,
+  cleanerProfileId: string,
+  now: Date,
+): Promise<CleanerCardView | null> {
+  try {
+    const profile = await db.cleanerProfile.findUnique({
+      where: { id: cleanerProfileId },
+      select: {
+        displayName: true,
+        ratingAverage: true,
+        ratingCount: true,
+        activatedAt: true,
+        createdAt: true,
+        homeAddress: { select: { inseeCode: true, cityName: true } },
+      },
+    });
+    if (!profile) return null;
+
+    const since = profile.activatedAt ?? profile.createdAt;
+    const months = Math.max(
+      0,
+      Math.floor((now.getTime() - since.getTime()) / (30 * 86_400_000)),
+    );
+
+    return {
+      firstName: profile.displayName,
+      // Le nom vient du référentiel quand l'INSEE y correspond : une valeur
+      // saisie à la main dans une adresse n'a pas à s'afficher telle quelle.
+      communeName:
+        (profile.homeAddress
+          ? getCommuneByInsee(profile.homeAddress.inseeCode)?.name
+          : null) ??
+        profile.homeAddress?.cityName ??
+        null,
+      seniorityMonths: months,
+      ratingAverage: profile.ratingCount > 0 ? profile.ratingAverage : null,
+      ratingCount: profile.ratingCount,
+    };
+  } catch (error) {
+    console.error(
+      "Fiche intervenant illisible après une réservation confirmée",
+      error,
+    );
+    return null;
+  }
+}
+
 export const confirmBooking = publicAction(confirmSchema, async (input) => {
   if (!isCoveredInsee(input.inseeCode)) {
     throw new OutsideCoverageError(
@@ -196,6 +272,7 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
     select: { id: true, commissionRateBp: true },
   });
   const db = forOrganization(organizationId);
+  const now = new Date();
 
   const email = input.email.trim().toLowerCase();
 
@@ -251,12 +328,25 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
       clientNotes: input.clientNotes ?? null,
     });
 
+    const cleaner = await cleanerCard(db, created.cleanerProfileId, now);
+    const addressLabel = `${input.street}, ${input.postalCode} ${input.cityName}`;
+
     return {
       bookingId: created.bookingId,
       startAt: created.scheduledStart.toISOString(),
       endAt: created.scheduledEnd.toISOString(),
       grossAmountCents: created.grossAmountCents,
       netAmountCents: created.netAmountCents,
+      addressLabel,
+      cleaner,
+      calendar: bookingCalendar({
+        bookingId: created.bookingId,
+        start: created.scheduledStart,
+        end: created.scheduledEnd,
+        location: addressLabel,
+        cleanerFirstName: cleaner?.firstName ?? null,
+        stampedAt: now,
+      }),
     };
   } catch (error) {
     // L'adresse vient d'être créée pour cette réservation : la laisser

@@ -543,3 +543,78 @@ describe("recherche de créneaux", () => {
     }
   });
 });
+
+describe("marge de trajet sur une destination approximative", () => {
+  /**
+   * Le tunnel demande la commune avant l'adresse. Entre les deux, les créneaux
+   * sont cherchés sur le centre de la commune : ce qui est proposé là doit
+   * rester tenable une fois l'adresse exacte connue, sinon la réservation
+   * échoue au dernier écran, après que tout a été rempli.
+   */
+  const request = {
+    window: DAY,
+    durationMinutes: 120,
+    destination: point("martillac"),
+    now: NOW,
+    travel: travelMatrixFrom([]),
+  };
+
+  it("élargit les deux tampons de trajet", () => {
+    const sans = evaluateSlot(schedule(), request, paris(13, 10).getTime());
+    const avec = evaluateSlot(
+      schedule(),
+      { ...request, travelMarginMinutes: 10 },
+      paris(13, 10).getTime(),
+    );
+
+    expect(sans).not.toBeNull();
+    expect(avec).not.toBeNull();
+    expect(avec!.travelMinutesBefore).toBeGreaterThan(
+      sans!.travelMinutesBefore,
+    );
+    expect(avec!.travelMinutesAfter).toBeGreaterThan(sans!.travelMinutesAfter);
+  });
+
+  it("ne rend jamais un créneau plus facile", () => {
+    // Une marge ne peut que retirer des créneaux, jamais en ajouter : c'est ce
+    // qui permet de s'y fier avant de connaître l'adresse.
+    const sans = findSlots([schedule()], request);
+    const avec = findSlots([schedule()], {
+      ...request,
+      travelMarginMinutes: 10,
+    });
+
+    const heures = new Set(sans.map((slot) => slot.start.getTime()));
+    for (const slot of avec) {
+      expect(heures.has(slot.start.getTime())).toBe(true);
+    }
+  });
+
+  it("retire le créneau qui ne tiendrait plus une fois la route allongée", () => {
+    // Journée bornée à 17 h : une mission de 9 h à 17 h ne laisse aucune place
+    // au retour, et la marge suffit à faire tomber le dernier départ possible.
+    const cleaner = schedule({ homePoint: point("cabanac-et-villagrains") });
+    const tardif = paris(13, 14, 30).getTime();
+
+    const sans = evaluateSlot(cleaner, request, tardif);
+    const avec = evaluateSlot(
+      cleaner,
+      { ...request, travelMarginMinutes: 30 },
+      tardif,
+    );
+
+    expect(sans).not.toBeNull();
+    expect(avec).toBeNull();
+  });
+
+  it("laisse tout inchangé quand la marge est nulle", () => {
+    const sans = evaluateSlot(schedule(), request, paris(13, 10).getTime());
+    const zero = evaluateSlot(
+      schedule(),
+      { ...request, travelMarginMinutes: 0 },
+      paris(13, 10).getTime(),
+    );
+
+    expect(zero).toEqual(sans);
+  });
+});

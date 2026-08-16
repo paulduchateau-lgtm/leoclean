@@ -39,12 +39,49 @@ export interface SlotView {
   end: string;
 }
 
+/**
+ * L'intervenant, tel que le client le découvre.
+ *
+ * « Le même intervenant, chaque semaine » est la promesse centrale du service,
+ * et elle n'était jusqu'ici incarnée nulle part : le client repartait avec une
+ * heure et un prix, sans savoir qui allait entrer chez lui. Le prénom, la
+ * commune et l'ancienneté suffisent à en faire quelqu'un.
+ *
+ * Le nom de famille n'y figure pas, ni l'adresse : la commune de résidence est
+ * ce qui rend vérifiable la promesse de proximité, la rue ne regarde personne.
+ */
+export interface CleanerCardView {
+  /** Prénom d'affichage. Le nom complet n'est jamais publié. */
+  firstName: string;
+  /** Commune de résidence, quand elle est connue. */
+  communeName: string | null;
+  /** Ancienneté sur la plateforme, en mois révolus. */
+  seniorityMonths: number;
+  /** Note moyenne, seulement s'il existe des avis réels. */
+  ratingAverage: number | null;
+  ratingCount: number;
+}
+
 export interface ConfirmationView {
   bookingId: string;
   startAt: string;
   endAt: string;
   grossAmountCents: number;
   netAmountCents: number;
+  /** Adresse de l'intervention, telle qu'elle se lit. */
+  addressLabel: string;
+  /**
+   * Intervenant désigné. `null` quand l'attribution n'a pas encore abouti :
+   * on annonce alors une confirmation sous 24 heures plutôt que d'inventer
+   * quelqu'un.
+   */
+  cleaner: CleanerCardView | null;
+  /**
+   * Fichier iCalendar de l'intervention, produit là où la réservation est
+   * écrite. Le navigateur n'a plus qu'à le proposer au téléchargement — il
+   * n'a rien à composer, donc rien à composer de faux.
+   */
+  calendar: string;
 }
 
 export type Frequency = "ONE_OFF" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
@@ -119,6 +156,12 @@ export interface BookingBackend {
     lng: number;
     inseeCode: string;
     durationMinutes: number;
+    /**
+     * Ce que désignent `lat` et `lng`. Le tunnel demande la commune bien avant
+     * l'adresse : en mode `commune`, la recherche se donne une marge de trajet
+     * pour ne proposer que des créneaux qui tiendront à l'adresse exacte.
+     */
+    precision?: "adresse" | "commune";
   }): Promise<ActionResult<SlotView[]>>;
 
   confirmBooking(

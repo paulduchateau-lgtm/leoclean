@@ -3,7 +3,11 @@ import type {
   ConfirmationView,
   Frequency,
 } from "@/lib/booking/backend";
-import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
+import {
+  BOOKING_HORIZON_DAYS,
+  COMMUNE_TRAVEL_MARGIN_MINUTES,
+} from "@/lib/booking/horizon";
+import { bookingCalendar } from "@/lib/booking/ics";
 import { searchAddresses } from "@/lib/geo/ban";
 import { quote } from "@/lib/pricing";
 import {
@@ -15,7 +19,7 @@ import {
 import { findSlots } from "@/lib/scheduling/slots";
 import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
 
-import { demoSchedules } from "./roster";
+import { demoCleanerCard, demoSchedules } from "./roster";
 
 /**
  * Tunnel de réservation, entièrement dans le navigateur.
@@ -85,7 +89,7 @@ export const demoBookingBackend: BookingBackend = {
     });
   },
 
-  getSlots({ lat, lng, inseeCode, durationMinutes }) {
+  getSlots({ lat, lng, inseeCode, durationMinutes, precision }) {
     if (!isCoveredInsee(inseeCode)) {
       return Promise.resolve({
         ok: false,
@@ -107,6 +111,9 @@ export const demoBookingBackend: BookingBackend = {
       window,
       durationMinutes,
       destination: { lat, lng },
+      // Même prudence qu'en production tant que seule la commune est connue.
+      travelMarginMinutes:
+        precision === "commune" ? COMMUNE_TRAVEL_MARGIN_MINUTES : 0,
       now,
       limit: 60,
     });
@@ -138,16 +145,46 @@ export const demoBookingBackend: BookingBackend = {
       taxCreditRateBp: TAX_CREDIT_RATE_BP,
     });
 
+    const end = new Date(start.getTime() + computed.durationMinutes * 60_000);
+
+    /*
+     * L'intervenant est désigné par le même score qu'en production : on
+     * rejoue la recherche sur l'adresse exacte et on retient le candidat dont
+     * l'heure de départ est celle qui a été choisie. C'est ce qui permet à la
+     * confirmation de montrer quelqu'un, et non une heure et un prix.
+     */
+    const window = { start: start.getTime() - 1, end: end.getTime() + 1 };
+    const candidate = findSlots(demoSchedules(window), {
+      window,
+      durationMinutes: computed.durationMinutes,
+      destination: { lat: input.lat, lng: input.lng },
+      now: new Date(start.getTime() - 86_400_000),
+      limit: 1,
+    })[0];
+
+    const cleaner = candidate
+      ? demoCleanerCard(candidate.cleanerProfileId)
+      : null;
+    const addressLabel = `${input.street}, ${input.postalCode} ${input.cityName}`;
+
     const confirmation: ConfirmationView = {
       // L'identifiant annonce ce qu'il est : personne ne doit pouvoir le
       // confondre avec une réservation réelle, ni le chercher en base.
       bookingId: "demonstration",
       startAt: input.startAt,
-      endAt: new Date(
-        start.getTime() + computed.durationMinutes * 60_000,
-      ).toISOString(),
+      endAt: end.toISOString(),
       grossAmountCents: computed.grossAmountCents,
       netAmountCents: computed.netAmountCents,
+      addressLabel,
+      cleaner,
+      calendar: bookingCalendar({
+        bookingId: "demonstration",
+        start,
+        end,
+        location: addressLabel,
+        cleanerFirstName: cleaner?.firstName ?? null,
+        stampedAt: new Date(),
+      }),
     };
 
     return Promise.resolve({ ok: true, data: confirmation });

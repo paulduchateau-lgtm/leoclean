@@ -66,6 +66,21 @@ export interface SlotRequest {
   /** Délai de prévenance minimal, en minutes. */
   leadTimeMinutes?: number;
   travel?: TravelMatrix;
+  /**
+   * Marge ajoutée à chacun des deux trajets, en minutes.
+   *
+   * Nulle quand la destination est une adresse exacte. Elle ne sert qu'au cas
+   * où l'on ne connaît encore que la commune : le tunnel demande la commune
+   * bien avant l'adresse, et un créneau proposé depuis le centre d'une commune
+   * doit rester tenable pour n'importe quelle adresse de cette commune. Sans
+   * elle, la réservation échouerait au dernier écran, une fois tout rempli —
+   * c'est `createBooking` qui réévalue le créneau sur l'adresse réelle.
+   *
+   * Elle rend la proposition plus prudente, jamais plus permissive : mieux
+   * vaut ne pas montrer un créneau tenable que d'en promettre un qui ne l'est
+   * pas.
+   */
+  travelMarginMinutes?: number;
   /** Nombre maximal de créneaux renvoyés, les plus proches d'abord. */
   limit?: number;
 }
@@ -184,12 +199,15 @@ export function evaluateSlot(
   const originPoint = previous?.point ?? schedule.homePoint;
   const destinationPoint = next?.point ?? schedule.homePoint;
 
+  const margin = request.travelMarginMinutes ?? 0;
   const travelBefore = originPoint
-    ? roundTravelBuffer(travel.minutesBetween(originPoint, request.destination))
+    ? roundTravelBuffer(
+        travel.minutesBetween(originPoint, request.destination) + margin,
+      )
     : 0;
   const travelAfter = destinationPoint
     ? roundTravelBuffer(
-        travel.minutesBetween(request.destination, destinationPoint),
+        travel.minutesBetween(request.destination, destinationPoint) + margin,
       )
     : 0;
 

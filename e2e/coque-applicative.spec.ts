@@ -154,24 +154,17 @@ test.describe("retour arrière dans le tunnel", () => {
   test("revient d'un écran au lieu de quitter la réservation", async ({
     page,
   }) => {
+    // Le lien d'une page commune répond déjà au premier écran : le tunnel
+    // s'ouvre sur le logement.
     await page.goto("/menage-a-domicile/leognan");
     await page.getByRole("link", { name: /Voir les créneaux/ }).click();
 
-    await expect(page.getByText("Étape 1 sur 5")).toBeVisible();
-
-    // Saisie manuelle, comme le parcours de bout en bout : ne pas dépendre
-    // d'un service tiers pour vérifier une règle de navigation.
-    await page
-      .getByRole("button", { name: "Saisir mon adresse manuellement" })
-      .click();
-    await page.fill("#manual-street", "12 rue des Vignes");
-    await page.selectOption("#manual-commune", "leognan");
-    await page.getByRole("button", { name: "Décrire mon logement" }).click();
-
-    await expect(page.getByText("Étape 2 sur 5")).toBeVisible();
+    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
+    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await expect(page.getByText("Étape 3 sur 6")).toBeVisible();
 
     await page.goBack();
-    await expect(page.getByText("Étape 1 sur 5")).toBeVisible();
+    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
     // Toujours dans le tunnel, pas revenu sur la page commune.
     expect(new URL(page.url()).pathname).toBe("/reserver");
 
@@ -184,23 +177,17 @@ test.describe("retour arrière dans le tunnel", () => {
     page,
   }) => {
     await page.goto("/reserver");
-    await page
-      .getByRole("button", { name: "Saisir mon adresse manuellement" })
-      .click();
-    await page.fill("#manual-street", "12 rue des Vignes");
-    await page.selectOption("#manual-commune", "leognan");
-    await page.getByRole("button", { name: "Décrire mon logement" }).click();
-
-    await expect(page.getByText("Étape 2 sur 5")).toBeVisible();
+    await page.getByRole("button", { name: /^Léognan/ }).click();
+    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
 
     // La flèche recule d'une entrée d'historique : sans cela, elle en
     // empilerait une de plus et le retour du navigateur ferait du surplace.
     await page
       .getByRole("button", { name: "Revenir à l'écran précédent" })
       .click();
-    await expect(page.getByText("Étape 1 sur 5")).toBeVisible();
+    await expect(page.getByText("Étape 1 sur 6")).toBeVisible();
 
     await page.goForward();
-    await expect(page.getByText("Étape 2 sur 5")).toBeVisible();
+    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
   });
 });
