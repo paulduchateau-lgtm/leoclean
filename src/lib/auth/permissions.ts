@@ -26,6 +26,15 @@ export const PERMISSIONS = [
   "booking:read:own",
   /** Lire les missions qui nous sont affectées. */
   "assignment:read:own",
+  /**
+   * Accepter ou refuser une mission qu'on nous propose.
+   *
+   * Aucun rôle de gestion ne la détient, et c'est la même raison que pour
+   * `availability:manage:own` : accepter une mission à la place de quelqu'un
+   * reviendrait à la lui imposer. Un gestionnaire peut réattribuer — c'est
+   * `assignment:manage` — il ne peut pas répondre à sa place.
+   */
+  "assignment:respond:own",
   /** Réattribuer manuellement une mission. */
   "assignment:manage",
   /** Créer une réservation pour soi. */
@@ -65,7 +74,11 @@ const ORG_MANAGER_PERMISSIONS: readonly Permission[] = [
 export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
   CLIENT: ["booking:read:own", "booking:create:own"],
 
-  CLEANER: ["assignment:read:own", "availability:manage:own"],
+  CLEANER: [
+    "assignment:read:own",
+    "assignment:respond:own",
+    "availability:manage:own",
+  ],
 
   ORG_MANAGER: ORG_MANAGER_PERMISSIONS,
 

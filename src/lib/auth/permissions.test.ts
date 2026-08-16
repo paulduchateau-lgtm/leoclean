@@ -69,6 +69,22 @@ describe("cloisonnement des rôles", () => {
     }
   });
 
+  it("laisse l'intervenant seul juge des missions qu'il accepte", () => {
+    // Même raison que pour les disponibilités : accepter une mission à la
+    // place de quelqu'un revient à la lui imposer. La gestion peut
+    // réattribuer, jamais répondre.
+    expect(can("CLEANER", "assignment:respond:own")).toBe(true);
+    expect(can("CLEANER", "assignment:manage")).toBe(false);
+    for (const role of [
+      "ORG_MANAGER",
+      "ORG_OWNER",
+      "PLATFORM_ADMIN",
+    ] as const) {
+      expect(can(role, "assignment:respond:own")).toBe(false);
+      expect(can(role, "assignment:manage")).toBe(true);
+    }
+  });
+
   it("réserve la gestion des membres et la facturation au propriétaire", () => {
     expect(can("ORG_MANAGER", "org:members:manage")).toBe(false);
     expect(can("ORG_MANAGER", "payment:refund")).toBe(false);
