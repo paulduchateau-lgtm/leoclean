@@ -16,6 +16,7 @@ import { forOrganization, prisma } from "@/lib/db";
 import { searchAddresses } from "@/lib/geo/ban";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 import { isValidFrenchPhone, normalizePhone } from "@/lib/phone";
+import { exigerQuota } from "@/lib/securite/limitation";
 import { MINIMUM_BILLABLE_MINUTES } from "@/lib/pricing/public-grid";
 import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
 
@@ -139,6 +140,12 @@ const slotsSchema = z.object({
 });
 
 export const getSlots = publicAction(slotsSchema, async (input) => {
+  /*
+   * L'appel le plus coûteux du site : le moteur de disponibilité est
+   * interrogé sur trois semaines. C'est aussi le plus tentant à marteler.
+   */
+  await exigerQuota("creneaux");
+
   if (!isCoveredInsee(input.inseeCode)) {
     // Le nom de la commune vient du référentiel, jamais du navigateur : c'est
     // ce qui garantit qu'un message affiché à l'écran ne peut pas être dicté
@@ -260,6 +267,10 @@ async function cleanerCard(
 }
 
 export const confirmBooking = publicAction(confirmSchema, async (input) => {
+  // Une réservation engage un intervenant : en enchaîner cinq en une heure
+  // depuis la même source n'est pas un client pressé.
+  await exigerQuota("reservation");
+
   if (!isCoveredInsee(input.inseeCode)) {
     throw new OutsideCoverageError(
       getCommuneByInsee(input.inseeCode)?.name ?? "cette commune",

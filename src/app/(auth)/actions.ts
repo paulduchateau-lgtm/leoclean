@@ -5,6 +5,7 @@ import { z } from "zod";
 import { publicAction } from "@/lib/actions";
 import { signIn } from "@/lib/auth/config";
 import { prisma } from "@/lib/db";
+import { exigerQuota } from "@/lib/securite/limitation";
 
 /**
  * Demande d'un lien de connexion.
@@ -34,6 +35,14 @@ const THROTTLE_MAX_LINKS = 3;
 export const requestMagicLink = publicAction(
   signInSchema,
   async ({ email, callbackUrl }) => {
+    /*
+     * Le quota par adresse ne protège que le destinataire : un script qui
+     * change d'adresse à chaque appel envoie autant de messages qu'il veut, et
+     * c'est la réputation d'expéditeur du domaine qui en paie le prix. La
+     * limitation par source complète la première, elle ne la remplace pas.
+     */
+    await exigerQuota("connexion");
+
     /**
      * Limitation du renvoi de liens.
      *

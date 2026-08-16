@@ -1369,6 +1369,34 @@ model WebhookEvent {
 
 /// Journal d'audit. `organizationId` est optionnel : certaines actions sont
 /// le fait de la plateforme et ne relèvent d'aucune organisation.
+/// Compteur de limitation de débit.
+///
+/// Le site prend des réservations sans compte : les formulaires publics sont
+/// donc la surface la plus exposée, et la seule protection en place — champ
+/// piège et délai de trois secondes — n'arrête qu'un robot naïf.
+///
+/// Le compteur vit en base et non en mémoire, pour la même raison que la
+/// limitation d'envoi des liens de connexion : un déploiement sans serveur
+/// n'a pas de mémoire partagée, et un compteur par instance ne compte rien.
+///
+/// `key` porte l'action et la source — adresse IP hachée, ou adresse email.
+/// L'IP n'est jamais stockée en clair : c'est une donnée personnelle, et un
+/// compteur n'a pas besoin de savoir qui, seulement combien.
+model RateLimit {
+  id String @id @default(cuid())
+
+  key   String @unique
+  count Int    @default(0)
+
+  /// Début de la fenêtre courante. Une fenêtre glissante coûterait une ligne
+  /// par requête ; une fenêtre fixe suffit à arrêter un abus.
+  windowAt DateTime
+
+  updatedAt DateTime @updatedAt
+
+  @@index([windowAt])
+}
+
 model AuditLog {
   id             String  @id @default(cuid())
   organizationId String?

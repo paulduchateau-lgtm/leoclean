@@ -5,6 +5,7 @@ import { z } from "zod";
 import { publicAction } from "@/lib/action-result";
 import { forOrganization } from "@/lib/db";
 import { marketplaceOrganizationId } from "@/lib/organizations";
+import { exigerQuota } from "@/lib/securite/limitation";
 import { isCoveredInsee } from "@/lib/territory";
 
 /**
@@ -78,6 +79,13 @@ const leadSchema = z.object({
 });
 
 export const submitLead = publicAction(leadSchema, async (input) => {
+  /*
+   * Le champ piège et le délai de trois secondes n'arrêtent qu'un robot naïf :
+   * un script qui les respecte passe autant de fois qu'il veut. La limitation
+   * par source ferme cette porte-là.
+   */
+  await exigerQuota("rappel");
+
   const looksAutomated =
     (input.website !== undefined && input.website !== "") ||
     (input.renderedAt !== undefined && Date.now() - input.renderedAt < 3000);

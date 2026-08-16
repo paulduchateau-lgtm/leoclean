@@ -87,6 +87,8 @@ export const GLOBAL_MODELS: Readonly<Record<string, string>> = {
     "Un temps de trajet entre deux points est un fait géographique, pas une donnée d'organisation. Le mutualiser est ce qui rend le cache efficace.",
   WebhookEvent:
     "Journal d'idempotence des webhooks : l'organisation n'est connue qu'après analyse du contenu.",
+  RateLimit:
+    "Compteur de limitation de débit : il protège des formulaires publics, qui sont par définition antérieurs à toute organisation.",
 };
 
 /** Opérations dont l'argument `where` doit être restreint à l'organisation. */
