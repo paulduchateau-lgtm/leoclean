@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { InterventionActions } from "@/app/(app)/mon-espace/intervention-actions";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { auth } from "@/lib/auth/config";
+import { decideCancellation, refusalMessage } from "@/lib/booking/cancel";
 import type { ClientBookingView } from "@/lib/booking/client-bookings";
 import { loadClientBookings } from "@/lib/booking/client-bookings-session";
 import { bookingCalendarFilename } from "@/lib/booking/ics";
@@ -23,12 +25,17 @@ import { SITE } from "@/lib/site";
  * du RGPD. Un second système d'authentification à côté du premier ne serait pas
  * un raccourci, ce serait une deuxième surface à sécuriser.
  *
- * **Ce qui n'y est pas, et pourquoi.** La replanification et l'annulation en
- * autonomie ne sont pas proposées : elles supposent des transitions de statut,
- * une notification de l'intervenant et une reprise du créneau libéré, qui
- * n'existent pas encore. Un bouton « Annuler » qui n'annulerait rien serait
- * pire que son absence. Le barème est affiché, et l'annulation se fait par
- * téléphone ou par message — ce qui est le fonctionnement réel aujourd'hui.
+ * **L'annulation en autonomie existe désormais.** Elle supposait trois choses
+ * qui manquaient : une transition de statut tracée, la libération du créneau,
+ * et l'information de l'intervenant. `client-space.ts` fait les trois dans une
+ * seule transaction — sans la troisième écriture, l'affectation resterait
+ * `ACCEPTED` et la contrainte d'exclusion gèlerait un créneau pour une
+ * intervention qui n'a plus lieu.
+ *
+ * Le coût est annoncé **avant** la confirmation, lu dans le même barème que
+ * celui qui prélève. La replanification, elle, n'y est toujours pas : elle
+ * suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
+ * entier. Annuler puis reprendre reste le chemin, et il est honnête.
  */
 
 export const metadata: Metadata = {
@@ -56,11 +63,25 @@ const FREE_CANCELLATION_HOURS = CANCELLATION_TIERS[0]!.fromHoursBefore;
 function BookingCard({
   booking,
   upcoming,
+  now,
 }: {
   booking: ClientBookingView;
   upcoming: boolean;
+  now: Date;
 }) {
   const start = new Date(booking.startAt);
+
+  /* Décidé côté serveur, avec la même fonction que l'action de mutation : deux
+     règles concurrentes finiraient par diverger, et le client verrait un
+     bouton qui refuse ou un montant qui n'est pas celui qu'on prélève. */
+  const decision = decideCancellation({
+    status: booking.status as Parameters<
+      typeof decideCancellation
+    >[0]["status"],
+    grossAmountCents: booking.grossAmountCents,
+    scheduledStart: start,
+    now,
+  });
 
   return (
     <li className="rounded-xl border border-border bg-card p-5">
@@ -99,14 +120,28 @@ function BookingCard({
       )}
 
       {upcoming ? (
-        <a
-          href={`data:text/calendar;charset=utf-8,${encodeURIComponent(booking.calendar)}`}
-          download={bookingCalendarFilename(start)}
-          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-border bg-card px-5 text-sm font-bold"
-        >
-          <CalendarPlusIcon className="size-4" aria-hidden />
-          Ajouter à mon calendrier
-        </a>
+        <>
+          <a
+            href={`data:text/calendar;charset=utf-8,${encodeURIComponent(booking.calendar)}`}
+            download={bookingCalendarFilename(start)}
+            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-border bg-card px-5 text-sm font-bold"
+          >
+            <CalendarPlusIcon className="size-4" aria-hidden />
+            Ajouter à mon calendrier
+          </a>
+
+          <InterventionActions
+            bookingId={booking.id}
+            cancellable={decision.allowed}
+            feeCents={decision.outcome.feeCents}
+            refusalMessage={
+              decision.refusal === null
+                ? null
+                : refusalMessage(decision.refusal)
+            }
+            hasCleaner={booking.cleaner !== null}
+          />
+        </>
       ) : null}
     </li>
   );
@@ -124,6 +159,10 @@ export default async function MonEspacePage() {
   const bookings = await loadClientBookings();
   const upcoming = bookings?.upcoming ?? [];
   const past = bookings?.past ?? [];
+  // Une seule lecture de l'horloge pour toute la page : deux cartes rendues à
+  // une seconde d'intervalle ne doivent pas tomber de part et d'autre d'un
+  // palier du barème.
+  const now = new Date();
 
   return (
     <>
@@ -151,7 +190,12 @@ export default async function MonEspacePage() {
         ) : (
           <ul className="mt-4 space-y-3">
             {upcoming.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} upcoming />
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                upcoming
+                now={now}
+              />
             ))}
           </ul>
         )}
@@ -165,6 +209,7 @@ export default async function MonEspacePage() {
                   key={booking.id}
                   booking={booking}
                   upcoming={false}
+                  now={now}
                 />
               ))}
             </ul>
@@ -172,13 +217,16 @@ export default async function MonEspacePage() {
         ) : null}
 
         <section className="mt-12 border-t border-border pt-8">
-          <h2 className="text-lg font-extrabold">Modifier ou annuler</h2>
+          <h2 className="text-lg font-extrabold">
+            Le barème d&apos;annulation
+          </h2>
           <p className="mt-2 text-pretty text-muted-foreground">
-            Cela se fait par téléphone ou par message, et nous nous en occupons
-            tout de suite. L&apos;annulation est gratuite jusqu&apos;à{" "}
-            {FREE_CANCELLATION_HOURS} heures avant l&apos;intervention. En deçà,
-            le barème des conditions générales s&apos;applique, plafonné à
-            chaque palier.
+            Vous annulez depuis chaque intervention, en deux gestes, et le coût
+            est annoncé avant que vous confirmiez. C&apos;est gratuit
+            jusqu&apos;à {FREE_CANCELLATION_HOURS} heures avant. En deçà, le
+            barème des conditions générales s&apos;applique, plafonné à chaque
+            palier. Pour déplacer un rendez-vous plutôt que l&apos;annuler,
+            appelez-nous : nous le faisons tout de suite.
           </p>
           {/* Le barème est lu depuis le module de tarification, jamais
               recopié : un montant affiché qui diffère de celui qu'on prélève

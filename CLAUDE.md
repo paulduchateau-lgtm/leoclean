@@ -854,12 +854,32 @@ maison : le dépôt a tranché pour des sessions en base, révocables
 immédiatement. Un second système d'authentification à côté du premier ne serait
 pas un raccourci, ce serait une deuxième surface à sécuriser.
 
-**La replanification et l'annulation en autonomie n'y sont pas**, et c'est
-délibéré : elles supposent des transitions de statut, une notification de
-l'intervenant et une reprise du créneau libéré, qui n'existent pas encore. Un
-bouton « Annuler » qui n'annulerait rien serait pire que son absence. Le barème
-est affiché, lu depuis le module de tarification, et l'annulation se fait par
-téléphone — ce qui est le fonctionnement réel.
+**L'annulation en autonomie existe.** Elle supposait trois choses qui
+manquaient, et `client-space.ts` les fait dans une seule transaction : la
+transition de statut tracée par `BookingStatusEvent`, la fin des affectations
+en cours, et un message à l'intervenant. **C'est la deuxième qui libère le
+créneau** — la contrainte d'exclusion ignore les statuts terminaux, si bien
+qu'une affectation restée `ACCEPTED` gèlerait une heure pour une intervention
+qui n'a plus lieu.
+
+Le coût est annoncé **avant** la confirmation, calculé par `decideCancellation`
+— la même fonction pour l'écran et pour la mutation, sinon le bouton et le
+prélèvement finiraient par diverger.
+
+**L'appartenance ne passe pas par `requireOrganization`**, un client de la
+marketplace n'ayant pas de `Membership` : le profil est résolu depuis la
+session, jamais depuis l'entrée, et une réservation qui ne lui est pas
+rattachée est introuvable — le même message que si elle n'existait pas, pour
+ne pas confirmer un identifiant à un curieux.
+
+**Le chat est rattaché à l'intervention, pas au couple de personnes.** Un
+intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
+personnes mélangerait deux interventions sans rapport. Sans intervenant
+désigné, l'envoi est refusé plutôt que d'écrire à personne.
+
+**La replanification n'y est toujours pas** : elle suppose de rechercher un
+créneau et de réattribuer, c'est-à-dire le tunnel entier. Annuler puis
+reprendre reste le chemin.
 
 ## Vitrine statique de démonstration
 
