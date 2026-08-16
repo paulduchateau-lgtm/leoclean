@@ -463,6 +463,70 @@ export function BookingFunnel({
     confirmation,
   ]);
 
+  /* --- Historique du navigateur ----------------------------------------- */
+
+  /**
+   * Chaque écran est une entrée d'historique.
+   *
+   * Sans cela, le retour arrière — bouton du navigateur, geste de balayage sur
+   * iOS, touche Retour d'Android — faisait sortir du tunnel depuis n'importe
+   * quelle étape. C'est le geste le plus employé sur mobile, et le seul dont
+   * l'effet était de tout perdre : cinq écrans remplis, une sortie sèche vers
+   * la page d'où l'on venait.
+   *
+   * L'état React ne bouge pas, puisque le composant n'est jamais démonté : ce
+   * qui est écrit dans l'historique n'est que le nom de l'écran. Rien d'autre
+   * n'y va, et surtout aucune donnée personnelle — l'entrée d'historique
+   * survit à l'onglet.
+   *
+   * L'entrée d'arrivée est corrigée plutôt qu'ajoutée : sans cela, revenir
+   * depuis le deuxième écran quitterait la page au lieu de revenir au premier.
+   */
+  const stepPushedByHistory = useRef(false);
+  /** Entrées d'historique ajoutées par le tunnel, et donc reprenables. */
+  const ownHistoryEntries = useRef(0);
+
+  useEffect(() => {
+    const state = window.history.state as { leocleanStep?: string } | null;
+    if (state?.leocleanStep) return;
+    window.history.replaceState({ ...state, leocleanStep: step }, "");
+    // Volontairement au montage seulement : la suite est gérée plus bas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Le retour arrière a déjà positionné l'écran : le réécrire ajouterait une
+    // entrée en avant, et le bouton Retour ferait du surplace.
+    if (stepPushedByHistory.current) {
+      stepPushedByHistory.current = false;
+      return;
+    }
+    const state = window.history.state as { leocleanStep?: string } | null;
+    if (state?.leocleanStep === step) return;
+    window.history.pushState({ ...state, leocleanStep: step }, "");
+    ownHistoryEntries.current += 1;
+  }, [step]);
+
+  useEffect(() => {
+    function onPopState(event: PopStateEvent) {
+      const target = (event.state as { leocleanStep?: string } | null)
+        ?.leocleanStep;
+      // Une entrée qui ne vient pas du tunnel appartient à la page précédente :
+      // on laisse le navigateur faire, c'est bien une sortie.
+      if (!target || !(STEPS as readonly string[]).includes(target)) return;
+      stepPushedByHistory.current = true;
+      ownHistoryEntries.current = Math.max(0, ownHistoryEntries.current - 1);
+      setError(null);
+      // Un retour arrière est un retour, pas la fin d'une modification lancée
+      // depuis le récapitulatif : l'entrée précédente est déjà la bonne.
+      setReturnToRecap(false);
+      setStep(target as Step);
+    }
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
   /* --- Devis ------------------------------------------------------------ */
 
   /**
@@ -600,7 +664,21 @@ export function BookingFunnel({
     goTo(target);
   }
 
+  /**
+   * Retour d'un écran.
+   *
+   * Il passe par l'historique quand le tunnel y a laissé une entrée : la
+   * flèche de l'écran et le retour du navigateur doivent défaire la même
+   * chose, sans quoi l'un empile ce que l'autre dépile. Le compteur garantit
+   * qu'on ne fait jamais reculer le navigateur au-delà de nos propres entrées
+   * — ce qui reviendrait à quitter le site sur un bouton qui promet le
+   * contraire.
+   */
   function goBack() {
+    if (ownHistoryEntries.current > 0) {
+      window.history.back();
+      return;
+    }
     setError(null);
     if (returnToRecap) {
       setReturnToRecap(false);

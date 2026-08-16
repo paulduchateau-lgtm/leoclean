@@ -358,6 +358,44 @@ s'applique qu'une fois `NEXT_PUBLIC_SITE_URL` configurée : sans elle, on ne
 sait pas ce qui est canonique, et refuser par défaut mettrait le site entier
 hors de l'index sur un oubli de variable.
 
+## Coque applicative
+
+Le site se consulte debout, dans la rue, à une main : c'est là que la décision
+de faire venir quelqu'un chez soi se prend. Trois éléments, tous mobiles, tous
+absents en desktop où la navigation de l'en-tête reste seule maîtresse.
+
+**La barre d'onglets est posée dans le gabarit racine et décide seule où elle
+n'a rien à faire.** Le critère est `isAppPath` — le même que celui qui répartit
+les chemins entre les deux domaines : pendant une réservation ou dans un espace
+connecté, un seul modèle de navigation à la fois. Elle réserve sa place par un
+bloc en fin de flux plutôt qu'en ajoutant un remplissage à chaque `<main>` :
+une barre fixée ne prend pas de place, et sans cela elle recouvrirait la
+dernière ligne du pied de page, qui porte les mentions légales et le téléphone.
+
+**La barre de rappel de prix se monte après le héros d'une page, jamais dans le
+gabarit** : c'est son emplacement dans le document qui définit « la lecture a
+commencé ». Elle s'efface devant tout élément portant `data-booking-cta`, parce
+que deux appels à l'action à l'écran demandent de choisir lequel compte. Aucun
+écouteur de défilement — deux `IntersectionObserver`, qui ne réveillent le fil
+principal que sur franchissement. Elle n'est jamais démontée non plus : elle
+glisse hors de l'écran, `inert`, ce qui évite un saut de mise en page à chaque
+franchissement.
+
+**L'aide est un panneau, pas une page.** Ajouter un écran entre la question et
+la réponse quand la réponse tient en trois liens ne se justifie pas.
+`ContactSheet` reprend les trois canaux de `ContactChannels` dans le même ordre
+d'engagement ; les blocs de contact des pages restent où ils sont, le panneau
+ne les remplace pas.
+
+**Le tunnel écrit chaque écran dans l'historique du navigateur.** Sans cela, le
+retour arrière — bouton, geste de balayage iOS, touche Retour d'Android — était
+le geste le plus employé sur mobile et le seul dont l'effet était de tout
+perdre. Seul le nom de l'écran y va ; l'état vit dans React, que rien ne
+démonte. La flèche de l'écran passe par `history.back()` plutôt que par
+`setStep`, faute de quoi l'une empilerait ce que l'autre dépile — avec un
+compteur d'entrées propres, pour ne jamais faire reculer le navigateur au-delà
+des nôtres et quitter le site sur un bouton qui promet le contraire.
+
 ## Moteur de disponibilité
 
 `src/lib/scheduling/` est **pur** : aucune lecture de base, aucun appel réseau,
@@ -530,6 +568,9 @@ src/
   app/                 routes App Router
   components/ui/       shadcn/ui, non modifiés sauf nécessité
   components/          composants métier
+    app-tab-bar.tsx      navigation du pouce, mobile, hors espaces applicatifs
+    sticky-booking-cta.tsx rappel de prix à la lecture, effacé par le vrai bouton
+    contact-sheet.tsx    les trois canaux, en panneau bas
   lib/
     db.ts              client Prisma et cloisonnement multi-tenant
     env.ts             variables d'environnement validées par Zod

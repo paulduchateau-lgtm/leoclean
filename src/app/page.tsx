@@ -6,6 +6,7 @@ import { CommuneStart } from "@/components/commune-start";
 import { SiteFooter } from "@/components/site-footer";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteHeader } from "@/components/site-header";
+import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { Badge } from "@/components/ui/badge";
 import { publishedCommunes } from "@/lib/communes-content";
 import { formatHourlyRate } from "@/lib/pricing";
@@ -134,6 +135,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <StickyBookingCta />
 
         <section className="mx-auto w-full max-w-4xl px-6 py-16">
           <h2 className="text-2xl font-black tracking-tight">

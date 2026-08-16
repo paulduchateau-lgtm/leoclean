@@ -6,6 +6,7 @@ import { ArticleBody } from "@/components/article-body";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import {
   getPublishedArticle,
   publishedArticles,
@@ -155,6 +156,8 @@ export default async function ArticlePage({
           <p className="mt-6 max-w-prose text-lg text-pretty">
             {article.description}
           </p>
+
+          <StickyBookingCta />
 
           <div className="mt-10">
             <ArticleBody blocks={article.blocks} />

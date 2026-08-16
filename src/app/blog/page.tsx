@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { publishedArticles, readingMinutes } from "@/lib/blog";
 import { clientEnv } from "@/lib/env";
 import {
@@ -52,6 +53,8 @@ export default function BlogIndexPage() {
           de qui. Les chiffres cités sont ceux que nous appliquons dans les{" "}
           {COMMUNES.length} communes du sud de Bordeaux.
         </p>
+
+        <StickyBookingCta />
 
         <ul className="mt-10 space-y-4">
           {articles.map((article) => (

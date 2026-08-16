@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Figtree, Fraunces } from "next/font/google";
 
+import { AppTabBar } from "@/components/app-tab-bar";
 import { DemoBanner } from "@/components/demo-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { clientEnv } from "@/lib/env";
@@ -99,6 +100,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col">
         {clientEnv.NEXT_PUBLIC_DEMO_STATIQUE ? <DemoBanner /> : null}
         {children}
+        {/* La coque applicative se pose ici, une fois pour tout le site : elle
+            décide seule des écrans où elle n'a rien à faire. */}
+        <AppTabBar />
         <Toaster position="top-center" />
       </body>
     </html>

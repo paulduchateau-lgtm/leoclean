@@ -4,6 +4,7 @@ import { ContactChannels } from "@/components/contact-channels";
 import { LeadForm } from "@/components/lead-form";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { Badge } from "@/components/ui/badge";
 import { getPublishedCommune } from "@/lib/communes-content";
 import {
@@ -119,6 +120,8 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
           </p>
         </section>
 
+        <StickyBookingCta communeSlug={commune.slug} />
+
         <section className="mx-auto w-full max-w-4xl space-y-10 px-6 pb-12">
           {intention.sections.map((section) => (
             <div key={section.heading}>
@@ -198,6 +201,10 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
                 mieux et plus vite à qui est déjà décidé. */}
             <Link
               href={`/reserver?commune=${commune.slug}`}
+              /* Tant que ce bouton est à l'écran, la barre collante s'efface :
+                 deux appels à l'action concurrents demanderaient de choisir
+                 lequel compte. */
+              data-booking-cta
               className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
             >
               Voir les créneaux à {commune.name}
