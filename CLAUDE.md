@@ -864,8 +864,13 @@ téléphone — ce qui est le fonctionnement réel.
 ## Vitrine statique de démonstration
 
 `npm run build:demo -- --base-path /depot` produit dans `out/` un site de
-fichiers, publié sur GitHub Pages par `.github/workflows/leoclean-pages.yml`.
-Elle sert à montrer et à faire relire, jamais à prendre des réservations.
+fichiers. Elle sert à montrer et à faire relire, jamais à prendre des
+réservations.
+
+**Elle n'est publiée par aucun workflow.** Ce document a longtemps désigné un
+`.github/workflows/leoclean-pages.yml` qui n'existe pas : `ci.yml` est le seul
+workflow du dépôt. La commande se lance donc à la main, et le jour où la
+publication sera automatisée, c'est ici qu'il faudra l'écrire.
 
 **Le tunnel y fonctionne pour de bon**, et c'est le bénéfice concret d'avoir
 tenu les moteurs purs : tarification et disponibilité sont les mêmes fonctions
@@ -889,9 +894,19 @@ vrai numéro et de vrais tarifs — quelqu'un pourrait croire y avoir réservé.
 
 **Le build écarte des fichiers plutôt que d'ajouter des conditions.**
 `scripts/build-demo-statique.mjs` déplace ce qu'un export ne peut pas produire
-— espaces connectés, server actions, middleware — pose les substituts de
-`demo/overlay/`, puis restaure l'arbre dans un `finally`. Une condition oubliée
-casserait le build de production ; un fichier déplacé ne casse que celui-ci.
+— espaces connectés, server actions, middleware, pages société, page d'offre —
+pose les substituts de `demo/overlay/`, puis restaure l'arbre dans un
+`finally`. Une condition oubliée casserait le build de production ; un fichier
+déplacé ne casse que celui-ci.
+
+**Une route ajoutée est une exclusion à envisager.** La liste n'est pas
+déductible du code : `/pro/[slug]` a cassé la vitrine pendant une journée
+parce que `dynamicParams` est incompatible avec `output: export`, et rien ne
+l'a signalé — `ci.yml` ne lance ni `npm run build` ni `npm run build:demo`.
+Une page qui porte une server action, lit la base ou se rend à la demande doit
+partir, **et ses composants avec elle** : un composant resté seul importerait
+une action qui n'est plus là, et c'est le typage qui échouerait, pas
+l'export.
 
 **`basePath` n'est pas appliqué au `src` d'une image non optimisée**, et
 l'export impose ce mode. D'où `lib/asset-path.ts` : tout fichier de `public/`
