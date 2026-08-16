@@ -20,39 +20,45 @@ describe("intentions secondaires", () => {
     }
   });
 
-  it("reste un déploiement restreint, pas un produit cartésien", () => {
-    // Seize communes multipliées par deux intentions donneraient trente-deux
-    // pages dont la plupart n'auraient rien à dire. La retenue est le sujet.
+  it("reste un déploiement restreint : trois communes par intention", () => {
+    /*
+     * Le périmètre a été réduit de six à trois communes le 16 août 2026, après
+     * le relevé de duplication : six pages tièdes valent moins que trois
+     * fortes, et enrichir douze paragraphes à la main n'était pas tenable.
+     * Voir `docs/AUDIT-DUPLICATION.md`.
+     *
+     * Les deux intentions visent désormais les **mêmes** communes — Léognan,
+     * qui est le siège, et les deux communes les plus peuplées du territoire,
+     * toutes deux à moins de huit kilomètres. Le test précédent exigeait des
+     * ensembles différents ; c'était un garde-fou contre le produit cartésien,
+     * et le plafond de trois le remplace avantageusement.
+     */
     for (const intention of ALL_INTENTIONS) {
-      const count = Object.keys(intention.communes).length;
-      expect(count, intention.slug).toBeGreaterThanOrEqual(4);
-      expect(count, intention.slug).toBeLessThanOrEqual(8);
+      const communes = Object.keys(intention.communes);
+      expect(communes, intention.slug).toHaveLength(3);
+      expect(communes, intention.slug).toContain("leognan");
     }
-
-    // Et les deux intentions ne couvrent pas le même territoire.
-    const femme = new Set(
-      intentionPages("femme-de-menage").map((page) => page.commune.slug),
-    );
-    const repassage = new Set(
-      intentionPages("repassage").map((page) => page.commune.slug),
-    );
-    expect([...femme].some((slug) => !repassage.has(slug))).toBe(true);
-    expect([...repassage].some((slug) => !femme.has(slug))).toBe(true);
   });
 
-  it("écrit un paragraphe propre à chaque commune", () => {
-    const texts = pages.map((page) => page.local.text);
+  it("écrit plusieurs paragraphes propres à chaque commune", () => {
+    const texts = pages.map((page) => page.local.paragraphs.join(" "));
     expect(new Set(texts).size).toBe(texts.length);
 
     for (const { commune, local } of pages) {
-      expect(local.text.length, commune.slug).toBeGreaterThan(200);
-      expect(local.faq.length, commune.slug).toBeGreaterThanOrEqual(1);
+      // Trois paragraphes et trois questions : c'est ce qu'il faut pour que la
+      // part propre pèse plus du tiers de la page, seuil retenu après le
+      // relevé de duplication du 16 août 2026.
+      expect(local.paragraphs.length, commune.slug).toBeGreaterThanOrEqual(3);
+      expect(local.paragraphs.join(" ").length, commune.slug).toBeGreaterThan(
+        900,
+      );
+      expect(local.faq.length, commune.slug).toBeGreaterThanOrEqual(3);
     }
   });
 
   it("nomme la commune dans son paragraphe local", () => {
     for (const { commune, local } of pages) {
-      expect(local.text, commune.slug).toContain(commune.name);
+      expect(local.paragraphs.join(" "), commune.slug).toContain(commune.name);
     }
   });
 
@@ -133,11 +139,11 @@ describe("part propre à chaque commune", () => {
   }
 
   function localLength(local: {
-    text: string;
+    paragraphs: readonly string[];
     faq: readonly { question: string; answer: string }[];
   }): number {
     return (
-      local.text.length +
+      local.paragraphs.join(" ").length +
       local.faq.reduce(
         (total, entry) => total + entry.question.length + entry.answer.length,
         0,
@@ -148,16 +154,17 @@ describe("part propre à chaque commune", () => {
   /**
    * Plancher, et non objectif.
    *
-   * La page la plus pauvre aujourd'hui — `femme-de-menage/leognan` — tient
-   * 16,9 % de texte propre. Le seuil est posé juste en dessous : ce test
-   * n'atteste pas que les pages vont bien, il interdit qu'elles aillent plus
-   * mal. Une page saine serait au tiers, ce qui ferait tomber le recouvrement
-   * mesuré sous 60 % ; y arriver demande de la connaissance de terrain, et
-   * c'est l'arbitrage ouvert dans `docs/AUDIT-DUPLICATION.md`.
+   * Le seuil était de 16 % tant que six communes se partageaient un même
+   * gabarit : c'était un plancher constaté, pas un objectif. Après la
+   * réduction à trois communes et l'enrichissement du 16 août 2026, les six
+   * pages tiennent entre 44 et 47 % de texte propre. Le seuil est remonté au
+   * tiers — la valeur à partir de laquelle une page cesse d'être la variante
+   * de sa voisine — avec la marge qu'il faut pour qu'une correction
+   * rédactionnelle ne le fasse pas rougir pour rien.
    */
-  const MINIMUM_OWN_SHARE = 0.16;
+  const MINIMUM_OWN_SHARE = 0.33;
 
-  it("ne laisse aucune page descendre sous le plancher constaté", () => {
+  it("garde à chaque page plus du tiers de texte à elle", () => {
     for (const intention of ALL_INTENTIONS) {
       const shared = sharedLength(intention);
       for (const [slug, local] of Object.entries(intention.communes)) {

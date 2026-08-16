@@ -52,7 +52,17 @@ test.describe("réservation", () => {
   // recherche de créneaux sur trois semaines : il dépasse le budget par défaut.
   test.setTimeout(120_000);
 
-  test("mène de la commune à la confirmation", async ({ page }) => {
+  test("mène de la commune à la confirmation", async ({ page, isMobile }) => {
+    /*
+     * Le seul test de la suite qui écrive réellement en base, et donc le seul
+     * qui consomme un créneau. Le faire tourner sur les deux projets revenait
+     * à lancer deux réservations concurrentes sur la même commune à la même
+     * heure : la base en refuse une, à juste titre, et le test échouait pour
+     * une bonne raison — ce qui en fait un mauvais test. Mobile d'abord,
+     * puisque c'est là que se prennent les réservations.
+     */
+    test.skip(!isMobile, "Une seule réservation réelle par exécution.");
+
     await page.goto("/reserver");
 
     // 1. Commune. Le prix d'appel est annoncé avant même le premier choix :

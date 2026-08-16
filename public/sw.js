@@ -78,7 +78,9 @@ self.addEventListener("fetch", (event) => {
    */
   if (requete.mode === "navigate") {
     event.respondWith(
-      fetch(requete).catch(() => caches.match(HORS_LIGNE).then((r) => r ?? Response.error())),
+      fetch(requete).catch(() =>
+        caches.match(HORS_LIGNE).then((r) => r ?? Response.error()),
+      ),
     );
   }
 });

@@ -43,6 +43,6 @@ export default async function Image({
   return ogCard({
     overline: "Repassage",
     title: fillTemplate("Repassage à {commune}", page.commune.name),
-    subtitle: ogLead(page.local.text),
+    subtitle: ogLead(page.local.paragraphs[0] ?? ""),
   });
 }

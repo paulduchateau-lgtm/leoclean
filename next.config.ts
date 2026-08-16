@@ -17,6 +17,31 @@ import type { NextConfig } from "next";
 const demoStatique = process.env.NEXT_PUBLIC_DEMO_STATIQUE === "true";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
+/**
+ * Pages d'intention retirées le 16 août 2026, et où les envoyer.
+ *
+ * `femme-de-menage` et `repassage` étaient publiées sur six communes chacune,
+ * choisies pour leur population. Le relevé de duplication a montré que ces
+ * pages partageaient 84 % de leur texte entre elles : chapeau, sections et FAQ
+ * communes étaient écrits une fois pour l'intention, et la part propre à la
+ * commune pesait une centaine de mots sur neuf cents. Trois pages fortes
+ * valent mieux que six tièdes — voir `docs/AUDIT-DUPLICATION.md`.
+ *
+ * Ces URL étaient indexables : les laisser répondre 404 perdrait sèchement ce
+ * qu'elles avaient acquis. Une redirection permanente transmet ce capital à la
+ * page commune correspondante, qui traite le même lieu et existe toujours.
+ * Permanente et non temporaire : la décision est prise, et un 307 laisserait
+ * les moteurs conserver l'ancienne URL indéfiniment.
+ */
+const INTENTIONS_RETIREES = [
+  { from: "/femme-de-menage/cestas", to: "/menage-a-domicile/cestas" },
+  { from: "/femme-de-menage/cadaujac", to: "/menage-a-domicile/cadaujac" },
+  { from: "/femme-de-menage/la-brede", to: "/menage-a-domicile/la-brede" },
+  { from: "/repassage/cadaujac", to: "/menage-a-domicile/cadaujac" },
+  { from: "/repassage/saint-selve", to: "/menage-a-domicile/saint-selve" },
+  { from: "/repassage/martillac", to: "/menage-a-domicile/martillac" },
+] as const;
+
 const nextConfig: NextConfig = {
   /**
    * Ancre la racine du workspace sur ce dossier. Next.js la déduit sinon du
@@ -33,6 +58,25 @@ const nextConfig: NextConfig = {
     // Une erreur de type doit casser le build, jamais être ignorée.
     ignoreBuildErrors: false,
   },
+
+  /*
+   * L'export statique de la vitrine ne sait pas rediriger — GitHub Pages ne
+   * sert que des fichiers. Les redirections n'existent donc qu'en production,
+   * là où elles ont un sens : la démonstration est en `noindex`, aucune de ces
+   * URL n'y a jamais été indexée.
+   */
+  ...(demoStatique
+    ? {}
+    : {
+        redirects: () =>
+          Promise.resolve(
+            INTENTIONS_RETIREES.map(({ from, to }) => ({
+              source: from,
+              destination: to,
+              permanent: true,
+            })),
+          ),
+      }),
 
   images: demoStatique
     ? // L'optimiseur d'images de Next exige un serveur ; en export statique

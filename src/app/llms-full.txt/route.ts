@@ -84,7 +84,7 @@ export function GET(): Response {
         "",
         intention.lede,
         "",
-        local.text,
+        local.paragraphs.join("\n\n"),
         "",
         ...intention.sections.map((section) =>
           [`### ${section.heading}`, "", section.paragraphs.join("\n\n")].join(

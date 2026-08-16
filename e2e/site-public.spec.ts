@@ -214,6 +214,39 @@ test.describe("intentions secondaires", () => {
     expect(repassage).toContain("corbeille");
   });
 
+  test("redirige en 301 les pages d'intention retirées", async ({ page }) => {
+    /*
+     * Ces six URL étaient indexables avant la réduction du 16 août 2026 : les
+     * laisser répondre 404 perdrait sèchement ce qu'elles avaient acquis. La
+     * redirection permanente transmet ce capital à la page commune, qui traite
+     * le même lieu et existe toujours.
+     */
+    for (const [ancienne, nouvelle] of [
+      ["/femme-de-menage/cestas", "/menage-a-domicile/cestas"],
+      ["/femme-de-menage/la-brede", "/menage-a-domicile/la-brede"],
+      ["/repassage/martillac", "/menage-a-domicile/martillac"],
+    ]) {
+      const response = await page.goto(ancienne!);
+      expect(new URL(page.url()).pathname, ancienne).toBe(nouvelle);
+      expect(response?.status(), ancienne).toBe(200);
+    }
+  });
+
+  test("ne publie plus que trois communes par intention", async ({
+    request,
+  }) => {
+    // Trois pages fortes valent mieux que six tièdes : le relevé de
+    // duplication les donnait à 84 % identiques entre elles.
+    const body = await (await request.get("/sitemap.xml")).text();
+    const femme = body.match(/\/femme-de-menage\//g) ?? [];
+    const repassage = body.match(/\/repassage\//g) ?? [];
+
+    expect(femme).toHaveLength(3);
+    expect(repassage).toHaveLength(3);
+    expect(body).toContain("/femme-de-menage/leognan");
+    expect(body).toContain("/repassage/leognan");
+  });
+
   test("renvoie 404 là où l'intention n'est pas publiée", async ({ page }) => {
     // Le déploiement est volontairement restreint : une commune sans contenu
     // propre ne doit pas produire une page vide, mais rien du tout.

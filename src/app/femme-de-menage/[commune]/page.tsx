@@ -60,7 +60,7 @@ export async function generateMetadata({
       `${INTENTION_SUMMARY} ${page.commune.name} (${page.commune.postalCode}) : ` +
       `Léo Clean y intervient à partir de ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, ` +
       `sans lien d'employeur, avec un minimum de ${MINIMUM_BILLABLE_MINUTES / 60} heures.`,
-    openGraphDescription: page.local.text,
+    openGraphDescription: page.local.paragraphs[0],
     // La carte est celle de la commune : voir `opengraph-image.tsx` à côté.
     hasOwnOpenGraphImage: true,
   });

@@ -289,12 +289,28 @@ compare distance routière et distance orthodromique rattraperait une rechute.
 
 **Les intentions secondaires sont un déploiement volontairement restreint.**
 `src/lib/intentions.ts` porte `/femme-de-menage/<commune>` et
-`/repassage/<commune>` : six communes chacune, et pas les mêmes. « Femme de
-ménage à X » ne cherche pas une prestation à acheter mais à comprendre qui
-emploie qui ; le repassage est une autre prestation, avec ses propres unités.
-Multiplier seize communes par deux intentions donnerait trente-deux pages dont
-la plupart n'auraient rien à dire — un test borne le nombre de communes par
-intention et exige que les deux ensembles diffèrent.
+`/repassage/<commune>` sur **trois communes chacune, les mêmes** : Léognan, le
+siège, et Gradignan et Villenave-d'Ornon, les deux plus peuplées du territoire
+et les plus proches parmi elles. « Femme de ménage à X » ne cherche pas une
+prestation à acheter mais à comprendre qui emploie qui ; le repassage est une
+autre prestation, avec ses propres unités. Multiplier seize communes par deux
+intentions donnerait trente-deux pages dont la plupart n'auraient rien à dire.
+
+Le périmètre était de six communes par intention jusqu'au 16 août 2026 : le
+relevé de duplication les donnait à 84 % identiques entre elles, parce que le
+chapeau, les sections et la FAQ commune sont écrits une fois pour l'intention
+et que seule une centaine de mots sur neuf cents changeait de commune en
+commune. **Trois pages fortes valent mieux que six tièdes** — le recouvrement
+est retombé à 62 %, sans qu'aucune paire du site ne dépasse plus 70 %. Les six
+URL retirées redirigent en 301 vers leur page commune, qui traite le même lieu :
+elles étaient indexables, et un 404 perdrait sèchement ce qu'elles avaient
+acquis.
+
+Un test exige désormais trois paragraphes, trois questions et **plus du tiers
+de texte propre** par commune. Il interdit surtout d'ajouter une quatrième
+commune à moindres frais que les trois existantes, ce qui est exactement la
+pente qui avait produit l'écart. Journal complet :
+[docs/AUDIT-DUPLICATION.md](docs/AUDIT-DUPLICATION.md).
 
 **Le blog répond aux intentions sans nom de ville.** `src/lib/blog.ts` :
 articles en blocs typés, jamais en HTML — rien de ce qui est rédigé ne peut

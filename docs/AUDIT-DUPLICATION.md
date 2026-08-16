@@ -9,10 +9,10 @@ pour décider si un gabarit produit du contenu ou des satellites.
 
 Deux indicateurs, parce qu'ils ne disent pas la même chose.
 
-| Indicateur                | Ce qu'il mesure                                        |
-| ------------------------- | ------------------------------------------------------ |
-| **Mots** (Jaccard)        | Vocabulaire partagé. Deux pages sur le même service se ressemblent forcément un peu. |
-| **Phrases** (5-grammes)   | Suites de cinq mots identiques. C'est celui qui compte : au-delà d'un seuil, les pages disent littéralement la même chose. |
+| Indicateur              | Ce qu'il mesure                                                                                                            |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Mots** (Jaccard)      | Vocabulaire partagé. Deux pages sur le même service se ressemblent forcément un peu.                                       |
+| **Phrases** (5-grammes) | Suites de cinq mots identiques. C'est celui qui compte : au-delà d'un seuil, les pages disent littéralement la même chose. |
 
 Le recouvrement de phrases est pris dans le sens le plus défavorable des deux :
 une page courte entièrement contenue dans une longue est un doublon, même si la
@@ -24,14 +24,14 @@ Script : `audit-similarite.mjs`, exécuté contre une construction de production
 
 **Le risque n'est pas là où on l'attendait.**
 
-| Paire de gabarits                   | Phrases communes, médiane | Maximum |
-| ----------------------------------- | ------------------------: | ------: |
-| `femme-de-menage` ↔ `femme-de-menage` |                  **84 %** |    85 % |
-| `repassage` ↔ `repassage`             |                  **83 %** |    84 % |
-| `menage-a-domicile` ↔ `menage-a-domicile` |                    55 % |    58 % |
-| `femme-de-menage` ↔ `menage-a-domicile` |                      23 % |    26 % |
-| `menage-a-domicile` ↔ `repassage`       |                      22 % |    25 % |
-| `femme-de-menage` ↔ `repassage`         |                      22 % |    25 % |
+| Paire de gabarits                         | Phrases communes, médiane | Maximum |
+| ----------------------------------------- | ------------------------: | ------: |
+| `femme-de-menage` ↔ `femme-de-menage`     |                  **84 %** |    85 % |
+| `repassage` ↔ `repassage`                 |                  **83 %** |    84 % |
+| `menage-a-domicile` ↔ `menage-a-domicile` |                      55 % |    58 % |
+| `femme-de-menage` ↔ `menage-a-domicile`   |                      23 % |    26 % |
+| `menage-a-domicile` ↔ `repassage`         |                      22 % |    25 % |
+| `femme-de-menage` ↔ `repassage`           |                      22 % |    25 % |
 
 Deux lectures, l'une rassurante et l'autre non.
 
@@ -57,38 +57,79 @@ contenu éditorial est écrit commune par commune dans `communes-content.ts`, et
 
 ## Ce qui a été fait
 
-Rien de destructif. **Aucune page n'a été supprimée ni fusionnée** — le brief
-l'interdit sans arbitrage, et l'audit montre de toute façon que la fusion
-envisagée n'était pas la bonne opération.
+**Réduction à trois communes par intention, puis enrichissement** — l'option 2
+suivie de l'option 1, arbitrée par le porteur du projet le 16 août 2026.
 
-Un garde-fou exécutable a été posé à la place : `intentions.test.ts` borne
-désormais la part propre à chaque commune, de la même façon que
-`communes-content.test.ts` le fait pour les pages communes. La situation ne peut
-plus se dégrader en silence.
+Les deux intentions visent désormais les mêmes trois communes : **Léognan**, le
+siège, et **Gradignan** et **Villenave-d'Ornon**, les deux plus peuplées du
+territoire, respectivement à 4,9 et 7,6 kilomètres de Léognan. Le choix combine
+le volume de recherche et la proximité — les deux raisons qui font qu'une page
+locale se classe et qu'un créneau tient.
 
-## Ce qui reste à trancher
+Les six pages restantes sont passées d'une centaine de mots propres à trois
+paragraphes et trois questions chacune, soit **1 130 à 1 250 mots par page**
+contre 950 auparavant, dont 44 à 47 % ne peuvent être écrits pour une autre
+commune. Le contenu ajouté est ancré dans des faits déjà publiés : typologie
+d'habitat, quartiers, distances mesurées, population.
 
-Les douze pages d'intention sont à 84 % identiques entre elles. Trois issues,
-qui ne se valent pas :
+**Relevé après modification**, même méthode, même script :
 
-1. **Enrichir.** Porter la part propre à chaque commune à 300 mots réellement
-   spécifiques — quartiers, typologie d'habitat, prix pratiqués localement en
-   emploi direct — ferait tomber le recouvrement sous 60 %. C'est douze
-   paragraphes à écrire, et ils ne s'inventent pas : ils demandent de la
-   connaissance de terrain.
-2. **Réduire.** Publier `femme-de-menage` et `repassage` sur deux ou trois
-   communes seulement, celles où l'intention a vraiment quelque chose de
-   particulier à dire. Quatre pages fortes valent mieux que douze tièdes.
-3. **Laisser.** 84 % entre pages sœurs d'un même gabarit est courant sur les
-   sites locaux, et Google traite plus souvent ces pages en « contenu de faible
-   valeur » qu'en pénalité. Le risque est un non-classement, pas une sanction.
+| Paire de gabarits                         | Avant |    Après |
+| ----------------------------------------- | ----: | -------: |
+| `femme-de-menage` ↔ `femme-de-menage`     |  84 % | **62 %** |
+| `repassage` ↔ `repassage`                 |  83 % | **61 %** |
+| `menage-a-domicile` ↔ `menage-a-domicile` |  55 % |     49 % |
+| `femme-de-menage` ↔ `menage-a-domicile`   |  23 % |     23 % |
 
-**Recommandation : option 2, puis option 1 sur ce qui reste.** Le périmètre
-actuel — six communes par intention, choisies pour leur population — n'a pas de
-justification éditoriale ; il a une justification arithmétique. Réduire à trois
-communes par intention, celles pour lesquelles il existe un vrai angle local,
-rend l'enrichissement faisable à la main.
+**Aucune paire ne dépasse plus 70 %**, contre trente auparavant. Le maximum
+observé est de 62 %, entre `femme-de-menage/villenave-d-ornon` et
+`femme-de-menage/gradignan`.
 
-Cette décision appartient au porteur du projet : elle retire des URL indexables,
-ce qui exige des redirections 301 et se paie en visibilité le temps que les
-moteurs se réajustent.
+Ce qui reste partagé est le chapeau, les trois sections éditoriales et la FAQ
+commune : c'est le propos de l'intention, qui ne change pas d'une commune à
+l'autre et qu'il serait malhonnête de réécrire en variantes.
+
+### Les six URL retirées
+
+Elles étaient indexables : les laisser répondre 404 perdrait sèchement ce
+qu'elles avaient acquis. Chacune redirige en 301 vers la page commune
+correspondante, qui traite le même lieu et existe toujours. Permanente et non
+temporaire : la décision est prise, et un 307 laisserait les moteurs conserver
+l'ancienne URL indéfiniment. La table vit dans `next.config.ts` ; un test de
+bout en bout vérifie les redirections.
+
+| Retirée                     | Vers                             |
+| --------------------------- | -------------------------------- |
+| `/femme-de-menage/cestas`   | `/menage-a-domicile/cestas`      |
+| `/femme-de-menage/cadaujac` | `/menage-a-domicile/cadaujac`    |
+| `/femme-de-menage/la-brede` | `/menage-a-domicile/la-brede`    |
+| `/repassage/cadaujac`       | `/menage-a-domicile/cadaujac`    |
+| `/repassage/saint-selve`    | `/menage-a-domicile/saint-selve` |
+| `/repassage/martillac`      | `/menage-a-domicile/martillac`   |
+
+### Le garde-fou
+
+`intentions.test.ts` exige désormais trois paragraphes et trois questions par
+commune, et une part propre au-dessus du tiers — la valeur à partir de laquelle
+une page cesse d'être la variante de sa voisine. Le seuil précédent, 16 %,
+n'était qu'un plancher constaté. Le test interdit aussi d'ajouter une quatrième
+commune à moindres frais que les trois existantes, ce qui est exactement la
+pente qui avait produit l'écart.
+
+## Ce qu'il faudra surveiller
+
+Le recouvrement de 62 % entre pages sœurs est acceptable et ne se réduira plus
+sans toucher au propos commun de l'intention. Deux évolutions le referaient
+monter, et ce sont les deux à surveiller :
+
+- **Rouvrir le périmètre.** Ajouter une quatrième ou une cinquième commune
+  rediviserait la part propre. Si le besoin se présente, écrire d'abord les
+  trois paragraphes, publier ensuite.
+- **Allonger les sections communes.** Chaque phrase ajoutée au chapeau ou aux
+  sections est ajoutée à trois pages à la fois. Le test le rattrapera, mais il
+  vaut mieux le savoir avant d'écrire.
+
+Il reste enfin le mesuré des pages `menage-a-domicile` : 49 % entre elles, sans
+qu'aucune paire n'approche le seuil. Elles sont écrites commune par commune
+depuis le début, et `communes-content.test.ts` y interdit déjà la moindre phrase
+en double.

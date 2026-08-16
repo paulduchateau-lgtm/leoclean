@@ -43,6 +43,6 @@ export default async function Image({
   return ogCard({
     overline: "Femme de ménage",
     title: fillTemplate("Femme de ménage à {commune}", page.commune.name),
-    subtitle: ogLead(page.local.text),
+    subtitle: ogLead(page.local.paragraphs[0] ?? ""),
   });
 }

@@ -34,9 +34,15 @@ const COMMUNES = [
   "isle-saint-georges",
 ];
 
-/** Texte du `<main>` seul, balises retirées. */
+/**
+ * Texte du `<main>` seul, balises retirées.
+ *
+ * Les redirections ne sont pas suivies : une page retirée renvoie vers sa
+ * commune, et la suivre reviendrait à comparer une page à elle-même — 100 %
+ * de recouvrement, qui ne dit rien.
+ */
 async function mainText(path) {
-  const response = await fetch(`${BASE}${path}`);
+  const response = await fetch(`${BASE}${path}`, { redirect: "manual" });
   if (!response.ok) return null;
   const html = await response.text();
   const main = /<main[^>]*>([\s\S]*?)<\/main>/.exec(html)?.[1];
@@ -77,7 +83,11 @@ function containment(a, b) {
 const pages = new Map();
 
 for (const commune of COMMUNES) {
-  for (const template of ["menage-a-domicile", "femme-de-menage", "repassage"]) {
+  for (const template of [
+    "menage-a-domicile",
+    "femme-de-menage",
+    "repassage",
+  ]) {
     const path = `/${template}/${commune}`;
     const text = await mainText(path);
     if (text) pages.set(path, text);

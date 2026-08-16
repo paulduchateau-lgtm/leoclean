@@ -17,9 +17,24 @@ export default defineConfig({
     timezoneId: "Europe/Paris",
   },
   projects: [
+    /*
+     * Le parcours complet réserve réellement, et consomme donc un créneau à
+     * chaque exécution. Sans nettoyage préalable, la suite cesse d'être
+     * répétable au bout d'une dizaine de passages. Voir
+     * `e2e/nettoyage.setup.ts`.
+     */
+    { name: "nettoyage", testMatch: /nettoyage\.setup\.ts/ },
     // Mobile d'abord : c'est là que se prennent les réservations.
-    { name: "mobile", use: { ...devices["Pixel 7"] } },
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "mobile",
+      use: { ...devices["Pixel 7"] },
+      dependencies: ["nettoyage"],
+    },
+    {
+      name: "desktop",
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["nettoyage"],
+    },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined

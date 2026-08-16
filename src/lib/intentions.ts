@@ -28,8 +28,16 @@ import { type Commune, getCommuneBySlug } from "./territory";
 export type IntentionSlug = "femme-de-menage" | "repassage";
 
 export interface IntentionLocal {
-  /** Ce que l'intention a de particulier dans cette commune. Unique. */
-  text: string;
+  /**
+   * Ce que l'intention a de particulier dans cette commune.
+   *
+   * Une suite de paragraphes, comme les sections communes : c'est la part de
+   * la page qui n'existe que pour ce lieu, et elle doit peser assez lourd
+   * pour que la page ne soit pas une variante de sa voisine. Le relevé du
+   * 16 août 2026 la voulait au-dessus du tiers — voir
+   * `docs/AUDIT-DUPLICATION.md`.
+   */
+  paragraphs: readonly string[];
   faq: readonly { question: string; answer: string }[];
 }
 
@@ -91,8 +99,64 @@ const INTENTIONS: readonly Intention[] = [
       },
     ],
     communes: {
+      leognan: {
+        paragraphs: [
+          "Léognan est la commune où vivent la plupart des intervenants Léo Clean, et cela change concrètement trois choses. Les délais y sont les plus courts du territoire : une première intervention se cale souvent sous quarante-huit heures, là où il faut compter davantage aux extrémités de la zone. Les annulations y sont rares, parce qu'un trajet de cinq minutes ne se heurte ni aux embouteillages de la rocade ni à un imprévu de garde d'enfant. Et l'intervenant qui vient chez vous est souvent quelqu'un que vous croisez au marché du mercredi : ce n'est pas un argument sentimental, c'est ce qui fait qu'on prévient la veille au lieu de ne pas venir.",
+          "Le bâti de Léognan pèse aussi sur ce qu'on attend d'une femme de ménage. La commune mêle un bourg ancien, des lotissements pavillonnaires des années 1980 et 1990, et de grandes propriétés de l'appellation Pessac-Léognan. Les lotissements dominent en nombre : maisons de 90 à 140 m² sur un niveau ou deux, avec un garage et une véranda que personne ne compte dans la surface habitable et qui prennent pourtant une demi-heure. Les propriétés viticoles, elles, posent une autre question — des volumes qu'on ne traite pas en une intervention, et une saisonnalité qui culmine autour des vendanges, quand la maison reçoit.",
+          "Une dernière particularité, propre à une commune de dix mille six cent soixante-dix habitants où tout le monde se connaît : la discrétion se demande explicitement. Nos intervenants ne commentent jamais un intérieur, et c'est une consigne écrite, pas une politesse.",
+        ],
+        faq: [
+          {
+            question:
+              "Peut-on rencontrer l'intervenant avant la première intervention ?",
+            answer:
+              "Oui, et c'est fréquent à Léognan compte tenu des distances. Une visite de dix minutes suffit à faire le tour du logement, à convenir des priorités et des modalités d'accès. Elle n'est pas facturée.",
+          },
+          {
+            question: "Quel est le délai pour une première venue à Léognan ?",
+            answer:
+              "C'est la commune la plus rapide du territoire, parce que la plupart des intervenants Léo Clean y habitent : comptez généralement quarante-huit heures pour un premier créneau, contre trois à cinq jours aux extrémités de la zone.",
+          },
+          {
+            question:
+              "Intervenez-vous dans les propriétés viticoles de Pessac-Léognan ?",
+            answer:
+              "Oui, sur la partie habitation. Au-delà de 400 m², nous organisons deux passages plutôt qu'une intervention unique : six heures d'affilée sont intenables et le travail s'en ressent. Appelez-nous au 06 84 36 38 62, ces logements se chiffrent mieux de vive voix.",
+          },
+        ],
+      },
+      gradignan: {
+        paragraphs: [
+          "À Gradignan, deux demandes coexistent sans se ressembler, et la première question que nous posons est de savoir dans laquelle vous vous reconnaissez. Les familles installées dans les maisons boisées du secteur — Cayac, les abords du parc de Mandavit, les rues résidentielles vers Malartic — cherchent un entretien hebdomadaire qui dure des années, avec la même personne. Les logements étudiants proches du campus cherchent l'inverse : un ménage de sortie, en juin ou en septembre, une fois pour toutes. Le premier appelle un intervenant attitré et un tarif régulier ; le second une intervention ponctuelle, dont la date est connue trois mois à l'avance mais jamais réservée avant la dernière semaine.",
+          "Le caractère boisé de la commune n'est pas qu'un agrément : il ajoute du travail. Les maisons de Gradignan sont majoritairement de 100 à 130 m² sur terrain arboré, et l'entretien y demande trois heures à trois heures et demie. Les feuilles entrent avec les chaussures d'octobre à décembre, le pollen des pins se dépose en avril sur les rebords et les vitres, et les terrasses en bois demandent un passage à part que nous chiffrons séparément plutôt que de le glisser dans une heure déjà prise.",
+          "Avec 26 952 habitants, Gradignan est la deuxième commune la plus peuplée de notre zone et la plus dense après Villenave-d'Ornon. Le vivier d'intervenants y est donc large, mais les créneaux du milieu de matinée en semaine — ceux que cherchent les foyers où personne n'est là dans la journée — sont les premiers pris.",
+        ],
+        faq: [
+          {
+            question: "Intervenez-vous dans les logements étudiants ?",
+            answer:
+              "Oui, essentiellement pour des ménages de fin de bail, au tarif ponctuel de 33 € de l'heure. Un studio ou un T1 se traite en deux heures, la durée minimale facturée. À Gradignan, ces demandes se concentrent en juin et en septembre : réservez dix jours à l'avance sur ces deux mois.",
+          },
+          {
+            question:
+              "Le jardin arboré change-t-il la durée d'un ménage à Gradignan ?",
+            answer:
+              "À l'intérieur, oui, d'environ une demi-heure en automne et au printemps : feuilles rapportées sur les sols, pollen de pin sur les rebords et les vitres. L'entretien de la terrasse et des abords est une prestation distincte, que nous chiffrons à part plutôt que de la prendre sur une heure déjà réservée.",
+          },
+          {
+            question:
+              "Trouve-t-on facilement un créneau du matin à Gradignan ?",
+            answer:
+              "C'est la deuxième commune la plus peuplée du territoire, donc celle où nous avons le plus d'intervenants après Léognan et Villenave-d'Ornon. Les créneaux de 9 h à 12 h en semaine partent néanmoins les premiers : comptez une semaine d'avance pour en obtenir un régulier.",
+          },
+        ],
+      },
       "villenave-d-ornon": {
-        text: "Villenave-d'Ornon est la commune du territoire où la demande est la plus forte et la rotation la plus rapide : 42 545 habitants, une part d'appartements bien supérieure au reste de la zone, et des locataires qui changent souvent de logement. Cela joue dans les deux sens — le vivier d'intervenants y est le plus large, mais les meilleurs créneaux, ceux du milieu de matinée, partent vite.",
+        paragraphs: [
+          "Villenave-d'Ornon est la commune du territoire où la demande est la plus forte et la rotation la plus rapide. Avec 42 545 habitants, c'est la plus peuplée de notre zone, et celle où la part d'appartements dépasse nettement le reste du secteur. Cela joue dans les deux sens : le vivier d'intervenants y est le plus large après Léognan, mais les meilleurs créneaux — ceux du milieu de matinée, quand le logement est vide — partent en quelques jours.",
+          "La commune s'étend de la Garonne aux coteaux et mêle des quartiers qui n'ont presque rien en commun. Le long de la ligne C du tramway, les résidences récentes abritent surtout des locataires, souvent seuls ou en couple, qui déménagent tous les deux ou trois ans : la demande y est faite d'appartements de 50 à 80 m² traités en deux à trois heures, et de ménages de fin de bail. Le bourg ancien et ses maisons de ville posent l'inverse — des surfaces plus grandes, des sols mêlés, et des foyers installés pour longtemps. Les secteurs résidentiels vers Sarcignan et Chambéry relèvent du pavillonnaire classique, avec des demandes hebdomadaires régulières.",
+          "Dire « je cherche une femme de ménage à Villenave-d'Ornon » ne suffit donc pas à nous permettre de vous proposer quelqu'un : c'est le quartier qui détermine le trajet de l'intervenant, et le trajet qui détermine si un créneau tient. Le code postal 33140 couvre onze kilomètres du nord au sud.",
+        ],
         faq: [
           {
             question:
@@ -100,56 +164,16 @@ const INTENTIONS: readonly Intention[] = [
             answer:
               "C'est la commune où Léo Clean dispose du plus grand nombre d'intervenants après Léognan. Une première intervention est généralement programmée sous 48 à 72 heures, y compris en appartement.",
           },
-        ],
-      },
-      gradignan: {
-        text: "À Gradignan, deux demandes coexistent sans se ressembler. Les familles installées dans les maisons boisées du secteur cherchent un entretien hebdomadaire durable, sur plusieurs années. Les logements étudiants proches du campus cherchent un ménage de sortie, en juin ou en septembre, une fois pour toutes. Le premier appelle un intervenant attitré, le second une intervention ponctuelle.",
-        faq: [
-          {
-            question: "Intervenez-vous dans les logements étudiants ?",
-            answer:
-              "Oui, essentiellement pour des ménages de fin de bail, au tarif ponctuel de 33 € de l'heure. Un studio ou un T1 se traite en deux heures, la durée minimale facturée.",
-          },
-        ],
-      },
-      cestas: {
-        text: "Cestas pose un problème que les autres communes ne posent pas : ses quartiers sont si distants les uns des autres — Cestas-Bourg, Gazinet, Toctoucau — qu'un intervenant qui habite l'un d'eux n'est pas nécessairement proche de vous. Chercher « une femme de ménage à Cestas » sans préciser le secteur revient à chercher dans 100 km². C'est la première question que nous posons au téléphone.",
-        faq: [
-          {
-            question: "Vos intervenants habitent-ils Cestas ?",
-            answer:
-              "Une partie oui, et c'est ce qui rend la commune tenable malgré son étendue. Nous attribuons en priorité un intervenant du même secteur que vous — Bourg, Gazinet ou Toctoucau — plutôt qu'un intervenant de la commune au sens large.",
-          },
-        ],
-      },
-      leognan: {
-        text: "Léognan est la commune où vivent la plupart des intervenants Léo Clean, ce qui change concrètement deux choses : les délais y sont les plus courts du territoire, et l'intervenant qui vient chez vous est souvent quelqu'un que vous croisez au marché. Ce n'est pas un argument sentimental — c'est ce qui explique qu'un rendez-vous soit rarement annulé ici.",
-        faq: [
           {
             question:
-              "Peut-on rencontrer l'intervenant avant la première intervention ?",
+              "Combien coûte un ménage d'appartement à Villenave-d'Ornon ?",
             answer:
-              "Oui, et c'est fréquent à Léognan compte tenu des distances. Une visite de dix minutes suffit à faire le tour du logement, à convenir des priorités et des modalités d'accès.",
+              "Un appartement de 60 m² demande environ deux heures et demie, soit 72,50 € en formule régulière à 29 € de l'heure et 82,50 € en intervention ponctuelle à 33 €. C'est la configuration la plus fréquente le long du tramway.",
           },
-        ],
-      },
-      cadaujac: {
-        text: "Cadaujac est une commune de familles et de maisons de plain-pied, souvent construites depuis moins de vingt ans. La demande y est très majoritairement régulière — un passage par semaine ou tous les quinze jours, aux mêmes horaires — plutôt que ponctuelle. C'est le profil sur lequel un intervenant attitré prend tout son sens : au bout de trois mois, il n'a plus besoin de consignes.",
-        faq: [
           {
-            question: "Peut-on fixer un jour et une heure fixes à Cadaujac ?",
+            question: "Le quartier compte-t-il pour être servi rapidement ?",
             answer:
-              "Oui, c'est le principe de la formule régulière : un créneau réservé, le même chaque semaine ou toutes les deux semaines, avec le même intervenant. C'est aussi ce qui permet le tarif de 29 € de l'heure plutôt que 33 €.",
-          },
-        ],
-      },
-      "la-brede": {
-        text: "À La Brède, le bâti ancien du bourg change ce qu'on attend d'un intervenant. Tomettes, parquets non vitrifiés, menuiseries à petits carreaux, hauteurs sous plafond : ce sont des surfaces qui se dégradent si on les traite comme du carrelage récent. Chercher une femme de ménage à La Brède, c'est souvent chercher quelqu'un qui a déjà travaillé dans ce type de maison.",
-        faq: [
-          {
-            question: "Vos intervenants savent-ils traiter les sols anciens ?",
-            answer:
-              "Oui, et nous le vérifions à l'entretien de recrutement. Tomettes, parquets et carreaux de ciment se nettoient sans excès d'eau et avec des produits neutres ; signalez-les à la réservation pour que nous vous attribuions un intervenant à l'aise avec ce bâti.",
+              "Oui, plus qu'ailleurs : Villenave-d'Ornon s'étend de la Garonne aux coteaux sur onze kilomètres. Nous attribuons en priorité un intervenant du même secteur que vous — corridor du tramway, bourg, ou Sarcignan et Chambéry — parce que c'est ce qui rend un créneau du matin tenable.",
           },
         ],
       },
@@ -203,66 +227,81 @@ const INTENTIONS: readonly Intention[] = [
       },
     ],
     communes: {
-      "villenave-d-ornon": {
-        text: "En appartement, le repassage pose une question de place avant de poser une question de temps : il faut déplier une table, et de quoi suspendre ce qui sort du fer. À Villenave-d'Ornon, où les appartements sont plus nombreux qu'ailleurs sur le territoire, nous convenons de cet emplacement dès la première intervention plutôt que de le chercher chaque fois.",
+      leognan: {
+        paragraphs: [
+          "À Léognan, le repassage est presque toujours demandé en complément d'un ménage régulier plutôt que seul, et c'est la formule qui a du sens ici : la plupart de nos intervenants habitent la commune, si bien qu'une heure supplémentaire sur un créneau déjà réservé ne coûte aucun déplacement. Ajouter le repassage à un entretien hebdomadaire revient à passer de trois heures à quatre, au même tarif horaire de 29 € en formule régulière, sans nouveau rendez-vous à caler.",
+          "Le bâti de la commune explique le volume. Les maisons de Léognan font le plus souvent 90 à 140 m², avec un cellier ou une buanderie où la corbeille s'accumule à l'abri des regards — donc plus longtemps qu'ailleurs. Une corbeille de foyer de quatre personnes accumulée sur deux à trois jours représente environ une heure ; celle qui attend depuis une semaine en demande deux, et il vaut mieux le savoir avant de réserver deux heures en pensant que ce sera large.",
+          "Une demande revient régulièrement dans les propriétés de l'appellation Pessac-Léognan : le linge de table. Nappes et grandes serviettes se repassent lentement et occupent toute la table à repasser, ce qui rend le poste peu compatible avec un créneau serré. Signalez-le à la réservation, que nous prévoyions le temps plutôt que de le prendre sur le reste.",
+        ],
         faq: [
           {
-            question: "Peut-on repasser dans un petit appartement ?",
+            question: "Le repassage est-il facturé au même tarif à Léognan ?",
             answer:
-              "Oui, dès lors qu'une table à repasser peut être dépliée et qu'un point de suspension existe — tringle, porte, portant. C'est le cas dans la quasi-totalité des logements où nous intervenons à Villenave-d'Ornon.",
+              "Oui, 29 € de l'heure en formule régulière et 33 € en intervention ponctuelle, comme le ménage et comme dans les quinze autres communes desservies. Le repassage n'est pas une prestation à part au tarif : c'est du temps de travail, compté comme le reste.",
+          },
+          {
+            question:
+              "Peut-on ajouter le repassage à un ménage déjà réservé à Léognan ?",
+            answer:
+              "Oui, et c'est la formule la plus fréquente ici : une heure de plus sur un créneau existant, sans déplacement supplémentaire et sans second rendez-vous. Prévenez-nous au 06 84 36 38 62, l'intervenant en est informé avant sa venue.",
+          },
+          {
+            question: "Repassez-vous le linge de table d'une grande maison ?",
+            answer:
+              "Oui, en le prévoyant : une nappe de banquet occupe la table à repasser à elle seule et demande dix à quinze minutes. Sur les propriétés viticoles de Léognan, nous réservons souvent une intervention distincte avant réception plutôt que d'intégrer ce poste à l'entretien courant.",
           },
         ],
       },
       gradignan: {
-        text: "Gradignan est une commune de familles avec enfants scolarisés, et le rythme du repassage y suit celui de l'école : les corbeilles gonflent le week-end et se vident en début de semaine. Les créneaux du lundi et du mardi matin y sont, de loin, les plus demandés pour cette prestation.",
-        faq: [
-          {
-            question: "Quel jour réserver le repassage à Gradignan ?",
-            answer:
-              "Le lundi et le mardi matin sont les créneaux les plus demandés, la corbeille du week-end étant alors au plus haut. Ce sont aussi les premiers à partir : mieux vaut réserver un créneau récurrent qu'appeler chaque semaine.",
-          },
+        paragraphs: [
+          "À Gradignan, le repassage suit le rythme scolaire, et c'est ce qui le distingue des autres communes du territoire. Les maisons de 100 à 130 m² du secteur abritent majoritairement des familles, et la corbeille se remplit du lundi au vendredi : chemises, polos d'école, tenues de sport. Elle se vide mal le week-end, précisément parce que c'est le moment où l'on préfère être ailleurs. Un passage hebdomadaire fixe, en milieu de semaine, empêche l'accumulation bien mieux qu'un rattrapage mensuel — deux heures régulières valent mieux que quatre heures tous les mois, pour le même prix horaire.",
+          "La proximité du campus crée une seconde demande, sans rapport avec la première. Les logements étudiants ne génèrent pratiquement pas de repassage pendant l'année ; ils en génèrent au moment du départ, avec le linge de lit et les rideaux d'un état des lieux de sortie. Ce n'est pas la même prestation, et elle se réserve en ponctuel, à 33 € de l'heure.",
+          "Deuxième commune la plus peuplée de la zone avec 26 952 habitants, Gradignan est aussi celle où l'on nous demande le plus souvent d'intervenir en l'absence des occupants. Le repassage s'y prête bien : contrairement au ménage, il ne dérange personne et ne demande aucun accès particulier, hors la table, le fer et l'endroit où poser ce qui est fait.",
         ],
-      },
-      leognan: {
-        text: "À Léognan, le repassage est presque toujours pris en option d'un ménage régulier plutôt qu'en prestation seule : les intervenants y sont déjà sur place chaque semaine, et une heure de plus sur un créneau existant coûte moins cher qu'un déplacement dédié de deux heures.",
         faq: [
           {
             question:
-              "Vaut-il mieux ajouter le repassage au ménage ou le réserver seul ?",
+              "Peut-on réserver du repassage seul, sans ménage, à Gradignan ?",
             answer:
-              "L'ajouter, dans presque tous les cas. Une heure de repassage greffée sur un ménage existant coûte 29 € ; une prestation seule impose le minimum de deux heures, soit 58 €, pour la même corbeille.",
+              "Oui, avec le même minimum de deux heures que toute intervention Léo Clean. C'est ce que demandent les foyers qui font leur ménage eux-mêmes mais renoncent devant la corbeille. Sur une famille de quatre personnes, deux heures traitent environ deux corbeilles.",
           },
-        ],
-      },
-      cadaujac: {
-        text: "Les maisons de Cadaujac, majoritairement récentes et de plain-pied, disposent presque toujours d'un cellier ou d'une buanderie. Le repassage s'y fait sur place, à côté du sèche-linge, sans traverser la maison avec une pile de linge propre — un détail qui fait gagner un quart d'heure sur une corbeille familiale.",
-        faq: [
           {
-            question: "Où le repassage est-il effectué dans la maison ?",
+            question: "Un passage hebdomadaire suffit-il pour une famille ?",
             answer:
-              "Là où le linge se trouve : buanderie, cellier ou pièce de vie, selon ce qui est le plus pratique chez vous. C'est convenu à la première intervention et ne change plus ensuite.",
+              "Pour un foyer de quatre personnes à Gradignan, une heure de repassage par semaine tient le rythme sans accumulation. Le rattrapage mensuel coûte le même prix horaire mais se solde par des corbeilles de quatre heures, plus pénibles et moins bien faites.",
+          },
+          {
+            question:
+              "Intervenez-vous en notre absence pour le repassage à Gradignan ?",
+            answer:
+              "Oui, c'est même la demande la plus fréquente ici. Le repassage ne suppose aucun accès particulier : il faut une table, un fer en état de marche et un endroit où poser le linge fait. Les modalités d'entrée se conviennent une fois, à la première réservation.",
           },
         ],
       },
-      "saint-selve": {
-        text: "Saint-Selve est la commune où le repassage est le plus souvent demandé sur le territoire. Les maisons y sont spacieuses, de 100 à 150 m², presque toutes équipées d'une buanderie, et les foyers y sont plutôt familiaux — trois conditions qui font une corbeille conséquente chaque semaine.",
+      "villenave-d-ornon": {
+        paragraphs: [
+          "Villenave-d'Ornon est la commune du territoire où le repassage seul est le plus souvent demandé, et la géographie l'explique. La part d'appartements y dépasse nettement le reste de la zone, en particulier le long de la ligne C du tramway : des logements de 50 à 80 m² où le ménage se fait en deux à trois heures, souvent par les occupants eux-mêmes, mais où la corbeille reste. S'ajoute une population qui travaille à Bordeaux et rentre par le tramway : la chemise repassée y est un besoin hebdomadaire, pas un confort.",
+          "L'appartement pose une contrainte que la maison ne pose pas : la place. Il faut pouvoir déplier une table à repasser et poser ce qui est fait, dans un salon ou une chambre où tout est déjà occupé. C'est la première question que nous posons quand une réservation de repassage arrive d'un appartement du corridor du tramway, et elle évite qu'un intervenant découvre sur place qu'il n'a pas d'où travailler.",
+          "Avec 42 545 habitants, Villenave-d'Ornon est la commune la plus peuplée de notre zone, et celle où le vivier d'intervenants est le plus large après Léognan. La contrepartie est la même que pour le ménage : les créneaux de fin de journée, ceux qui suivent le retour du tramway, sont les plus demandés et les premiers pris.",
+        ],
         faq: [
           {
             question:
-              "Peut-on réserver deux heures de repassage seul à Saint-Selve ?",
+              "Faut-il beaucoup de place pour un repassage en appartement ?",
             answer:
-              "Oui, c'est le format le plus courant dans la commune. Deux heures correspondent à la durée minimale d'intervention et couvrent largement une corbeille familiale hebdomadaire, pliage compris.",
+              "Il faut de quoi déplier une table à repasser et poser le linge fait — environ deux mètres carrés dégagés. C'est la seule contrainte matérielle, et nous la vérifions à la réservation plutôt que de la découvrir sur place.",
           },
-        ],
-      },
-      martillac: {
-        text: "Martillac compte une forte proportion de jeunes ménages actifs, dont le linge s'accumule pendant la semaine faute de temps le soir. La demande y porte moins sur le volume que sur la régularité : une heure toutes les semaines, greffée sur un entretien courant, plutôt qu'un rattrapage mensuel de quatre heures.",
-        faq: [
           {
             question:
-              "Le repassage peut-il se faire pendant nos heures de bureau ?",
+              "Combien de chemises repasse-t-on en une heure à Villenave-d'Ornon ?",
             answer:
-              "Oui, comme le ménage : c'est le cas le plus fréquent à Martillac. L'accès se fait par clé confiée ou par code, convenu à la réservation, et le linge repassé est rangé ou laissé sur cintres selon votre consigne.",
+              "Comptez huit à dix chemises par heure, à raison de cinq à sept minutes chacune. Pour cinq chemises par semaine, une heure hebdomadaire suffit largement et laisse de la place pour le linge de lit.",
+          },
+          {
+            question:
+              "Peut-on avoir un créneau de repassage en fin de journée ?",
+            answer:
+              "Oui, jusqu'à 19 h du lundi au vendredi. Ce sont les créneaux les plus demandés à Villenave-d'Ornon, où beaucoup rentrent de Bordeaux par le tramway : réservez une semaine à l'avance pour un rendez-vous régulier après 17 h.",
           },
         ],
       },

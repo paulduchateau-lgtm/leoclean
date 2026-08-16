@@ -48,7 +48,10 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
     organizationJsonLd(),
     serviceJsonLd(
       title,
-      local.text,
+      // Le premier paragraphe pose le sujet : c'est celui qui se cite. Les
+      // suivants développent, et une description de service qui les
+      // embarquerait tous ne serait plus une description.
+      local.paragraphs[0] ?? intention.lede,
       PUBLIC_RATES.map((rate) => ({
         name: rate.label,
         description: rate.description,
@@ -115,9 +118,13 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
             {intention.lede}
           </p>
 
-          <p className="mt-6 max-w-prose rounded-lg border border-mint-200 bg-mint-50 p-5 text-pretty">
-            {local.text}
-          </p>
+          {/* La part propre à la commune, mise en évidence : c'est ce que
+              cette page dit et qu'aucune autre ne dit. */}
+          <div className="mt-6 max-w-prose space-y-4 rounded-lg border border-mint-200 bg-mint-50 p-5 text-pretty">
+            {local.paragraphs.map((paragraph) => (
+              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+            ))}
+          </div>
         </section>
 
         <StickyBookingCta communeSlug={commune.slug} />

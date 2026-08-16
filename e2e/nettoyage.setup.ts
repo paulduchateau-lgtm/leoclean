@@ -1,0 +1,62 @@
+/*
+ * Playwright ne charge pas `.env` : il lance le serveur en sous-processus,
+ * mais ce fichier-ci tourne dans son propre contexte et doit ouvrir sa propre
+ * connexion.
+ */
+import "dotenv/config";
+
+import { test as nettoyage } from "@playwright/test";
+
+import { prisma } from "@/lib/db";
+
+/**
+ * Nettoyage des réservations écrites par les tests.
+ *
+ * Le parcours complet de bout en bout **réserve réellement** : c'est tout son
+ * intérêt, et c'est aussi ce qui rend la suite non répétable. Chaque exécution
+ * consomme un créneau chez un intervenant du jeu de données, et au bout d'une
+ * dizaine de passages il n'en reste plus à Léognan pour une mission de trois
+ * heures — le test échoue alors sur « aucun créneau », c'est-à-dire pour une
+ * bonne raison, ce qui en fait un mauvais test.
+ *
+ * Le nettoyage ne vise que ce qu'il a créé : les comptes du domaine
+ * `@leoclean.test`, qu'aucun humain ne peut posséder. Il ne touche ni au seed,
+ * ni aux profils créés à la main, ni au travail d'une autre session sur la
+ * même base — c'est la raison pour laquelle il filtre sur l'email plutôt que
+ * de tronquer des tables comme le font les tests d'intégration.
+ *
+ * Il tourne **avant** la suite et non après : un échec en cours de route
+ * laisserait sinon la base dans l'état qui l'a provoqué, et l'exécution
+ * suivante partirait du même mauvais pied.
+ */
+const DOMAINE_DE_TEST = "@leoclean.test";
+
+nettoyage("efface les réservations des exécutions précédentes", async () => {
+  const comptes = await prisma.user.findMany({
+    where: { email: { endsWith: DOMAINE_DE_TEST } },
+    select: { id: true },
+  });
+
+  if (comptes.length === 0) {
+    await prisma.$disconnect();
+    return;
+  }
+
+  const identifiants = comptes.map((compte) => compte.id);
+
+  /*
+   * Les réservations, les affectations et les adresses disparaissent en
+   * cascade avec le profil client : le schéma le garantit, et s'en remettre à
+   * lui vaut mieux qu'une suite de suppressions à tenir à jour.
+   */
+  await prisma.clientProfile.deleteMany({
+    where: { userId: { in: identifiants } },
+  });
+  await prisma.user.deleteMany({ where: { id: { in: identifiants } } });
+
+  console.log(
+    `Nettoyage : ${comptes.length} compte(s) de test et leurs réservations effacés.`,
+  );
+
+  await prisma.$disconnect();
+});
