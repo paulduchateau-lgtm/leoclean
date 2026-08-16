@@ -4,11 +4,11 @@ import { DownloadIcon, Loader2Icon, TriangleAlertIcon } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import {
-  MOT_DE_CONFIRMATION,
   exporterMesDonnees,
   supprimerMesDonnees,
 } from "@/app/(app)/mon-compte/mes-donnees/actions";
 import { Button } from "@/components/ui/button";
+import { MOT_DE_CONFIRMATION } from "@/lib/rgpd/confirmation";
 import type { ResultatEffacement } from "@/lib/rgpd/effacement";
 
 /**

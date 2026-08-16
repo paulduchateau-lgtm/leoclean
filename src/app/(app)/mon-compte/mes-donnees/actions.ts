@@ -10,6 +10,7 @@ import {
   type DonneesPersonnelles,
   rassemblerDonnees,
 } from "@/lib/rgpd/donnees";
+import { MOT_DE_CONFIRMATION } from "@/lib/rgpd/confirmation";
 import { effacerDonnees } from "@/lib/rgpd/effacement";
 
 /**
@@ -28,9 +29,6 @@ class ConfirmationManquanteError extends BusinessError {
     );
   }
 }
-
-/** Mot à recopier avant l'effacement. */
-export const MOT_DE_CONFIRMATION = "SUPPRIMER";
 
 export const exporterMesDonnees = authedAction(
   z.object({}),
