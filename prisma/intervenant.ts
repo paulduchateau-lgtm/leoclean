@@ -112,6 +112,29 @@ async function main(): Promise<void> {
     select: { id: true },
   });
 
+  /*
+   * L'appartenance est ce qui ouvre l'espace intervenant : `requireOrganization`
+   * la relit en base à chaque appel et refuse tout accès sans elle. Un profil
+   * créé sans appartenance donne un intervenant que le moteur d'attribution
+   * voit, mais qui ne peut pas se connecter pour accepter ses missions.
+   */
+  await prisma.membership.upsert({
+    where: {
+      userId_organizationId: {
+        userId: user.id,
+        organizationId: organization.id,
+      },
+    },
+    create: {
+      userId: user.id,
+      organizationId: organization.id,
+      role: "CLEANER",
+      status: "ACTIVE",
+      acceptedAt: new Date(),
+    },
+    update: {},
+  });
+
   const existant = await prisma.cleanerProfile.findUnique({
     where: {
       organizationId_userId: {
@@ -123,7 +146,9 @@ async function main(): Promise<void> {
   });
 
   if (existant) {
-    console.log(`${prenom} ${nom} est déjà enregistrée. Rien à faire.`);
+    console.log(
+      `${prenom} ${nom} est déjà enregistrée. Son appartenance est à jour.`,
+    );
     return;
   }
 
