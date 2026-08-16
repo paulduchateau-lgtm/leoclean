@@ -31,7 +31,36 @@ import { prisma } from "@/lib/db";
  */
 const DOMAINE_DE_TEST = "@leoclean.test";
 
+/**
+ * Fixtures du formulaire de rappel.
+ *
+ * Elles n'ont ni compte ni email — l'un des tests vérifie précisément que le
+ * formulaire aboutit sans adresse — donc rien ne les rattache au domaine de
+ * test, et la cascade ne les emporte pas. Elles s'accumulaient à raison de
+ * trois par exécution, et finissaient par noyer les vraies demandes dans le
+ * back-office, où elles réclament un rappel dans la journée.
+ *
+ * Le couple nom + téléphone est recopié depuis `pre-reservation.spec.ts` : le
+ * ciblage est étroit à dessein, pour qu'une demande réelle ne puisse jamais
+ * être emportée par le nettoyage.
+ */
+const DEMANDES_DE_TEST = [
+  { name: "Claire Dubourg", phone: "0612345678" },
+  { name: "Damien Lafitte", phone: "0684363862" },
+];
+
 nettoyage("efface les réservations des exécutions précédentes", async () => {
+  const demandes = await prisma.lead.deleteMany({
+    where: {
+      OR: DEMANDES_DE_TEST.map((demande) => ({ ...demande, email: null })),
+    },
+  });
+  if (demandes.count > 0) {
+    console.log(
+      `Nettoyage : ${demandes.count} demande(s) de rappel de test effacée(s).`,
+    );
+  }
+
   const comptes = await prisma.user.findMany({
     where: { email: { endsWith: DOMAINE_DE_TEST } },
     select: { id: true },
