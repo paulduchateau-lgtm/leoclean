@@ -221,3 +221,79 @@ test.describe("intentions secondaires", () => {
     expect(response?.status()).toBe(404);
   });
 });
+
+test.describe("cartes de partage", () => {
+  /**
+   * Ce que voit quelqu'un à qui l'on envoie un lien dans WhatsApp.
+   *
+   * Deux défauts se ressemblent et coûtent la même chose : pas d'image du
+   * tout — le lien s'affiche en ligne de texte grise — et une image présente
+   * mais rattachée à la mauvaise URL, auquel cas tous les partages du site se
+   * consolident sur l'accueil.
+   */
+  const PAGES = ["/", "/tarifs", "/menage-a-domicile/leognan"];
+
+  test("chaque page annonce sa propre URL de partage", async ({ page }) => {
+    const urls = new Set<string>();
+
+    for (const path of PAGES) {
+      await page.goto(path);
+      const url = await page
+        .locator('meta[property="og:url"]')
+        .getAttribute("content");
+      expect(url, `og:url manquant sur ${path}`).toBeTruthy();
+      expect(url).toMatch(/^https?:\/\//);
+      urls.add(url!);
+
+      const canonical = await page
+        .locator('link[rel="canonical"]')
+        .getAttribute("href");
+      // `canonical` et `og:url` désignent la même page, toujours.
+      expect(canonical, `canonical manquant sur ${path}`).toBeTruthy();
+      expect(new URL(url!).pathname).toBe(new URL(canonical!).pathname);
+    }
+
+    expect(urls.size).toBe(PAGES.length);
+  });
+
+  test("chaque page porte une image de partage servie", async ({
+    page,
+    request,
+  }) => {
+    for (const path of PAGES) {
+      await page.goto(path);
+      const image = await page
+        .locator('meta[property="og:image"]')
+        .getAttribute("content");
+      expect(image, `og:image manquant sur ${path}`).toBeTruthy();
+
+      const response = await request.get(image!);
+      expect(response.status(), `image injoignable pour ${path}`).toBe(200);
+      expect(response.headers()["content-type"]).toContain("image/png");
+    }
+  });
+
+  test("la carte d'une commune lui est propre", async ({ page }) => {
+    await page.goto("/menage-a-domicile/gradignan");
+    const gradignan = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute("content");
+
+    await page.goto("/menage-a-domicile/cestas");
+    const cestas = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute("content");
+
+    expect(gradignan).not.toBe(cestas);
+  });
+
+  test("demande une vignette pleine largeur", async ({ page }) => {
+    // En `summary`, X recadre la carte en carré de 144 pixels : ni le nom de
+    // la commune ni le tarif n'y seraient lisibles.
+    await page.goto("/");
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      "content",
+      "summary_large_image",
+    );
+  });
+});

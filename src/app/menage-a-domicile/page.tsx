@@ -12,18 +12,19 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import {
   COMMUNES,
   MONTESQUIEU_COMMUNES,
   TERRITORY_POPULATION,
 } from "@/lib/territory";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/menage-a-domicile",
   title: "Ménage à domicile au sud de Bordeaux",
   description:
     "Léo Clean fait le ménage à domicile dans 16 communes du sud de Bordeaux, de Villenave-d'Ornon à Saucats, à partir de 29 €/h.",
-  alternates: { canonical: "/menage-a-domicile" },
-};
+});
 
 export const revalidate = 86_400;
 

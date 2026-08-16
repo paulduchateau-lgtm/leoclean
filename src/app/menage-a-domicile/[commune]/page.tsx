@@ -29,7 +29,7 @@ import {
   serializeJsonLd,
   serviceJsonLd,
 } from "@/lib/seo/json-ld";
-import { absoluteUrl } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { COMMUNES } from "@/lib/territory";
 
 /**
@@ -64,20 +64,18 @@ export async function generateMetadata({
   const { commune, content } = published;
   const path = `/menage-a-domicile/${commune.slug}`;
 
-  return {
+  return pageMetadata({
+    path,
     title: `Ménage à domicile à ${commune.name} (${commune.postalCode})`,
     description:
       `Léo Clean fait le ménage à domicile à ${commune.name} à partir de ` +
       `${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, avec un intervenant attitré ` +
       `qui habite le secteur. ${content.driveMinutesFromLeognan > 0 ? `À ${content.driveMinutesFromLeognan} minutes de notre siège de Léognan.` : "Notre commune siège."}`,
-    alternates: { canonical: path },
-    openGraph: {
-      title: `Ménage à domicile à ${commune.name}`,
-      description: content.intro,
-      url: absoluteUrl(path),
-      type: "website",
-    },
-  };
+    openGraphTitle: `Ménage à domicile à ${commune.name}`,
+    openGraphDescription: content.intro,
+    // La carte est celle de la commune : voir `opengraph-image.tsx` à côté.
+    hasOwnOpenGraphImage: true,
+  });
 }
 
 export default async function CommunePage({

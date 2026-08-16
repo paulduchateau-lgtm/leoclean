@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { canonicalHost, hostOf } from "@/lib/hosting";
+import { canonicalHost, hostOf, isIndexableHost } from "@/lib/hosting";
 
 /**
  * Redirection optimiste des espaces connectés.
@@ -48,6 +48,30 @@ const HOSTS = {
 };
 
 export function proxy(request: NextRequest): NextResponse {
+  const requestHost = request.headers.get("host") ?? "";
+  return withIndexingPolicy(route(request), requestHost);
+}
+
+/**
+ * Refuse l'indexation à tout hôte qui n'est pas un domaine de production.
+ *
+ * L'en-tête plutôt que la balise : il couvre `robots.txt`, `sitemap.xml`, les
+ * cartes de partage et les redirections, qui n'ont pas de `<head>` où poser une
+ * méta. `noindex` seul, sans `nofollow` : les liens partant d'une
+ * prévisualisation pointent vers elle-même, et les faire suivre coûte moins que
+ * de les faire ignorer.
+ */
+function withIndexingPolicy(
+  response: NextResponse,
+  requestHost: string,
+): NextResponse {
+  if (!isIndexableHost(HOSTS, requestHost)) {
+    response.headers.set("X-Robots-Tag", "noindex");
+  }
+  return response;
+}
+
+function route(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
 
   /*

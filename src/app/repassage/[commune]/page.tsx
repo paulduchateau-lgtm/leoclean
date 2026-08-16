@@ -7,7 +7,7 @@ import {
   getIntentionPage,
   intentionPages,
 } from "@/lib/intentions";
-import { absoluteUrl } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/metadata";
 
 /**
  * « Repassage à domicile à <commune> ».
@@ -46,17 +46,14 @@ export async function generateMetadata({
     page.commune.name,
   );
 
-  return {
+  return pageMetadata({
+    path,
     title,
     description,
-    alternates: { canonical: path },
-    openGraph: {
-      title,
-      description: page.local.text,
-      url: absoluteUrl(path),
-      type: "website",
-    },
-  };
+    openGraphDescription: page.local.text,
+    // La carte est celle de la commune : voir `opengraph-image.tsx` à côté.
+    hasOwnOpenGraphImage: true,
+  });
 }
 
 export default async function RepassagePage({

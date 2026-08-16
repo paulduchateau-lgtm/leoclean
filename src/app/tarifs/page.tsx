@@ -20,14 +20,15 @@ import {
   serializeJsonLd,
   serviceJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { COMMUNES } from "@/lib/territory";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/tarifs",
   title: "Tarifs du ménage à domicile",
   description:
     "Ménage à domicile à partir de 29 €/h en formule régulière, 33 €/h en ponctuel. Minimum 2 heures. Tarifs identiques dans les 16 communes desservies au sud de Bordeaux.",
-  alternates: { canonical: "/tarifs" },
-};
+});
 
 export const revalidate = 86_400;
 

@@ -45,12 +45,25 @@ export const metadata: Metadata = {
   description: SITE.description,
   applicationName: SITE.name,
   alternates: { canonical: "/" },
+  /**
+   * `url` n'est délibérément pas posé ici. Une valeur héritée est la même
+   * pour tout le site : elle rattachait à l'accueil les partages de chaque
+   * page qui ne déclarait pas son propre bloc. Chaque page pose le sien, via
+   * `pageMetadata()`.
+   */
   openGraph: {
     type: "website",
     locale: "fr_FR",
     siteName: SITE.name,
-    url: SITE.url,
   },
+  /**
+   * La carte de partage fait 1200 × 630 : en `summary`, X la recadrerait en
+   * vignette carrée de 144 pixels, où ni le nom de la commune ni le tarif ne
+   * seraient lisibles. `twitter:image` n'est pas renseigné — les moteurs de
+   * prévisualisation retombent sur `og:image`, que `opengraph-image.tsx`
+   * fournit sur toutes les pages.
+   */
+  twitter: { card: "summary_large_image" },
   /**
    * La vitrine statique est un double intégral du futur site : seize pages
    * communes, douze pages d'intention, quatre articles, tous rédigés pour se
@@ -63,6 +76,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  /**
+   * La page occupe l'écran jusque sous l'encoche et la barre d'accueil iOS.
+   * C'est la condition pour que `env(safe-area-inset-*)` renvoie autre chose
+   * que zéro — sans quoi une barre fixée en bas se retrouve à cheval sur la
+   * barre système.
+   */
+  viewportFit: "cover",
   themeColor: [
     // ink-0 et ink-950 du design system.
     { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },

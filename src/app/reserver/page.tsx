@@ -17,6 +17,7 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { COMMUNES_BY_POPULATION } from "@/lib/territory";
 
 /**
@@ -29,12 +30,15 @@ import { COMMUNES_BY_POPULATION } from "@/lib/territory";
  */
 
 export const metadata: Metadata = {
-  title: "Réserver un ménage à domicile",
-  description:
-    "Réservez un ménage à domicile au sud de Bordeaux en quelques minutes : votre adresse, votre logement, votre créneau. Prix affiché avant de réserver, sans paiement immédiat.",
-  alternates: { canonical: "/reserver" },
+  ...pageMetadata({
+    path: "/reserver",
+    title: "Réserver un ménage à domicile",
+    description:
+      "Réservez un ménage à domicile au sud de Bordeaux en quelques minutes : votre adresse, votre logement, votre créneau. Prix affiché avant de réserver, sans paiement immédiat.",
+  }),
   // Un tunnel n'apporte rien en résultat de recherche : il n'a de sens qu'après
-  // la page qui a convaincu.
+  // la page qui a convaincu. Il garde en revanche sa carte de partage : le lien
+  // circule de la main à la main, ce que l'index ne voit pas.
   robots: { index: false, follow: true },
 };
 

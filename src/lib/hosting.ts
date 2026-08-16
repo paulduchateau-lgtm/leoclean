@@ -76,3 +76,26 @@ export function canonicalHost(
   }
   return null;
 }
+
+/**
+ * Cet hôte a-t-il le droit d'être indexé ?
+ *
+ * Un déploiement Vercel répond sur son `*.vercel.app` en plus du domaine
+ * acheté. Les deux servent le même contenu mot pour mot : laissés indexables,
+ * ils se font concurrence sur les requêtes mêmes que le site cherche à gagner,
+ * et c'est le domaine sans notoriété qui absorbe une partie des liens. Il en va
+ * de même des URL de prévisualisation, publiques et devinables.
+ *
+ * La règle est donc : on n'indexe que l'hôte qu'on a déclaré. Elle ne
+ * s'applique qu'une fois l'origine canonique configurée — sans elle, on ne sait
+ * pas ce qui est canonique, et refuser l'indexation par défaut mettrait tout le
+ * site hors de l'index sur un oubli de variable.
+ */
+export function isIndexableHost(
+  hosts: { site: string | null; app: string | null },
+  requestHost: string,
+): boolean {
+  const { site, app } = hosts;
+  if (!site) return true;
+  return requestHost === site || requestHost === app;
+}

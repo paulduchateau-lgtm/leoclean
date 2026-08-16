@@ -10,6 +10,7 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { PENDING_IDENTITY_FIELDS, SITE } from "@/lib/site";
 import {
   COMMUNES,
@@ -26,12 +27,12 @@ import {
  * qu'en discours : « Léo Clean intervient dans 16 communes » se cite, « nous
  * sommes à votre écoute depuis toujours » ne se cite pas.
  */
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/a-propos",
   title: "À propos de Léo Clean",
   description:
     "Léo Clean est un service de ménage à domicile basé à Léognan, qui intervient dans 16 communes du sud de Bordeaux, en Gironde, dont les 13 de la Communauté de communes de Montesquieu.",
-  alternates: { canonical: "/a-propos" },
-};
+});
 
 export const revalidate = 86_400;
 

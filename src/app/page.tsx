@@ -18,6 +18,7 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { SITE } from "@/lib/site";
 import {
   COMMUNES,
@@ -25,9 +26,7 @@ import {
   TERRITORY_POPULATION,
 } from "@/lib/territory";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
-};
+export const metadata: Metadata = pageMetadata({ path: "/" });
 
 export const revalidate = 86_400;
 

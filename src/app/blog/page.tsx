@@ -10,14 +10,15 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { COMMUNES } from "@/lib/territory";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/blog",
   title: "Conseils ménage à domicile",
   description:
     "Prix, durées, statuts, état des lieux : les réponses aux questions qu'on se pose avant de faire appel à quelqu'un pour son ménage, dans le sud de Bordeaux.",
-  alternates: { canonical: "/blog" },
-};
+});
 
 export const revalidate = 86_400;
 

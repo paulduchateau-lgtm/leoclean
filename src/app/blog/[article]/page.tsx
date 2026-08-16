@@ -20,7 +20,7 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
-import { absoluteUrl } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/metadata";
 
 /**
  * Article de conseil.
@@ -54,19 +54,16 @@ export async function generateMetadata({
 
   const path = `/blog/${article.slug}`;
 
-  return {
+  return pageMetadata({
+    path,
     title: article.metaTitle ?? article.title,
     description: article.description,
-    alternates: { canonical: path },
-    openGraph: {
-      title: article.title,
-      description: article.description,
-      url: absoluteUrl(path),
-      type: "article",
+    openGraphTitle: article.title,
+    article: {
       publishedTime: article.publishedAt,
       modifiedTime: article.updatedAt,
     },
-  };
+  });
 }
 
 export default async function ArticlePage({

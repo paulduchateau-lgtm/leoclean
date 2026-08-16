@@ -329,6 +329,35 @@ un avis contenant `</script>` refermerait la balise.
 en réponse à « qui fait du ménage à Léognan ? » vaut davantage qu'un contenu
 verrouillé que personne ne reprend.
 
+**Aucune page ne construit ses métadonnées de partage à la main.**
+`src/lib/seo/metadata.ts` est le seul endroit où `canonical` et `og:url` sont
+décidés, parce qu'ils ne peuvent pas désigner deux pages différentes. Le
+gabarit racine ne porte plus d'`og:url` : une valeur héritée est la même
+partout, et rattachait à l'accueil les partages de chaque page qui ne
+déclarait pas son propre bloc. Attention à une règle de Next qui se paie cher :
+un `openGraph` posé par une page **remplace** celui du gabarit au lieu de le
+compléter — l'image du site doit donc être reposée explicitement, sauf quand la
+page a sa propre carte, auquel cas une `images` écrite à la main effacerait
+celle de la route.
+
+**La carte de partage est générée, une par commune.** `src/lib/seo/og.tsx`
+compose l'image dans le langage du système — surtitre en capitales, titre en
+graisse 900, prix en pilule menthe sur texte encre. C'est la deuxième surface,
+après `magic-link-email.tsx`, où les couleurs sont recopiées plutôt que
+référencées : le moteur de rendu ne voit pas la feuille de styles. Chaque
+valeur porte le nom de son token. Figtree y est versionnée en TrueType dans
+`assets/fonts/`, avec sa licence — `next/font` ne sert que du woff2, que ce
+moteur ne lit pas.
+
+**On n'indexe que l'hôte qu'on a déclaré.** Un déploiement Vercel répond aussi
+sur son `*.vercel.app`, mot pour mot le même contenu : `src/proxy.ts` pose un
+`X-Robots-Tag: noindex` sur tout hôte qui n'est ni la vitrine ni
+l'application. L'en-tête plutôt que la balise, parce qu'il couvre aussi
+`robots.txt`, le sitemap et les cartes, qui n'ont pas de `<head>`. La règle ne
+s'applique qu'une fois `NEXT_PUBLIC_SITE_URL` configurée : sans elle, on ne
+sait pas ce qui est canonique, et refuser par défaut mettrait le site entier
+hors de l'index sur un oubli de variable.
+
 ## Moteur de disponibilité
 
 `src/lib/scheduling/` est **pur** : aucune lecture de base, aucun appel réseau,

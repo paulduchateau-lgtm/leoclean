@@ -11,14 +11,15 @@ import {
   organizationJsonLd,
   serializeJsonLd,
 } from "@/lib/seo/json-ld";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { COMMUNES } from "@/lib/territory";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/etre-rappele",
   title: "Être rappelé",
   description:
     "Laissez votre numéro, nous vous rappelons dans la journée pour organiser votre ménage à domicile au sud de Bordeaux.",
-  alternates: { canonical: "/etre-rappele" },
-};
+});
 
 export default function EtreRappelePage() {
   return (

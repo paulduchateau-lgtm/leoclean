@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { canonicalHost, hostOf, isAppPath } from "@/lib/hosting";
+import {
+  canonicalHost,
+  hostOf,
+  isAppPath,
+  isIndexableHost,
+} from "@/lib/hosting";
 
 /**
  * Répartition entre la vitrine et l'application.
@@ -107,5 +112,35 @@ describe("lecture d'une origine", () => {
     expect(hostOf(undefined)).toBeNull();
     expect(hostOf("")).toBeNull();
     expect(hostOf("pas-une-url")).toBeNull();
+  });
+});
+
+describe("hôtes indexables", () => {
+  it("indexe les deux domaines de production", () => {
+    expect(isIndexableHost(HOSTS, "leoclean.fr")).toBe(true);
+    expect(isIndexableHost(HOSTS, "app.leoclean.fr")).toBe(true);
+  });
+
+  it("refuse l'indexation du domaine Vercel et des prévisualisations", () => {
+    // Le doublon le plus coûteux : même contenu, même mots-clés, autre domaine.
+    expect(isIndexableHost(HOSTS, "leoclean.vercel.app")).toBe(false);
+    expect(isIndexableHost(HOSTS, "leoclean-git-refonte.vercel.app")).toBe(
+      false,
+    );
+  });
+
+  it("n'a pas d'opinion tant que l'origine canonique n'est pas configurée", () => {
+    // Un oubli de variable ne doit pas mettre le site entier hors de l'index.
+    expect(isIndexableHost({ site: null, app: null }, "leoclean.fr")).toBe(
+      true,
+    );
+    expect(isIndexableHost({ site: null, app: null }, "localhost:3000")).toBe(
+      true,
+    );
+  });
+
+  it("indexe le développement, où la vitrine est son propre domaine", () => {
+    const local = { site: "localhost:3000", app: null };
+    expect(isIndexableHost(local, "localhost:3000")).toBe(true);
   });
 });
