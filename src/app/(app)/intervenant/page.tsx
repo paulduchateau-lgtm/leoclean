@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { MissionProposeeCarte } from "@/app/(app)/intervenant/mission-proposee";
@@ -79,6 +80,14 @@ export default async function MissionsPage() {
       <h1 className="font-heading text-3xl font-semibold tracking-tight">
         Bonjour {profil.displayName}
       </h1>
+      <p className="mt-3 text-sm">
+        <Link
+          href="/intervenant/disponibilites"
+          className="text-primary hover:underline"
+        >
+          Mes disponibilités →
+        </Link>
+      </p>
 
       <section className="mt-10">
         <h2 className="font-heading text-xl font-semibold">
