@@ -10,8 +10,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import { ContactSheet } from "@/components/contact-sheet";
+import dynamic from "next/dynamic";
 import { isAppPath } from "@/lib/hosting";
+
+/**
+ * Le panneau de contact n'est téléchargé qu'à l'ouverture.
+ *
+ * Il embarque le `Dialog` de Base UI — piège à focus, gestion du fond, couche
+ * de portail — soit plusieurs dizaines de kilo-octets pour un écran que la
+ * plupart des visiteurs n'ouvriront jamais. La barre d'onglets vivant dans le
+ * gabarit racine, ce poids se serait payé sur chaque page du site.
+ */
+const ContactSheet = dynamic(() =>
+  import("@/components/contact-sheet").then((module) => module.ContactSheet),
+);
 
 /**
  * Barre d'onglets, en bas de l'écran, sur mobile seulement.

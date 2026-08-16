@@ -1182,6 +1182,18 @@ function FunnelHeader({
       <h2 className="mt-5 text-2xl font-black tracking-tight text-balance">
         {title}
       </h2>
+
+      {/*
+        Le changement d'écran est annoncé aux lecteurs d'écran.
+        Le tunnel ne navigue pas : c'est le même document dont le contenu est
+        remplacé, si bien que rien n'est lu quand on passe d'une étape à la
+        suivante — quelqu'un qui n'y voit pas se retrouve devant un formulaire
+        qui a changé sans prévenir. `polite` plutôt qu'`assertive` : l'annonce
+        attend la fin de ce qui est en cours de lecture, elle ne la coupe pas.
+      */}
+      <p aria-live="polite" className="sr-only">
+        Étape {index + 1} sur {STEPS.length} : {title}
+      </p>
     </div>
   );
 }

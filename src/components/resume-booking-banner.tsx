@@ -3,7 +3,6 @@
 import { ArrowRightIcon, RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
-import { z } from "zod";
 
 /**
  * Bandeau de reprise, en tête d'accueil.
@@ -38,24 +37,58 @@ const STEPS = [
  * Le stockage est une frontière comme une autre : son contenu est modifiable
  * à la main et peut venir d'une version antérieure de l'écran. Il est donc
  * validé, jamais typé par assertion.
+ *
+ * **Le contrôle est écrit à la main, et c'est la seule entorse du dépôt à la
+ * règle « Zod à chaque frontière ».** Ce composant est rendu sur la page
+ * d'accueil, qui est la porte d'entrée du référencement : importer le
+ * validateur y ajoutait un fragment de 282 kio, servi à chaque visiteur, pour
+ * vérifier quatre champs primitifs dont aucun ne pilote quoi que ce soit —
+ * ils ne servent qu'à afficher un numéro d'étape et à composer un lien vers
+ * une commune, elle-même revalidée à l'arrivée. Le tunnel, lui, garde Zod :
+ * ce qu'il relit décide d'un prix.
  */
-const schema = z.object({
-  savedAt: z.number(),
-  step: z.enum(STEPS),
-  communeSlug: z.string().max(60),
-  chosenSlot: z.iso.datetime().nullable(),
-});
 
-type Saved = z.infer<typeof schema>;
+const STEPS_SET: ReadonlySet<string> = new Set(STEPS);
+
+interface Saved {
+  savedAt: number;
+  step: (typeof STEPS)[number];
+  communeSlug: string;
+  chosenSlot: string | null;
+}
+
+function parse(raw: unknown): Saved | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const value = raw as Record<string, unknown>;
+
+  if (typeof value.savedAt !== "number" || !Number.isFinite(value.savedAt)) {
+    return null;
+  }
+  if (typeof value.step !== "string" || !STEPS_SET.has(value.step)) return null;
+  if (typeof value.communeSlug !== "string") return null;
+  if (value.communeSlug.length === 0 || value.communeSlug.length > 60) {
+    return null;
+  }
+  if (value.chosenSlot !== null && typeof value.chosenSlot !== "string") {
+    return null;
+  }
+
+  return {
+    savedAt: value.savedAt,
+    step: value.step as (typeof STEPS)[number],
+    communeSlug: value.communeSlug,
+    chosenSlot: (value.chosenSlot as string | null) ?? null,
+  };
+}
 
 function read(): Saved | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = schema.safeParse(JSON.parse(raw));
-    if (!parsed.success) return null;
-    if (Date.now() - parsed.data.savedAt > MAX_AGE_MS) return null;
-    return parsed.data;
+    const saved = parse(JSON.parse(raw));
+    if (!saved) return null;
+    if (Date.now() - saved.savedAt > MAX_AGE_MS) return null;
+    return saved;
   } catch {
     // Stockage illisible — quota, mode privé, JSON tronqué. Il n'y a rien à
     // rattraper : la page s'affiche sans bandeau, ce qui est l'état normal.

@@ -344,7 +344,9 @@ test.describe("réservation", () => {
     await expect(
       page.getByRole("heading", { name: /taille de votre logement/ }),
     ).toBeVisible();
-    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 2 sur 6", { exact: true }),
+    ).toBeVisible();
   });
 
   test("reste utilisable quand la recherche d'adresse ne rend rien", async ({

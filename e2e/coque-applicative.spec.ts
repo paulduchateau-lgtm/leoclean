@@ -159,12 +159,18 @@ test.describe("retour arrière dans le tunnel", () => {
     await page.goto("/menage-a-domicile/leognan");
     await page.getByRole("link", { name: /Voir les créneaux/ }).click();
 
-    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 2 sur 6", { exact: true }),
+    ).toBeVisible();
     await page.getByRole("button", { name: /Studio ou T2/ }).click();
-    await expect(page.getByText("Étape 3 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 3 sur 6", { exact: true }),
+    ).toBeVisible();
 
     await page.goBack();
-    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 2 sur 6", { exact: true }),
+    ).toBeVisible();
     // Toujours dans le tunnel, pas revenu sur la page commune.
     expect(new URL(page.url()).pathname).toBe("/reserver");
 
@@ -178,17 +184,23 @@ test.describe("retour arrière dans le tunnel", () => {
   }) => {
     await page.goto("/reserver");
     await page.getByRole("button", { name: /^Léognan/ }).click();
-    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 2 sur 6", { exact: true }),
+    ).toBeVisible();
 
     // La flèche recule d'une entrée d'historique : sans cela, elle en
     // empilerait une de plus et le retour du navigateur ferait du surplace.
     await page
       .getByRole("button", { name: "Revenir à l'écran précédent" })
       .click();
-    await expect(page.getByText("Étape 1 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 1 sur 6", { exact: true }),
+    ).toBeVisible();
 
     await page.goForward();
-    await expect(page.getByText("Étape 2 sur 6")).toBeVisible();
+    await expect(
+      page.getByText("Étape 2 sur 6", { exact: true }),
+    ).toBeVisible();
   });
 });
 

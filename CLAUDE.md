@@ -652,6 +652,46 @@ l'export impose ce mode. D'où `lib/asset-path.ts` : tout fichier de `public/`
 référencé en dur doit passer par `assetPath()`, sinon il est cherché à la
 racine du domaine.
 
+## Performance et accessibilité, mesurées
+
+`scripts/mesurer-vitals.mjs` relève les indicateurs sur une construction de
+production. **Le débit réseau n'y est pas simulé et ne peut pas l'être** :
+Chrome n'applique pas la limitation au trafic de bouclage. Ce qui est mesuré
+est donc le temps de rendu, processeur bridé quatre fois — 48 à 104 ms de LCP
+selon les pages. La part réseau se mesurera sur `leoclean.fr` une fois le
+domaine en production.
+
+**Le décalage cumulé vaut zéro partout, bandeau de reprise compris.** C'était
+le seul risque : un bloc rendu après hydratation en tête d'accueil pousse tout
+le reste vers le bas. Il se pose avant le premier rendu, si bien que le
+décalage ne compte pas — mais la mesure est faite dans les deux états, avec et
+sans parcours enregistré, précisément parce que ce n'est pas évident.
+
+**Le site ne contient aucune image.** La typographie fait tout le travail
+visuel, et les deux familles sont chargées par `next/font`, Fraunces sans
+préchargement — aucun écran ne la demande au premier rendu.
+
+**Deux dépendances ne descendent plus dans le premier octet.** `ContactSheet`
+embarque le `Dialog` de Base UI et n'est chargé qu'à l'ouverture du panneau —
+la barre d'onglets vivant dans le gabarit racine, ce poids se serait payé sur
+chaque page. Et le bandeau de reprise valide le stockage à la main : c'est la
+seule entorse du dépôt à la règle « Zod à chaque frontière », consentie parce
+qu'elle ajoutait 62 kio compressés à la page d'accueil pour vérifier quatre
+champs primitifs qui ne pilotent rien. Le tunnel garde Zod : ce qu'il relit
+décide d'un prix.
+
+**Un écart de contraste est constaté et non corrigé.** `ink-500` sur blanc vaut
+3,89:1, sous le seuil AA de 4,5 pour du texte courant ; le token n'est employé
+que par `.overline`. Le corriger dans le code ferait diverger le produit de son
+design system, ce que le dépôt interdit : `src/styles/contrast.test.ts`
+verrouille le constat dans les deux sens pour que la question revienne au
+système au lieu de se perdre. `ink-600` tiendrait 5,7:1 et resterait dans la
+même famille.
+
+**Le changement d'écran du tunnel est annoncé.** Le parcours ne navigue pas —
+c'est le même document dont le contenu est remplacé — si bien que rien n'était
+lu d'une étape à l'autre.
+
 ## Base de données
 
 PostgreSQL 15+ avec **PostGIS** et **btree_gist**. Deux garanties vivent en SQL
