@@ -2,19 +2,22 @@ import { CheckIcon, MapPinIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CommuneStart } from "@/components/commune-start";
+import { ContactChannels } from "@/components/contact-channels";
+import { Comparison } from "@/components/home/comparison";
+import { Engagement } from "@/components/home/engagement";
+import { KeyFigures } from "@/components/home/key-figures";
+import { Prestations } from "@/components/home/prestations";
+import { TrustStrip } from "@/components/home/trust-strip";
+import { Zones } from "@/components/home/zones";
 import { ResumeBookingBanner } from "@/components/resume-booking-banner";
 import { SiteFooter } from "@/components/site-footer";
-import { ContactChannels } from "@/components/contact-channels";
 import { SiteHeader } from "@/components/site-header";
 import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { Badge } from "@/components/ui/badge";
-import { publishedCommunes } from "@/lib/communes-content";
+import { clientEnv } from "@/lib/env";
+import { FACTS } from "@/lib/facts";
+import { FISCAL } from "@/lib/fiscal";
 import { formatHourlyRate } from "@/lib/pricing";
-import {
-  MINIMUM_BILLABLE_MINUTES,
-  PUBLIC_RATES,
-} from "@/lib/pricing/public-grid";
 import {
   breadcrumbJsonLd,
   organizationJsonLd,
@@ -22,20 +25,22 @@ import {
 } from "@/lib/seo/json-ld";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { SITE } from "@/lib/site";
-import {
-  COMMUNES,
-  COMMUNES_BY_POPULATION,
-  TERRITORY_POPULATION,
-} from "@/lib/territory";
+import { COMMUNES } from "@/lib/territory";
 
 export const metadata: Metadata = pageMetadata({
   path: "/",
-  summary: `Léo Clean fait le ménage à domicile dans ${COMMUNES.length} communes du sud de Bordeaux, en Gironde, à partir de ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}, avec un intervenant attitré qui habite le secteur.`,
+  summary: `Léo Clean fait le ménage à domicile dans ${COMMUNES.length} communes du sud de Bordeaux, en Gironde, à partir de ${formatHourlyRate(FACTS.lowestHourlyRateCents)}, avec un intervenant attitré qui habite le secteur.`,
 });
 
 export const revalidate = 86_400;
 
-/** Ce qui distingue Léo Clean d'une plateforme nationale. */
+/**
+ * Ce que la limite de {@link FACTS.maxDriveMinutes} minutes change chez vous.
+ *
+ * Ces quatre arguments existaient déjà et ne sont pas réécrits : ils sont bons,
+ * et le seul défaut de leur ancienne place était de venir avant qu'on ait dit
+ * pourquoi. Ils suivent désormais la thèse dont ils sont la conséquence.
+ */
 const PROMISES = [
   {
     title: "Le même intervenant, chaque semaine",
@@ -55,13 +60,26 @@ const PROMISES = [
   },
 ];
 
-export default function Home() {
-  const published = publishedCommunes();
-  const unpublished = COMMUNES_BY_POPULATION.filter(
-    (commune) =>
-      !published.some((entry) => entry.commune.slug === commune.slug),
-  );
+/** Le déroulé, en trois temps. Ce sont les écrans réels du tunnel. */
+const STEPS = [
+  {
+    number: "01",
+    title: "Votre commune et votre logement",
+    body: "Deux questions, pas de compte à créer. La surface suffit à estimer la durée.",
+  },
+  {
+    number: "02",
+    title: "Votre créneau, prix affiché",
+    body: "Du lundi au vendredi de 8 h à 19 h, le samedi de 9 h à 13 h. Le prix est connu avant de confirmer.",
+  },
+  {
+    number: "03",
+    title: "Votre intervenant confirmé",
+    body: "Nous choisissons la personne disponible la plus proche de chez vous, et nous vous la présentons.",
+  },
+];
 
+export default function Home() {
   return (
     <>
       <script
@@ -77,7 +95,13 @@ export default function Home() {
       <SiteHeader />
 
       <main className="flex flex-1 flex-col">
-        {/* Le fond menthe et ses taches colorées sont la signature du système :
+        {/* Bloc 1 — la thèse.
+            La page s'ouvrait sur « Où habitez-vous ? » et seize communes :
+            un effort de sélection demandé à quelqu'un à qui on n'avait encore
+            donné aucune raison de rester. Les seize liens sont maintenant en
+            fin de page, où ils servent de preuve au lieu de servir de menu.
+
+            Le fond menthe et ses taches colorées sont la signature du système :
             une pièce aérée, pas un bandeau. Elles se posent en absolu derrière
             le contenu, et `overflow-hidden` les empêche d'élargir la page. */}
         <section className="relative overflow-hidden border-b border-border-subtle bg-mint-50">
@@ -99,12 +123,13 @@ export default function Home() {
           <div className="relative mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
             {/* Un parcours interrompu se retrouve ici, pas dans la mémoire de
                 la personne : elle revient par l'accueil, et sans ce bandeau
-                elle recommence de zéro. */}
+                elle recommence de zéro. Posé avant le premier rendu, il ne
+                décale rien. */}
             <ResumeBookingBanner />
 
             <Badge variant="secondary" className="mb-5 gap-1.5">
               <MapPinIcon className="size-3.5" aria-hidden />
-              {COMMUNES.length} communes au sud de Bordeaux
+              {FACTS.communeCount} communes au sud de Bordeaux
             </Badge>
 
             {/* Un seul mot en Fraunces, en fin de phrase : c'est la respiration
@@ -114,46 +139,89 @@ export default function Home() {
               <span className="accent-word">à côté</span> de chez vous.
             </h1>
 
-            {/* La réservation commence ici, pas trois écrans plus loin — et
-                avant la description, qui sert le référencement plus qu'elle
-                n'aide à décider. La repousser sous le bloc d'action est ce qui
-                fait tenir la première étape dans un écran de 390 pixels. */}
-            <CommuneStart className="mt-8" />
-
-            <p className="mt-8 max-w-prose text-pretty text-muted-foreground">
-              {SITE.description}
+            {/* La thèse du site, et elle n'est pas une excuse. Un périmètre
+                court n'est pas une couverture en construction : c'est le
+                mécanisme qui rend tenable la promesse de revoir la même
+                personne. Cette phrase était enterrée en milieu de page. */}
+            <p className="mt-6 max-w-prose text-lg text-pretty">
+              Nous ne dépassons pas une vingtaine de minutes de route depuis{" "}
+              {SITE.address.city}. C&apos;est une limite que nous nous imposons,
+              et c&apos;est elle qui rend le reste possible : des intervenants
+              qui habitent votre commune, et la même personne chez vous à chaque
+              passage.
             </p>
 
-            <p className="mt-6 text-sm text-muted-foreground">
-              À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)},
-              minimum {MINIMUM_BILLABLE_MINUTES / 60} heures. Du lundi au
-              vendredi de 8 h à 19 h, le samedi de 9 h à 13 h.{" "}
-              <Link href="/tarifs" className="text-brand underline">
-                Voir le détail des tarifs
+            {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
+                deux appels à l'action visibles demanderaient de choisir lequel
+                compte. */}
+            <div
+              className="mt-8 flex flex-col gap-3 sm:flex-row"
+              data-booking-cta
+            >
+              <Link
+                href="/reserver"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+              >
+                Réserver
               </Link>
-              .
-            </p>
-
-            {/* Les trois canaux directs restent, en second rang : ils servent
-                ceux qui ne réserveront pas seuls, pas ceux qui le feraient. */}
-            <div className="mt-10 border-t border-border/60 pt-6">
-              <p className="mb-4 text-sm text-muted-foreground">
-                Vous préférez en parler à quelqu&apos;un ?
-              </p>
-              <ContactChannels className="[&>div]:sm:justify-start" />
+              <Link
+                href="/tarifs"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
+              >
+                Voir les tarifs
+              </Link>
             </div>
+
+            {/* La vitrine statique n'embarque pas les espaces connectés : le
+                lien y pointerait vers une page qui n'existe pas. */}
+            {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
+              <p className="mt-5 text-sm text-muted-foreground">
+                Déjà client ?{" "}
+                <Link href="/mon-espace" className="text-brand underline">
+                  Accéder à mes interventions
+                </Link>
+              </p>
+            )}
           </div>
         </section>
 
         <StickyBookingCta />
 
+        {/* Bloc 2 — les preuves chiffrées. */}
+        <KeyFigures />
+
+        {/* Bloc 3 — le cadre : ce qui sécurise, avant l'objection. */}
+        <TrustStrip />
+
+        {/* Bloc 4 — le paragraphe d'identité.
+            Dense et factuel : c'est celui que les moteurs et les modèles de
+            langage citent. Il reste vrai hors de sa page, et chaque chiffre
+            n'y apparaît qu'une fois. */}
+        <section className="mx-auto w-full max-w-4xl px-6 pt-16">
+          <p className="max-w-prose text-pretty">
+            {SITE.description} Nos intervenants se déplacent à{" "}
+            <strong>{FACTS.maxDriveMinutes} minutes de route au maximum</strong>{" "}
+            depuis {SITE.address.city}, à partir de{" "}
+            <strong>
+              {formatHourlyRate(FACTS.lowestHourlyRateCents)}, minimum{" "}
+              {FACTS.minimumBillableMinutes / 60} heures
+            </strong>
+            . Les prestations relèvent des services à la personne :{" "}
+            <strong>{FISCAL.sap.label}</strong>.
+          </p>
+        </section>
+
+        {/* Bloc 5 — la conséquence concrète de la thèse. */}
         <section className="mx-auto w-full max-w-4xl px-6 py-16">
           <h2 className="text-2xl font-black tracking-tight">
-            Pourquoi Léo Clean plutôt qu&apos;une plateforme nationale
+            Ce que ça change chez vous
           </h2>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {PROMISES.map((promise) => (
-              <div key={promise.title}>
+              <div
+                key={promise.title}
+                className="rounded-[var(--r-l)] border border-border bg-card p-5"
+              >
                 <h3 className="flex items-baseline gap-2 text-lg font-extrabold">
                   <CheckIcon
                     className="size-4 shrink-0 translate-y-0.5 text-brand"
@@ -169,49 +237,83 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-border-subtle bg-cream-50">
+        {/* Bloc 6 — l'offre. */}
+        <Prestations />
+
+        {/* Bloc 7 — le déroulé. */}
+        <section className="border-y border-border-subtle bg-sky-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
             <h2 className="text-2xl font-black tracking-tight">
-              Où nous intervenons
+              Comment ça se passe
             </h2>
-            <p className="mt-2 max-w-prose text-muted-foreground">
-              {COMMUNES.length} communes du sud de Bordeaux, soit{" "}
-              {TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants. Nous ne
-              dépassons pas une vingtaine de minutes de route depuis Léognan :
-              c&apos;est cette limite qui nous permet de vous envoyer toujours
-              la même personne.
-            </p>
 
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {published.map(({ commune, content }) => (
-                <li key={commune.slug}>
-                  <Link
-                    href={`/menage-a-domicile/${commune.slug}`}
-                    className="flex items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-mint-400"
+            <ol className="mt-8 grid gap-6 sm:grid-cols-3">
+              {STEPS.map((step) => (
+                <li key={step.number}>
+                  <span
+                    className="block text-3xl font-black tracking-tight text-mint-300"
+                    aria-hidden
                   >
-                    <span className="font-medium">Ménage à {commune.name}</span>
-                    <span className="text-sm whitespace-nowrap text-muted-foreground">
-                      {commune.isHeadquarters
-                        ? "siège"
-                        : `${content.driveMinutesFromLeognan} min`}
-                    </span>
-                  </Link>
+                    {step.number}
+                  </span>
+                  <h3 className="mt-1 font-extrabold">{step.title}</h3>
+                  <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+                    {step.body}
+                  </p>
                 </li>
               ))}
-            </ul>
+            </ol>
+          </div>
+        </section>
 
-            {/* Les seize communes ont leur page : cette phrase n'a rien à
-                annoncer aujourd'hui, et sans la garde elle s'affichait vide,
-                réduite à « Également desservies : . ». Le bloc reste pour le
-                jour où le territoire s'étendra — une commune desservie sans
-                page dédiée doit être annoncée, pas passée sous silence. C'est
-                la garde que porte déjà `/menage-a-domicile`. */}
-            {unpublished.length > 0 && (
-              <p className="mt-6 text-sm text-muted-foreground">
-                Également desservies :{" "}
-                {unpublished.map((commune) => commune.name).join(", ")}.
+        {/* Bloc 8 — l'alternative. */}
+        <Comparison />
+
+        {/* Bloc 9 — le lieu, en fin de parcours. */}
+        <Zones />
+
+        {/* Bloc 10 — la confiance, sans avis inventés. */}
+        <Engagement />
+
+        {/* Bloc 11 — la sortie. */}
+        <section className="border-t border-border-subtle bg-mint-50">
+          <div className="mx-auto w-full max-w-4xl px-6 py-16">
+            <h2 className="text-2xl font-black tracking-tight text-balance">
+              Une personne qui habite à côté, chez vous cette semaine
+            </h2>
+
+            <div
+              className="mt-8 flex flex-col gap-3 sm:flex-row"
+              data-booking-cta
+            >
+              <Link
+                href="/reserver"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+              >
+                Réserver
+              </Link>
+              <Link
+                href="/tarifs"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
+              >
+                Voir les tarifs
+              </Link>
+            </div>
+
+            <p className="mt-4 text-sm text-muted-foreground">
+              Prix affiché avant de réserver · Rien à payer aujourd&apos;hui ·
+              Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
+              avant
+            </p>
+
+            {/* Les trois canaux directs restent, en second rang : ils servent
+                ceux qui ne réserveront pas seuls, pas ceux qui le feraient. */}
+            <div className="mt-10 border-t border-border/60 pt-6">
+              <p className="mb-4 text-sm text-muted-foreground">
+                Vous préférez en parler à quelqu&apos;un ?
               </p>
-            )}
+              <ContactChannels className="[&>div]:sm:justify-start" />
+            </div>
           </div>
         </section>
       </main>

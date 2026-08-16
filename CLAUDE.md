@@ -112,8 +112,17 @@ crédit d'impôt, qui est le premier argument de conversion face à Wecasa. Deux
 issues possibles, à trancher avec la DDETS ou un conseil : créer une structure
 dédiée, ou vérifier qu'une dérogation s'applique.
 
-`NEXT_PUBLIC_SAP_DECLARED` reste donc à `false`, et rien n'est affiché sur
-l'avantage fiscal.
+**La déclaration est déposée, elle n'est pas obtenue** (porteur du projet,
+16 août 2026). C'est ce qui autorise le site à écrire « Déclaration SAP en
+cours » : la mention décrit un dossier déposé et non instruit, et une
+affirmation sur une situation administrative est vraie ou ne s'écrit pas. La
+réserve ci-dessus n'est pas levée pour autant — la condition d'activité
+exclusive gouverne l'**obtention**, et c'est elle qui décidera du passage en
+`declared`.
+
+`NEXT_PUBLIC_SAP_DECLARED` reste donc à `false` : aucun numéro, aucun montant
+après réduction, rien sur l'avantage fiscal au-delà du statut du dossier. La
+règle complète et son unique point de bascule vivent dans `src/lib/fiscal.ts`.
 
 ## Canaux de conversion
 
@@ -335,6 +344,88 @@ Les pages publiques ne lisent pas la base : un tarif marketing n'a pas à
 dépendre d'une connexion. `PricingRule` reste la source opérationnelle, propre
 à chaque organisation ; le seed importe la même grille pour que les deux ne
 divergent pas.
+
+### L'accueil raconte pourquoi le rayon est court
+
+**La thèse du site est que le périmètre est petit exprès.** Léo Clean vend
+l'inverse d'une plateforme : là où l'argument national est l'échelle et le
+choix, le nôtre est qu'une vingtaine de minutes de route est la limite qui
+rend tenable « la même personne chaque semaine ». Ce n'est pas une faiblesse à
+excuser ni une couverture en construction, c'est le mécanisme. La phrase qui
+le dit ouvre désormais la page au lieu d'être enterrée en milieu de parcours.
+
+**L'ordre des blocs découle de là** : thèse, preuves chiffrées, cadre qui
+sécurise, conséquences concrètes, offre, déroulé, comparatif des modèles,
+communes, engagements, sortie. Le visiteur comprend _pourquoi_ avant qu'on lui
+demande _où_ — l'accueil s'ouvrait auparavant sur « Où habitez-vous ? » et
+seize liens, soit un effort de sélection réclamé avant le premier argument.
+
+**Les seize communes n'ont pas disparu, elles ont changé de fonction.**
+Placées en fin de page et groupées en deux familles, chaque pastille portant
+son temps de trajet, elles ne sont plus un menu mais la preuve de la thèse.
+Aucun lien interne n'est perdu et `src/app/page.test.tsx` le vérifie sur le
+HTML rendu, pas sur les constantes : une donnée juste qui n'atteint pas la
+page ne vaut rien.
+
+**`src/lib/facts.ts` n'est pas une source de vérité, c'est un agrégateur.** Un
+bandeau de crédibilité rassemble en quatre nombres ce que quatre modules
+détiennent séparément ; sans point de rassemblement ils seraient écrits en dur
+dans le JSX. Chaque valeur y est dérivée — territoire, grille publique, NAP,
+barème d'annulation — et **aucune métrique d'activité n'y figure**. Nombre de
+clients, note moyenne, interventions réalisées : tant qu'elles n'existent pas
+elles ne sont pas dans le module, donc pas affichables. Un test l'impose.
+
+**Le maximum affiché est 21 minutes, pas 20.** Saint-Morillon est la commune
+la plus éloignée. La prose garde « une vingtaine de minutes », qui reste vraie,
+mais un chiffre présenté comme un maximum doit en être un : il est calculé
+depuis `communes-content.ts`, jamais écrit, et un test vérifie que les deux
+formulations peuvent coexister.
+
+**Il n'y a aucun avis client, et rien ne le maquille.** Fabriquer un
+témoignage est une pratique commerciale trompeuse au sens de l'article L121-2
+du code de la consommation, pour un gain sans rapport avec le risque. Le bloc
+d'engagements signés tient ce rôle : une promesse vérifiable, tenue par
+quelqu'un dont le nom et le numéro sont sur la page, ce qui est la seule forme
+de confiance qu'un service neuf peut offrir honnêtement. `<Avis />` est en
+place et muet, gardé par `FACTS.hasReviews` — le même drapeau que le
+`aggregateRating` du JSON-LD.
+
+**Le comparatif oppose des modèles, jamais des sociétés.** Aucun concurrent
+n'est nommé, aucun superlatif n'est employé, et chaque case défavorable à un
+autre modèle doit rester défendable devant celui qui l'opère. DOM unique,
+déplié par critère sur mobile plutôt que défilant horizontalement : un tableau
+qu'il faut pousser du doigt n'est pas lu, et un contenu rendu deux fois est
+cité de travers.
+
+### Ce que le site a le droit de dire du crédit d'impôt
+
+`src/lib/fiscal.ts` est le seul endroit où cette frontière est tranchée :
+aucune page ne décide seule d'afficher une mention fiscale.
+
+**Le statut n'est pas écrit, il est dérivé** de `NEXT_PUBLIC_SAP_DECLARED` et
+de `SITE.sapDeclarationNumber`. Poser à côté du drapeau existant un second
+interrupteur en dur créerait deux vérités concurrentes, et la question ne
+serait plus « sommes-nous déclarés ? » mais « lequel des deux dit vrai ? ». Le
+basculement ne coûte donc aucune ligne de code : une variable d'environnement,
+et le numéro dans `site.ts`.
+
+**Les deux sont exigés.** Un statut « déclaré » sans numéro afficherait une
+mention invérifiable, ce qui est précisément ce que la mention sert à éviter.
+Le drapeau seul ne bascule pas — la direction sûre est celle qui n'affirme
+rien.
+
+Tant que la déclaration n'est pas obtenue : le libellé est « Déclaration SAP
+en cours », jamais « agréé », jamais de numéro ; **le prix mis en avant reste
+le prix brut partout**, et aucun montant après réduction n'apparaît en accueil,
+en carte de prestation, en métadonnée ni dans le tunnel. La réduction ne peut
+être expliquée que dans un bloc dédié, sur la page tarifs. `<PrixAvecCreditImpot />`
+porte cette règle : il rend le prix brut, et la ligne secondaire n'existe que
+si `canShowTaxCredit()` l'autorise.
+
+Vocabulaire : l'entretien de la maison relève de la **déclaration** — dépôt
+d'un récépissé auprès de la DDETS — l'**agrément** étant réservé aux activités
+auprès de publics fragiles. La copy dit donc « déclaration ». Formulation à
+faire confirmer par un conseil avant mise en production.
 
 **Le JSON-LD n'invente rien.** Les champs inconnus sont omis plutôt que remplis.
 La note agrégée n'est émise que s'il existe des avis réels — la déclarer à vide
@@ -591,16 +682,29 @@ du barème des CGU.
 
 | Parcours                               | Cible | Mesuré |
 | -------------------------------------- | ----- | ------ |
-| Accueil → prix affiché                 | ≤ 4   | 2      |
-| Accueil → réservation confirmée        | ≤ 9   | 8      |
+| Accueil → prix affiché                 | ≤ 4   | 3      |
+| Accueil → réservation confirmée        | ≤ 9   | 9      |
 | Accueil → appel téléphonique           | ≤ 2   | 1      |
 | Reprise → confirmation (dernier écran) | ≤ 4   | 4      |
 
-L'accueil compte pour zéro geste : le bloc « Où habitez-vous ? » y répond au
-premier écran, si bien que le tunnel s'ouvre sur le logement. L'appel se fait
-en un geste depuis l'en-tête, en deux depuis la barre d'onglets. La reprise
-n'atteint la cible que depuis les derniers écrans — reprendre au deuxième
-demande évidemment de traverser les suivants.
+**Les deux premiers parcours ont coûté un geste à la refonte narrative de
+l'accueil**, et c'est un arbitrage assumé, pas une dérive. Le bloc « Où
+habitez-vous ? » répondait de la commune dès l'accueil, si bien que le tunnel
+s'ouvrait sur le logement ; l'accueil n'ayant plus qu'un bouton « Réserver »
+sans paramètre, le tunnel s'ouvre désormais sur son premier écran. Le prix
+apparaît donc au troisième geste au lieu du deuxième, et la réservation au
+neuvième au lieu du huitième. Les deux plafonds tiennent, mais **il ne reste
+plus de marge sur le second** : tout écran ajouté au tunnel dépasserait la
+cible, et c'est la cible qu'il faudrait alors rediscuter, pas la mesure qu'il
+faudrait arrondir.
+
+Ce que le geste achète : un visiteur qui a compris pourquoi le rayon est court
+avant qu'on lui demande où il habite. Les seize communes ouvraient la page —
+seize choix réclamés à quelqu'un qui n'avait encore reçu aucun argument.
+
+L'appel se fait en un geste depuis l'en-tête, en deux depuis la barre
+d'onglets. La reprise n'atteint la cible que depuis les derniers écrans —
+reprendre au deuxième demande évidemment de traverser les suivants.
 
 ## Application installable et espace client
 
@@ -938,9 +1042,12 @@ Bloquant à terme, pas immédiatement. Les champs concernés valent `null` dans
 espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalisée.
 
 - Numéro de déclaration SAP, pour Léo Clean **et** pour chaque intervenant :
-  la facturation en deux lignes suppose deux organismes déclarés. C'est le
-  seul champ qui bloque encore du contenu écrit — l'article sur le crédit
-  d'impôt est prêt et attend la déclaration pour être publié.
+  la facturation en deux lignes suppose deux organismes déclarés. Le dossier
+  de Léo Clean est déposé, non instruit ; c'est le récépissé qui manque. C'est
+  le seul champ qui bloque encore du contenu écrit — l'article sur le crédit
+  d'impôt est prêt et attend la déclaration pour être publié. Le renseigner
+  dans `site.ts` et lever `NEXT_PUBLIC_SAP_DECLARED` suffit à activer toutes
+  les mentions fiscales du site, sans autre modification.
 - Code APE : 70.22Z (conseil) contre la condition d'activité exclusive des
   services à la personne. Arbitrage non tranché.
 - Les CGU emploient `bonjour@leoclean.com` : à reprendre deux fois, le domaine
