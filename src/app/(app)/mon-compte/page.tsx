@@ -82,6 +82,15 @@ export default async function AccountPage() {
         )}
       </section>
 
+      <p className="mt-10 text-sm">
+        <Link
+          href="/mon-compte/mes-donnees"
+          className="text-primary hover:underline"
+        >
+          Mes données personnelles : copie et suppression
+        </Link>
+      </p>
+
       <form
         className="mt-10"
         action={async () => {
