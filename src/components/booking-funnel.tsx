@@ -803,8 +803,13 @@ export function BookingFunnel({
         ) : null}
 
         {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
-            réessai : un squelette perpétuel par-dessus ne dirait rien. */}
-        {step === "creneau" && slotsStatus !== "error" ? (
+            réessai : un squelette perpétuel par-dessus ne dirait rien.
+            Sans devis non plus il n'y a rien à attendre — la recherche de
+            créneaux a besoin d'une durée, donc d'un devis, et le squelette
+            promettait un contenu qui ne pouvait pas arriver. */}
+        {step === "creneau" &&
+        slotsStatus !== "error" &&
+        (quote !== null || quotesPending) ? (
           <SlotStep
             slots={slots}
             fetchedAt={slotsFetchedAt}
