@@ -20,6 +20,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:init": "tsx prisma/init.ts",
+    "db:intervenant": "tsx prisma/intervenant.ts",
     "db:studio": "prisma studio",
     "build:demo": "node scripts/build-demo-statique.mjs"
   },
