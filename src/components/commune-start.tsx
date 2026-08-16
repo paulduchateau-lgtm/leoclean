@@ -18,12 +18,12 @@ import { COMMUNES_BY_POPULATION } from "@/lib/territory";
 export function CommuneStart({ className = "" }: { className?: string }) {
   return (
     <section
-      className={`rounded-2xl bg-primary p-6 text-primary-foreground sm:p-8 ${className}`}
+      className={`rounded-2xl bg-primary p-6 text-primary-foreground shadow-mint sm:p-8 ${className}`}
       aria-labelledby="commune-start"
     >
       <h2
         id="commune-start"
-        className="font-heading text-xl font-semibold text-primary-foreground"
+        className="text-xl font-extrabold text-primary-foreground"
       >
         Où habitez-vous ?
       </h2>
@@ -36,7 +36,7 @@ export function CommuneStart({ className = "" }: { className?: string }) {
           <li key={commune.slug}>
             <Link
               href={`/reserver?commune=${commune.slug}`}
-              className="inline-flex min-h-11 items-center rounded-full bg-primary-foreground/10 px-4 text-sm font-medium ring-1 ring-primary-foreground/25 transition-colors hover:bg-primary-foreground hover:text-primary"
+              className="inline-flex min-h-11 items-center rounded-full bg-ink-0/70 px-4 text-sm font-semibold ring-1 ring-ink-0 transition-colors hover:bg-ink-900 hover:text-primary"
             >
               {commune.name}
             </Link>

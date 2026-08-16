@@ -1,26 +1,33 @@
 :root {
-  --space-0: 0;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
-  --space-20: 80px;
-  --space-24: 96px;
-  --space-32: 128px;
-  --gutter-mobile: 20px;
-  --gutter-desktop: 40px;
-  --container-max: 1200px;
-  --container-narrow: 720px;
-  --section-y-mobile: var(--space-16);
-  --section-y-desktop: var(--space-24);
-  --control-h-sm: 34px;
-  --control-h-md: 42px;
-  --control-h-lg: 52px;
+  /* --- Grille de 4, rythme de 8 --- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+  --sp-32: 128px;
+  /* --- Marges de page --- */
+  --gutter-mobile: 16px;
+  --gutter-tablet: 24px;
+  --gutter-desktop: 32px;
+  --maxw: 1120px;
+  --maxw-narrow: 720px;
+  --section-y-mobile: var(--sp-16);
+  --section-y-desktop: var(--sp-24);
+  /* --- Gabarits de contrôle : toute action primaire est ≥ 44 px --- */
+  --control-h-xs: 32px;
+  --control-h-sm: 40px;
+  --control-h-md: 48px;
+  --control-h-lg: 56px;
+  --control-h-xl: 64px;
+  --field-h: 52px;
   --touch-min: 44px;
 }

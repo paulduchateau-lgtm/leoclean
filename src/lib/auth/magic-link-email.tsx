@@ -72,59 +72,72 @@ export function MagicLinkEmail({
 
 /**
  * Les styles sont en ligne : les clients de messagerie ignorent largement les
- * feuilles de style externes, et Gmail supprime les balises `<style>`.
+ * feuilles de style externes, et Gmail supprime les balises `<style>`. Les
+ * valeurs sont donc recopiées du design system plutôt que référencées — c'est
+ * la seule surface du produit où la règle ne peut pas s'appliquer.
  */
 const body = {
-  backgroundColor: "#f6f4ee",
+  /* ink-50 */
+  backgroundColor: "#f4f8f6",
   fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "Figtree, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   margin: 0,
   padding: "32px 0",
 };
 
 const container = {
   backgroundColor: "#ffffff",
-  border: "1px solid #e6e1d6",
-  borderRadius: "14px",
+  /* ink-100 */
+  border: "1px solid #eaf0ed",
+  /* r-l */
+  borderRadius: "20px",
   margin: "0 auto",
   maxWidth: "480px",
   padding: "32px",
 };
 
 const heading = {
-  color: "#1f5c4a",
+  /* ink-900 */
+  color: "#16261f",
   fontSize: "24px",
-  fontWeight: 700,
+  fontWeight: 900,
+  letterSpacing: "-0.02em",
   margin: "0 0 24px",
 };
 
 const text = {
-  color: "#26302c",
+  /* ink-800 */
+  color: "#23352f",
   fontSize: "16px",
-  lineHeight: "24px",
+  lineHeight: "26px",
   margin: "0 0 12px",
 };
 
+/* Menthe pleine et texte encre : le bouton primaire du système, en pilule. */
 const button = {
-  backgroundColor: "#1f5c4a",
-  borderRadius: "12px",
-  color: "#ffffff",
+  /* mint-400 */
+  backgroundColor: "#63e6be",
+  borderRadius: "999px",
+  /* ink-900 */
+  color: "#16261f",
   display: "inline-block",
   fontSize: "16px",
-  fontWeight: 600,
-  padding: "14px 24px",
+  fontWeight: 700,
+  padding: "15px 24px",
   textDecoration: "none",
 };
 
 const muted = {
-  color: "#6b736e",
+  /* ink-500 */
+  color: "#74857e",
   fontSize: "13px",
   lineHeight: "20px",
   margin: "0 0 8px",
 };
 
 const link = {
-  color: "#1f5c4a",
+  /* mint-700 */
+  color: "#0a7c61",
   fontSize: "13px",
   lineHeight: "20px",
   margin: "0 0 8px",
@@ -132,6 +145,7 @@ const link = {
 };
 
 const rule = {
-  borderColor: "#e6e1d6",
+  /* ink-100 */
+  borderColor: "#eaf0ed",
   margin: "28px 0 16px",
 };

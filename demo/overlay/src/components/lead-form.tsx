@@ -25,8 +25,8 @@ export function LeadForm({
     : undefined;
 
   return (
-    <div className="rounded-2xl border border-border bg-secondary/50 p-6 text-center">
-      <p className="font-heading font-semibold">
+    <div className="rounded-xl border border-border bg-secondary/50 p-6 text-center">
+      <p className="font-extrabold">
         Le formulaire de rappel n&apos;est pas actif sur cette démonstration
       </p>
       <p className="mx-auto mt-2 max-w-prose text-sm text-pretty text-muted-foreground">

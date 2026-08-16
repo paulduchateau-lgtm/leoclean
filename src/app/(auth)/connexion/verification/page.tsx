@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 export default function VerifyRequestPage() {
   return (
     <div className="text-center">
-      <MailCheckIcon className="mx-auto mb-4 size-9 text-primary" aria-hidden />
-      <h1 className="font-heading text-2xl font-semibold tracking-tight">
+      <MailCheckIcon className="mx-auto mb-4 size-9 text-brand" aria-hidden />
+      <h1 className="text-2xl font-black tracking-tight">
         Vérifiez votre boîte mail
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
@@ -20,7 +20,7 @@ export default function VerifyRequestPage() {
       </p>
       <p className="mt-6 text-sm text-muted-foreground">
         Rien reçu ? Pensez à regarder dans vos indésirables, puis{" "}
-        <Link href="/connexion" className="text-primary underline">
+        <Link href="/connexion" className="text-brand underline">
           demandez un nouveau lien
         </Link>
         .

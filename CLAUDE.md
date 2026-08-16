@@ -544,20 +544,46 @@ ne doit être ressaisie en dur dans une page.
 
 ## Design
 
-Le design system Léo Clean fait foi. Ses tokens vivent dans
-`src/styles/tokens/` et sont **importés tels quels**, jamais recopiés : une
-valeur dupliquée finit toujours par diverger.
+Le design system fait foi. Ses tokens vivent dans `src/styles/tokens/` et sont
+**importés tels quels**, jamais recopiés : une valeur dupliquée finit toujours
+par diverger. Ils portent les noms du système — `--mint-400`, `--r-l`,
+`--sp-6`, `--sh-m` — pour qu'une valeur du document se retrouve dans le code
+sans traduction.
 
 `globals.css` câble ensuite les variables sémantiques de shadcn/ui dessus —
-`--primary` sur `--action-primary-bg`, `--background` sur `--surface-page`, et
-ainsi de suite. Aucun composant ne connaît la marque, ce qui permet de changer
-l'identité en un seul fichier. **Ne jamais écrire de couleur en dur.**
+`--primary` sur `--mint-400`, `--background` sur `--bg`, et ainsi de suite.
+Aucun composant ne connaît la marque, ce qui permet de changer l'identité en un
+seul fichier. **Ne jamais écrire de couleur en dur.** Seule exception,
+documentée sur place : `magic-link-email.tsx`, les clients de messagerie
+n'acceptant pas les variables CSS.
 
-Palettes : **vert Léo** (leaf) pour la fraîcheur et l'éco-responsabilité,
-**terre** (clay) pour la chaleur humaine, **lin et encre** en neutres chauds,
-**ciel** (sky) pour les accents de données. Titres en **Epilogue**, texte en
-**Figtree**, chargés par `next/font` plutôt que par l'`@import` Google Fonts du
-système, qui bloquerait le rendu.
+### Ce que le système impose
+
+Palettes : **menthe** en primaire, **pêche** en secondaire pour la chaleur,
+**citron** en accent des moments de joie, **ciel**, **sauge**, **crème** en
+teintes de soutien, et des neutres **ink** légèrement teintés vert. Les
+couleurs sémantiques — succès, alerte, erreur, information — gardent la même
+teinte quel que soit le thème.
+
+**La menthe pleine ne sert qu'à l'action principale : un écran, un seul bouton
+menthe.** Elle porte du texte encre, jamais du blanc — à 400, elle ne tient pas
+le contraste. Pour écrire, une icône ou un trait fin, employer `text-brand`
+(menthe 700), jamais `text-primary`.
+
+**Toute action est une pilule** — boutons, tags, badges, avatars. Le reste de
+l'échelle grandit avec l'élément : 6 px pour une case à cocher, 14 px pour un
+champ ou une alerte, 20 px pour une card, 28 px pour un panneau, 36 px pour une
+section ou un hero. Aucun angle vif.
+
+Gabarits tactiles : bouton primaire à 48 px, champ à 52 px, case à cocher et
+radio à 24 px. Rien qui porte une conversion ne descend sous 44 px.
+
+Typographie : **Figtree** porte 98 % du système, titres compris — la hiérarchie
+vient de la graisse (900 pour trancher, 800 en dessous, 400 pour lire), pas
+d'un changement de famille. **Fraunces** en italique ne sert qu'au mot d'accent
+d'un titre marketing, via la classe `.accent-word` : un mot, jamais dans le
+tunnel ni le tableau de bord. Les deux sont chargées par `next/font` plutôt que
+par l'`@import` Google Fonts du système, qui bloquerait le rendu.
 
 Le thème sombre n'est pas défini par le système : celui du projet en est une
 dérivation, à revoir si le système en fournit un.
@@ -571,19 +597,19 @@ double.
 
 ### Divergences avec le système, à arbitrer
 
-Le document du design system décrit un périmètre et des tarifs qui ne
-correspondent pas aux décisions prises depuis :
-
-- il cite « Talence, Bègles, Villenave-d'Ornon, Gradignan, Cadaujac » quand la
-  zone retenue est de 16 communes sans Talence ni Bègles ;
-- il emploie « 23 € / h » dans ses exemples de ton, quand la grille est à
-  29 €/h ;
-- il décrit Léo Clean comme déclarant à l'Urssaf pour le client, ce qui suppose
-  la déclaration SAP, non encore obtenue.
-
-Ce sont des exemples de rédaction, pas des tokens : le code suit les décisions
-du projet. À reprendre dans le document si le système doit rester la
-référence.
+- Le document est rédigé sous une marque de démonstration, **MENTA**, avec son
+  propre logotype et sa baseline. Le code n'en reprend que le langage visuel :
+  la marque reste **Léo Clean**, et le symbole est l'étoile fournie par le
+  client, incrustée en `currentColor` pour respecter la règle de contraste du
+  système — jamais de monochrome menthe sur blanc.
+- Le mot d'accent en Fraunces est posé au milieu du titre d'accueil, quand le
+  système le veut en fin de phrase. Déplacer l'accent supposait de réécrire une
+  accroche qui n'est pas la nôtre : à trancher avec le client.
+- Le document décrit un périmètre et des tarifs qui ne correspondent pas aux
+  décisions prises depuis — communes hors zone, « 23 € / h » quand la grille
+  est à 29 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
+  sont des exemples de rédaction, pas des tokens : le code suit les décisions
+  du projet.
 
 ## Commandes
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Epilogue, Figtree } from "next/font/google";
+import { Figtree, Fraunces } from "next/font/google";
 
 import { DemoBanner } from "@/components/demo-banner";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,16 +16,24 @@ import "./globals.css";
  * rendu, ce qui est rédhibitoire sur des pages dont le référencement est le
  * canal d'acquisition principal.
  */
-const heading = Epilogue({
-  variable: "--font-heading-family",
-  subsets: ["latin"],
-  display: "swap",
-});
-
 const sans = Figtree({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
+});
+
+/**
+ * Police d'accent, réservée à un mot par titre marketing. Elle n'est pas
+ * préchargée : aucun écran ne la demande au premier rendu, et la précharger
+ * coûterait une requête bloquante pour trois mots sur tout le site.
+ */
+const display = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  display: "swap",
+  style: "italic",
+  weight: ["600"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -56,9 +64,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    // linen-50 et ink-900 du design system.
-    { media: "(prefers-color-scheme: light)", color: "#FBF9F5" },
-    { media: "(prefers-color-scheme: dark)", color: "#23211D" },
+    // ink-0 et ink-950 du design system.
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B1B16" },
   ],
 };
 
@@ -66,7 +74,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${sans.variable} ${heading.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         {clientEnv.NEXT_PUBLIC_DEMO_STATIQUE ? <DemoBanner /> : null}

@@ -29,37 +29,39 @@ export function SiteHeader({
   variant?: "site" | "tunnel";
 }) {
   return (
-    <header className="border-b border-border bg-background/90 backdrop-blur">
+    <header className="border-b border-border-subtle bg-background/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-6 py-4">
         <Logo className="shrink-0" />
 
         <nav
           aria-label="Navigation principale"
-          className="flex shrink-0 items-center gap-4 text-sm sm:gap-5"
+          className="flex shrink-0 items-center gap-1 text-sm sm:gap-1.5"
         >
           {variant === "site" ? (
             <>
+              {/* Les liens de contenu se survolent en pastille menthe : c'est
+                  la même grammaire que les listes du reste du système. */}
               <Link
                 href="/tarifs"
-                className="hidden hover:text-primary sm:inline"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 sm:inline-block"
               >
                 Tarifs
               </Link>
               <Link
                 href="/blog"
-                className="hidden hover:text-primary sm:inline"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 sm:inline-block"
               >
                 Conseils
               </Link>
               <Link
                 href="/a-propos"
-                className="hidden hover:text-primary sm:inline"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 sm:inline-block"
               >
                 À propos
               </Link>
               <Link
                 href="/reserver"
-                className="rounded-lg bg-primary px-3 py-1.5 font-medium whitespace-nowrap text-primary-foreground"
+                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
               >
                 Réserver
               </Link>
@@ -67,7 +69,7 @@ export function SiteHeader({
           ) : null}
           <a
             href={`tel:${SITE.phoneE164}`}
-            className="font-medium whitespace-nowrap text-primary"
+            className="inline-flex h-10 items-center rounded-full px-3 font-bold whitespace-nowrap text-brand transition-colors hover:bg-mint-50"
             aria-label={`Appeler ${SITE.name} au ${SITE.phone}`}
           >
             <PhoneIcon className="size-5 sm:hidden" aria-hidden />

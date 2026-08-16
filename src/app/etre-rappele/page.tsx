@@ -39,7 +39,7 @@ export default function EtreRappelePage() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
           Être rappelé
         </h1>
         <p className="mt-4 max-w-prose text-lg text-pretty text-muted-foreground">

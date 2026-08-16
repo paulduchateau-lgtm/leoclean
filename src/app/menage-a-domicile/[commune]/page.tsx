@@ -138,13 +138,13 @@ export default async function CommunePage({
         >
           <ol className="flex flex-wrap gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href="/" className="hover:text-primary">
+              <Link href="/" className="hover:text-brand">
                 Accueil
               </Link>
             </li>
             <li aria-hidden>/</li>
             <li>
-              <Link href="/menage-a-domicile" className="hover:text-primary">
+              <Link href="/menage-a-domicile" className="hover:text-brand">
                 Ménage à domicile
               </Link>
             </li>
@@ -161,7 +161,7 @@ export default async function CommunePage({
             {commune.name} · {commune.postalCode} · Gironde
           </Badge>
 
-          <h1 className="font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+          <h1 className="text-3xl leading-tight font-black tracking-tight text-balance sm:text-4xl">
             Ménage à domicile à {commune.name}
           </h1>
 
@@ -170,31 +170,31 @@ export default async function CommunePage({
           </p>
 
           <dl className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <dt className="text-xs text-muted-foreground">À partir de</dt>
-              <dd className="mt-1 font-heading text-xl font-semibold">
+              <dd className="mt-1 text-xl font-extrabold">
                 {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}
               </dd>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <dt className="text-xs text-muted-foreground">Habitants</dt>
-              <dd className="mt-1 font-heading text-xl font-semibold tabular-nums">
+              <dd className="mt-1 text-xl font-extrabold tabular-nums">
                 {commune.population.toLocaleString("fr-FR")}
               </dd>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <dt className="text-xs text-muted-foreground">
                 {commune.isHeadquarters ? "Notre siège" : "Depuis Léognan"}
               </dt>
-              <dd className="mt-1 font-heading text-xl font-semibold">
+              <dd className="mt-1 text-xl font-extrabold">
                 {commune.isHeadquarters
                   ? commune.name
                   : `${content.driveMinutesFromLeognan} min`}
               </dd>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-lg border border-border bg-card p-4">
               <dt className="text-xs text-muted-foreground">Durée minimale</dt>
-              <dd className="mt-1 font-heading text-xl font-semibold">
+              <dd className="mt-1 text-xl font-extrabold">
                 {MINIMUM_BILLABLE_MINUTES / 60} h
               </dd>
             </div>
@@ -202,7 +202,7 @@ export default async function CommunePage({
         </section>
 
         <section className="mx-auto w-full max-w-4xl px-6 pb-12">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-black tracking-tight">
             Les logements de {commune.name}
           </h2>
           <p className="mt-3 max-w-prose text-pretty text-muted-foreground">
@@ -213,7 +213,7 @@ export default async function CommunePage({
             {content.landmarks.map((landmark) => (
               <li key={landmark} className="flex items-baseline gap-2">
                 <CheckIcon
-                  className="size-4 shrink-0 translate-y-0.5 text-primary"
+                  className="size-4 shrink-0 translate-y-0.5 text-brand"
                   aria-hidden
                 />
                 <span>Nous intervenons dans {landmark}.</span>
@@ -224,7 +224,7 @@ export default async function CommunePage({
 
         <section className="border-y border-border bg-secondary/30">
           <div className="mx-auto w-full max-w-4xl px-6 py-12">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Tarifs du ménage à {commune.name}
             </h2>
             <p className="mt-2 text-muted-foreground">
@@ -264,11 +264,11 @@ export default async function CommunePage({
                           {rate.description}
                         </span>
                       </th>
-                      <td className="py-4 pr-4 font-heading text-lg font-semibold whitespace-nowrap">
+                      <td className="py-4 pr-4 text-lg font-extrabold whitespace-nowrap">
                         {formatHourlyRate(rate.hourlyRateCents)}
                       </td>
                       {showTaxCredit ? (
-                        <td className="py-4 font-heading text-lg font-semibold whitespace-nowrap text-primary">
+                        <td className="py-4 text-lg font-extrabold whitespace-nowrap text-brand">
                           {formatHourlyRate(
                             Math.round(
                               (rate.hourlyRateCents *
@@ -296,7 +296,7 @@ export default async function CommunePage({
         </section>
 
         <section className="mx-auto w-full max-w-4xl px-6 py-12">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-black tracking-tight">
             Questions fréquentes à {commune.name}
           </h2>
 
@@ -305,9 +305,7 @@ export default async function CommunePage({
               <div key={entry.question}>
                 {/* Question en h3, réponse en paragraphe : le couple le plus
                     fiablement extrait par les modèles de langage. */}
-                <h3 className="font-heading text-lg font-semibold">
-                  {entry.question}
-                </h3>
+                <h3 className="text-lg font-extrabold">{entry.question}</h3>
                 <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
                   {entry.answer}
                 </p>
@@ -316,9 +314,9 @@ export default async function CommunePage({
           </div>
         </section>
 
-        <section className="border-t border-border bg-primary/5">
+        <section className="border-t border-border bg-mint-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Un ménage à {commune.name} ?
             </h2>
             <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
@@ -332,7 +330,7 @@ export default async function CommunePage({
                 on venait de lire la page entière. */}
             <Link
               href={`/reserver?commune=${commune.slug}`}
-              className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-primary px-6 font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
             >
               Voir les créneaux à {commune.name}
             </Link>
@@ -355,7 +353,7 @@ export default async function CommunePage({
 
         {siblingIntentions.length > 0 ? (
           <section className="mx-auto w-full max-w-4xl px-6 pt-12">
-            <h2 className="font-heading text-xl font-semibold tracking-tight">
+            <h2 className="text-xl font-extrabold tracking-tight">
               Autres prestations à {commune.name}
             </h2>
             <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
@@ -363,7 +361,7 @@ export default async function CommunePage({
                 <li key={intention.slug}>
                   <Link
                     href={`/${intention.slug}/${commune.slug}`}
-                    className="text-primary hover:underline"
+                    className="text-brand hover:underline"
                   >
                     {fillTemplate(intention.titleTemplate, commune.name)}
                   </Link>
@@ -374,7 +372,7 @@ export default async function CommunePage({
         ) : null}
 
         <section className="mx-auto w-full max-w-4xl px-6 py-12">
-          <h2 className="font-heading text-xl font-semibold tracking-tight">
+          <h2 className="text-xl font-extrabold tracking-tight">
             Nous intervenons aussi
           </h2>
           <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
@@ -382,7 +380,7 @@ export default async function CommunePage({
               <li key={other.slug}>
                 <Link
                   href={`/menage-a-domicile/${other.slug}`}
-                  className="text-primary hover:underline"
+                  className="text-brand hover:underline"
                 >
                   Ménage à {other.name}
                 </Link>

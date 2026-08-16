@@ -86,7 +86,7 @@ export default function AProposPage() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
           À propos de {SITE.name}
         </h1>
 
@@ -94,9 +94,7 @@ export default function AProposPage() {
           {SITE.description}
         </p>
 
-        <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
-          En bref
-        </h2>
+        <h2 className="mt-12 text-2xl font-black tracking-tight">En bref</h2>
         <dl className="mt-4 divide-y divide-border border-y border-border">
           {facts.map((fact) => (
             <div key={fact.label} className="grid grid-cols-3 gap-4 py-3">
@@ -106,7 +104,7 @@ export default function AProposPage() {
           ))}
         </dl>
 
-        <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
+        <h2 className="mt-12 text-2xl font-black tracking-tight">
           Comment Léo Clean fonctionne
         </h2>
         <p className="mt-3 text-pretty text-muted-foreground">
@@ -125,7 +123,7 @@ export default function AProposPage() {
           n&apos;ont pas été vérifiées.
         </p>
 
-        <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
+        <h2 className="mt-12 text-2xl font-black tracking-tight">
           Pourquoi une zone restreinte
         </h2>
         <p className="mt-3 text-pretty text-muted-foreground">
@@ -138,7 +136,7 @@ export default function AProposPage() {
           chaque semaine.
         </p>
 
-        <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
+        <h2 className="mt-12 text-2xl font-black tracking-tight">
           Les communes desservies
         </h2>
         <ul className="mt-4 grid gap-x-8 gap-y-1 sm:grid-cols-2">
@@ -161,7 +159,7 @@ export default function AProposPage() {
         </p>
 
         {PENDING_IDENTITY_FIELDS.length > 0 ? (
-          <p className="mt-12 rounded-xl border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
+          <p className="mt-12 rounded-lg border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
             Les informations légales de Léo Clean seront publiées ici dès
             l&apos;immatriculation de la société. Nous préférons ne rien
             afficher plutôt qu&apos;afficher une information approximative.

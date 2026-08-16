@@ -23,7 +23,7 @@ export function ContactChannels({
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
         >
           <PhoneIcon className="size-4" aria-hidden />
           {SITE.phone}
@@ -33,7 +33,7 @@ export function ContactChannels({
           href={whatsappLink(communeName)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
         >
           <MessageCircleIcon className="size-4" aria-hidden />
           Écrire sur WhatsApp
@@ -45,7 +45,7 @@ export function ContactChannels({
               ? `?subject=${encodeURIComponent(`Ménage à domicile à ${communeName}`)}`
               : ""
           }`}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
         >
           <MailIcon className="size-4" aria-hidden />
           Envoyer un email

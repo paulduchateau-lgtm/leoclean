@@ -819,8 +819,8 @@ export function BookingFunnel({
             qu'un écran vide. */}
         {step === "recapitulatif" && (!quote || !address || !chosenSlot) ? (
           <div className="space-y-3" aria-hidden>
-            <div className="h-48 animate-pulse rounded-2xl bg-secondary" />
-            <div className="h-32 animate-pulse rounded-2xl bg-secondary" />
+            <div className="h-48 animate-pulse rounded-xl bg-secondary" />
+            <div className="h-32 animate-pulse rounded-xl bg-secondary" />
           </div>
         ) : null}
 
@@ -902,7 +902,7 @@ function FunnelHeader({
         ))}
       </div>
 
-      <h2 className="mt-5 font-heading text-2xl font-semibold tracking-tight text-balance">
+      <h2 className="mt-5 text-2xl font-black tracking-tight text-balance">
         {title}
       </h2>
     </div>
@@ -932,7 +932,7 @@ function PriceBar({
       {quote ? (
         <div>
           <div className="flex items-baseline justify-between gap-3">
-            <p className="font-heading text-2xl font-semibold tabular-nums">
+            <p className="text-2xl font-black tabular-nums">
               {formatEuros(quote.grossAmountCents)}
             </p>
             <p className="shrink-0 text-sm text-muted-foreground tabular-nums">
@@ -952,7 +952,7 @@ function PriceBar({
       ) : (
         <div className="flex items-baseline justify-between gap-4">
           <div>
-            <p className="font-heading text-xl font-semibold">
+            <p className="text-xl font-extrabold">
               À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}
             </p>
             <p className="text-sm text-pretty text-muted-foreground">
@@ -980,7 +980,7 @@ function ResumePrompt({
     : "";
 
   return (
-    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
+    <div className="rounded-xl border border-mint-200 bg-mint-50 p-5">
       <p className="font-medium">
         Vous réserviez un ménage à {saved.address.cityName}
         {when}.
@@ -1010,7 +1010,7 @@ function ErrorNotice({
   return (
     <div
       role="alert"
-      className="rounded-2xl border border-destructive/40 bg-destructive/5 p-5"
+      className="rounded-xl border border-destructive/40 bg-destructive/5 p-5"
     >
       <p className="text-sm">{error.message}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -1025,7 +1025,7 @@ function ErrorNotice({
         ) : null}
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="text-sm font-medium text-primary underline"
+          className="text-sm font-medium text-brand underline"
         >
           Ou appelez-nous au {SITE.phone}
         </a>
@@ -1038,7 +1038,13 @@ function ErrorNotice({
 /* Étape 1 — Adresse                                                          */
 /* -------------------------------------------------------------------------- */
 
-/** Carte de choix : remplie quand elle est retenue, jamais seulement bordée. */
+/*
+ * Carte de choix — le `selectable` du design system.
+ *
+ * Retenue, elle prend la bordure menthe, le fond menthe très clair et un halo :
+ * trois signaux plutôt qu'un, pour que le choix se voie sans dépendre de la
+ * seule couleur. Le texte reste encre, donc lisible dans tous les états.
+ */
 function ChoiceCard({
   selected,
   disabled,
@@ -1062,18 +1068,18 @@ function ChoiceCard({
       disabled={disabled}
       onClick={onClick}
       aria-pressed={selected}
-      className={`flex min-h-16 w-full items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-[background-color,border-color,color,transform] duration-150 active:scale-[0.98] disabled:opacity-50 motion-reduce:active:scale-100 ${
+      className={`flex min-h-16 w-full items-center justify-between gap-4 rounded-lg border-2 p-4.5 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-50 motion-reduce:active:scale-100 ${
         selected
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-border bg-card hover:border-primary enabled:active:bg-secondary"
+          ? "border-mint-500 bg-mint-50 ring-3 ring-mint-100"
+          : "border-border bg-card hover:border-mint-400 enabled:hover:bg-mint-50"
       } ${className}`}
     >
       <span>
-        <span className="block font-medium">{title}</span>
+        <span className="block font-semibold">{title}</span>
         {hint ? (
           <span
             className={`mt-0.5 block text-sm ${
-              selected ? "text-primary-foreground/80" : "text-muted-foreground"
+              selected ? "text-mint-800" : "text-muted-foreground"
             }`}
           >
             {hint}
@@ -1215,10 +1221,10 @@ function AddressStep({
       </div>
 
       {outsideOnly ? (
-        <p className="rounded-2xl border border-border bg-secondary/40 p-4 text-sm">
+        <p className="rounded-xl border border-border bg-secondary/40 p-4 text-sm">
           Léo Clean intervient dans seize communes au sud de Bordeaux. Cette
           adresse n&apos;en fait pas partie —{" "}
-          <Link href="/menage-a-domicile" className="text-primary underline">
+          <Link href="/menage-a-domicile" className="text-brand underline">
             voir la liste des communes
           </Link>
           .
@@ -1232,7 +1238,7 @@ function AddressStep({
           {[0, 1, 2].map((line) => (
             <li
               key={line}
-              className="h-16 animate-pulse rounded-2xl bg-secondary"
+              className="h-16 animate-pulse rounded-xl bg-secondary"
             />
           ))}
         </ul>
@@ -1252,10 +1258,10 @@ function AddressStep({
               }
               aside={
                 <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
                     address.isCovered
-                      ? "bg-secondary text-secondary-foreground"
-                      : "border border-border text-muted-foreground"
+                      ? "bg-mint-100 text-mint-800"
+                      : "border-[1.5px] border-border text-muted-foreground"
                   }`}
                 >
                   {address.isCovered ? "Desservie" : "Hors zone"}
@@ -1275,7 +1281,7 @@ function AddressStep({
           <button
             type="button"
             onClick={() => setManual(true)}
-            className="font-medium text-primary underline"
+            className="font-medium text-brand underline"
           >
             Saisir mon adresse manuellement
           </button>
@@ -1364,7 +1370,7 @@ function ManualAddress({
           id="manual-commune"
           value={communeSlug}
           onChange={(event) => setCommuneSlug(event.target.value)}
-          className="mt-2 min-h-12 w-full rounded-xl border border-input bg-card px-3 text-base"
+          className="mt-2 min-h-12 w-full rounded-lg border border-input bg-card px-3 text-base"
         >
           {communes.map((entry) => (
             <option key={entry.slug} value={entry.slug}>
@@ -1441,7 +1447,7 @@ function HousingStep({
       {/* Repliée par défaut : la surface au mètre près est une précision
           d'appoint, pas le chemin principal. */}
       {custom ? (
-        <div className="rounded-2xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-4">
           <Label htmlFor="surface">Surface exacte</Label>
           <div className="mt-3 flex items-center gap-3">
             <Input
@@ -1526,13 +1532,13 @@ function FrequencyStep({
               aside={
                 quote ? (
                   <span className="shrink-0 text-right">
-                    <span className="block font-heading text-lg font-semibold tabular-nums">
+                    <span className="block text-lg font-extrabold tabular-nums">
                       {formatEuros(quote.grossAmountCents)}
                     </span>
                     <span
                       className={`block text-xs ${
                         selected === option.value
-                          ? "text-primary-foreground/80"
+                          ? "text-mint-800"
                           : "text-muted-foreground"
                       }`}
                     >
@@ -1630,7 +1636,7 @@ function SlotStep({
           {[0, 1, 2, 3, 4].map((chip) => (
             <div
               key={chip}
-              className="h-18 w-18 shrink-0 animate-pulse rounded-2xl bg-secondary"
+              className="h-18 w-18 shrink-0 animate-pulse rounded-xl bg-secondary"
             />
           ))}
         </div>
@@ -1638,7 +1644,7 @@ function SlotStep({
           {[0, 1, 2, 3, 4, 5].map((cell) => (
             <div
               key={cell}
-              className="h-12 animate-pulse rounded-xl bg-secondary"
+              className="h-12 animate-pulse rounded-lg bg-secondary"
             />
           ))}
         </div>
@@ -1648,7 +1654,7 @@ function SlotStep({
 
   if (slots.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-secondary/40 p-5">
+      <div className="rounded-xl border border-border bg-secondary/40 p-5">
         <p className="font-medium">
           Aucun créneau sur les trois prochaines semaines.
         </p>
@@ -1658,7 +1664,7 @@ function SlotStep({
         </p>
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="mt-4 inline-flex min-h-12 items-center rounded-xl bg-primary px-5 font-medium text-primary-foreground"
+          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
         >
           Appeler le {SITE.phone}
         </a>
@@ -1682,18 +1688,18 @@ function SlotStep({
                   disabled={!open}
                   onClick={() => setActiveKey(day.key)}
                   aria-pressed={isActive}
-                  className={`flex min-h-18 w-18 flex-col items-center justify-center rounded-2xl border px-2 py-2 text-center transition-colors ${
+                  className={`flex min-h-18 w-18 flex-col items-center justify-center rounded-lg border-2 px-2 py-2 text-center transition-[background-color,border-color] duration-200 ease-brand ${
                     isActive
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? "border-ink-900 bg-ink-900 text-white"
                       : open
-                        ? "border-border bg-card hover:border-primary"
-                        : "border-border/60 bg-transparent text-muted-foreground line-through"
+                        ? "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
+                        : "border-border-subtle bg-muted text-ink-300 line-through"
                   }`}
                 >
                   <span className="text-xs capitalize">
                     {chipFormatter.format(day.date).split(" ")[0]}
                   </span>
-                  <span className="font-heading text-lg font-semibold tabular-nums">
+                  <span className="text-lg font-extrabold tabular-nums">
                     {day.date.getDate()}
                   </span>
                   <span className="text-[0.65rem] uppercase">
@@ -1708,7 +1714,7 @@ function SlotStep({
 
       {active ? (
         <div>
-          <h3 className="font-heading font-semibold first-letter:uppercase">
+          <h3 className="font-extrabold first-letter:uppercase">
             {dayFormatter.format(active.date)}
           </h3>
           {active.slots.length === 0 ? (
@@ -1722,10 +1728,10 @@ function SlotStep({
                   <button
                     type="button"
                     onClick={() => onChoose(slot.start)}
-                    className={`min-h-12 w-full rounded-xl border text-sm font-medium tabular-nums transition-[background-color,border-color,transform] duration-150 active:scale-[0.98] motion-reduce:active:scale-100 ${
+                    className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] motion-reduce:active:scale-100 ${
                       chosen === slot.start
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-card hover:border-primary"
+                        ? "border-ink-900 bg-ink-900 text-white"
+                        : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
                     }`}
                   >
                     {timeFormatter.format(new Date(slot.start))}
@@ -1770,7 +1776,7 @@ function RecapLine({
         type="button"
         onClick={onEdit}
         aria-label={editLabel}
-        className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-primary underline"
+        className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-brand underline"
       >
         <PencilIcon className="size-3.5" aria-hidden />
         Modifier
@@ -1837,7 +1843,7 @@ function RecapStep({
         onSubmit();
       }}
     >
-      <dl className="rounded-2xl border border-border bg-card px-5 py-1">
+      <dl className="rounded-xl border border-border bg-card px-5 py-1">
         <RecapLine
           label="Rendez-vous"
           value={`${dayFormatter.format(start)} à ${hourLabel(start)}`}
@@ -1869,7 +1875,7 @@ function RecapStep({
       </dl>
 
       {!editContact ? (
-        <dl className="rounded-2xl border border-border bg-card px-5 py-1">
+        <dl className="rounded-xl border border-border bg-card px-5 py-1">
           <RecapLine
             label="Vous"
             value={`${contact.firstName} ${contact.lastName} · ${formatFrenchPhone(contact.phone)} · ${contact.email}`}
@@ -1879,9 +1885,7 @@ function RecapStep({
         </dl>
       ) : (
         <div>
-          <h3 className="font-heading text-lg font-semibold">
-            Comment vous joindre ?
-          </h3>
+          <h3 className="text-lg font-extrabold">Comment vous joindre ?</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {known
               ? "Ces coordonnées sont celles de votre compte."
@@ -1944,7 +1948,7 @@ function RecapStep({
       {/* Repliées : ces deux précisions sont utiles, mais les imposer dans le
           flux principal allongeait l'écran le plus décisif du parcours. */}
       {details ? (
-        <div className="space-y-5 rounded-2xl border border-border bg-card p-5">
+        <div className="space-y-5 rounded-xl border border-border bg-card p-5">
           <div>
             <Label htmlFor="accessNotes">Comment entrer chez vous ?</Label>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -1983,14 +1987,14 @@ function RecapStep({
       <ul className="space-y-2 text-sm text-muted-foreground">
         <li className="flex items-baseline gap-2">
           <CheckIcon
-            className="size-4 shrink-0 translate-y-0.5 text-primary"
+            className="size-4 shrink-0 translate-y-0.5 text-brand"
             aria-hidden
           />
           Rien à payer aujourd&apos;hui : vous réglez après la prestation.
         </li>
         <li className="flex items-baseline gap-2">
           <CheckIcon
-            className="size-4 shrink-0 translate-y-0.5 text-primary"
+            className="size-4 shrink-0 translate-y-0.5 text-brand"
             aria-hidden
           />
           Annulation gratuite jusqu&apos;à {FREE_CANCELLATION_HOURS} heures
@@ -1998,7 +2002,7 @@ function RecapStep({
         </li>
         <li className="flex items-baseline gap-2">
           <CheckIcon
-            className="size-4 shrink-0 translate-y-0.5 text-primary"
+            className="size-4 shrink-0 translate-y-0.5 text-brand"
             aria-hidden
           />
           Intervenant vérifié : SIRET, assurance et identité contrôlés.
@@ -2041,13 +2045,11 @@ function Confirmed({
   const start = new Date(confirmation.startAt);
 
   return (
-    <div className="rounded-2xl border border-primary/30 bg-primary/5 p-8 text-center">
+    <div className="rounded-xl border border-mint-200 bg-mint-50 p-8 text-center">
       <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
         <CheckIcon className="size-6" aria-hidden />
       </span>
-      <h2 className="mt-5 font-heading text-2xl font-semibold">
-        C&apos;est réservé.
-      </h2>
+      <h2 className="mt-5 text-2xl font-black">C&apos;est réservé.</h2>
       <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
         Rendez-vous{" "}
         <strong className="text-foreground first-letter:uppercase">
@@ -2062,7 +2064,7 @@ function Confirmed({
       </p>
       <a
         href={`tel:${SITE.phoneE164}`}
-        className="mt-6 inline-flex min-h-12 items-center rounded-xl border border-border bg-card px-5 font-medium"
+        className="mt-6 inline-flex min-h-12 items-center rounded-lg border border-border bg-card px-5 font-medium"
       >
         Appeler le {SITE.phone}
       </a>

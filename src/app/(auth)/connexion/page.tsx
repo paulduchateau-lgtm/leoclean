@@ -29,9 +29,7 @@ export default async function SignInPage({
 
   return (
     <>
-      <h1 className="font-heading text-2xl font-semibold tracking-tight">
-        Se connecter
-      </h1>
+      <h1 className="text-2xl font-black tracking-tight">Se connecter</h1>
       <p className="mt-2 mb-6 text-sm text-muted-foreground">
         Pour suivre vos ménages, vos factures et votre intervenant attitré.
       </p>

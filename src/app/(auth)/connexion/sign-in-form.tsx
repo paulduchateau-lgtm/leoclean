@@ -26,9 +26,9 @@ export function SignInForm({ callbackUrl }: { callbackUrl: string }) {
 
   if (state?.ok) {
     return (
-      <div className="rounded-xl border border-border bg-secondary/50 p-6 text-center">
+      <div className="rounded-lg border border-border bg-secondary/50 p-6 text-center">
         <CheckCircle2Icon
-          className="mx-auto mb-3 size-8 text-primary"
+          className="mx-auto mb-3 size-8 text-brand"
           aria-hidden
         />
         <p className="font-medium">Regardez votre boîte mail</p>

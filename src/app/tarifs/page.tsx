@@ -99,7 +99,7 @@ export default function TarifsPage() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
           Tarifs
         </h1>
         <p className="mt-5 max-w-prose text-lg text-pretty text-muted-foreground">
@@ -137,11 +137,11 @@ export default function TarifsPage() {
                       {rate.description}
                     </span>
                   </th>
-                  <td className="py-4 pr-4 font-heading text-lg font-semibold whitespace-nowrap">
+                  <td className="py-4 pr-4 text-lg font-extrabold whitespace-nowrap">
                     {formatHourlyRate(rate.hourlyRateCents)}
                   </td>
                   {showTaxCredit ? (
-                    <td className="py-4 font-heading text-lg font-semibold whitespace-nowrap text-primary">
+                    <td className="py-4 text-lg font-extrabold whitespace-nowrap text-brand">
                       {formatHourlyRate(
                         Math.round(
                           (rate.hourlyRateCents *
@@ -157,7 +157,7 @@ export default function TarifsPage() {
           </table>
         </div>
 
-        <h2 className="mt-14 font-heading text-2xl font-semibold tracking-tight">
+        <h2 className="mt-14 text-2xl font-black tracking-tight">
           Combien de temps pour mon logement ?
         </h2>
         <p className="mt-2 text-muted-foreground">
@@ -216,9 +216,7 @@ export default function TarifsPage() {
           </table>
         </div>
 
-        <h2 className="mt-14 font-heading text-2xl font-semibold tracking-tight">
-          Annulation
-        </h2>
+        <h2 className="mt-14 text-2xl font-black tracking-tight">Annulation</h2>
         <p className="mt-2 max-w-prose text-muted-foreground">
           Gratuite jusqu&apos;à 24 heures avant l&apos;intervention. Au-delà,
           les frais sont plafonnés : ils ne dépassent jamais les montants
@@ -238,15 +236,13 @@ export default function TarifsPage() {
           ))}
         </ul>
 
-        <h2 className="mt-14 font-heading text-2xl font-semibold tracking-tight">
+        <h2 className="mt-14 text-2xl font-black tracking-tight">
           Questions fréquentes
         </h2>
         <div className="mt-6 space-y-6">
           {FAQ.map((entry) => (
             <div key={entry.question}>
-              <h3 className="font-heading text-lg font-semibold">
-                {entry.question}
-              </h3>
+              <h3 className="text-lg font-extrabold">{entry.question}</h3>
               <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
                 {entry.answer}
               </p>

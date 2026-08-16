@@ -121,13 +121,13 @@ export default async function ArticlePage({
         >
           <ol className="flex flex-wrap gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href="/" className="hover:text-primary">
+              <Link href="/" className="hover:text-brand">
                 Accueil
               </Link>
             </li>
             <li aria-hidden>/</li>
             <li>
-              <Link href="/blog" className="hover:text-primary">
+              <Link href="/blog" className="hover:text-brand">
                 Conseils
               </Link>
             </li>
@@ -139,7 +139,7 @@ export default async function ArticlePage({
         </nav>
 
         <article className="mx-auto w-full max-w-4xl px-6 py-10">
-          <h1 className="font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+          <h1 className="text-3xl leading-tight font-black tracking-tight text-balance sm:text-4xl">
             {article.title}
           </h1>
 
@@ -164,15 +164,13 @@ export default async function ArticlePage({
           </div>
 
           <section className="mt-14">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Questions fréquentes
             </h2>
             <div className="mt-6 space-y-6">
               {article.faq.map((entry) => (
                 <div key={entry.question}>
-                  <h3 className="font-heading text-lg font-semibold">
-                    {entry.question}
-                  </h3>
+                  <h3 className="text-lg font-extrabold">{entry.question}</h3>
                   <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
                     {entry.answer}
                   </p>
@@ -182,9 +180,9 @@ export default async function ArticlePage({
           </section>
         </article>
 
-        <section className="border-y border-border bg-primary/5">
+        <section className="border-y border-border bg-mint-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Une question sur votre situation ?
             </h2>
             <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
@@ -197,7 +195,7 @@ export default async function ArticlePage({
 
         {communes.length > 0 ? (
           <section className="mx-auto w-full max-w-4xl px-6 py-12">
-            <h2 className="font-heading text-xl font-semibold tracking-tight">
+            <h2 className="text-xl font-extrabold tracking-tight">
               Le ménage près de chez vous
             </h2>
             <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
@@ -205,7 +203,7 @@ export default async function ArticlePage({
                 <li key={commune.slug}>
                   <Link
                     href={`/menage-a-domicile/${commune.slug}`}
-                    className="text-primary hover:underline"
+                    className="text-brand hover:underline"
                   >
                     Ménage à {commune.name}
                   </Link>
@@ -217,7 +215,7 @@ export default async function ArticlePage({
 
         {others.length > 0 ? (
           <section className="mx-auto w-full max-w-4xl px-6 pb-12">
-            <h2 className="font-heading text-xl font-semibold tracking-tight">
+            <h2 className="text-xl font-extrabold tracking-tight">
               À lire aussi
             </h2>
             <ul className="mt-4 space-y-2">
@@ -225,7 +223,7 @@ export default async function ArticlePage({
                 <li key={entry.slug}>
                   <Link
                     href={`/blog/${entry.slug}`}
-                    className="text-primary hover:underline"
+                    className="text-brand hover:underline"
                   >
                     {entry.title}
                   </Link>

@@ -44,7 +44,7 @@ export function SiteFooter() {
                 <li key={commune.slug}>
                   <Link
                     href={`/menage-a-domicile/${commune.slug}`}
-                    className="hover:text-primary"
+                    className="hover:text-brand"
                   >
                     {commune.name} ({commune.postalCode})
                   </Link>
@@ -61,7 +61,7 @@ export function SiteFooter() {
               <li key={`${intention.slug}-${commune.slug}`}>
                 <Link
                   href={`/${intention.slug}/${commune.slug}`}
-                  className="hover:text-primary"
+                  className="hover:text-brand"
                 >
                   {intention.slug === "repassage"
                     ? `Repassage à ${commune.name}`
@@ -70,7 +70,7 @@ export function SiteFooter() {
               </li>
             ))}
             <li>
-              <Link href="/blog" className="hover:text-primary">
+              <Link href="/blog" className="hover:text-brand">
                 Conseils ménage
               </Link>
             </li>
@@ -78,7 +78,7 @@ export function SiteFooter() {
                 bouton de réservation ; la page reste atteignable ici, sans quoi
                 elle serait orpheline tout en figurant au sitemap. */}
             <li>
-              <Link href="/etre-rappele" className="hover:text-primary">
+              <Link href="/etre-rappele" className="hover:text-brand">
                 Être rappelé
               </Link>
             </li>

@@ -42,7 +42,7 @@ export default function BlogIndexPage() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+        <h1 className="text-3xl font-black tracking-tight text-balance sm:text-4xl">
           Conseils ménage à domicile
         </h1>
         <p className="mt-5 max-w-prose text-lg text-pretty text-muted-foreground">
@@ -57,9 +57,9 @@ export default function BlogIndexPage() {
             <li key={article.slug}>
               <Link
                 href={`/blog/${article.slug}`}
-                className="block rounded-xl border border-border bg-card p-6 transition-colors hover:border-primary"
+                className="block rounded-lg border border-border bg-card p-6 transition-colors hover:border-mint-400"
               >
-                <h2 className="font-heading text-xl font-semibold tracking-tight text-balance">
+                <h2 className="text-xl font-extrabold tracking-tight text-balance">
                   {article.title}
                 </h2>
                 <p className="mt-2 text-pretty text-muted-foreground">

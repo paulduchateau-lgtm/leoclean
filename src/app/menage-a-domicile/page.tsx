@@ -52,7 +52,7 @@ export default function CommunesHubPage() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+        <h1 className="text-3xl font-black tracking-tight text-balance sm:text-4xl">
           Ménage à domicile au sud de Bordeaux
         </h1>
         <p className="mt-5 max-w-prose text-lg text-pretty text-muted-foreground">
@@ -64,7 +64,7 @@ export default function CommunesHubPage() {
           partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}.
         </p>
 
-        <h2 className="mt-12 font-heading text-2xl font-semibold tracking-tight">
+        <h2 className="mt-12 text-2xl font-black tracking-tight">
           Choisissez votre commune
         </h2>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -72,9 +72,9 @@ export default function CommunesHubPage() {
             <li key={commune.slug}>
               <Link
                 href={`/menage-a-domicile/${commune.slug}`}
-                className="block rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary"
+                className="block rounded-lg border border-border bg-card p-5 transition-colors hover:border-mint-400"
               >
-                <span className="font-heading text-lg font-semibold">
+                <span className="text-lg font-extrabold">
                   Ménage à {commune.name}
                 </span>
                 <span className="mt-1 block text-sm text-muted-foreground">
@@ -94,7 +94,7 @@ export default function CommunesHubPage() {
             être annoncée, pas passée sous silence. */}
         {upcoming.length > 0 ? (
           <>
-            <h2 className="mt-12 font-heading text-xl font-semibold tracking-tight">
+            <h2 className="mt-12 text-xl font-extrabold tracking-tight">
               Également desservies
             </h2>
             <p className="mt-2 text-muted-foreground">

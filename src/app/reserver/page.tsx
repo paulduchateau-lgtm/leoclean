@@ -107,7 +107,7 @@ export default async function ReserverPage({
         </div>
 
         <section className="mt-16 border-t border-border pt-10">
-          <h2 className="font-heading text-xl font-semibold tracking-tight">
+          <h2 className="text-xl font-extrabold tracking-tight">
             Vous préférez en parler ?
           </h2>
           <p className="mt-2 max-w-prose text-muted-foreground">
@@ -118,7 +118,7 @@ export default async function ReserverPage({
           <ContactChannels className="mt-6" />
           <p className="mt-6 text-sm text-muted-foreground">
             Vous cherchez plutôt à savoir combien ça coûte ?{" "}
-            <Link href="/tarifs" className="text-primary hover:underline">
+            <Link href="/tarifs" className="text-brand hover:underline">
               Voir les tarifs détaillés
             </Link>
             .

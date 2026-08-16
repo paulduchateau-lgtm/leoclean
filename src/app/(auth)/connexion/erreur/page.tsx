@@ -42,7 +42,7 @@ export default async function AuthErrorPage({
         className="mx-auto mb-4 size-9 text-warning"
         aria-hidden
       />
-      <h1 className="font-heading text-2xl font-semibold tracking-tight">
+      <h1 className="text-2xl font-black tracking-tight">
         Connexion impossible
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">{message}</p>
@@ -53,7 +53,7 @@ export default async function AuthErrorPage({
 
       <p className="mt-4 text-sm text-muted-foreground">
         Un problème persistant ? Écrivez-nous à{" "}
-        <a href={`mailto:${SITE.email}`} className="text-primary underline">
+        <a href={`mailto:${SITE.email}`} className="text-brand underline">
           {SITE.email}
         </a>
         .

@@ -33,25 +33,23 @@ export default async function AccountPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <h1 className="font-heading text-3xl font-semibold tracking-tight">
-        Mon compte
-      </h1>
+      <h1 className="text-3xl font-black tracking-tight">Mon compte</h1>
       <p className="mt-2 text-muted-foreground">{session.user.email}</p>
 
       <section className="mt-10">
-        <h2 className="font-heading text-lg font-semibold">Mes accès</h2>
+        <h2 className="text-lg font-extrabold">Mes accès</h2>
 
         {memberships.length === 0 ? (
           /* Un état vide sans issue est un bug : celui-ci dit ce qui manque et
              donne le geste qui le comble. */
-          <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-5">
+          <div className="mt-3 rounded-lg border border-border bg-secondary/40 p-5">
             <p className="text-sm text-muted-foreground">
               Votre compte n&apos;est rattaché à aucun espace pour
               l&apos;instant. Il le sera à votre première réservation.
             </p>
             <Link
               href="/reserver"
-              className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary px-5 font-medium text-primary-foreground"
+              className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
             >
               Réserver un ménage
             </Link>
@@ -61,7 +59,7 @@ export default async function AccountPage() {
             {memberships.map((membership) => (
               <li
                 key={membership.organizationId}
-                className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-4"
+                className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
               >
                 <span className="font-medium">
                   {membership.organizationName}

@@ -5,37 +5,50 @@
 }
 body {
   margin: 0;
-  background: var(--surface-page);
-  color: var(--text-body);
-  font-family: var(--font-body);
-  font-size: var(--text-body);
-  line-height: var(--leading-relaxed);
+  background: var(--bg-alt);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
+  font-synthesis-weight: none;
 }
+/*
+ * Les titres ne changent pas de famille : Figtree porte tout le système, et
+ * c'est la graisse — 900 pour trancher, 800 en dessous — qui fait la
+ * hiérarchie. Fraunces reste réservée au mot d'accent, via `.serif`.
+ */
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display);
-  color: var(--text-strong);
-  letter-spacing: var(--tracking-heading);
-  line-height: var(--leading-snug);
+  font-family: var(--font-sans);
+  color: var(--text);
+  letter-spacing: var(--ls-heading);
+  line-height: var(--lh-snug);
+  font-weight: var(--fw-black);
   margin: 0;
 }
+h3,
+h4 {
+  line-height: var(--lh-heading);
+  font-weight: var(--fw-extrabold);
+}
 a {
-  color: var(--leaf-700);
-  text-decoration-color: var(--leaf-200);
-  text-underline-offset: 3px;
+  color: var(--mint-700);
+  text-decoration-color: var(--mint-300);
+  text-underline-offset: 4px;
 }
 a:hover {
-  color: var(--leaf-800);
-  text-decoration-color: var(--leaf-500);
+  color: var(--mint-800);
+  text-decoration-color: var(--mint-600);
 }
 ::selection {
-  background: var(--leaf-200);
+  background: var(--mint-200);
   color: var(--ink-900);
 }
 :focus-visible {
-  outline: 2px solid var(--focus-ring);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
+  border-radius: var(--r-xs);
 }

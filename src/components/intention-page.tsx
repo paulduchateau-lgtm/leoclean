@@ -81,7 +81,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
         >
           <ol className="flex flex-wrap gap-2 text-sm text-muted-foreground">
             <li>
-              <Link href="/" className="hover:text-primary">
+              <Link href="/" className="hover:text-brand">
                 Accueil
               </Link>
             </li>
@@ -89,7 +89,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
             <li>
               <Link
                 href={`/menage-a-domicile/${commune.slug}`}
-                className="hover:text-primary"
+                className="hover:text-brand"
               >
                 {commune.name}
               </Link>
@@ -106,7 +106,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
             {commune.name} · {commune.postalCode}
           </Badge>
 
-          <h1 className="font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl">
+          <h1 className="text-3xl leading-tight font-black tracking-tight text-balance sm:text-4xl">
             {title}
           </h1>
 
@@ -114,7 +114,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
             {intention.lede}
           </p>
 
-          <p className="mt-6 max-w-prose rounded-xl border border-primary/20 bg-primary/5 p-5 text-pretty">
+          <p className="mt-6 max-w-prose rounded-lg border border-mint-200 bg-mint-50 p-5 text-pretty">
             {local.text}
           </p>
         </section>
@@ -122,7 +122,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
         <section className="mx-auto w-full max-w-4xl space-y-10 px-6 pb-12">
           {intention.sections.map((section) => (
             <div key={section.heading}>
-              <h2 className="font-heading text-2xl font-semibold tracking-tight">
+              <h2 className="text-2xl font-black tracking-tight">
                 {section.heading}
               </h2>
               <div className="mt-3 space-y-4">
@@ -141,7 +141,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
 
         <section className="border-y border-border bg-secondary/30">
           <div className="mx-auto w-full max-w-4xl px-6 py-12">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Tarifs à {commune.name}
             </h2>
             <p className="mt-2 text-muted-foreground">
@@ -152,10 +152,10 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
               {PUBLIC_RATES.map((rate) => (
                 <li
                   key={rate.key}
-                  className="rounded-xl border border-border bg-card p-5"
+                  className="rounded-lg border border-border bg-card p-5"
                 >
                   <p className="font-medium">{rate.label}</p>
-                  <p className="mt-1 font-heading text-2xl font-semibold">
+                  <p className="mt-1 text-2xl font-black">
                     {formatHourlyRate(rate.hourlyRateCents)}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -168,15 +168,13 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
         </section>
 
         <section className="mx-auto w-full max-w-4xl px-6 py-12">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-black tracking-tight">
             Questions fréquentes
           </h2>
           <div className="mt-6 space-y-6">
             {faq.map((entry) => (
               <div key={entry.question}>
-                <h3 className="font-heading text-lg font-semibold">
-                  {entry.question}
-                </h3>
+                <h3 className="text-lg font-extrabold">{entry.question}</h3>
                 <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
                   {entry.answer}
                 </p>
@@ -185,9 +183,9 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
           </div>
         </section>
 
-        <section className="border-t border-border bg-primary/5">
+        <section className="border-t border-border bg-mint-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Un ménage à {commune.name} ?
             </h2>
             <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
@@ -200,7 +198,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
                 mieux et plus vite à qui est déjà décidé. */}
             <Link
               href={`/reserver?commune=${commune.slug}`}
-              className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-primary px-6 font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
             >
               Voir les créneaux à {commune.name}
             </Link>
@@ -223,7 +221,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
               Voir aussi{" "}
               <Link
                 href={`/menage-a-domicile/${commune.slug}`}
-                className="text-primary hover:underline"
+                className="text-brand hover:underline"
               >
                 le ménage à domicile à {commune.name}
               </Link>
@@ -233,7 +231,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
 
           {siblings.length > 0 ? (
             <>
-              <h2 className="mt-8 font-heading text-xl font-semibold tracking-tight">
+              <h2 className="mt-8 text-xl font-extrabold tracking-tight">
                 Dans les autres communes
               </h2>
               <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
@@ -241,7 +239,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
                   <li key={other.slug}>
                     <Link
                       href={`/${sibling.slug}/${other.slug}`}
-                      className="text-primary hover:underline"
+                      className="text-brand hover:underline"
                     >
                       {fillTemplate(sibling.titleTemplate, other.name)}
                     </Link>

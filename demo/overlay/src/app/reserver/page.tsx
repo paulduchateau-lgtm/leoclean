@@ -34,8 +34,8 @@ export default function ReserverPage() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
         <h1 className="sr-only">Réserver un ménage à domicile</h1>
 
-        <div className="rounded-2xl border border-clay-500/40 bg-clay-500/5 p-5">
-          <p className="font-heading font-semibold">Démonstration</p>
+        <div className="rounded-xl border border-peach-200 bg-peach-50 p-5">
+          <p className="font-extrabold text-peach-800">Démonstration</p>
           <p className="mt-2 text-pretty text-muted-foreground">
             Le parcours ci-dessous fonctionne réellement : la recherche
             d&apos;adresse interroge la Base Adresse Nationale, le prix sort du
@@ -46,7 +46,10 @@ export default function ReserverPage() {
           <p className="mt-2 text-pretty text-muted-foreground">
             Rien n&apos;est enregistré, et personne ne vous rappellera. Pour une
             vraie demande, appelez le{" "}
-            <a href="tel:+33684363862" className="text-primary">
+            <a
+              href="tel:+33684363862"
+              className="font-bold text-brand underline"
+            >
               06 84 36 38 62
             </a>
             .
@@ -67,7 +70,7 @@ export default function ReserverPage() {
         </div>
 
         <section className="mt-16 border-t border-border pt-10">
-          <h2 className="font-heading text-xl font-semibold tracking-tight">
+          <h2 className="text-xl font-extrabold tracking-tight">
             Vous préférez en parler ?
           </h2>
           <p className="mt-2 max-w-prose text-muted-foreground">
@@ -78,7 +81,7 @@ export default function ReserverPage() {
           <ContactChannels className="mt-6" />
           <p className="mt-6 text-sm text-muted-foreground">
             Vous cherchez plutôt à savoir combien ça coûte ?{" "}
-            <Link href="/tarifs" className="text-primary hover:underline">
+            <Link href="/tarifs" className="text-brand hover:underline">
               Voir les tarifs détaillés
             </Link>
             .

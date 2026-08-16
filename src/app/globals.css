@@ -3,7 +3,7 @@
 @import "shadcn/tailwind.css";
 
 /*
- * Tokens du design system Léo Clean.
+ * Tokens du design system.
  *
  * Ils sont importés tels quels, sans être recopiés : le système fait foi, et
  * une valeur dupliquée finirait par diverger. Les variables sémantiques de
@@ -27,7 +27,13 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: ui-monospace, SFMono-Regular, monospace;
-  --font-heading: var(--font-heading-family);
+  /*
+   * Figtree porte aussi les titres : la hiérarchie vient de la graisse, pas
+   * d'un changement de famille. `font-display` expose Fraunces, réservée au
+   * mot d'accent d'un titre marketing.
+   */
+  --font-heading: var(--font-sans);
+  --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -44,7 +50,10 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
   --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -53,6 +62,12 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  /*
+   * La menthe pleine sert à peindre une action, pas à écrire : à 400 elle ne
+   * tient pas le contraste sur blanc. `text-brand` est la menthe lisible, la
+   * seule à employer sur du texte, une icône ou un trait fin.
+   */
+  --color-brand: var(--brand);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -62,142 +77,215 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 
-  /* Palettes de marque, accessibles en `bg-leaf-700`, `text-clay-600`… */
-  --color-leaf-50: var(--leaf-50);
-  --color-leaf-100: var(--leaf-100);
-  --color-leaf-200: var(--leaf-200);
-  --color-leaf-300: var(--leaf-300);
-  --color-leaf-400: var(--leaf-400);
-  --color-leaf-500: var(--leaf-500);
-  --color-leaf-600: var(--leaf-600);
-  --color-leaf-700: var(--leaf-700);
-  --color-leaf-800: var(--leaf-800);
-  --color-leaf-900: var(--leaf-900);
-  --color-leaf-mint: var(--leaf-mint);
-  --color-clay-100: var(--clay-100);
-  --color-clay-300: var(--clay-300);
-  --color-clay-500: var(--clay-500);
-  --color-clay-600: var(--clay-600);
-  --color-linen-100: var(--linen-100);
-  --color-linen-200: var(--linen-200);
+  /*
+   * Les couleurs sémantiques du système, exposées telles quelles : un état —
+   * succès, alerte, erreur, information — garde la même teinte partout, et ne
+   * suit pas le thème.
+   */
+  --color-success-bg: var(--success-bg);
+  --color-success-border: var(--success-border);
+  --color-success-dark: var(--success-dark);
+  --color-warning-bg: var(--warning-bg);
+  --color-warning-border: var(--warning-border);
+  --color-warning-dark: var(--warning-dark);
+  --color-error: var(--error);
+  --color-error-bg: var(--error-bg);
+  --color-error-border: var(--error-border);
+  --color-error-dark: var(--error-dark);
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-info-border: var(--info-border);
+  --color-info-dark: var(--info-dark);
+
+  /* Palettes de marque, accessibles en `bg-mint-400`, `text-peach-700`… */
+  --color-mint-50: var(--mint-50);
+  --color-mint-100: var(--mint-100);
+  --color-mint-200: var(--mint-200);
+  --color-mint-300: var(--mint-300);
+  --color-mint-400: var(--mint-400);
+  --color-mint-500: var(--mint-500);
+  --color-mint-600: var(--mint-600);
+  --color-mint-700: var(--mint-700);
+  --color-mint-800: var(--mint-800);
+  --color-mint-900: var(--mint-900);
+  --color-mint-950: var(--mint-950);
+  --color-peach-50: var(--peach-50);
+  --color-peach-100: var(--peach-100);
+  --color-peach-200: var(--peach-200);
+  --color-peach-300: var(--peach-300);
+  --color-peach-400: var(--peach-400);
+  --color-peach-500: var(--peach-500);
+  --color-peach-600: var(--peach-600);
+  --color-peach-700: var(--peach-700);
+  --color-peach-800: var(--peach-800);
+  --color-lemon-100: var(--lemon-100);
+  --color-lemon-200: var(--lemon-200);
+  --color-lemon-300: var(--lemon-300);
+  --color-lemon-400: var(--lemon-400);
+  --color-lemon-700: var(--lemon-700);
+  --color-cream-50: var(--cream-50);
+  --color-cream-100: var(--cream-100);
+  --color-cream-200: var(--cream-200);
+  --color-sky-50: var(--sky-50);
+  --color-sky-100: var(--sky-100);
+  --color-sky-200: var(--sky-200);
+  --color-sky-400: var(--sky-400);
+  --color-sage-50: var(--sage-50);
+  --color-sage-100: var(--sage-100);
+  --color-sage-200: var(--sage-200);
+  --color-ink-0: var(--ink-0);
+  --color-ink-25: var(--ink-25);
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
   --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
   --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
 
-  --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
+  --shadow-xs: var(--sh-xs);
+  --shadow-sm: var(--sh-s);
+  --shadow-md: var(--sh-m);
+  --shadow-lg: var(--sh-l);
+  --shadow-xl: var(--sh-xl);
+  --shadow-mint: var(--sh-mint);
 
-  --tracking-overline: var(--tracking-overline);
-  --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
-  --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-brand: var(--ease);
+  --ease-bounce: var(--ease-bounce);
+
+  --tracking-overline: var(--ls-caps);
+
+  /*
+   * Les rayons du système sont exposés un à un plutôt que dérivés d'un rayon
+   * unique : l'échelle n'est pas proportionnelle, elle grandit avec la taille
+   * de l'élément. `rounded-4xl` vaut la pilule, seule forme admise pour une
+   * action.
+   */
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-s);
+  --radius-md: var(--r-m);
+  --radius-lg: var(--r-l);
+  --radius-xl: var(--r-xl);
+  --radius-2xl: var(--r-2xl);
+  --radius-3xl: 44px;
+  --radius-4xl: var(--r-pill);
 }
 
 /*
  * Câblage de shadcn/ui sur le design system.
  *
  * Aucun composant ne connaît la marque : ils consomment `--primary`,
- * `--background`, `--border`… qui sont ici branchés sur les alias sémantiques
- * du système. Changer l'identité se fait donc dans un seul fichier.
+ * `--background`, `--border`… qui sont ici branchés sur les rôles du système.
+ * Changer l'identité se fait donc dans un seul fichier.
  */
 :root {
-  --background: var(--surface-page);
-  --foreground: var(--text-body);
-  --card: var(--surface-card);
-  --card-foreground: var(--text-strong);
-  --popover: var(--surface-raised);
-  --popover-foreground: var(--text-strong);
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
 
-  --primary: var(--action-primary-bg);
-  --primary-foreground: var(--action-primary-fg);
-  --secondary: var(--surface-sunken);
+  /*
+   * La menthe pleine ne sert qu'à l'action principale, et porte du texte
+   * encre : à 400, elle est trop claire pour du blanc.
+   */
+  --primary: var(--mint-400);
+  --primary-foreground: var(--text-on-brand);
+  --brand: var(--text-brand);
+  /*
+   * `secondary` désigne une surface creusée, pas une action : c'est ainsi que
+   * shadcn l'emploie et que les pages s'en servent. L'action secondaire du
+   * système — l'encre pleine, contrepoint de la menthe — est portée par la
+   * variante du bouton, qui la nomme explicitement.
+   */
+  --secondary: var(--surface-alt);
   --secondary-foreground: var(--ink-800);
-  --muted: var(--surface-sunken);
-  --muted-foreground: var(--text-muted);
-  --accent: var(--action-accent-bg);
-  --accent-foreground: var(--action-accent-fg);
+  --muted: var(--surface-alt);
+  --muted-foreground: var(--text-secondary);
+  /*
+   * `accent` est l'état survolé des listes et des menus, pas la couleur
+   * d'accent de la marque : le système survole en menthe très claire. La pêche
+   * reste disponible en `bg-peach-500`, pour les blocs qui la réclament.
+   */
+  --accent: var(--mint-50);
+  --accent-foreground: var(--mint-800);
 
-  --success: var(--color-success);
-  --success-foreground: var(--linen-0);
-  --warning: var(--color-warning);
-  --warning-foreground: var(--ink-900);
-  --destructive: var(--color-danger);
+  --success-foreground: var(--text-inverse);
+  --warning-foreground: var(--text-inverse);
+  --destructive: var(--error);
+  --destructive-hover: var(--error-dark);
 
-  --border: var(--border-subtle);
-  --input: var(--border-default);
-  --ring: var(--focus-ring);
+  --input: var(--border);
+  --ring: var(--focus);
 
-  --chart-1: var(--leaf-600);
-  --chart-2: var(--clay-500);
-  --chart-3: var(--sky-500);
-  --chart-4: var(--color-warning);
-  --chart-5: var(--leaf-300);
+  --chart-1: var(--mint-500);
+  --chart-2: var(--peach-500);
+  --chart-3: var(--sky-400);
+  --chart-4: var(--lemon-400);
+  --chart-5: var(--mint-800);
 
-  /* `--radius-lg` du système, dont shadcn dérive ses autres rayons. */
-  --radius: var(--radius-lg);
+  /* Rayon de référence : celui d'une card. */
+  --radius: var(--r-l);
 
-  --sidebar: var(--surface-sunken);
-  --sidebar-foreground: var(--text-body);
-  --sidebar-primary: var(--action-primary-bg);
-  --sidebar-primary-foreground: var(--action-primary-fg);
-  --sidebar-accent: var(--linen-200);
-  --sidebar-accent-foreground: var(--ink-800);
+  --sidebar: var(--surface-alt);
+  --sidebar-foreground: var(--text);
+  --sidebar-primary: var(--mint-400);
+  --sidebar-primary-foreground: var(--text-on-brand);
+  --sidebar-accent: var(--mint-100);
+  --sidebar-accent-foreground: var(--mint-800);
   --sidebar-border: var(--border-subtle);
-  --sidebar-ring: var(--focus-ring);
+  --sidebar-ring: var(--focus);
 }
 
 /*
  * Thème sombre.
  *
- * Le design system n'en définit pas. Celui-ci en est une dérivation : les
- * rôles sont inversés en conservant les mêmes familles — encre profonde en
- * fond, vert éclairci pour rester lisible sur sombre, lin pour le texte. À
+ * Le design system n'en définit pas. Celui-ci en est une dérivation : encre
+ * profonde en fond, menthe éclaircie pour rester lisible, mêmes familles. À
  * revoir si le système en fournit un.
  */
 .dark {
-  --background: var(--ink-900);
-  --foreground: var(--linen-100);
-  --card: var(--ink-800);
-  --card-foreground: var(--linen-50);
-  --popover: var(--ink-800);
-  --popover-foreground: var(--linen-50);
+  --background: var(--ink-950);
+  --foreground: var(--ink-50);
+  --card: var(--ink-900);
+  --card-foreground: var(--ink-25);
+  --popover: var(--ink-900);
+  --popover-foreground: var(--ink-25);
 
-  --primary: var(--leaf-300);
-  --primary-foreground: var(--ink-900);
-  --secondary: var(--ink-700);
-  --secondary-foreground: var(--linen-100);
-  --muted: var(--ink-700);
-  --muted-foreground: var(--linen-400);
-  --accent: var(--clay-300);
-  --accent-foreground: var(--ink-900);
+  --primary: var(--mint-400);
+  --primary-foreground: var(--ink-950);
+  --brand: var(--mint-300);
+  --secondary: var(--ink-800);
+  --secondary-foreground: var(--ink-50);
+  --muted: var(--ink-800);
+  --muted-foreground: var(--ink-300);
+  --accent: var(--ink-800);
+  --accent-foreground: var(--mint-300);
 
-  --success: var(--leaf-300);
-  --success-foreground: var(--ink-900);
-  --warning: var(--color-warning);
-  --warning-foreground: var(--ink-900);
-  --destructive: var(--clay-300);
+  --success: var(--mint-400);
+  --success-foreground: var(--ink-950);
+  --warning: var(--lemon-300);
+  --warning-foreground: var(--ink-950);
+  --destructive: #f08b84;
+  --destructive-hover: #f6b4af;
 
-  --border: color-mix(in oklab, var(--linen-400) 28%, transparent);
-  --input: color-mix(in oklab, var(--linen-400) 36%, transparent);
-  --ring: var(--leaf-400);
+  --border: color-mix(in oklab, var(--ink-300) 24%, transparent);
+  --input: color-mix(in oklab, var(--ink-300) 32%, transparent);
+  --ring: var(--mint-400);
 
-  --sidebar: var(--ink-800);
-  --sidebar-foreground: var(--linen-100);
-  --sidebar-primary: var(--leaf-300);
-  --sidebar-primary-foreground: var(--ink-900);
-  --sidebar-accent: var(--ink-700);
-  --sidebar-accent-foreground: var(--linen-100);
-  --sidebar-border: color-mix(in oklab, var(--linen-400) 28%, transparent);
-  --sidebar-ring: var(--leaf-400);
+  --sidebar: var(--ink-900);
+  --sidebar-foreground: var(--ink-50);
+  --sidebar-primary: var(--mint-400);
+  --sidebar-primary-foreground: var(--ink-950);
+  --sidebar-accent: var(--ink-800);
+  --sidebar-accent-foreground: var(--ink-50);
+  --sidebar-border: color-mix(in oklab, var(--ink-300) 24%, transparent);
+  --sidebar-ring: var(--mint-400);
 }
 
 @layer base {
@@ -207,32 +295,59 @@
 
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground;
-    line-height: var(--leading-relaxed);
+    line-height: var(--lh-body);
+    font-synthesis-weight: none;
   }
 
-  /* Les titres emploient la police d'affichage et son interlettrage serré. */
+  /*
+   * Les titres restent en Figtree : c'est la graisse — 900 pour trancher,
+   * 800 en dessous — qui fait la hiérarchie, pas un changement de famille.
+   */
   h1,
-  h2,
+  h2 {
+    font-weight: var(--fw-black);
+    letter-spacing: var(--ls-heading);
+    line-height: var(--lh-snug);
+  }
+
   h3,
   h4 {
-    font-family: var(--font-heading-family);
-    color: var(--text-strong);
-    letter-spacing: var(--tracking-heading);
-    line-height: var(--leading-snug);
+    font-weight: var(--fw-extrabold);
+    letter-spacing: -0.015em;
+    line-height: var(--lh-heading);
   }
 
   ::selection {
-    background: var(--leaf-200);
+    background: var(--mint-200);
     color: var(--ink-900);
   }
 
   :focus-visible {
-    outline: 2px solid var(--focus-ring);
+    outline: 3px solid var(--focus);
     outline-offset: 2px;
+  }
+
+  /* Les prix et les durées ne doivent jamais danser d'un chiffre à l'autre. */
+  th,
+  td,
+  time,
+  output,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -242,10 +357,38 @@
    * interlettrage large. « SUD BORDEAUX · DEPUIS 2021 ».
    */
   .overline {
-    font-size: var(--text-overline);
-    font-weight: var(--weight-semibold);
-    letter-spacing: var(--tracking-overline);
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--ls-caps);
     text-transform: uppercase;
-    color: var(--text-muted);
+    color: var(--text-tertiary);
+  }
+
+  /*
+   * Mot d'accent d'un titre marketing : Fraunces en italique, un mot maximum,
+   * toujours en fin de phrase, jamais dans l'app transactionnelle.
+   */
+  .accent-word {
+    font-family: var(--font-display), Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-optical-sizing: auto;
+    font-variation-settings:
+      "SOFT" 40,
+      "WONK" 1;
+    color: var(--mint-600);
+  }
+
+  /*
+   * Taches colorées des blocs marketing. Purement décoratives : elles se
+   * placent en absolu derrière le contenu, jamais au-dessus.
+   */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+    opacity: 0.9;
+    pointer-events: none;
   }
 }

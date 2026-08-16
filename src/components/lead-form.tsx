@@ -51,21 +51,16 @@ export function LeadForm({
 
   if (state?.ok) {
     return (
-      <div className="rounded-2xl border border-border bg-secondary/50 p-8 text-center">
+      <div className="rounded-xl border border-border bg-secondary/50 p-8 text-center">
         <CheckCircle2Icon
-          className="mx-auto mb-4 size-9 text-primary"
+          className="mx-auto mb-4 size-9 text-brand"
           aria-hidden
         />
-        <p className="font-heading text-xl font-semibold">
-          C&apos;est noté, merci.
-        </p>
+        <p className="text-xl font-extrabold">C&apos;est noté, merci.</p>
         <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
           Nous vous rappelons dans la journée, ou le lendemain matin si vous
           avez écrit le soir. Si c&apos;est urgent, appelez directement le{" "}
-          <a
-            href={`tel:${SITE.phoneE164}`}
-            className="font-medium text-primary"
-          >
+          <a href={`tel:${SITE.phoneE164}`} className="font-medium text-brand">
             {SITE.phone}
           </a>
           .

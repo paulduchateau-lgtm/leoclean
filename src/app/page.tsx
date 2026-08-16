@@ -73,16 +73,36 @@ export default function Home() {
       <SiteHeader />
 
       <main className="flex flex-1 flex-col">
-        <section className="border-b border-border bg-secondary/40">
-          <div className="mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
+        {/* Le fond menthe et ses taches colorées sont la signature du système :
+            une pièce aérée, pas un bandeau. Elles se posent en absolu derrière
+            le contenu, et `overflow-hidden` les empêche d'élargir la page. */}
+        <section className="relative overflow-hidden border-b border-border-subtle bg-mint-50">
+          <div
+            className="blob top-[-160px] right-[-90px] size-[360px] bg-mint-200"
+            aria-hidden
+          />
+          <div
+            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-lemon-200 opacity-70"
+            aria-hidden
+          />
+          {/* La tache pêche passe derrière le titre : elle ne paraît qu'à
+              partir du moment où la ligne de texte ne la traverse plus. */}
+          <div
+            className="blob top-[120px] left-[64%] hidden size-[150px] bg-peach-200 opacity-40 lg:block"
+            aria-hidden
+          />
+
+          <div className="relative mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
             <Badge variant="secondary" className="mb-5 gap-1.5">
               <MapPinIcon className="size-3.5" aria-hidden />
               {COMMUNES.length} communes au sud de Bordeaux
             </Badge>
 
-            <h1 className="font-heading text-4xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl">
-              Le ménage à domicile, par des personnes qui habitent à côté de
-              chez vous.
+            {/* Un seul mot en Fraunces, en fin de phrase : c'est la respiration
+                humaine qui empêche le rendu SaaS, et elle ne se répète pas. */}
+            <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
+              Le ménage à domicile, par des personnes qui habitent{" "}
+              <span className="accent-word">à côté</span> de chez vous.
             </h1>
 
             {/* La réservation commence ici, pas trois écrans plus loin — et
@@ -99,7 +119,7 @@ export default function Home() {
               À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)},
               minimum {MINIMUM_BILLABLE_MINUTES / 60} heures. Du lundi au
               vendredi de 8 h à 19 h, le samedi de 9 h à 13 h.{" "}
-              <Link href="/tarifs" className="text-primary underline">
+              <Link href="/tarifs" className="text-brand underline">
                 Voir le détail des tarifs
               </Link>
               .
@@ -117,15 +137,15 @@ export default function Home() {
         </section>
 
         <section className="mx-auto w-full max-w-4xl px-6 py-16">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-black tracking-tight">
             Pourquoi Léo Clean plutôt qu&apos;une plateforme nationale
           </h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
             {PROMISES.map((promise) => (
               <div key={promise.title}>
-                <h3 className="flex items-baseline gap-2 font-heading text-lg font-semibold">
+                <h3 className="flex items-baseline gap-2 text-lg font-extrabold">
                   <CheckIcon
-                    className="size-4 shrink-0 translate-y-0.5 text-primary"
+                    className="size-4 shrink-0 translate-y-0.5 text-brand"
                     aria-hidden
                   />
                   {promise.title}
@@ -138,9 +158,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-border bg-secondary/30">
+        <section className="border-y border-border-subtle bg-cream-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="font-heading text-2xl font-semibold tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight">
               Où nous intervenons
             </h2>
             <p className="mt-2 max-w-prose text-muted-foreground">
@@ -156,7 +176,7 @@ export default function Home() {
                 <li key={commune.slug}>
                   <Link
                     href={`/menage-a-domicile/${commune.slug}`}
-                    className="flex items-baseline justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 transition-colors hover:border-primary"
+                    className="flex items-baseline justify-between gap-3 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-mint-400"
                   >
                     <span className="font-medium">Ménage à {commune.name}</span>
                     <span className="text-sm whitespace-nowrap text-muted-foreground">

@@ -1,19 +1,30 @@
 :root {
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-pill: 999px;
+  /*
+   * Aucun angle vif : plus l'élément est grand, plus l'arrondi est généreux,
+   * et toute action est une pilule. Rayon intérieur = rayon extérieur − padding.
+   */
+  --r-xs: 6px;
+  --r-s: 10px;
+  --r-m: 14px;
+  --r-l: 20px;
+  --r-xl: 28px;
+  --r-2xl: 36px;
+  --r-pill: 999px;
   --border-width-hairline: 1px;
   --border-width-strong: 2px;
-  --shadow-xs: 0 1px 2px rgba(35, 33, 29, 0.05);
-  --shadow-sm:
-    0 1px 3px rgba(35, 33, 29, 0.06), 0 1px 2px rgba(35, 33, 29, 0.04);
-  --shadow-md:
-    0 4px 14px rgba(35, 33, 29, 0.07), 0 1px 3px rgba(35, 33, 29, 0.04);
-  --shadow-lg:
-    0 12px 32px rgba(35, 33, 29, 0.1), 0 2px 6px rgba(35, 33, 29, 0.05);
-  --shadow-inset-hairline: inset 0 0 0 1px var(--border-subtle);
-  --shadow-focus: 0 0 0 3px rgba(111, 169, 138, 0.45);
+  /*
+   * Ombres teintées d'encre verte plutôt que de noir pur, très diffuses et
+   * très basses en opacité : elles séparent les plans, elles ne décorent pas.
+   */
+  --sh-xs: 0 1px 2px rgba(11, 27, 22, 0.06);
+  --sh-s: 0 2px 6px rgba(11, 27, 22, 0.06), 0 1px 2px rgba(11, 27, 22, 0.04);
+  --sh-m:
+    0 6px 16px -4px rgba(11, 27, 22, 0.08), 0 2px 5px rgba(11, 27, 22, 0.04);
+  --sh-l:
+    0 14px 32px -10px rgba(11, 27, 22, 0.12), 0 4px 10px rgba(11, 27, 22, 0.04);
+  --sh-xl:
+    0 28px 60px -18px rgba(11, 27, 22, 0.18), 0 8px 18px rgba(11, 27, 22, 0.05);
+  --sh-mint: 0 10px 24px -8px rgba(22, 177, 137, 0.45);
+  --sh-inset: inset 0 1px 2px rgba(11, 27, 22, 0.05);
+  --sh-focus: 0 0 0 4px var(--focus-halo);
 }
