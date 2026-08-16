@@ -1,5 +1,5 @@
 import { APreciser } from "@/components/intervenants/a-preciser";
-import { INTERVENANTS, canSayGuaranteed, netRateLabel } from "@/lib/facts";
+import { INTERVENANTS, canSayGuaranteed, netRatePhrase } from "@/lib/facts";
 import { formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { PUBLIC_RATES } from "@/lib/pricing/public-grid";
 
@@ -67,7 +67,7 @@ export function Remuneration() {
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-4 py-3">
-          <dt>Ce que vous touchez, {netRateLabel()}</dt>
+          <dt>Ce que vous touchez, {netRatePhrase()}</dt>
           <dd className="font-extrabold whitespace-nowrap text-brand">
             {net === null ? (
               <APreciser quoi="rémunération nette horaire" />

@@ -50,9 +50,37 @@ describe("landing intervenants — ce que la page ne doit jamais dire", () => {
 
   it("n'écrit pas « garanti » tant que la garantie n'est pas définie", () => {
     // Trois situations sans réponse : le mot ne veut rien dire, et l'employer
-    // à vide le viderait aussi pour le jour où il sera mérité.
-    expect(text.toLowerCase()).not.toContain("net garanti");
-    expect(text).toContain("versé à date fixe");
+    // à vide le viderait aussi pour le jour où il sera mérité. On dit à la
+    // place ce qu'on tient — le délai de versement — et jamais « à date fixe »,
+    // qui décrirait un engagement mensuel qu'on ne prend pas.
+    expect(text.toLowerCase()).not.toContain("garanti");
+    expect(text).toContain("versé sous 5 jours ouvrés");
+    expect(text).not.toContain("date fixe");
+  });
+
+  it("affiche le partage complet, chaque ligne déduite des deux autres", () => {
+    // 29 € payés, 18 € nets, 11 € de coordination sur une heure — soit 87 €,
+    // 54 € et 33 € sur l'exemple de trois heures. Aucune des trois n'est
+    // écrite : la page les calcule, donc elles ne peuvent pas se contredire.
+    expect(text).toContain("87,00 €");
+    expect(text).toContain("54,00 €");
+    expect(text).toContain("33,00 €");
+  });
+
+  it("marque encore ce qui n'est pas arbitré, sans l'inventer", () => {
+    // Les trois situations de garantie n'ont pas de réponse : la page le
+    // montre plutôt que de combler, et c'est aussi ce qui la tient hors de
+    // l'index. Le jour où elles sont écrites, la pastille disparaît et le mot
+    // « garanti » apparaît, sans autre modification.
+    expect(text).toContain("à préciser");
+    expect(text).toContain("Le client ne paie pas");
+  });
+
+  it("dit que les premières missions du filleul ne sont pas commissionnées", () => {
+    // Le code n'est pas rétroactif : la commission court à partir de la
+    // cinquième mission. La copy le dit plutôt que de le laisser découvrir au
+    // premier versement.
+    expect(text).toContain("sans rattrapage sur les précédentes");
   });
 
   it("n'affiche aucun gain de trajet chiffré", () => {

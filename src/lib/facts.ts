@@ -116,11 +116,27 @@ export const FACTS = {
  * nous oppose un an plus tard.
  */
 export const INTERVENANTS = {
-  /** Rémunération nette horaire, en centimes. Décision non prise. */
-  netHourlyRateCents: null as number | null,
+  /**
+   * Rémunération nette horaire, en centimes.
+   *
+   * 18 € pour 29 € payés par le client en formule régulière, soit une marge de
+   * coordination de 38 % — c'est l'exemple des CGU, et le dépôt en portait
+   * déjà la décision sans qu'aucune constante ne la tienne. Ce montant est le
+   * seul chiffre de la page qu'un intervenant vérifiera sur son relevé
+   * bancaire : le bloc rémunération en déduit les deux autres lignes plutôt
+   * que de les écrire, de sorte qu'aucune des trois ne peut contredire les
+   * autres.
+   */
+  netHourlyRateCents: 1800 as number | null,
 
-  /** Formulation du délai de paiement, par exemple « le 5 de chaque mois ». */
-  paymentTerms: null as string | null,
+  /**
+   * Délai de paiement, tel qu'il se dit.
+   *
+   * Cinq jours ouvrés après l'intervention. C'est un délai, pas une date fixe
+   * mensuelle : la copy dit donc « sous 5 jours ouvrés » et jamais « à date
+   * fixe », qui décrirait un autre engagement.
+   */
+  paymentTerms: "sous 5 jours ouvrés" as string | null,
 
   /**
    * Ce que couvre le mot « garanti ».
@@ -209,9 +225,29 @@ export function canSayGuaranteed(): boolean {
   );
 }
 
-/** Qualificatif du montant net, dérivé de ce qu'on est en mesure de tenir. */
+/**
+ * Qualificatif court du montant net, pour un bandeau.
+ *
+ * « garanti » ne s'écrit que si les trois situations ont une réponse ; sinon
+ * le montant est simplement net, ce qui est vrai et déjà distinctif.
+ */
 export function netRateLabel(): string {
-  return canSayGuaranteed() ? "net garanti" : "net, versé à date fixe";
+  return canSayGuaranteed() ? "net garanti" : "net";
+}
+
+/**
+ * Le même qualificatif, en prose.
+ *
+ * Tant que « garanti » n'est pas mérité, on dit ce qu'on tient réellement —
+ * le délai de versement — plutôt que rien. Il est lu dans `paymentTerms` et
+ * non recopié : écrire « à date fixe » quand l'engagement est un délai de cinq
+ * jours ouvrés décrirait un autre engagement que celui qu'on prend.
+ */
+export function netRatePhrase(): string {
+  if (canSayGuaranteed()) return "net garanti";
+  return INTERVENANTS.paymentTerms === null
+    ? "net, versé à date fixe"
+    : `net, versé ${INTERVENANTS.paymentTerms}`;
 }
 
 /**

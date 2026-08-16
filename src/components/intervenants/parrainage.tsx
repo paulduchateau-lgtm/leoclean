@@ -85,6 +85,12 @@ export function Parrainage() {
             votre filleul, pas sur vous.
           </li>
           <li>
+            Ces {PARRAINAGE.qualifyingBookings} premières interventions ouvrent
+            le droit, elles ne sont pas commissionnées : la commission court à
+            partir de la {PARRAINAGE.qualifyingBookings}
+            <sup>e</sup>, sans rattrapage sur les précédentes.
+          </li>
+          <li>
             Le pourcentage porte sur ce qui lui est versé — la somme que vous
             retrouvez sur votre espace, pas un chiffre que vous devriez croire
             sur parole.

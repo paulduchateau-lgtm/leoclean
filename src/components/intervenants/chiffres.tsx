@@ -50,16 +50,20 @@ export function ChiffresIntervenants() {
       aria-label="Les conditions en quatre chiffres"
     >
       <dl className="mx-auto grid w-full max-w-4xl grid-cols-2 gap-px overflow-hidden bg-border-subtle sm:grid-cols-4">
+        {/* Même construction que le bandeau de l'accueil client : le terme
+            précède sa valeur dans le document, et l'ordre visuel est retourné
+            par la mise en page plutôt que par un doublon `sr-only` qu'un
+            lecteur d'écran énoncerait deux fois. */}
         {figures.map((figure) => (
-          <div key={figure.label} className="bg-card px-5 py-6 text-center">
-            <dt className="sr-only">{figure.label}</dt>
-            <dd>
-              <span className="block text-2xl font-black tracking-tight text-brand">
-                {figure.value}
-              </span>
-              <span className="mt-1 block text-sm text-pretty text-muted-foreground">
-                {figure.label}
-              </span>
+          <div
+            key={figure.label}
+            className="flex flex-col-reverse bg-card px-5 py-6 text-center"
+          >
+            <dt className="mt-1 text-sm text-pretty text-muted-foreground">
+              {figure.label}
+            </dt>
+            <dd className="text-2xl font-black tracking-tight text-brand">
+              {figure.value}
             </dd>
           </div>
         ))}

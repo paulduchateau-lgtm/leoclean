@@ -11,6 +11,7 @@ import {
   PENDING_INTERVENANT_FIELDS,
   canSayGuaranteed,
   netRateLabel,
+  netRatePhrase,
 } from "@/lib/facts";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import { LOWEST_HOURLY_RATE_CENTS } from "@/lib/pricing/public-grid";
@@ -108,10 +109,31 @@ describe("conditions faites aux intervenants", () => {
 
   it("n'écrit pas « garanti » tant que les trois situations sont sans réponse", () => {
     // Le mot n'engage à rien tant qu'on n'a pas dit contre quoi il garantit.
-    // « Versé à date fixe » est déjà un argument, et il est vrai.
+    // On dit alors ce qu'on tient réellement : le délai de versement.
     expect(canSayGuaranteed()).toBe(false);
-    expect(netRateLabel()).toBe("net, versé à date fixe");
+    expect(netRateLabel()).toBe("net");
     expect(netRateLabel()).not.toContain("garanti");
+    expect(netRatePhrase()).not.toContain("garanti");
+  });
+
+  it("décrit le versement par son délai réel, pas par une date fixe", () => {
+    // Cinq jours ouvrés après l'intervention est un délai. Écrire « à date
+    // fixe » décrirait un engagement mensuel qu'on ne prend pas.
+    expect(INTERVENANTS.paymentTerms).toBe("sous 5 jours ouvrés");
+    expect(netRatePhrase()).toBe("net, versé sous 5 jours ouvrés");
+    expect(netRatePhrase()).not.toContain("date fixe");
+  });
+
+  it("annonce un net cohérent avec la marge de coordination du dépôt", () => {
+    // 18 € nets pour 29 € payés : 38 % de coordination, l'exemple des CGU.
+    // Le test tient le rapport, pas le chiffre — si le tarif client bouge, il
+    // faudra rouvrir la question plutôt que laisser filer la marge.
+    const net = INTERVENANTS.netHourlyRateCents;
+    expect(net).not.toBeNull();
+
+    const margin = 1 - net! / LOWEST_HOURLY_RATE_CENTS;
+    expect(margin).toBeGreaterThan(0.35);
+    expect(margin).toBeLessThan(0.4);
   });
 
   it("écrit « garanti » dès que les trois ont une réponse", () => {
@@ -131,12 +153,15 @@ describe("conditions faites aux intervenants", () => {
     expect(regle(manquant)).toBe(false);
   });
 
-  it("tient la page hors de l'index tant qu'un chiffre manque", () => {
-    // Une page d'offre qui se classerait sans pouvoir dire ce qu'elle paie
-    // ferait venir précisément les gens qu'elle décevrait.
-    expect(PENDING_INTERVENANT_FIELDS.length).toBeGreaterThan(0);
+  it("tient la page hors de l'index tant qu'une garantie manque", () => {
+    // La rémunération et le délai de paiement sont arbitrés ; les trois
+    // situations de garantie ne le sont pas. Une page d'offre qui se
+    // classerait sans pouvoir dire ce qui se passe en cas d'impayé décevrait
+    // précisément les gens qu'elle cherche à convaincre.
+    expect(PENDING_INTERVENANT_FIELDS).not.toContain("rémunération nette");
+    expect(PENDING_INTERVENANT_FIELDS).not.toContain("délai de paiement");
+    expect(PENDING_INTERVENANT_FIELDS).toContain("garantie en cas d'impayé");
     expect(INTERVENANT_PAGE_READY).toBe(false);
-    expect(PENDING_INTERVENANT_FIELDS).toContain("rémunération nette");
   });
 
   it("ne demande aucune exclusivité et ne facture aucune inscription", () => {

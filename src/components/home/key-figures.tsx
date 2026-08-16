@@ -40,17 +40,21 @@ export function KeyFigures() {
       className="border-b border-border-subtle bg-card"
       aria-label="Léo Clean en quatre chiffres"
     >
+      {/* `flex-col-reverse` place le nombre au-dessus de son libellé sans
+          inverser le document : une liste de définitions veut le terme avant
+          sa valeur, et répéter le libellé en `sr-only` le ferait entendre deux
+          fois. */}
       <dl className="mx-auto grid w-full max-w-4xl grid-cols-2 gap-px overflow-hidden bg-border-subtle sm:grid-cols-4">
         {FIGURES.map((figure) => (
-          <div key={figure.label} className="bg-card px-5 py-6 text-center">
-            <dt className="sr-only">{figure.label}</dt>
-            <dd>
-              <span className="block text-3xl font-black tracking-tight text-brand">
-                {figure.value}
-              </span>
-              <span className="mt-1 block text-sm text-pretty text-muted-foreground">
-                {figure.label}
-              </span>
+          <div
+            key={figure.label}
+            className="flex flex-col-reverse bg-card px-5 py-6 text-center"
+          >
+            <dt className="mt-1 text-sm text-pretty text-muted-foreground">
+              {figure.label}
+            </dt>
+            <dd className="text-3xl font-black tracking-tight text-brand">
+              {figure.value}
             </dd>
           </div>
         ))}

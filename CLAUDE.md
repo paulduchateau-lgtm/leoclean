@@ -489,6 +489,11 @@ filleuls ferait dépendre le gain du recrutement opéré par autrui, ce qui est
 la définition de la vente à la boule de neige à l'article L.121-15 du code de
 la consommation.
 
+**La commission n'est pas rétroactive**, conformément au calcul : les cinq
+premières missions du filleul ouvrent le droit sans être commissionnées, et la
+fenêtre de douze mois court à partir de la cinquième. La page l'écrit plutôt
+que de le laisser découvrir au premier versement.
+
 **La candidature est écrite dans `Lead`**, distinguée par son `sourcePath`.
 Créer un modèle demanderait une migration que rien ne justifie tant que le
 traitement d'une candidature est un coup de téléphone ; le jour où elle

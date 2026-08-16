@@ -21,7 +21,7 @@ import {
   PARRAINAGE,
 } from "@/lib/facts";
 import { FEATURES, stageLabel } from "@/lib/features";
-import { formatEuros } from "@/lib/pricing";
+import { formatEuros, formatHourlyRate } from "@/lib/pricing";
 import {
   breadcrumbJsonLd,
   faqJsonLd,
@@ -86,8 +86,8 @@ const REPONSES = [
     body: "La formule régulière crée un planning stable, pas une file d'attente où il faut se replacer chaque semaine.",
   },
   {
-    title: "Un paiement à date fixe",
-    body: "Quel que soit le délai de règlement du client.",
+    title: `Un paiement ${INTERVENANTS.paymentTerms ?? "à date fixe"}`,
+    body: "Quel que soit le délai de règlement du client, qui est notre affaire et pas la vôtre.",
   },
   {
     title: "La facturation automatique",
@@ -135,15 +135,26 @@ const OUTILS_SOCIETE = [
   "Une facturation consolidée",
 ];
 
+/**
+ * Le net, tel qu'il se dit dans une phrase.
+ *
+ * Dérivé plutôt qu'écrit : la FAQ, le bandeau et le bloc rémunération citent
+ * tous les trois ce montant, et trois occurrences d'un chiffre recopié sont
+ * trois occasions de diverger.
+ */
+const NET_EN_TOUTES_LETTRES =
+  INTERVENANTS.netHourlyRateCents === null
+    ? "un montant net à l'heure"
+    : `${formatHourlyRate(INTERVENANTS.netHourlyRateCents)} nets`;
+
 const FAQ = [
   {
     question: "Combien je gagne ?",
-    answer: `La rémunération est un montant net à l'heure, annoncé avant que vous acceptiez une mission, et il ne dépend pas de ce que le client finit par payer. Le montant exact et le détail du partage figurent sur cette page, section « Ce que vous touchez ».`,
+    answer: `${NET_EN_TOUTES_LETTRES}, annoncés avant que vous acceptiez une mission. Le montant ne dépend pas de ce que le client finit par payer, et le partage complet — ce que paie le client, ce que vous touchez, ce que garde Léo Clean — figure sur cette page, section « Ce que vous touchez ».`,
   },
   {
-    question: "Que veut dire « versé à date fixe » ?",
-    answer:
-      "Que vous êtes réglé selon un calendrier connu à l'avance, indépendamment de la date à laquelle le client règle Léo Clean. Le délai de règlement du client est notre affaire, pas la vôtre.",
+    question: "Quand suis-je payé ?",
+    answer: `${INTERVENANTS.paymentTerms === null ? "À une date connue à l'avance" : `Sous cinq jours ouvrés après l'intervention`}, indépendamment de la date à laquelle le client règle Léo Clean. Son délai de règlement est notre affaire, pas la vôtre.`,
   },
   {
     question: "Suis-je payé si le client ne paie pas ?",
