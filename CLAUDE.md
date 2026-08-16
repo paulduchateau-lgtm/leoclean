@@ -427,6 +427,73 @@ d'un récépissé auprès de la DDETS — l'**agrément** étant réservé aux a
 auprès de publics fragiles. La copy dit donc « déclaration ». Formulation à
 faire confirmer par un conseil avant mise en production.
 
+### La seconde porte : `/travailler-avec-nous`
+
+**La thèse est la même contrainte, retournée.** Le client s'entend dire
+« une vingtaine de minutes de route, donc toujours la même personne » ;
+l'intervenant s'entend dire « une vingtaine de minutes de route, donc une
+journée remplie sans la passer en voiture ». Le premier poste de perte de
+revenu d'un intervenant à domicile n'est pas le tarif horaire mais le trajet
+non payé et les trous de planning : un périmètre court concentre là où une
+plateforme nationale disperse. On parle donc de kilomètres, d'heures et de
+délais de paiement, jamais de « rejoindre une aventure ».
+
+**La page n'est ni indexée ni annoncée tant qu'elle est incomplète.**
+`PENDING_INTERVENANT_FIELDS` suit la convention de `PENDING_IDENTITY_FIELDS` :
+tant qu'il manque une valeur — la rémunération nette au premier chef — la
+page porte `noindex`, reste hors du sitemap et de `llms.txt`, et aucun lien ne
+la désigne depuis l'en-tête, le pied de page ou l'accueil. Elle reste
+atteignable par son URL, pour être relue. Se classer sur « missions ménage
+Gironde » sans pouvoir dire ce qu'on paie ferait venir exactement les gens
+qu'on décevrait.
+
+**Le mot « garanti » est dérivé, pas écrit.** Il n'engage à rien tant qu'on
+n'a pas dit _contre quoi_ il garantit : `canSayGuaranteed()` n'est vrai que si
+les trois situations — retard de paiement, impayé, annulation tardive — ont
+une réponse écrite. À défaut, la page dit « net, versé à date fixe », qui est
+déjà un argument et qui est vrai.
+
+**Toute la copy du moteur de planning est en proposition.** « On vous
+propose » et jamais « on vous affecte », « une suggestion de tournée » et
+jamais « votre tournée », et le fait que l'ordre soit modifiable est écrit
+noir sur blanc. Ce n'est pas une préférence de ton : un logiciel qui ordonne
+la journée d'un indépendant est un indice de subordination s'il le subit, et
+n'en est pas un s'il le pilote. Un site qui promet la liberté pendant que le
+fonctionnement dit l'inverse est une pièce à charge, pas une protection. Un
+test interdit le vocabulaire d'affectation sur le HTML rendu.
+
+**Le bloc « ce qu'on lit de votre agenda » et le bloc qui demande l'accès ne
+font qu'un seul composant.** Le brief exigeait qu'ils soient adjacents ; les
+réunir rend la séparation impossible sans réécrire le fichier, ce qui vaut
+mieux qu'un test constatant l'erreur après coup. Deux consentements distincts
+— heures occupées d'un côté, lieux de l'autre — parce que les demander
+ensemble reviendrait à obtenir le second sans qu'il ait été posé.
+
+**`src/lib/features.ts` est au produit ce que `fiscal.ts` est au droit.**
+Trois états par fonction : `live` sans libellé, `beta` avec « En test », et
+`roadmap` avec « Disponible au lancement ». Le bloc reste visible en
+`roadmap` — on ne cache pas la fonction, on dit qu'elle n'existe pas encore.
+`savedTravelMinutes` vaut `null` et rien ne s'affiche : ni chiffre, ni
+fourchette, ni « jusqu'à ». Aucune capture d'écran d'une interface inexistante.
+`appleCalendar` est faux tant que la voie technique n'est pas tranchée, Apple
+ne fournissant pas d'API serveur équivalente à celle de Google.
+
+**Le parrainage n'est pas décidé sur cette page.** `referral/rules.ts`
+existait avant elle, verrouillé par ses propres tests : 5 % du chiffre
+d'affaires du filleul, à partir de sa cinquième mission, pendant douze mois,
+plafonné à 150 € par mois tous filleuls confondus. `FACTS.parrainage` ne fait
+que le lire. Le plafond **est annoncé** : c'est la seule limite du dispositif,
+et la taire reproduirait l'opacité reprochée aux plateformes nationales. Un
+seul niveau, `MAX_REFERRAL_DEPTH` à 1 — toucher sur les filleuls de ses
+filleuls ferait dépendre le gain du recrutement opéré par autrui, ce qui est
+la définition de la vente à la boule de neige à l'article L.121-15 du code de
+la consommation.
+
+**La candidature est écrite dans `Lead`**, distinguée par son `sourcePath`.
+Créer un modèle demanderait une migration que rien ne justifie tant que le
+traitement d'une candidature est un coup de téléphone ; le jour où elle
+devient un dossier avec des pièces et des états, elle aura sa table.
+
 **Le JSON-LD n'invente rien.** Les champs inconnus sont omis plutôt que remplis.
 La note agrégée n'est émise que s'il existe des avis réels — la déclarer à vide
 est un motif de sanction manuelle. Le balisage est échappé à la sérialisation :
@@ -848,6 +915,10 @@ src/
     db.ts              client Prisma et cloisonnement multi-tenant
     env.ts             variables d'environnement validées par Zod
     site.ts            NAP et identité publique — source unique
+    facts.ts           agrégateur des chiffres affichés, côté client et côté offre
+    fiscal.ts          ce que le site a le droit de dire du crédit d'impôt
+    features.ts        disponibilité des fonctions annoncées (live/beta/roadmap)
+    referral/          parrainage client et cooptation intervenant, un seul niveau
     territory.ts       les 16 communes (INSEE, CP, population, centroïde)
     communes-content.ts contenu éditorial des 16 pages locales
     intentions.ts      /femme-de-menage et /repassage, par commune

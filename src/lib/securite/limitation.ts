@@ -47,6 +47,14 @@ export const QUOTAS = {
   creneaux: { max: 60, fenetreMs: 3_600_000 },
   /** Envoi de liens de connexion, par source et non plus seulement par adresse. */
   connexion: { max: 15, fenetreMs: 3_600_000 },
+  /**
+   * Candidature d'intervenant.
+   *
+   * Plus rare encore qu'une demande de rappel : on ne postule pas trois fois
+   * dans la même heure. Le quota est distinct de `rappel` pour qu'un robot qui
+   * martèle un formulaire ne ferme pas l'autre.
+   */
+  candidature: { max: 5, fenetreMs: 3_600_000 },
 } as const satisfies Record<string, Quota>;
 
 export type Action = keyof typeof QUOTAS;

@@ -15,7 +15,7 @@ import { SiteHeader } from "@/components/site-header";
 import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { Badge } from "@/components/ui/badge";
 import { clientEnv } from "@/lib/env";
-import { FACTS } from "@/lib/facts";
+import { FACTS, INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { FISCAL } from "@/lib/fiscal";
 import { formatHourlyRate } from "@/lib/pricing";
 import {
@@ -314,6 +314,22 @@ export default function Home() {
               </p>
               <ContactChannels className="[&>div]:sm:justify-start" />
             </div>
+
+            {/* La porte côté offre, discrète et tout en bas : quelqu'un qui
+                cherche du travail lit la page jusqu'au bout, un client non.
+                Elle n'apparaît qu'une fois les conditions arbitrées. */}
+            {INTERVENANT_PAGE_READY && (
+              <p className="mt-8 text-sm text-muted-foreground">
+                Vous êtes professionnel du ménage ?{" "}
+                <Link
+                  href="/travailler-avec-nous"
+                  className="text-brand underline"
+                >
+                  Travaillez avec nous
+                </Link>
+                .
+              </p>
+            )}
           </div>
         </section>
       </main>
