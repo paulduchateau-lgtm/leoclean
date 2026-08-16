@@ -3,14 +3,17 @@ import type { Metadata } from "next";
 import { CommuneStart } from "@/components/commune-start";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { clientEnv } from "@/lib/env";
+import {
+  afterTaxCreditCents,
+  canShowTaxCredit,
+  creditImpotConditions,
+} from "@/lib/fiscal";
 import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { estimateDuration } from "@/lib/pricing";
 import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
   STANDARD_SQM_PER_HOUR,
-  TAX_CREDIT_RATE_BP,
 } from "@/lib/pricing/public-grid";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import {
@@ -65,7 +68,11 @@ const FAQ = [
 ];
 
 export default function TarifsPage() {
-  const showTaxCredit = clientEnv.NEXT_PUBLIC_SAP_DECLARED;
+  // La frontière fiscale est tranchée dans `lib/fiscal.ts` et nulle part
+  // ailleurs : cette page lisait directement la variable d'environnement, ce
+  // qui faisait deux endroits où répondre à « avons-nous le droit de
+  // l'afficher ». Deux endroits finissent toujours par se contredire.
+  const showTaxCredit = canShowTaxCredit();
   const service = {
     sqmPerHour: STANDARD_SQM_PER_HOUR,
     minDurationMinutes: MINIMUM_BILLABLE_MINUTES,
@@ -145,11 +152,7 @@ export default function TarifsPage() {
                   {showTaxCredit ? (
                     <td className="py-4 text-lg font-extrabold whitespace-nowrap text-brand">
                       {formatHourlyRate(
-                        Math.round(
-                          (rate.hourlyRateCents *
-                            (10_000 - TAX_CREDIT_RATE_BP)) /
-                            10_000,
-                        ),
+                        afterTaxCreditCents(rate.hourlyRateCents),
                       )}
                     </td>
                   ) : null}
@@ -158,6 +161,19 @@ export default function TarifsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Cible de l'astérisque posé par `<PrixAvecCreditImpot />`. Le bloc
+            n'existe que déclaration obtenue : détailler des conditions
+            d'éligibilité avant d'y avoir droit reviendrait à annoncer
+            l'avantage par la bande. */}
+        {showTaxCredit ? (
+          <p
+            id="credit-impot"
+            className="mt-6 max-w-prose text-sm text-muted-foreground"
+          >
+            {creditImpotConditions()}
+          </p>
+        ) : null}
 
         <h2 className="mt-14 text-2xl font-black tracking-tight">
           Combien de temps pour mon logement ?
