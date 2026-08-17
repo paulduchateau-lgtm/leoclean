@@ -560,6 +560,20 @@ valeur porte le nom de son token. Figtree y est versionnée en TrueType dans
 `assets/fonts/`, avec sa licence — `next/font` ne sert que du woff2, que ce
 moteur ne lit pas.
 
+**Seule la production a le droit d'être indexée**, et cela se déclare plutôt
+que se déduire. `NEXT_PUBLIC_ENVIRONMENT` vaut `production` ou `dev` ; hors
+production, le proxy pose `X-Robots-Tag: noindex` sur tout, `robots.txt` refuse
+tout, le gabarit racine émet `index: false` et un bandeau non fermable annonce
+l'environnement de test — le site affiche un vrai numéro et de vrais tarifs, et
+la dev est une copie conforme jusqu'à la confirmation de réservation.
+
+La déclaration ne dépend d'aucun nom d'hôte, et c'est tout son intérêt : la
+règle ci-dessous, fondée sur la comparaison des domaines, suffisait tant qu'un
+environnement de test n'avait pas de domaine à lui, mais elle autorise
+`dev.leoclean.fr` dès que la dev déclare cette origine comme la sienne. La
+valeur par défaut reste `production`, pour la même raison qu'ailleurs : un
+oubli de variable ne doit pas mettre le site entier hors de l'index.
+
 **On n'indexe que l'hôte qu'on a déclaré.** Un déploiement Vercel répond aussi
 sur son `*.vercel.app`, mot pour mot le même contenu : `src/proxy.ts` pose un
 `X-Robots-Tag: noindex` sur tout hôte qui n'est ni la vitrine ni

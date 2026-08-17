@@ -142,6 +142,9 @@ try {
     env: {
       ...process.env,
       NEXT_PUBLIC_DEMO_STATIQUE: "true",
+      // La vitrine n'est pas la production : une seule règle décide de
+      // l'indexation, et elle passe par cette déclaration.
+      NEXT_PUBLIC_ENVIRONMENT: "dev",
       NEXT_PUBLIC_BASE_PATH: basePath,
       NEXT_PUBLIC_SITE_URL:
         process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.invalid",

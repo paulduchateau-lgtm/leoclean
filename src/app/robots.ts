@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { clientEnv } from "@/lib/env";
 import { absoluteUrl } from "@/lib/site";
 
 /**
@@ -44,6 +45,17 @@ const LLM_CRAWLERS = [
 ];
 
 export default function robots(): MetadataRoute.Robots {
+  /*
+   * Hors production, on refuse tout. L'en-tête `X-Robots-Tag` posé par le
+   * proxy suffirait — il couvre ce fichier comme le reste — mais c'est ici
+   * qu'un humain vient vérifier, et un `robots.txt` permissif servi par un
+   * environnement de test se lit comme une autorisation. Deux refus valent
+   * mieux qu'un seul, invisible.
+   */
+  if (clientEnv.NEXT_PUBLIC_ENVIRONMENT !== "production") {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
+  }
+
   return {
     rules: [
       { userAgent: "*", allow: "/", disallow: PRIVATE_PATHS },

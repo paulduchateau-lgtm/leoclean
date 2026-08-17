@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Figtree, Fraunces } from "next/font/google";
 
 import { AppTabBar } from "@/components/app-tab-bar";
+import { BandeauEnvironnement } from "@/components/bandeau-environnement";
 import { DemoBanner } from "@/components/demo-banner";
 import { ServiceWorker } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
@@ -80,9 +81,11 @@ export const metadata: Metadata = {
    * classer sur les mêmes requêtes. Laissée indexable, elle concurrencerait
    * `leoclean.fr` sur les requêtes mêmes qu'elle sert à gagner.
    */
-  robots: clientEnv.NEXT_PUBLIC_DEMO_STATIQUE
-    ? { index: false, follow: false }
-    : { index: true, follow: true },
+  robots:
+    clientEnv.NEXT_PUBLIC_DEMO_STATIQUE ||
+    clientEnv.NEXT_PUBLIC_ENVIRONMENT !== "production"
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -107,7 +110,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sans.variable} ${display.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        {clientEnv.NEXT_PUBLIC_DEMO_STATIQUE ? <DemoBanner /> : null}
+        {/* Un seul bandeau à la fois : la vitrine statique dit déjà tout ce
+            que dirait celui de l'environnement, et plus précisément. */}
+        {clientEnv.NEXT_PUBLIC_DEMO_STATIQUE ? (
+          <DemoBanner />
+        ) : clientEnv.NEXT_PUBLIC_ENVIRONMENT !== "production" ? (
+          <BandeauEnvironnement />
+        ) : null}
         {children}
         {/* La coque applicative se pose ici, une fois pour tout le site : elle
             décide seule des écrans où elle n'a rien à faire. */}
