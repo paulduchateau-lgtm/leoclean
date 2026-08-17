@@ -877,9 +877,38 @@ intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
 personnes mélangerait deux interventions sans rapport. Sans intervenant
 désigné, l'envoi est refusé plutôt que d'écrire à personne.
 
-**La replanification n'y est toujours pas** : elle suppose de rechercher un
-créneau et de réattribuer, c'est-à-dire le tunnel entier. Annuler puis
-reprendre reste le chemin.
+**La replanification à l'initiative du client n'y est toujours pas** : elle
+suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
+entier. Annuler puis reprendre reste le chemin.
+
+### Quand personne n'accepte la mission
+
+Le tunnel vend un créneau **ferme**, et il arrive qu'il ne le soit pas : le
+dernier intervenant refuse, `reattribuer` ne trouve personne, la réservation
+retombe en `PENDING_ASSIGNMENT`. C'est le seul moment où la promesse n'est pas
+tenue, et le client attendait jusqu'ici un appel.
+
+**`SlotProposal` porte la sortie : un intervenant propose une autre heure, le
+client tranche.** Rien ne bouge tant qu'il n'a pas répondu — déplacer d'office
+le rendez-vous de quelqu'un parce que personne n'était libre lui ferait porter
+un manque qui n'est pas le sien. Refuser est donc un bouton de même poids
+qu'accepter.
+
+**La table ne porte aucune contrainte d'exclusion, et c'est voulu** : une
+proposition n'occupe personne. C'est l'écriture de l'`Assignment`, à la
+validation, qui rencontre `Assignment_no_overlap` — le conflit se décide sur
+la seule écriture qui engage un intervenant, jamais avant.
+
+**Accepter se fait en deux temps assumés**, pas en une transaction : on déplace
+la réservation, puis on demande une affectation restreinte à l'intervenant qui
+a proposé, ce qui réutilise `reattribuer` — trajets réels, tampons, et la
+contrainte. S'il s'est engagé ailleurs entre-temps, l'écriture échoue : la
+réservation revient à son heure d'origine et le client l'apprend, plutôt que
+de se retrouver déplacé sans personne pour venir.
+
+**La durée ne se renégocie pas** : `proposedEnd` se déduit de la durée de la
+réservation. Changer la durée changerait le prix, et un prix qui bouge après
+la réservation n'est plus une proposition.
 
 ## Vitrine statique de démonstration
 

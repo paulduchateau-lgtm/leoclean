@@ -121,6 +121,7 @@ model Organization {
   calendarConnections  CalendarConnection[]
   externalBusyBlocks   ExternalBusyBlock[]
   assignments          Assignment[]
+  slotProposals        SlotProposal[]
   payments             Payment[]
   payouts              Payout[]
   invoices             Invoice[]
@@ -335,6 +336,7 @@ model CleanerProfile {
   calendarConnections    CalendarConnection[]
   externalBusyBlocks     ExternalBusyBlock[]
   assignments            Assignment[]
+  slotProposals          SlotProposal[]
   payouts                Payout[]
   reviews                Review[]
   issuedInvoices         Invoice[]
@@ -634,6 +636,7 @@ model Booking {
   subscription  Subscription?        @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   items         BookingItem[]
   assignments   Assignment[]
+  slotProposals SlotProposal[]
   statusEvents  BookingStatusEvent[]
   payments      Payment[]
   invoices      Invoice[]
@@ -968,6 +971,67 @@ model Assignment {
   @@index([cleanerProfileId, startAt])
   @@index([bookingId, status])
   @@index([respondBy])
+}
+
+enum SlotProposalStatus {
+  /// Proposée par l'intervenant, en attente de la réponse du client.
+  PENDING
+  /// Le client a validé : la réservation est déplacée et l'affectation créée.
+  ACCEPTED
+  DECLINED
+  /// L'intervenant s'est rétracté avant la réponse du client.
+  WITHDRAWN
+  /// Le client n'a pas répondu à temps, ou l'heure proposée est passée.
+  EXPIRED
+}
+
+/// Créneau de remplacement proposé par un intervenant.
+///
+/// Elle n'existe que dans un cas : personne n'a accepté la mission à l'heure
+/// demandée, et la réservation est retombée en `PENDING_ASSIGNMENT`. Plutôt
+/// que de laisser le client attendre un appel, un intervenant qui voudrait la
+/// prendre à une autre heure le propose, et le client tranche.
+///
+/// C'est une **proposition**, pas une modification : rien ne bouge tant que le
+/// client n'a pas validé. Cette asymétrie n'est pas une politesse — déplacer
+/// unilatéralement le rendez-vous de quelqu'un serait une rupture de la
+/// promesse vendue par le tunnel, qui est un créneau ferme.
+///
+/// La durée n'est pas renégociable ici : `proposedEnd` se déduit de la durée
+/// de la réservation. Un intervenant qui voudrait aussi changer la durée
+/// change le prix, et cela se traite au téléphone.
+model SlotProposal {
+  id               String             @id @default(cuid())
+  organizationId   String
+  bookingId        String
+  cleanerProfileId String
+  status           SlotProposalStatus @default(PENDING)
+
+  proposedStart DateTime
+  proposedEnd   DateTime
+
+  /// Mot de l'intervenant au client. « Je peux jeudi mais pas mardi. »
+  message String?
+
+  /// Au-delà, la proposition ne vaut plus : le planning aura bougé.
+  respondBy   DateTime?
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  /// Un intervenant ne propose pas deux fois la même heure sur la même
+  /// réservation : sans cela, un double envoi produirait deux cartes
+  /// identiques à valider, et valider la seconde après la première
+  /// déplacerait un rendez-vous déjà déplacé.
+  @@unique([bookingId, cleanerProfileId, proposedStart])
+  @@index([organizationId, status])
+  @@index([bookingId, status])
+  @@index([cleanerProfileId, status])
 }
 
 // ===========================================================================

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { authedAction } from "@/lib/actions";
 import { reattribuer } from "@/lib/assignments/reattribution";
 import { requireOrganization } from "@/lib/auth/session";
+import { proposeSlot } from "@/lib/booking/slot-proposal-store";
 import { BusinessError } from "@/lib/booking/errors";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
@@ -47,7 +48,7 @@ class MissionIntrouvableError extends BusinessError {
  * identifiant reçu : personne ne peut répondre à la place d'un autre en
  * changeant un champ.
  */
-async function affectationEnAttente(assignmentId: string, userId: string) {
+async function profilIntervenant(userId: string) {
   const organizationId = await marketplaceOrganizationId();
   const { db } = await requireOrganization(
     organizationId,
@@ -61,6 +62,12 @@ async function affectationEnAttente(assignmentId: string, userId: string) {
   if (!profil) {
     throw new MissionIntrouvableError();
   }
+
+  return { db, organizationId, profil };
+}
+
+async function affectationEnAttente(assignmentId: string, userId: string) {
+  const { db, organizationId, profil } = await profilIntervenant(userId);
 
   const affectation = await db.assignment.findFirst({
     where: {
@@ -111,6 +118,37 @@ export const accepterMission = authedAction(
 
     revalidatePath("/intervenant");
     return { accepte: true as const };
+  },
+);
+
+/**
+ * Proposer un autre créneau sur une mission que personne n'a prise.
+ *
+ * L'intervenant ne réserve rien : il propose, et le client tranche. La
+ * réservation ne bouge qu'à la validation, et c'est à ce moment-là seulement
+ * que la contrainte d'exclusion se prononce sur sa disponibilité.
+ */
+export const proposerUnAutreCreneau = authedAction(
+  z.object({
+    bookingId: z.string().min(1),
+    proposedStart: z.iso.datetime(),
+    message: z.string().trim().max(500).optional(),
+  }),
+  async (input, user) => {
+    const { db, profil } = await profilIntervenant(user.id);
+    const result = await proposeSlot(
+      db,
+      profil.id,
+      {
+        bookingId: input.bookingId,
+        proposedStart: new Date(input.proposedStart),
+        message: input.message ?? null,
+      },
+      new Date(),
+    );
+
+    revalidatePath("/intervenant");
+    return { proposalId: result.proposalId };
   },
 );
 

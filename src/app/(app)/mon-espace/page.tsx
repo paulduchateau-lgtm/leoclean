@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { InterventionActions } from "@/app/(app)/mon-espace/intervention-actions";
+import { PropositionCreneau } from "@/app/(app)/mon-espace/proposition-creneau";
 import { ContactChannels } from "@/components/contact-channels";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -11,6 +12,8 @@ import { auth } from "@/lib/auth/config";
 import { decideCancellation, refusalMessage } from "@/lib/booking/cancel";
 import type { ClientBookingView } from "@/lib/booking/client-bookings";
 import { loadClientBookings } from "@/lib/booking/client-bookings-session";
+import { loadClientProposals } from "@/lib/booking/slot-proposal-session";
+import type { ClientProposalView } from "@/lib/booking/slot-proposal-store";
 import { bookingCalendarFilename } from "@/lib/booking/ics";
 import { formatDuration, formatEuros } from "@/lib/pricing";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
@@ -64,10 +67,13 @@ function BookingCard({
   booking,
   upcoming,
   now,
+  proposals,
 }: {
   booking: ClientBookingView;
   upcoming: boolean;
   now: Date;
+  /** Créneaux de remplacement proposés sur cette intervention. */
+  proposals: ClientProposalView[];
 }) {
   const start = new Date(booking.startAt);
 
@@ -130,6 +136,10 @@ function BookingCard({
             Ajouter à mon calendrier
           </a>
 
+          {proposals.map((proposal) => (
+            <PropositionCreneau key={proposal.id} proposal={proposal} />
+          ))}
+
           <InterventionActions
             bookingId={booking.id}
             cancellable={decision.allowed}
@@ -156,7 +166,10 @@ export default async function MonEspacePage() {
     redirect("/connexion?callbackUrl=/mon-espace");
   }
 
-  const bookings = await loadClientBookings();
+  const [bookings, proposals] = await Promise.all([
+    loadClientBookings(),
+    loadClientProposals(),
+  ]);
   const upcoming = bookings?.upcoming ?? [];
   const past = bookings?.past ?? [];
   // Une seule lecture de l'horloge pour toute la page : deux cartes rendues à
@@ -195,6 +208,9 @@ export default async function MonEspacePage() {
                 booking={booking}
                 upcoming
                 now={now}
+                proposals={proposals.filter(
+                  (proposal) => proposal.bookingId === booking.id,
+                )}
               />
             ))}
           </ul>
@@ -210,6 +226,7 @@ export default async function MonEspacePage() {
                   booking={booking}
                   upcoming={false}
                   now={now}
+                  proposals={[]}
                 />
               ))}
             </ul>
