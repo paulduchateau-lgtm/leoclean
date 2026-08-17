@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createBooking, responseDeadline } from "@/lib/booking/create";
-import { BusinessError } from "@/lib/booking/errors";
+import { PREMIER_LOT_TAILLE } from "@/lib/assignments/diffusion";
 import { forOrganization, prisma } from "@/lib/db";
 import { travelMatrixFrom } from "@/lib/scheduling/travel";
 import { getCommuneBySlug } from "@/lib/territory";
@@ -188,14 +188,32 @@ describe("création d'une réservation", () => {
       include: { items: true, assignments: true, statusEvents: true },
     });
 
-    expect(booking.status).toBe("ASSIGNED");
+    /*
+     * La demande naît en recherche : la mission est proposée, pas attribuée.
+     * C'est l'acceptation qui la fera passer en CONFIRMED, et elle seule.
+     */
+    expect(booking.status).toBe("PENDING_ASSIGNMENT");
     expect(booking.items).toHaveLength(1);
-    expect(booking.assignments).toHaveLength(1);
     expect(booking.statusEvents).toHaveLength(1);
-    expect(booking.assignments[0]!.status).toBe("PROPOSED");
-    expect(booking.assignments[0]!.cleanerProfileId).toBe(
+
+    // Une proposition par intervenant disponible, dans l'ordre du score et
+    // plafonnée à la taille du lot.
+    expect(booking.assignments).toHaveLength(
+      Math.min(fixture.cleanerProfileIds.length, PREMIER_LOT_TAILLE),
+    );
+    expect(booking.assignments.every((a) => a.status === "PROPOSED")).toBe(
+      true,
+    );
+    expect(booking.assignments.every((a) => a.lot === 1)).toBe(true);
+
+    // Le mieux classé est du lot, mais il n'est pas titulaire pour autant.
+    expect(booking.assignments.map((a) => a.cleanerProfileId)).toContain(
       fixture.cleanerProfileIds[0],
     );
+
+    // L'échéance annoncée est celle du premier lot, et elle est surveillable.
+    expect(booking.diffusionLot).toBe(1);
+    expect(booking.diffusionDeadlineAt).toEqual(created.respondBy);
   });
 
   it("fige les montants du devis affiché", async () => {
@@ -263,11 +281,18 @@ describe("création d'une réservation", () => {
 });
 
 describe("concurrence sur un même créneau", () => {
-  it("n'accorde le créneau qu'à un seul client", async () => {
-    // Le cœur du verrou. Deux réservations parties en même temps sur le même
-    // créneau, avec une seule intervenante : la base doit en accepter une et
-    // une seule, et l'autre doit recevoir une erreur métier lisible — pas une
-    // trace d'exécution.
+  it("enregistre les deux demandes, même avec une seule intervenante", async () => {
+    /*
+     * Le cœur du verrou a changé de place. Deux demandes sur le même créneau
+     * avec une seule intervenante ne s'excluent plus à l'écriture : elles la
+     * sollicitent toutes les deux, et c'est elle qui tranchera en acceptant
+     * l'une — la base refusant la seconde acceptation.
+     *
+     * Ce que ce test défend désormais : personne ne reçoit d'erreur pour une
+     * mission qu'un intervenant pourrait encore prendre. L'ancien modèle
+     * répondait « créneau pris » au second client alors que rien n'était pris,
+     * seulement proposé.
+     */
     const fixture = await seed({ cleaners: 1, clients: 2 });
     const start = paris(13, 10);
 
@@ -276,63 +301,67 @@ describe("concurrence sur un même créneau", () => {
       book(fixture, 1, start),
     ]);
 
-    const fulfilled = results.filter((result) => result.status === "fulfilled");
-    const rejected = results.filter((result) => result.status === "rejected");
+    expect(results.every((result) => result.status === "fulfilled")).toBe(true);
 
-    expect(fulfilled).toHaveLength(1);
-    expect(rejected).toHaveLength(1);
+    const db = forOrganization(fixture.organizationId);
+    const assignments = await db.assignment.findMany();
 
-    /*
-     * Le perdant reçoit l'un ou l'autre des deux refus, et les deux sont
-     * justes : selon que la première transaction a déjà été validée quand la
-     * seconde lit les disponibilités, celle-ci ne voit plus aucune
-     * intervenante libre — « aucun intervenant disponible » — ou la voit
-     * encore et se fait arrêter par la contrainte d'exclusion — « créneau
-     * pris ». Exiger la seconde forme rendait ce test dépendant d'un ordre
-     * d'exécution que rien ne garantit.
-     *
-     * Ce qui doit être vrai dans les deux cas, et qui est vérifié : c'est une
-     * erreur métier, donc un message écrit pour être lu, et non une trace
-     * technique.
-     */
-    expect(rejected[0]!.reason).toBeInstanceOf(BusinessError);
-    expect(rejected[0]!.reason).not.toBeInstanceOf(TypeError);
-
-    // Et la base ne porte qu'une affectation : rien n'a été écrit à moitié.
-    const assignments = await forOrganization(
-      fixture.organizationId,
-    ).assignment.findMany();
-    expect(assignments).toHaveLength(1);
+    // Deux propositions pour la même personne, sur le même créneau : c'est
+    // précisément ce que l'ancienne contrainte interdisait.
+    expect(assignments).toHaveLength(2);
+    expect(assignments.every((a) => a.status === "PROPOSED")).toBe(true);
+    expect(new Set(assignments.map((a) => a.cleanerProfileId)).size).toBe(1);
   });
 
-  it("ne laisse aucune réservation orpheline après un échec", async () => {
-    // Si la transaction ne couvrait pas l'affectation, le perdant laisserait
-    // derrière lui une réservation sans intervenant — un client qui attend
-    // quelqu'un qui ne viendra pas.
+  it("refuse la seconde acceptation, et ne laisse rien à moitié écrit", async () => {
+    /*
+     * L'exclusivité s'exerce ici, et nulle part ailleurs. Une intervenante
+     * tient deux propositions qui se chevauchent : elle ne peut en accepter
+     * qu'une, et le refus de la base doit laisser la seconde intacte plutôt
+     * qu'une réservation à moitié confirmée.
+     */
     const fixture = await seed({ cleaners: 1, clients: 2 });
     const start = paris(13, 10);
 
-    await Promise.allSettled([
-      book(fixture, 0, start),
-      book(fixture, 1, start),
-    ]);
+    await book(fixture, 0, start);
+    await book(fixture, 1, start);
 
     const db = forOrganization(fixture.organizationId);
-    const bookings = await db.booking.findMany({
-      include: { assignments: true, items: true },
+    const [premiere, seconde] = await db.assignment.findMany({
+      orderBy: { createdAt: "asc" },
     });
 
-    expect(bookings).toHaveLength(1);
-    expect(bookings[0]!.assignments).toHaveLength(1);
-    expect(bookings[0]!.items).toHaveLength(1);
+    await db.assignment.update({
+      where: { id: premiere!.id },
+      data: { status: "ACCEPTED" },
+    });
+
+    await expect(
+      db.assignment.update({
+        where: { id: seconde!.id },
+        data: { status: "ACCEPTED" },
+      }),
+    ).rejects.toThrow();
+
+    const apres = await db.assignment.findUniqueOrThrow({
+      where: { id: seconde!.id },
+    });
+    expect(apres.status).toBe("PROPOSED");
   });
 
-  it("sert les deux clients quand deux intervenantes sont disponibles", async () => {
-    // Ce test défend le repli sur le candidat suivant. Les deux réservations
-    // désignent d'abord la même intervenante — la lecture des disponibilités
-    // ne voit pas les transactions en cours — et la perdante doit réessayer
-    // avec la seconde plutôt que d'annoncer un créneau pris alors qu'il ne
-    // l'est pas.
+  it("enregistre deux demandes concurrentes sur le même créneau", async () => {
+    /*
+     * Ce test défendait le repli sur le candidat suivant, qui n'a plus d'objet :
+     * une proposition ne réserve rien, deux demandes simultanées ne se heurtent
+     * donc à aucune écriture. Ce qu'il défend maintenant est plus fort — aucune
+     * des deux n'est refusée — et le déplacement de la garantie se lit dans la
+     * dernière assertion : les deux intervenantes sont sollicitées **par les
+     * deux demandes**, ce que l'ancienne contrainte interdisait.
+     *
+     * La course se tranche à l'acceptation, et c'est
+     * `Assignment_one_accepted_per_booking` plus `Assignment_no_overlap` qui
+     * s'en chargent — vérifiés dans `schema-guarantees`.
+     */
     const fixture = await seed({ cleaners: 2, clients: 2 });
     const start = paris(13, 10);
 
@@ -343,15 +372,21 @@ describe("concurrence sur un même créneau", () => {
 
     expect(results.every((result) => result.status === "fulfilled")).toBe(true);
 
-    const assignments = await forOrganization(
-      fixture.organizationId,
-    ).assignment.findMany();
-    expect(assignments).toHaveLength(2);
-    // Deux intervenantes distinctes : la seconde n'a pas été attribuée deux
-    // fois au même créneau.
-    expect(
-      new Set(assignments.map((entry) => entry.cleanerProfileId)).size,
-    ).toBe(2);
+    const db = forOrganization(fixture.organizationId);
+    const bookings = await db.booking.findMany({
+      include: { assignments: true },
+    });
+
+    expect(bookings).toHaveLength(2);
+    expect(bookings.every((b) => b.status === "PENDING_ASSIGNMENT")).toBe(true);
+
+    // Chaque demande a sollicité les deux intervenantes disponibles : quatre
+    // propositions, aucune n'immobilisant le créneau.
+    for (const booking of bookings) {
+      expect(
+        new Set(booking.assignments.map((a) => a.cleanerProfileId)).size,
+      ).toBe(2);
+    }
   });
 
   it("laisse le créneau suivant libre après une réservation", async () => {

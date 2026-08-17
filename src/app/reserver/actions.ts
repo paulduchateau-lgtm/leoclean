@@ -6,10 +6,12 @@ import { publicAction } from "@/lib/action-result";
 import type { CleanerCardView } from "@/lib/booking/backend";
 import { bookingCalendar } from "@/lib/booking/ics";
 import { createBooking, listAvailableSlots } from "@/lib/booking/create";
-import { SlotTakenError } from "@/lib/booking/errors";
 import { sendMagicLink } from "@/lib/auth/magic-link";
 import { getCurrentUser } from "@/lib/auth/session";
-import { OutsideCoverageError } from "@/lib/booking/errors";
+import {
+  NoCleanerAvailableError,
+  OutsideCoverageError,
+} from "@/lib/booking/errors";
 import {
   BOOKING_HORIZON_DAYS,
   COMMUNE_TRAVEL_MARGIN_MINUTES,
@@ -220,66 +222,6 @@ const confirmSchema = z.object({
   clientNotes: z.string().trim().max(1000).optional(),
 });
 
-/**
- * Fiche de l'intervenant désigné, telle que le client la découvre.
- *
- * On ne publie que le prénom d'affichage et la commune de résidence : c'est
- * ce qui rend vérifiable la promesse de proximité sans livrer l'adresse de
- * quelqu'un. La note n'est renvoyée que s'il existe des avis réels — annoncer
- * « 0 sur 5 » à une intervenante qui vient d'arriver serait faux et injuste.
- *
- * Une lecture qui échoue ne fait pas échouer la réservation : elle est déjà
- * écrite, et le client doit repartir avec son rendez-vous. On retombe alors
- * sur « intervenant confirmé sous 24 heures », qui est vrai dans tous les cas.
- */
-async function cleanerCard(
-  db: ReturnType<typeof forOrganization>,
-  cleanerProfileId: string,
-  now: Date,
-): Promise<CleanerCardView | null> {
-  try {
-    const profile = await db.cleanerProfile.findUnique({
-      where: { id: cleanerProfileId },
-      select: {
-        displayName: true,
-        ratingAverage: true,
-        ratingCount: true,
-        activatedAt: true,
-        createdAt: true,
-        homeAddress: { select: { inseeCode: true, cityName: true } },
-      },
-    });
-    if (!profile) return null;
-
-    const since = profile.activatedAt ?? profile.createdAt;
-    const months = Math.max(
-      0,
-      Math.floor((now.getTime() - since.getTime()) / (30 * 86_400_000)),
-    );
-
-    return {
-      firstName: profile.displayName,
-      // Le nom vient du référentiel quand l'INSEE y correspond : une valeur
-      // saisie à la main dans une adresse n'a pas à s'afficher telle quelle.
-      communeName:
-        (profile.homeAddress
-          ? getCommuneByInsee(profile.homeAddress.inseeCode)?.name
-          : null) ??
-        profile.homeAddress?.cityName ??
-        null,
-      seniorityMonths: months,
-      ratingAverage: profile.ratingCount > 0 ? profile.ratingAverage : null,
-      ratingCount: profile.ratingCount,
-    };
-  } catch (error) {
-    console.error(
-      "Fiche intervenant illisible après une réservation confirmée",
-      error,
-    );
-    return null;
-  }
-}
-
 export const confirmBooking = publicAction(confirmSchema, async (input) => {
   // Une réservation engage un intervenant : en enchaîner cinq en une heure
   // depuis la même source n'est pas un client pressé.
@@ -376,17 +318,32 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
         usedStart = start;
         break;
       } catch (error) {
+        /*
+         * Ce n'est plus « créneau pris » qu'on rattrape mais « personne de
+         * disponible » : une proposition ne réserve rien, il n'y a donc plus de
+         * course à perdre à l'écriture. Le repli garde tout son sens — si
+         * l'heure préférée ne trouve aucun intervenant, on essaie les suivantes
+         * que le client a cochées.
+         */
         const lastCandidate = index === candidates.length - 1;
-        if (error instanceof SlotTakenError && !lastCandidate) continue;
+        if (error instanceof NoCleanerAvailableError && !lastCandidate)
+          continue;
         throw error;
       }
     }
 
     // La boucle sort par `break` ou relance : ce cas n'arrive pas, mais le
     // type ne le sait pas, et une assertion mentirait au prochain lecteur.
-    if (created === null) throw new SlotTakenError();
+    if (created === null) throw new NoCleanerAvailableError();
 
-    const cleaner = await cleanerCard(db, created.cleanerProfileId, now);
+    /*
+     * Aucun intervenant n'est nommé sur l'écran de confirmation, et c'est
+     * désormais structurel : la mission vient d'être proposée à cinq personnes,
+     * aucune n'a encore accepté. Le tunnel retombe sur « nous vous confirmons
+     * votre intervenant sous 24 heures », qui est exactement l'échéance du
+     * premier lot.
+     */
+    const cleaner: CleanerCardView | null = null;
     const addressLabel = `${input.street}, ${input.postalCode} ${input.cityName}`;
 
     /*
@@ -439,7 +396,9 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
         start: created.scheduledStart,
         end: created.scheduledEnd,
         location: addressLabel,
-        cleanerFirstName: cleaner?.firstName ?? null,
+        // Personne n'a encore accepté : le fichier d'agenda ne peut nommer
+        // quiconque, et il annonce donc l'intervention seule.
+        cleanerFirstName: null,
         stampedAt: now,
       }),
     };

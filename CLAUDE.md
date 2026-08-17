@@ -28,7 +28,7 @@ Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 | Sujet                   | Décision                                                                                                                                                                                                                                                                    |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                                                                                                                                    |
-| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                                                                                                                                       |
+| Attribution             | **Diffusion par lots, acceptation explicite.** Le client demande un créneau ; la mission est proposée aux 5 mieux classés, et le premier qui accepte l'emporte. Sans acceptation sous 24 h, elle est élargie au secteur ; la recherche dure une semaine.                    |
 | Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                                                                                                                                               |
 | Promesse de récurrence  | Le tunnel vend un **tarif**, pas un abonnement : `createBooking` n'écrit pas de `Subscription`. On annonce que les passages suivants sont calés avec le client après le premier ménage, ce qui est le fonctionnement réel. À reprendre le jour où les abonnements existent. |
 | Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                                                                                                                                                |
@@ -694,31 +694,63 @@ suivant une mission à la même adresse. Deux tests protègent les deux sens.
 ## Réservation
 
 `src/lib/booking/create.ts` fait trois choses ensemble ou pas du tout : la
-réservation, ses lignes facturables, et l'affectation de l'intervenant. Une
-réservation sans affectation est un client qui attend quelqu'un qui ne viendra
-pas ; une affectation sans réservation est une heure bloquée pour rien.
+demande, ses lignes facturables, et les propositions du lot. Une demande sans
+proposition est un client qui attend un appel que personne n'a reçu ; des
+propositions sans demande sont des sollicitations pour une mission qui n'existe
+pas.
 
-**Le verrou anti-double-réservation n'est pas dans ce code.** Il est en base.
-Vérifier la disponibilité avant d'écrire ne sert qu'à donner un bon message :
-entre la vérification et l'écriture, une autre requête peut passer. Le code sait
-donc qu'il peut échouer, et traduit le refus de la base en `SlotTakenError`.
+**Ce n'est plus une attribution.** Le modèle précédent désignait le mieux classé
+et lui bloquait la place : le client repartait avec un rendez-vous ferme, et
+quelqu'un se voyait assigner une mission qu'il n'avait pas acceptée. La demande
+naît désormais en `PENDING_ASSIGNMENT`, proposée aux cinq mieux classés, et
+**seule une acceptation écrit `CONFIRMED`**.
 
-**Deux codes PostgreSQL signalent ce refus, pas un.** `23P01` est la violation
-de la contrainte d'exclusion ; `40P01` est l'interblocage, qui survient dans
-exactement la même situation — deux transactions écrivent réservation, lignes
-puis affectation, se croisent, et la base en sacrifie une. Ne reconnaître que
-le premier laissait remonter une erreur Prisma brute au client. `nativeErrorCodes`
-cherche le code natif où qu'il soit : Prisma l'a déplacé de `code` à `meta.code`
-puis à `meta.driverAdapterError.cause.code`, le message n'étant plus qu'un
-« Database error. ». Chercher à un seul endroit revient à ne plus rien
-reconnaître.
+**Le lot n'est pas « les cinq plus proches ».** Ce sont les cinq premiers du
+score existant, dont le trajet est déjà la composante dominante mais qui porte
+aussi la continuité. Composer sur la distance seule ferait changer d'intervenant
+un client régulier dès qu'un autre habite cent mètres plus près, alors que « la
+même personne chaque semaine » est la promesse centrale. Les quatre minuteries —
+24 h, 6 jours, une semaine, quinze jours — vivent dans
+`src/lib/assignments/diffusion.ts`, pur et testé à la milliseconde.
 
-**Sur refus, on essaie le candidat suivant.** Sans cela, deux réservations
-simultanées désigneraient toutes deux le mieux classé, la seconde échouerait, et
-le client s'entendrait dire que le créneau est pris alors qu'une autre
-intervenante était libre — la lecture des disponibilités ne voit pas les
-transactions en cours, seule l'écriture les rencontre. C'est un test
-d'intégration à deux réservations concurrentes qui a révélé le manque.
+**Le verrou anti-double-réservation n'est pas dans ce code**, il est en base, et
+il s'exerce désormais à l'acceptation. Deux garanties SQL s'y partagent le
+travail : `Assignment_no_overlap` interdit à _une personne_ deux missions qui se
+chevauchent, `Assignment_one_accepted_per_booking` interdit à _une mission_ deux
+personnes. La seconde existait depuis la phase 1, avant qu'on en ait besoin :
+c'est elle qui départage la course, et son refus se traduit en « cette mission
+vient d'être acceptée par quelqu'un de plus rapide ».
+
+**Une proposition ne réserve plus rien**, ni en base ni dans le moteur. Les deux
+doivent le dire de la même façon, sans quoi l'un propose ce que l'autre refuse :
+`BLOCKING_ASSIGNMENT_STATUSES` ne contient donc plus que `ACCEPTED`. Compter une
+proposition comme du temps occupé retirerait cinq plannings de la circulation
+pour une seule mission, et empêcherait un intervenant de recevoir deux offres
+concurrentes — c'est-à-dire de choisir.
+
+**Conséquence assumée : deux clients peuvent demander le même créneau.** Celui
+dont un intervenant accepte le premier l'obtient, l'autre continue de chercher.
+L'ancien modèle répondait « créneau pris » au second alors que rien n'était
+pris, seulement proposé.
+
+**La boucle « candidat suivant » a disparu avec sa raison d'être.** Elle
+existait parce que deux réservations simultanées désignaient le même intervenant
+et que la seconde échouait ; cinq propositions concurrentes ne se heurtent à
+rien. Le repli du tunnel sur les créneaux alternatifs, lui, reste — il rattrape
+désormais « aucun intervenant disponible » et non « créneau pris ».
+
+**Un refus ne déclenche plus de réattribution.** Quatre autres personnes
+tiennent la même proposition : rejouer le moteur solliciterait quelqu'un de plus
+mal classé avant que les mieux classés aient répondu. Ce qui suit un lot sans
+acceptation est affaire d'échéance, pas de refus.
+
+**Deux codes PostgreSQL signalent un refus de créneau, pas un.** `23P01` est la
+violation de la contrainte d'exclusion ; `40P01` est l'interblocage, qui survient
+dans la même situation. `23505` s'y ajoute pour la course perdue.
+`nativeErrorCodes` cherche le code natif où qu'il soit : Prisma l'a déplacé de
+`code` à `meta.code` puis à `meta.driverAdapterError.cause.code`, le message
+n'étant plus qu'un « Database error. ». Chercher à un seul endroit revient à ne
+plus rien reconnaître.
 
 **Rien de ce que renvoie le navigateur n'est cru sur parole.** Le prix est
 recalculé côté serveur à la confirmation, jamais repris du formulaire, et
@@ -1166,8 +1198,12 @@ parce qu'aucun contrôle applicatif n'y résiste :
   intervenant deux missions qui se chevauchent. Elle porte sur
   `blockStartAt`/`blockEndAt`, c'est-à-dire créneau **plus temps de trajet** :
   deux ménages jointifs à quinze kilomètres l'un de l'autre sont refusés par la
-  base. Les statuts terminaux sont hors du filtre, sinon l'historique gèlerait
-  le planning.
+  base. Elle ne filtre plus que `ACCEPTED` : une proposition ne réserve rien,
+  sans quoi un intervenant ne pourrait pas recevoir deux offres concurrentes.
+- `Assignment_one_accepted_per_booking` est l'autre moitié : un index unique
+  partiel sur `("bookingId") WHERE status = 'ACCEPTED'`, qui interdit à une
+  mission d'avoir deux intervenants. C'est lui qui tranche « le premier qui
+  accepte l'emporte », et il existe depuis la migration initiale.
 
 On emploie `tsrange` et non `tstzrange` dans cette contrainte : Prisma projette
 `DateTime` sur `timestamp without time zone` et y écrit de l'UTC ; une

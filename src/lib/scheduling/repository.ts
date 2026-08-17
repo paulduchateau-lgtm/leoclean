@@ -25,12 +25,23 @@ import { resolveTravelMatrix } from "./travel-cache";
 /**
  * Statuts d'affectation qui bloquent réellement le planning.
  *
- * Une proposition en attente bloque : l'intervenant peut l'accepter d'une
- * seconde à l'autre, et proposer le même créneau à un autre client
- * fabriquerait le conflit qu'on cherche à éviter. Les statuts terminaux, eux,
- * libèrent — sans quoi l'historique gèlerait le planning.
+ * **Seul l'accepté bloque**, et c'est la même règle que celle de la contrainte
+ * d'exclusion — le dépôt exige que le moteur et la base soient d'accord, faute
+ * de quoi l'un propose ce que l'autre refuse.
+ *
+ * Une proposition en attente ne bloque plus. C'était l'inverse tant qu'une
+ * mission était attribuée à une seule personne : elle pouvait accepter d'une
+ * seconde à l'autre, et proposer le même créneau ailleurs fabriquait le conflit.
+ * Depuis la diffusion par lots, la même mission est proposée à cinq personnes
+ * et personne ne détient rien : compter une proposition comme du temps occupé
+ * retirerait de la circulation cinq plannings pour une seule mission, et
+ * empêcherait un intervenant de recevoir deux offres concurrentes — c'est-à-dire
+ * de choisir.
+ *
+ * Les statuts terminaux libèrent, comme avant : sans quoi l'historique gèlerait
+ * le planning.
  */
-const BLOCKING_ASSIGNMENT_STATUSES = ["PROPOSED", "ACCEPTED"] as const;
+const BLOCKING_ASSIGNMENT_STATUSES = ["ACCEPTED"] as const;
 
 /** Statuts d'intervenant autorisés à recevoir une mission. */
 const ASSIGNABLE_CLEANER_STATUSES = ["ACTIVE"] as const;

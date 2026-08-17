@@ -11,11 +11,9 @@ import type { GeoPoint, TravelMatrix } from "@/lib/scheduling/travel";
 import { resolveTravelMatrix } from "@/lib/scheduling/travel-cache";
 import { pointsOf } from "@/lib/scheduling/repository";
 
-import {
-  NoCleanerAvailableError,
-  SlotTakenError,
-  isConcurrentSlotWrite,
-} from "./errors";
+import { composerLots, echeanceDuLot } from "@/lib/assignments/diffusion";
+
+import { NoCleanerAvailableError } from "./errors";
 
 /**
  * Création d'une réservation.
@@ -56,8 +54,17 @@ export interface CreateBookingInput {
 
 export interface CreatedBooking {
   bookingId: string;
-  assignmentId: string;
-  cleanerProfileId: string;
+  /**
+   * Intervenants sollicités, dans l'ordre du score.
+   *
+   * Aucun n'est encore titulaire de la mission : la liste dit à qui l'on a
+   * proposé, pas qui viendra. C'est pour cette raison qu'aucun nom n'est
+   * remonté à l'écran de confirmation — annoncer quelqu'un qui n'a pas accepté
+   * serait une promesse que personne n'a faite.
+   */
+  proposedTo: string[];
+  /** Échéance du premier lot, annoncée au client. */
+  respondBy: Date;
   scheduledStart: Date;
   scheduledEnd: Date;
   grossAmountCents: number;
@@ -65,12 +72,32 @@ export interface CreatedBooking {
 }
 
 /**
- * Réserve un créneau et attribue un intervenant.
+ * Enregistre une demande et la diffuse au premier lot d'intervenants.
  *
- * L'attribution est automatique et se fait ici, pas plus tard : le client doit
- * repartir avec un rendez-vous ferme, pas avec une demande en attente. Le
- * meilleur intervenant selon le score reçoit la mission au statut `PROPOSED` —
- * la place est bloquée immédiatement, la réponse peut attendre.
+ * **Ce n'est plus une attribution.** Le modèle précédent désignait le mieux
+ * classé et lui bloquait la place : le client repartait avec un rendez-vous
+ * ferme, et quelqu'un se voyait assigner une mission qu'il n'avait pas
+ * acceptée. Désormais la mission est proposée aux cinq mieux classés, et le
+ * premier qui accepte l'emporte.
+ *
+ * Trois conséquences, toutes assumées.
+ *
+ * **Le créneau n'est plus tenu.** Aucune proposition ne réserve la place — la
+ * contrainte d'exclusion ne couvre plus que l'accepté. Deux clients peuvent
+ * donc demander le même créneau au même vivier ; celui dont un intervenant
+ * accepte le premier l'obtient, l'autre continue de chercher. La garantie n'a
+ * pas disparu, elle s'applique à l'acceptation.
+ *
+ * **La boucle « candidat suivant » a disparu avec sa raison d'être.** Elle
+ * existait parce que deux réservations simultanées choisissaient le même
+ * intervenant et que la seconde échouait. Cinq propositions concurrentes ne se
+ * heurtent à rien : il n'y a plus d'écriture à réessayer.
+ *
+ * **On refuse toujours une demande que personne ne peut servir.** Si aucun
+ * intervenant n'est disponible sur ce créneau, la demande n'est pas enregistrée
+ * : accepter pour diffuser dans le vide reviendrait à faire attendre une
+ * semaine quelqu'un à qui l'on peut dire tout de suite de choisir une autre
+ * heure.
  */
 export async function createBooking(
   db: TenantClient,
@@ -143,38 +170,33 @@ export async function createBooking(
     throw new NoCleanerAvailableError();
   }
 
-  /**
-   * Les candidats sont essayés dans l'ordre du score, jusqu'à ce que la base
-   * en accepte un.
-   *
-   * Ce parcours n'est pas une précaution : sans lui, deux réservations
-   * simultanées choisiraient toutes deux le mieux classé, la seconde
-   * échouerait, et le client s'entendrait dire que le créneau est pris alors
-   * qu'une autre intervenante était libre. La lecture des disponibilités ne
-   * voit pas les transactions en cours ; seule l'écriture les rencontre.
-   *
-   * La boucle est bornée par le nombre d'intervenants réellement disponibles
-   * sur ce créneau : elle se termine toujours.
+  const { premier } = composerLots(candidates);
+
+  /*
+   * L'échéance du lot, bornée par le début de la mission. Vingt-quatre heures
+   * de réflexion sur une mission qui commence dans trois heures n'auraient
+   * aucun sens : la réponse ne servirait plus à rien quand elle arriverait.
    */
-  for (const chosen of candidates) {
-    try {
-      return await attemptBooking(chosen);
-    } catch (error) {
-      // Contrainte d'exclusion ou interblocage : dans les deux cas, une autre
-      // réservation écrivait ce créneau au même instant. On tente le suivant.
-      if (isConcurrentSlotWrite(error)) {
-        continue;
-      }
-      throw error;
-    }
-  }
+  const respondBy = new Date(
+    Math.min(
+      echeanceDuLot(1, now, now).getTime(),
+      input.scheduledStart.getTime(),
+    ),
+  );
 
-  // Tous les candidats ont été pris de vitesse : là, le créneau est vraiment
-  // parti.
-  throw new SlotTakenError();
+  return diffuser(premier, respondBy);
 
-  async function attemptBooking(
-    chosen: (typeof candidates)[number],
+  /**
+   * La demande, ses lignes facturables et les propositions du lot : ensemble ou
+   * pas du tout.
+   *
+   * La même raison qu'avant, transposée : une demande sans proposition est un
+   * client qui attend un appel que personne n'a reçu, et des propositions sans
+   * demande sont des sollicitations pour une mission qui n'existe pas.
+   */
+  async function diffuser(
+    lot: readonly (typeof candidates)[number][],
+    respondBy: Date,
   ): Promise<CreatedBooking> {
     return db.$transaction(async (tx) => {
       const booking = await tx.booking.create({
@@ -184,9 +206,15 @@ export async function createBooking(
           addressId: address.id,
           serviceId: quote.serviceId,
           subscriptionId: input.subscriptionId ?? null,
-          // La réservation naît attribuée : l'intervenant est déjà désigné et
-          // sa place bloquée. Elle passera en CONFIRMED à son acceptation.
-          status: "ASSIGNED",
+          /*
+           * La demande naît en recherche, et non attribuée : personne n'a
+           * encore accepté. Elle passera en CONFIRMED à la première
+           * acceptation, et c'est le seul chemin qui l'y mène.
+           */
+          status: "PENDING_ASSIGNMENT",
+          diffusionLot: 1,
+          diffusionLotSentAt: now,
+          diffusionDeadlineAt: respondBy,
           source: input.source ?? "LEOCLEAN",
           scheduledStart: input.scheduledStart,
           scheduledEnd,
@@ -220,43 +248,51 @@ export async function createBooking(
         })),
       });
 
-      const assignment = await tx.assignment.create({
-        data: {
+      /*
+       * Chaque proposition porte les tampons de trajet calculés pour *son*
+       * intervenant : le créneau bloqué diffère d'une personne à l'autre, selon
+       * la tournée dans laquelle la mission viendrait s'insérer. Les recopier
+       * depuis le premier candidat ferait accepter à quelqu'un un enchaînement
+       * que la base refuserait ensuite.
+       */
+      await tx.assignment.createMany({
+        data: lot.map((candidat) => ({
           organizationId: organization.id,
           bookingId: booking.id,
-          cleanerProfileId: chosen.cleanerProfileId,
-          status: "PROPOSED",
+          cleanerProfileId: candidat.cleanerProfileId,
+          status: "PROPOSED" as const,
+          lot: 1,
           startAt: input.scheduledStart,
           endAt: scheduledEnd,
           blockStartAt: new Date(
             input.scheduledStart.getTime() -
-              chosen.travelMinutesBefore * 60_000,
+              candidat.travelMinutesBefore * 60_000,
           ),
           blockEndAt: new Date(
-            scheduledEnd.getTime() + chosen.travelMinutesAfter * 60_000,
+            scheduledEnd.getTime() + candidat.travelMinutesAfter * 60_000,
           ),
-          travelMinutesBefore: chosen.travelMinutesBefore,
-          travelMinutesAfter: chosen.travelMinutesAfter,
-          score: chosen.score,
-          scoreBreakdown: chosen.breakdown,
+          travelMinutesBefore: candidat.travelMinutesBefore,
+          travelMinutesAfter: candidat.travelMinutesAfter,
+          score: candidat.score,
+          scoreBreakdown: candidat.breakdown,
           proposedAt: now,
-          respondBy: responseDeadline(input.scheduledStart, now),
-        },
+          respondBy,
+        })),
       });
 
       await tx.bookingStatusEvent.create({
         data: {
           organizationId: organization.id,
           bookingId: booking.id,
-          toStatus: "ASSIGNED",
-          reason: "Attribution automatique à la réservation",
+          toStatus: "PENDING_ASSIGNMENT",
+          reason: `Diffusion à ${lot.length} intervenant${lot.length > 1 ? "s" : ""} (lot 1)`,
         },
       });
 
       return {
         bookingId: booking.id,
-        assignmentId: assignment.id,
-        cleanerProfileId: chosen.cleanerProfileId,
+        proposedTo: lot.map((candidat) => candidat.cleanerProfileId),
+        respondBy,
         scheduledStart: input.scheduledStart,
         scheduledEnd,
         grossAmountCents: quote.grossAmountCents,
