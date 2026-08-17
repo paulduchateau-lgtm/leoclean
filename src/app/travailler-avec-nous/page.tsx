@@ -374,8 +374,12 @@ export default function TravaillerAvecNousPage() {
         {/* Bloc 12 — les deux portes. */}
         <Portes />
 
-        {/* Bloc 13 — les outils. Rien qui ne soit livré au lancement, et le
-            libellé le dit. Aucune capture : l'interface n'existe pas. */}
+        {/* Bloc 13 — les outils. La moitié de la liste existe déjà — missions,
+            semaine déclarée, dossier — et l'autre non : validation
+            d'intervention, factures, messagerie. D'où le libellé « en test »,
+            dérivé du drapeau et non écrit ici. Toujours aucune capture : ce qui
+            est livré n'est pas ce qui est décrit, et une image le laisserait
+            croire. */}
         <section className="border-y border-border-subtle bg-cream-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
             <h2 className="flex flex-wrap items-center gap-3 text-2xl font-black tracking-tight">
