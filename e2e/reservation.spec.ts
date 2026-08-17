@@ -271,7 +271,11 @@ test.describe("réservation", () => {
 
     const url = new URL(page.url());
     expect(url.searchParams.get("commune")).toBe("gradignan");
-    expect(url.searchParams.get("surface")).toBe("40");
+    // L'écran demande une durée et en déduit la surface, et non l'inverse :
+    // deux heures valent 50 m² à 25 m²/h. L'URL porte la surface parce que
+    // c'est elle que le reste de la chaîne — devis, créneaux, réservation —
+    // continue de lire.
+    expect(url.searchParams.get("surface")).toBe("50");
     expect(url.searchParams.get("step")).toBe("rythme");
   });
 
