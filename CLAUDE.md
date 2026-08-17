@@ -1163,6 +1163,25 @@ refusée dans une expression d'index.
 Les tests d'intégration exigent une base dont le nom se termine par `_test` —
 ils tronquent des tables.
 
+**Le déploiement migre avant de construire.** `vercel.json` désigne
+`npm run build:deploiement`, qui joue `prisma migrate deploy` puis la
+construction : Vercel ne migre rien de lui-même, et le code partait donc en
+ligne en attendant des colonnes que la base n'avait pas encore.
+
+**La migration ne passe jamais par le pooler transactionnel**, et c'est la
+raison d'être de `scripts/migrer-avant-deploiement.mjs`. Lancé sur le port 6543
+de Supabase, `prisma migrate` ne renvoie rien, n'échoue pas et ne rend pas la
+main : il attend un verrou que pgbouncer, qui recycle les connexions à chaque
+transaction, ne lui accordera jamais. Dans une construction Vercel, cela
+consomme le délai maximal avant d'abandonner sans rien dire. On migre donc par
+`DIRECT_URL` — pooler en mode session, port 5432 — et le script **refuse
+immédiatement** une URL qui porte les marques du mode transactionnel. Un échec
+nommé en deux secondes vaut mieux qu'un blocage muet de trois quarts d'heure.
+
+Conséquence de configuration : `DIRECT_URL` doit être renseignée chez
+l'hébergeur, pour la production comme pour les prévisualisations. `DATABASE_URL`
+reste en 6543, qui est la bonne connexion pour l'application.
+
 ## Structure
 
 ```
@@ -1323,6 +1342,7 @@ npm run db:init         # installe une base de production, sans données fictive
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
+npm run build:deploiement # migre puis construit — ce que Vercel exécute
 ```
 
 `npm run typecheck` lance `next typegen` au préalable : les types de routes
