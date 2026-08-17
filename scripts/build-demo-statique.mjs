@@ -123,6 +123,19 @@ try {
       `${poses.length} fichiers substitués.`,
   );
 
+  /*
+   * Les types de routes d'une construction précédente survivent dans `.next/`
+   * et décrivent un arbre que celle-ci n'a plus : le validateur engendré par
+   * `next typegen` importe chaque page qu'il a vue, y compris les espaces
+   * connectés que le script vient d'écarter, et la construction échoue au
+   * typage sur quatorze modules introuvables.
+   *
+   * On repart donc d'un cache vide. C'est le seul endroit du script où l'on
+   * détruit quelque chose, et cela ne coûte qu'une reconstruction : `.next/`
+   * est un artefact, jamais une source.
+   */
+  fs.rmSync(path.join(projet, ".next"), { recursive: true, force: true });
+
   execFileSync("npx", ["next", "build"], {
     cwd: projet,
     stdio: "inherit",

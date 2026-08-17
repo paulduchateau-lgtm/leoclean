@@ -34,6 +34,36 @@ jobs:
       - run: npm run test
       - run: npm run format:check
 
+  build:
+    name: Constructions (production et vitrine)
+    runs-on: ubuntu-latest
+    env:
+      # Aucun `SKIP_ENV_VALIDATION` ici, à dessein : c'est le seul job qui
+      # exerce la validation Zod de l'environnement au démarrage. Les valeurs
+      # sont donc réalistes de forme, sans désigner quoi que ce soit de réel.
+      DATABASE_URL: postgresql://personne:personne@127.0.0.1:5999/absente
+      AUTH_SECRET: secret-de-ci-au-moins-trente-deux-caracteres
+      NEXT_PUBLIC_SITE_URL: https://leoclean.fr
+      NEXT_PUBLIC_SAP_DECLARED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      # La base est volontairement injoignable. La construction doit aboutir
+      # quand même : `slugsSocietesPubliques` journalise et rend une liste
+      # vide, `dynamicParams` prenant le relais. Faire dépendre la mise en
+      # ligne des seize pages communes de l'existence de sociétés clientes
+      # serait un couplage que rien ne justifie — ce job en est la preuve.
+      - run: npm run build
+      # La vitrine se construit après, et sur le même arbre : c'est l'ordre le
+      # plus hostile, celui où les types de routes de la construction
+      # précédente traînent encore.
+      - run: npm run build:demo
+
   integration:
     name: Tests d'intégration (PostgreSQL + PostGIS)
     runs-on: ubuntu-latest
