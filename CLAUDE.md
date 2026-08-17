@@ -1267,7 +1267,9 @@ src/
       known-client.ts  profil, adresses et dernier choix d'un client connu
       client-bookings.ts réservations d'un client, pour son espace
       horizon.ts       horizon de réservation et marge de trajet (constantes)
-    assignments/       missions de l'intervenant et réattribution après refus
+    assignments/       diffusion par lots, échéances et classement des candidats
+      diffusion.ts     les quatre minuteries et leur ordre — pur
+      echeances.ts     ce qui arrive quand personne ne fait rien (server-only)
     availability/      semaine type déclarée — pur
     administration/    tableau de bord plateforme, ce qui attend un humain
     societes/          page publique d'une société cliente du SaaS
@@ -1413,12 +1415,30 @@ avant le passage, ni alerte sur une demande de rappel. `sendEmail` existe,
 moins coûteux à combler et le plus visible du dehors : aujourd'hui, un
 intervenant ne sait qu'on l'attend que s'il ouvre son espace.
 
-**Aucun ordonnanceur.** Les variables Inngest sont déclarées, rien ne les lit.
-Cinq travaux planifiés en dépendent, et aucun n'existe : l'expiration d'une
-proposition non répondue — `AssignmentStatus.EXPIRED` n'est écrit par personne,
-si bien qu'une proposition se périme en silence et n'apparaît que dans la liste
-du back-office —, la préautorisation à H-24, le prélèvement à H+24, le
-reversement hebdomadaire, la purge des compteurs de débit.
+**L'ordonnanceur existe, et il est frappé par un travail planifié.**
+`vercel.json` déclare un appel horaire à `/api/taches`, protégée par
+`CRON_SECRET` — Vercel l'envoie en `Authorization: Bearer`. La route refuse si
+le secret manque, direction inverse de celle retenue pour l'indexation et pour
+une raison inverse : un oubli qui désindexe se voit, un oubli qui ouvre un
+déclencheur ne se voit pas. Ouverte, elle permettrait de solliciter tous les
+intervenants d'un secteur autant de fois qu'on le voudrait.
+
+`src/lib/assignments/echeances.ts` exécute ce que `prochaineEtape` décide, et
+rien de plus : la règle reste pure et testable à la milliseconde, l'exécution
+reste vérifiable sans rejouer une semaine. Quatre travaux tournent —
+élargissement au second lot, main rendue au client quand des horaires
+alternatifs existent, arrêt de la recherche au bout d'une semaine, expiration
+des propositions et des contre-propositions — plus la purge des compteurs de
+débit, qui attendait depuis la phase 13. Chaque demande est traitée séparément :
+une erreur sur l'une ne doit pas arrêter les autres.
+
+**Restent deux travaux, tous deux liés au paiement** : la préautorisation à
+H-24 et le prélèvement à H+24, plus le reversement hebdomadaire. Ils viendront
+avec Stripe, sur la même route.
+
+Les variables Inngest restent déclarées et inutilisées. Le travail planifié de
+Vercel suffit à des échéances qui se comptent en heures ; Inngest apportera la
+durabilité et les reprises le jour où de l'argent transitera.
 
 **La vie d'une réservation s'arrête à `CONFIRMED`.** `IN_PROGRESS`, `COMPLETED`
 et `NO_SHOW` sont modélisés et jamais écrits. Sans clôture de mission : pas de

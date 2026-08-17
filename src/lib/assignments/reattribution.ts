@@ -4,7 +4,7 @@ import { responseDeadline } from "@/lib/booking/create";
 import { isConcurrentSlotWrite } from "@/lib/booking/errors";
 import type { TenantClient } from "@/lib/db";
 import { loadCleanerSchedules, pointsOf } from "@/lib/scheduling/repository";
-import { evaluateSlot } from "@/lib/scheduling/slots";
+import { type SlotCandidate, evaluateSlot } from "@/lib/scheduling/slots";
 import type { TravelMatrix } from "@/lib/scheduling/travel";
 import { resolveTravelMatrix } from "@/lib/scheduling/travel-cache";
 
@@ -52,11 +52,32 @@ export interface ReattributionResult {
   travelMinutesAfter: number;
 }
 
-export async function reattribuer(
+/**
+ * Candidats classés pour une mission, sans rien écrire.
+ *
+ * Extrait de `reattribuer` le jour où la diffusion par lots en a eu besoin :
+ * élargir au secteur, c'est proposer à tous ceux qui restent, et c'est
+ * exactement ce classement-là — mêmes plannings, mêmes temps de trajet réels,
+ * même score. Deux chemins qui reconstitueraient chacun leur classement
+ * finiraient par ne plus proposer les mêmes gens.
+ */
+export async function classerCandidats(
   db: TenantClient,
-  organization: { id: string },
-  input: ReattributionInput,
-): Promise<ReattributionResult | null> {
+  input: {
+    bookingId: string;
+    exclureCleanerProfileIds: readonly string[];
+    limiterAuxCleanerProfileIds?: readonly string[];
+    now: Date;
+    travel?: TravelMatrix;
+  },
+): Promise<{
+  booking: {
+    scheduledStart: Date;
+    scheduledEnd: Date;
+    durationMinutes: number;
+  };
+  candidats: SlotCandidate[];
+}> {
   const booking = await db.booking.findUniqueOrThrow({
     where: { id: input.bookingId },
     select: {
@@ -95,7 +116,7 @@ export async function reattribuer(
   );
 
   if (schedules.length === 0) {
-    return null;
+    return { booking, candidats: [] };
   }
 
   const travel =
@@ -123,6 +144,16 @@ export async function reattribuer(
     )
     .filter((candidat) => candidat !== null)
     .sort((a, b) => b.score - a.score);
+
+  return { booking, candidats };
+}
+
+export async function reattribuer(
+  db: TenantClient,
+  organization: { id: string },
+  input: ReattributionInput,
+): Promise<ReattributionResult | null> {
+  const { booking, candidats } = await classerCandidats(db, input);
 
   /*
    * Même parcours qu'à la création : on descend le classement jusqu'à ce que

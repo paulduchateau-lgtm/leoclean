@@ -68,6 +68,16 @@ const serverSchema = z.object({
   /** Instance OSRM auto-hébergée, ex. https://osrm.leoclean.fr */
   OSRM_BASE_URL: z.url().optional(),
 
+  /**
+   * Secret des travaux planifiés.
+   *
+   * Vercel l'envoie en `Authorization: Bearer` sur ses appels programmés.
+   * Absente, la route d'ordonnancement refuse de s'exécuter : un déclencheur
+   * ouvert permettrait de solliciter tous les intervenants d'un secteur à
+   * volonté.
+   */
+  CRON_SECRET: z.string().min(16).optional(),
+
   // --- Jobs asynchrones (phase 8) ----------------------------------------
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).optional(),
