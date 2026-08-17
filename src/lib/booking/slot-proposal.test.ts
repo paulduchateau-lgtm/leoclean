@@ -104,15 +104,23 @@ describe("durée et échéance", () => {
   });
 
   it("laisse une fenêtre de réponse, jamais au-delà du créneau", () => {
-    const large = respondByFor(PROPOSED, NOW);
-    expect(large.getTime()).toBe(
+    /*
+     * La fenêtre vaut désormais deux semaines : seul un créneau situé au-delà
+     * la laisse s'appliquer pleinement. C'est voulu — le client doit pouvoir
+     * demander qu'on continue à chercher son heure exacte, puis revenir
+     * accepter l'alternative des jours plus tard.
+     */
+    const lointain = new Date(NOW.getTime() + 30 * 24 * 3_600_000);
+    expect(respondByFor(lointain, NOW).getTime()).toBe(
       NOW.getTime() + PROPOSAL_RESPONSE_WINDOW_HOURS * 3_600_000,
     );
 
     // Créneau plus proche que la fenêtre : répondre après le début n'aurait
-    // aucun sens, l'échéance se rabat sur le créneau lui-même.
-    const proche = new Date(NOW.getTime() + 13 * 3_600_000);
-    expect(respondByFor(proche, NOW).getTime()).toBe(proche.getTime());
+    // aucun sens, l'échéance se rabat sur le créneau lui-même. C'est le cas
+    // courant, la plupart des créneaux proposés tombant sous les deux semaines.
+    for (const proche of [new Date(NOW.getTime() + 13 * 3_600_000), PROPOSED]) {
+      expect(respondByFor(proche, NOW).getTime()).toBe(proche.getTime());
+    }
   });
 });
 
