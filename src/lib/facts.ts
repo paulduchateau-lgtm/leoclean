@@ -4,6 +4,7 @@ import {
   LOWEST_HOURLY_RATE_CENTS,
   MINIMUM_BILLABLE_MINUTES,
 } from "./pricing/public-grid";
+import { MAX_REFERRAL_DEPTH, REFERRAL_PROGRAMS } from "./referral/rules";
 import { SITE } from "./site";
 import { COMMUNES, TERRITORY_POPULATION } from "./territory";
 
@@ -94,4 +95,201 @@ export const FACTS = {
    * agrégée sans avis est un motif de sanction manuelle.
    */
   hasReviews: false,
+} as const;
+
+// ===========================================================================
+// Côté offre — ce qu'on annonce aux intervenants
+// ===========================================================================
+
+/**
+ * Conditions faites aux intervenants.
+ *
+ * Les champs à `null` ne sont pas des oublis : ce sont des décisions que le
+ * porteur du projet n'a pas encore prises. Ils suivent la convention de
+ * `site.ts` — une valeur absente est masquée, jamais remplacée par un espace
+ * réservé, et `PENDING_INTERVENANT_FIELDS` empêche la page de partir tant
+ * qu'il en reste.
+ *
+ * Le montant net est le seul chiffre de la page qu'un intervenant vérifiera
+ * sur son relevé bancaire. Il n'est pas écrit tant qu'il n'est pas arbitré,
+ * parce qu'un chiffre provisoire affiché une semaine devient un chiffre qu'on
+ * nous oppose un an plus tard.
+ */
+export const INTERVENANTS = {
+  /**
+   * Rémunération nette horaire, en centimes.
+   *
+   * 18 € pour 29 € payés par le client en formule régulière, soit une marge de
+   * coordination de 38 % — c'est l'exemple des CGU, et le dépôt en portait
+   * déjà la décision sans qu'aucune constante ne la tienne. Ce montant est le
+   * seul chiffre de la page qu'un intervenant vérifiera sur son relevé
+   * bancaire : le bloc rémunération en déduit les deux autres lignes plutôt
+   * que de les écrire, de sorte qu'aucune des trois ne peut contredire les
+   * autres.
+   */
+  netHourlyRateCents: 1800 as number | null,
+
+  /**
+   * Délai de paiement, tel qu'il se dit.
+   *
+   * Cinq jours ouvrés après l'intervention. C'est un délai, pas une date fixe
+   * mensuelle : la copy dit donc « sous 5 jours ouvrés » et jamais « à date
+   * fixe », qui décrirait un autre engagement.
+   */
+  paymentTerms: "sous 5 jours ouvrés" as string | null,
+
+  /**
+   * Ce que couvre le mot « garanti ».
+   *
+   * Le mot n'engage à rien tant qu'on n'a pas dit **contre quoi** il garantit.
+   * Ces trois cas sont ceux qu'un intervenant ayant déjà travaillé pour une
+   * plateforme lira en premier, et le seul usage honnête du mot suppose que
+   * les trois aient une réponse. Tant que l'un manque, `netRateLabel()` écrit
+   * « net, versé à date fixe » — qui est déjà un argument, et qui est vrai.
+   */
+  guarantee: {
+    /** Le client règle en retard. */
+    latePayment: null as string | null,
+    /** Le client ne règle pas du tout. L'impayé est-il porté par Léo Clean ? */
+    unpaidClient: null as string | null,
+    /** Le client annule tardivement : quelle part du barème revient à l'intervenant ? */
+    lateCancellation: null as string | null,
+  },
+
+  /** Frais d'inscription, en centimes. Zéro, et ce n'est pas provisoire. */
+  signupFeeCents: 0,
+
+  /** Aucune exclusivité n'est demandée. Voir les points juridiques du dépôt. */
+  requiresExclusivity: false,
+
+  /** Rayon de travail, en minutes de route. Le même chiffre que côté client. */
+  maxDriveMinutes: MAX_DRIVE_MINUTES,
+
+  /**
+   * Pièces exigées avant la première intervention.
+   *
+   * Exactement la liste promise aux clients sous « professionnels vérifiés » :
+   * les deux faces du site énoncent la même chose, et n'importe qui peut le
+   * vérifier en ouvrant les deux pages.
+   */
+  requirements: [
+    "SIRET actif",
+    "Attestation de responsabilité civile professionnelle à jour",
+    "Pièce d'identité",
+    "RIB",
+    "Expérience du ménage à domicile",
+    "Résider ou travailler dans l'une des seize communes",
+  ],
+} as const;
+
+/**
+ * Ce qui manque avant que `/travailler-avec-nous` puisse être publiée.
+ *
+ * Même mécanique que `PENDING_IDENTITY_FIELDS` : la liste est dérivée, et
+ * c'est elle — non un drapeau posé à côté — qui décide si la page entre dans
+ * le sitemap et si les moteurs ont le droit de l'indexer. Une page d'offre
+ * dont le premier chiffre est absent ne doit pas se classer : elle décevrait
+ * exactement les gens qu'elle cherche à convaincre.
+ */
+export const PENDING_INTERVENANT_FIELDS: readonly string[] = [
+  ...(INTERVENANTS.netHourlyRateCents === null ? ["rémunération nette"] : []),
+  ...(INTERVENANTS.paymentTerms === null ? ["délai de paiement"] : []),
+  ...(INTERVENANTS.guarantee.latePayment === null
+    ? ["garantie en cas de retard de paiement"]
+    : []),
+  ...(INTERVENANTS.guarantee.unpaidClient === null
+    ? ["garantie en cas d'impayé"]
+    : []),
+  ...(INTERVENANTS.guarantee.lateCancellation === null
+    ? ["part de l'intervenant sur une annulation tardive"]
+    : []),
+];
+
+/** La page d'offre est-elle complète, donc publiable et indexable ? */
+export const INTERVENANT_PAGE_READY: boolean =
+  PENDING_INTERVENANT_FIELDS.length === 0;
+
+/**
+ * Peut-on écrire « garanti » ?
+ *
+ * Seulement si les trois situations ont une réponse écrite. Le mot est le seul
+ * des quatre chiffres du bandeau qui dise quelque chose qu'une plateforme
+ * nationale ne dit pas : l'employer à vide le viderait aussi pour le jour où
+ * il sera mérité.
+ */
+export function canSayGuaranteed(): boolean {
+  const { latePayment, unpaidClient, lateCancellation } =
+    INTERVENANTS.guarantee;
+  return (
+    latePayment !== null && unpaidClient !== null && lateCancellation !== null
+  );
+}
+
+/**
+ * Qualificatif court du montant net, pour un bandeau.
+ *
+ * « garanti » ne s'écrit que si les trois situations ont une réponse ; sinon
+ * le montant est simplement net, ce qui est vrai et déjà distinctif.
+ */
+export function netRateLabel(): string {
+  return canSayGuaranteed() ? "net garanti" : "net";
+}
+
+/**
+ * Le même qualificatif, en prose.
+ *
+ * Tant que « garanti » n'est pas mérité, on dit ce qu'on tient réellement —
+ * le délai de versement — plutôt que rien. Il est lu dans `paymentTerms` et
+ * non recopié : écrire « à date fixe » quand l'engagement est un délai de cinq
+ * jours ouvrés décrirait un autre engagement que celui qu'on prend.
+ */
+export function netRatePhrase(): string {
+  if (canSayGuaranteed()) return "net garanti";
+  return INTERVENANTS.paymentTerms === null
+    ? "net, versé à date fixe"
+    : `net, versé ${INTERVENANTS.paymentTerms}`;
+}
+
+/**
+ * Programme de cooptation entre intervenants.
+ *
+ * **Rien n'est décidé ici.** Tout est lu dans `referral/rules.ts`, qui est le
+ * module opérationnel : c'est lui qui calcule les commissions réellement
+ * versées, et ses règles sont verrouillées par des tests qui existaient avant
+ * cette page. Une page d'offre qui annoncerait un taux ou une durée différents
+ * de ceux que la machine applique serait une promesse non tenue, découverte au
+ * premier versement.
+ *
+ * Le plafond mensuel en fait partie. Il n'était pas prévu au brief de la page,
+ * mais il existe dans le calcul : annoncer « 5 % de votre filleul » sans dire
+ * qu'ils sont bornés à 150 € par mois reviendrait à cacher la seule limite du
+ * dispositif.
+ */
+export const PARRAINAGE = {
+  /** Part du chiffre d'affaires du filleul, en points de base. */
+  rateBp: REFERRAL_PROGRAMS.CLEANER.recurringRateBp,
+
+  /** Missions que le filleul doit avoir réalisées avant le premier versement. */
+  qualifyingBookings: REFERRAL_PROGRAMS.CLEANER.qualifyingCompletedBookings,
+
+  /** Durée de la commission, en mois, à compter du déclenchement. */
+  months: REFERRAL_PROGRAMS.CLEANER.recurringMonths,
+
+  /** Plafond mensuel, tous filleuls confondus, en centimes. */
+  monthlyCapCents: REFERRAL_PROGRAMS.CLEANER.monthlyCapCents,
+
+  /** Délai au-delà duquel un parrainage sans suite expire, en jours. */
+  expiryDays: REFERRAL_PROGRAMS.CLEANER.expiryDays,
+
+  /**
+   * Profondeur du réseau. Vaut 1, et ce n'est pas un réglage.
+   *
+   * Toucher sur les filleuls de ses filleuls ferait dépendre une partie du
+   * gain du recrutement opéré par autrui, ce qui est la définition de la vente
+   * à la boule de neige à l'article L.121-15 du code de la consommation.
+   */
+  depth: MAX_REFERRAL_DEPTH,
+
+  /** Versement en espèces : c'est un revenu, il entre dans le CA du parrain. */
+  rewardKind: REFERRAL_PROGRAMS.CLEANER.rewardKind,
 } as const;

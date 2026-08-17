@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 
 import { publishedCommunes } from "@/lib/communes-content";
+import { INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { SITE } from "@/lib/site";
 import {
   COMMUNES,
@@ -99,6 +100,17 @@ export function SiteFooter() {
                 Être rappelé
               </Link>
             </li>
+            {/* La seconde porte du site, côté offre. Elle n'est annoncée
+                qu'une fois ses conditions arbitrées : amener un intervenant
+                sur une page qui ne sait pas encore dire ce qu'elle paie
+                coûterait la candidature et la confiance. */}
+            {INTERVENANT_PAGE_READY && (
+              <li>
+                <Link href="/travailler-avec-nous" className="hover:text-brand">
+                  Devenir intervenant
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
 

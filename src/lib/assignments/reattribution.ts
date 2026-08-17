@@ -31,6 +31,15 @@ export interface ReattributionInput {
   bookingId: string;
   /** Profils à ne pas reproposer : ceux qui ont déjà répondu non. */
   exclureCleanerProfileIds: readonly string[];
+  /**
+   * Restreint la recherche à ces profils, quand l'intervenant est déjà connu.
+   *
+   * C'est le cas d'une contre-proposition validée par le client : la question
+   * n'est plus « qui ? » mais « celui-là est-il encore libre ? ». On réutilise
+   * malgré tout tout le chemin — temps de trajet réels, tampons, et surtout la
+   * contrainte d'exclusion à l'écriture, seule autorité sur les conflits.
+   */
+  limiterAuxCleanerProfileIds?: readonly string[];
   now: Date;
   /** Injectable pour les tests, comme dans le reste du moteur. */
   travel?: TravelMatrix;
@@ -80,7 +89,9 @@ export async function reattribuer(
     })
   ).filter(
     (schedule) =>
-      !input.exclureCleanerProfileIds.includes(schedule.cleanerProfileId),
+      !input.exclureCleanerProfileIds.includes(schedule.cleanerProfileId) &&
+      (input.limiterAuxCleanerProfileIds === undefined ||
+        input.limiterAuxCleanerProfileIds.includes(schedule.cleanerProfileId)),
   );
 
   if (schedules.length === 0) {

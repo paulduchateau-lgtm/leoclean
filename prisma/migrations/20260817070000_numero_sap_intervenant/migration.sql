@@ -1,0 +1,13 @@
+-- ---------------------------------------------------------------------------
+-- Numéro de déclaration Services à la personne de l'intervenant.
+--
+-- La facturation en deux lignes suppose deux organismes déclarés : celui de
+-- Léo Clean pour sa coordination, celui de l'intervenant pour le ménage. Sans
+-- ce numéro, la part de l'intervenant n'ouvre aucun crédit d'impôt au client,
+-- et la promesse faite en page tarifs ne tient qu'à moitié.
+--
+-- Colonne nullable, et elle doit le rester : les intervenants déjà en base
+-- n'en ont pas, et la déclaration met des semaines à être instruite. C'est
+-- l'activation qui l'exige, pas la table.
+-- ---------------------------------------------------------------------------
+ALTER TABLE "CleanerProfile" ADD COLUMN "sapDeclarationNumber" TEXT;

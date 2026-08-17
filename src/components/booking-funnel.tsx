@@ -40,12 +40,22 @@ import type {
 } from "@/lib/booking/backend";
 import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
 import { bookingCalendarFilename } from "@/lib/booking/ics";
+import { canShowTaxCredit } from "@/lib/fiscal";
 import { formatFrenchPhone } from "@/lib/phone";
 import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import {
+  MAX_DURATION_MINUTES,
+  SLOT_GRANULARITY_MINUTES,
+  estimateDuration,
+  suggestedSurfaceFor,
+  surfaceForDuration,
+  wholeHourChoices,
+} from "@/lib/pricing/duration";
+import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
+  STANDARD_SQM_PER_HOUR,
 } from "@/lib/pricing/public-grid";
 import { SITE } from "@/lib/site";
 
@@ -98,11 +108,11 @@ const FREQUENCIES: {
     label: "Tous les quinze jours",
     hint: "La formule la plus demandée",
   },
-  {
-    value: "MONTHLY",
-    label: "Une fois par mois",
-    hint: "Entretien de fond, tarif régulier",
-  },
+  /* « Une fois par mois » a été retiré du tunnel : à ce rythme, l'entretien
+     courant n'en est plus un, la durée nécessaire dérive vers le grand ménage
+     et la promesse d'intervenant attitré ne tient plus. La valeur reste dans
+     l'énumération et en base — des réservations existantes la portent — mais
+     elle ne se vend plus ici. */
   {
     value: "ONE_OFF",
     label: "Une seule fois",
@@ -111,23 +121,59 @@ const FREQUENCIES: {
 ];
 
 /**
+ * Nombre maximal de créneaux de repli.
+ *
+ * Quatre suffisent à couvrir le risque réel — un créneau pris entre
+ * l'affichage et la confirmation — et au-delà, cocher des heures devient une
+ * tâche à part entière au milieu d'un tunnel qu'on cherche à raccourcir.
+ */
+const MAX_ALTERNATE_SLOTS = 4;
+
+/** Rythme par défaut, celui que le plus grand nombre retient. */
+const DEFAULT_FREQUENCY: Frequency = "BIWEEKLY";
+
+/**
+ * Ramène un rythme à ceux que le tunnel propose encore.
+ *
+ * « Une fois par mois » a été retiré, mais il subsiste dans deux endroits que
+ * nous ne contrôlons pas : le dernier choix d'un client qui l'avait retenu, et
+ * un parcours interrompu enregistré dans le navigateur. Restaurer une valeur
+ * qui n'a plus de carte laisserait un écran sans sélection et une barre de
+ * prix vide, sans que rien n'explique pourquoi.
+ */
+function offeredFrequency(candidate: Frequency | undefined): Frequency {
+  return candidate !== undefined &&
+    FREQUENCIES.some((entry) => entry.value === candidate)
+    ? candidate
+    : DEFAULT_FREQUENCY;
+}
+
+/**
  * Types de logement proposés au choix.
  *
  * Personne ne connaît sa surface au mètre près, et la demander au clavier
  * numérique obligeait à effacer une valeur par défaut avant d'en saisir une
- * autre. Ces quatre repères sont ceux de la page tarifs, que les gens
- * reconnaissent. La surface exacte reste accessible, repliée.
+ * autre.
+ *
+ * **L'écran a été retourné.** On demandait une taille de logement pour en
+ * déduire une durée ; on demande désormais une durée et on indique le logement
+ * qu'elle couvre habituellement. Personne ne connaît sa surface au mètre près,
+ * alors que tout le monde sait dire « deux heures, ça devrait suffire » — et
+ * c'est la durée, non la surface, qui détermine le prix, la place occupée dans
+ * la tournée et donc la faisabilité du créneau. Demander directement la
+ * grandeur qui décide de tout supprime une conversion que le client faisait à
+ * l'aveugle.
+ *
+ * Le reste de la chaîne continue de parler en surface : `surfaceForDuration`
+ * fait le pont, et un test vérifie que l'aller-retour retombe exactement sur
+ * la durée choisie.
  */
-const HOUSING_PRESETS: {
-  label: string;
-  hint: string;
-  surfaceSqm: number;
-}[] = [
-  { label: "Studio ou T2", hint: "Environ 40 m²", surfaceSqm: 40 },
-  { label: "T3 ou petite maison", hint: "Environ 70 m²", surfaceSqm: 70 },
-  { label: "Maison familiale", hint: "Environ 100 m²", surfaceSqm: 100 },
-  { label: "Grande maison", hint: "Environ 140 m²", surfaceSqm: 140 },
-];
+const DURATION_SERVICE = {
+  sqmPerHour: STANDARD_SQM_PER_HOUR,
+  minDurationMinutes: MINIMUM_BILLABLE_MINUTES,
+};
+
+const WHOLE_HOUR_CHOICES = wholeHourChoices(DURATION_SERVICE);
 
 /**
  * Les six écrans, dans l'ordre.
@@ -164,7 +210,7 @@ type Step = (typeof STEPS)[number];
 /** Titre lu par la personne, et repère de progression. */
 const STEP_TITLES: Record<Step, string> = {
   commune: "Où habitez-vous ?",
-  logement: "Quelle est la taille de votre logement ?",
+  logement: "De combien de temps avez-vous besoin ?",
   rythme: "À quel rythme souhaitez-vous nous voir ?",
   creneau: "Quand voulez-vous que nous venions ?",
   coordonnees: "Comment vous joindre ?",
@@ -238,13 +284,22 @@ interface ContactInput {
   clientNotes: string;
 }
 
-/** Type de logement correspondant à une surface, s'il y en a un. */
+/**
+ * Libellé de durée correspondant à une surface reprise d'ailleurs.
+ *
+ * Une surface peut venir de l'URL ou du dernier choix d'un client connu : on
+ * lui redonne le libellé de la durée qu'elle produit, pour que le récapitulatif
+ * parle la même langue que l'écran de choix.
+ */
 function presetLabelFor(surfaceSqm: number | undefined): string | null {
   if (surfaceSqm === undefined) return null;
-  return (
-    HOUSING_PRESETS.find((preset) => preset.surfaceSqm === surfaceSqm)?.label ??
-    null
-  );
+  const { durationMinutes } = estimateDuration({
+    surfaceSqm,
+    service: DURATION_SERVICE,
+  });
+  return WHOLE_HOUR_CHOICES.includes(durationMinutes)
+    ? formatDuration(durationMinutes)
+    : null;
 }
 
 const EMPTY_CONTACT: ContactInput = {
@@ -456,7 +511,7 @@ export function BookingFunnel({
     presetLabelFor(defaultSurfaceSqm ?? knownClient?.lastChoice?.surfaceSqm),
   );
   const [frequency, setFrequency] = useState<Frequency>(
-    knownClient?.lastChoice?.frequency ?? "BIWEEKLY",
+    offeredFrequency(knownClient?.lastChoice?.frequency),
   );
   const [contact, setContact] = useState<ContactInput>(
     knownClient
@@ -489,6 +544,7 @@ export function BookingFunnel({
   const attemptedSlotsKey = useRef<string | null>(null);
 
   const [chosenSlot, setChosenSlot] = useState<string | null>(null);
+  const [alternateSlots, setAlternateSlots] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<{
     message: string;
@@ -916,7 +972,20 @@ export function BookingFunnel({
 
   function chooseSlot(start: string) {
     setChosenSlot(start);
-    advance("creneau");
+    // Un créneau ne peut pas être à la fois le préféré et son propre repli :
+    // le serveur écarterait le doublon, mais l'écran l'aurait montré coché
+    // deux fois.
+    setAlternateSlots((current) => current.filter((entry) => entry !== start));
+  }
+
+  function toggleAlternateSlot(start: string) {
+    setAlternateSlots((current) =>
+      current.includes(start)
+        ? current.filter((entry) => entry !== start)
+        : current.length >= MAX_ALTERNATE_SLOTS
+          ? current
+          : [...current, start],
+    );
   }
 
   function submit() {
@@ -942,6 +1011,7 @@ export function BookingFunnel({
         frequency,
         optionSlugs: [],
         startAt: chosenSlot,
+        alternateStarts: alternateSlots,
       });
       setSubmitting(false);
 
@@ -1008,8 +1078,12 @@ export function BookingFunnel({
               if (saved) setCommune(saved);
               setSurfaceSqm(resumable.surfaceSqm);
               setHousingLabel(resumable.housingLabel);
-              setFrequency(resumable.frequency);
+              setFrequency(offeredFrequency(resumable.frequency));
               setChosenSlot(resumable.chosenSlot);
+              // Les replis ne sont pas enregistrés : ils décrivent un état du
+              // planning qui a une semaine, et le proposer à nouveau ferait
+              // réserver sur des heures qui n'existent plus.
+              setAlternateSlots([]);
               if (resumable.surfaceSqm !== null) {
                 void loadQuotes(resumable.surfaceSqm);
               }
@@ -1059,7 +1133,10 @@ export function BookingFunnel({
             fetchedAt={slotsFetchedAt}
             pending={slotsStatus !== "ready"}
             chosen={chosenSlot}
+            alternates={alternateSlots}
             onChoose={chooseSlot}
+            onToggleAlternate={toggleAlternateSlot}
+            onContinue={() => advance("creneau")}
           />
         ) : null}
 
@@ -1101,8 +1178,6 @@ export function BookingFunnel({
             address={address}
             quote={quote}
             frequency={frequency}
-            housingLabel={housingLabel}
-            surfaceSqm={surfaceSqm}
             startAt={chosenSlot}
             contact={contact}
             onContactChange={setContact}
@@ -1871,62 +1946,87 @@ function HousingStep({
   surfaceSqm: number | null;
   onChoose: (surface: number, label: string | null) => void;
 }) {
-  const matchesPreset = HOUSING_PRESETS.some(
-    (preset) => preset.surfaceSqm === surfaceSqm,
-  );
-  const [custom, setCustom] = useState(surfaceSqm !== null && !matchesPreset);
-  const [value, setValue] = useState(String(surfaceSqm ?? 80));
+  const chosenMinutes =
+    surfaceSqm === null
+      ? null
+      : estimateDuration({ surfaceSqm, service: DURATION_SERVICE })
+          .durationMinutes;
 
-  const parsed = Number(value);
-  const valid = Number.isInteger(parsed) && parsed >= 15 && parsed <= 400;
+  const matchesWholeHour =
+    chosenMinutes !== null && WHOLE_HOUR_CHOICES.includes(chosenMinutes);
+
+  const [custom, setCustom] = useState(
+    chosenMinutes !== null && !matchesWholeHour,
+  );
+  const [value, setValue] = useState(String(chosenMinutes ?? 180));
+
+  const parsedMinutes = Number(value);
+  const validCustom =
+    Number.isInteger(parsedMinutes) &&
+    parsedMinutes % SLOT_GRANULARITY_MINUTES === 0 &&
+    parsedMinutes >= MINIMUM_BILLABLE_MINUTES &&
+    parsedMinutes <= MAX_DURATION_MINUTES;
+
+  /** Une durée choisie devient la surface qui la produit, à l'unité près. */
+  function chooseDuration(minutes: number, fromPreset: boolean) {
+    onChoose(
+      surfaceForDuration(minutes, DURATION_SERVICE),
+      fromPreset ? formatDuration(minutes) : null,
+    );
+  }
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Nous en déduisons la durée sur place. Elle reste ajustable ensuite —
-        nous comptons 25 m² traités par heure.
+        Personne ne connaît sa surface au mètre près, mais tout le monde sait
+        dire combien de temps il faut. Choisissez une durée : nous indiquons le
+        logement qu&apos;elle couvre habituellement. Elle reste ajustable avec
+        l&apos;intervenant.
       </p>
 
-      <div className="grid gap-3">
-        {HOUSING_PRESETS.map((preset) => (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {WHOLE_HOUR_CHOICES.map((minutes) => (
           <ChoiceCard
-            key={preset.label}
-            selected={surfaceSqm === preset.surfaceSqm}
-            onClick={() => onChoose(preset.surfaceSqm, preset.label)}
-            title={preset.label}
-            hint={preset.hint}
+            key={minutes}
+            selected={chosenMinutes === minutes}
+            onClick={() => chooseDuration(minutes, true)}
+            title={formatDuration(minutes)}
+            hint={`Idéal pour ${suggestedSurfaceFor(minutes, DURATION_SERVICE)} m²`}
           />
         ))}
       </div>
 
-      {/* Repliée par défaut : la surface au mètre près est une précision
-          d'appoint, pas le chemin principal. */}
+      {/* Repliée par défaut : la demi-heure d'appoint est une précision, pas
+          le chemin principal. */}
       {custom ? (
         <div className="rounded-xl border border-border bg-card p-4">
-          <Label htmlFor="surface">Surface exacte</Label>
+          <Label htmlFor="duration">Autre durée</Label>
           <div className="mt-3 flex items-center gap-3">
             <Input
-              id="surface"
+              id="duration"
               type="number"
               inputMode="numeric"
-              min={15}
-              max={400}
-              step={5}
+              min={MINIMUM_BILLABLE_MINUTES}
+              max={MAX_DURATION_MINUTES}
+              step={SLOT_GRANULARITY_MINUTES}
               value={value}
               onChange={(event) => setValue(event.target.value)}
               className="min-h-12 w-28"
             />
-            <span className="text-muted-foreground">m²</span>
+            <span className="text-muted-foreground">minutes</span>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            La surface habitable, hors garage et cave.
+            Par tranches de {SLOT_GRANULARITY_MINUTES} minutes, de{" "}
+            {formatDuration(MINIMUM_BILLABLE_MINUTES)} à{" "}
+            {formatDuration(MAX_DURATION_MINUTES)}. Au-delà, il vaut mieux deux
+            passages qu&apos;une journée intenable : appelez-nous.
           </p>
           <Button
             type="button"
             size="lg"
             className="mt-4 min-h-12 w-full"
-            disabled={!valid}
-            onClick={() => onChoose(parsed, null)}
+            disabled={!validCustom}
+            onClick={() => chooseDuration(parsedMinutes, false)}
           >
             Choisir mon rythme
           </Button>
@@ -1938,7 +2038,7 @@ function HousingStep({
           className="flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline"
         >
           <ChevronDownIcon className="size-4" aria-hidden />
-          Je connais ma surface exacte
+          Il me faut une autre durée
         </button>
       )}
 
@@ -1992,6 +2092,9 @@ function FrequencyStep({
                     <span className="block text-lg font-extrabold tabular-nums">
                       {formatEuros(quote.grossAmountCents)}
                     </span>
+                    {/* Un montant sans unité se lit comme un prix mensuel :
+                        sur un écran qui propose « chaque semaine » et « tous
+                        les quinze jours », l'ambiguïté n'est pas théorique. */}
                     <span
                       className={`block text-xs ${
                         selected === option.value
@@ -1999,8 +2102,23 @@ function FrequencyStep({
                           : "text-muted-foreground"
                       }`}
                     >
-                      {formatHourlyRate(quote.hourlyRateCents)}
+                      par session · {formatHourlyRate(quote.hourlyRateCents)}
                     </span>
+                    {/* La mention fiscale est tranchée dans `fiscal.ts` et
+                        nulle part ailleurs : tant que la déclaration SAP n'est
+                        pas obtenue, rien de ce qui touche au crédit d'impôt ne
+                        s'affiche, pas même « avant ». */}
+                    {canShowTaxCredit() ? (
+                      <span
+                        className={`block text-xs ${
+                          selected === option.value
+                            ? "text-mint-800"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        avant crédit d&apos;impôt
+                      </span>
+                    ) : null}
                   </span>
                 ) : pending ? (
                   <span
@@ -2069,13 +2187,19 @@ function SlotStep({
   fetchedAt,
   pending,
   chosen,
+  alternates,
   onChoose,
+  onToggleAlternate,
+  onContinue,
 }: {
   slots: SlotView[];
   fetchedAt: number | null;
   pending: boolean;
   chosen: string | null;
+  alternates: string[];
   onChoose: (start: string) => void;
+  onToggleAlternate: (start: string) => void;
+  onContinue: () => void;
 }) {
   const days = useMemo(
     () => (fetchedAt === null ? [] : buildCalendar(fetchedAt, slots)),
@@ -2185,30 +2309,101 @@ function SlotStep({
             </p>
           ) : (
             <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {active.slots.map((slot) => (
-                <li key={slot.start}>
+              {active.slots.map((slot) => {
+                const preferred = chosen === slot.start;
+                const alternate = alternates.includes(slot.start);
+                const full = alternates.length >= MAX_ALTERNATE_SLOTS;
+
+                return (
+                  <li key={slot.start}>
+                    <button
+                      type="button"
+                      /* Le premier choix désigne le créneau préféré. Les
+                         suivants ajoutent des replis — sauf sur le préféré
+                         lui-même, qu'un second appui libérerait sans qu'on
+                         sache lequel prend sa place. */
+                      disabled={
+                        !preferred &&
+                        chosen !== null &&
+                        alternate === false &&
+                        full
+                      }
+                      onClick={() => {
+                        // Une impulsion de dix millisecondes : le geste se
+                        // confirme dans la main. Absente sur iOS, sans
+                        // conséquence — c'est un ajout, pas un signal dont
+                        // dépend la compréhension.
+                        navigator.vibrate?.(10);
+                        if (chosen === null || preferred) onChoose(slot.start);
+                        else onToggleAlternate(slot.start);
+                      }}
+                      aria-pressed={preferred || alternate}
+                      className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100 ${
+                        preferred
+                          ? "border-ink-900 bg-ink-900 text-white"
+                          : alternate
+                            ? "border-mint-400 bg-mint-50 text-mint-800"
+                            : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
+                      }`}
+                    >
+                      {timeFormatter.format(new Date(slot.start))}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      ) : null}
+
+      {chosen !== null ? (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-sm">
+            <span className="font-semibold">Créneau préféré</span> :{" "}
+            <span className="font-bold tabular-nums">
+              {dayFormatter.format(new Date(chosen))} à{" "}
+              {timeFormatter.format(new Date(chosen))}
+            </span>
+          </p>
+
+          {/* Le repli n'est pas un confort. Entre l'affichage de la liste et
+              la confirmation, une autre réservation peut prendre la place :
+              la lecture des disponibilités ne voit pas les transactions en
+              cours, seule l'écriture les rencontre. Sans second choix, ce
+              client-là recommence tout son parcours. */}
+          <p className="mt-2 text-sm text-muted-foreground">
+            {alternates.length === 0
+              ? "Touchez d'autres heures pour dire lesquelles vous iraient aussi. Si votre créneau part entre-temps, nous prenons l'un de ceux-là plutôt que de tout vous faire recommencer."
+              : `${alternates.length} créneau${alternates.length > 1 ? "x" : ""} de repli. Nous ne les utilisons que si votre préféré n'est plus libre.`}
+          </p>
+
+          {alternates.length > 0 ? (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {[...alternates].sort().map((start) => (
+                <li key={start}>
                   <button
                     type="button"
-                    onClick={() => {
-                      // Une impulsion de dix millisecondes : le geste se
-                      // confirme dans la main avant que l'écran ne change.
-                      // Absente sur iOS, sans conséquence — c'est un ajout,
-                      // pas un signal dont dépend la compréhension.
-                      navigator.vibrate?.(10);
-                      onChoose(slot.start);
-                    }}
-                    className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] motion-reduce:active:scale-100 ${
-                      chosen === slot.start
-                        ? "border-ink-900 bg-ink-900 text-white"
-                        : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
-                    }`}
+                    onClick={() => onToggleAlternate(start)}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-mint-400 bg-mint-50 px-3 text-sm font-medium text-mint-800"
                   >
-                    {timeFormatter.format(new Date(slot.start))}
+                    {dayFormatter.format(new Date(start)).split(" ")[0]}{" "}
+                    {timeFormatter.format(new Date(start))}
+                    <span aria-hidden>×</span>
+                    <span className="sr-only">Retirer ce créneau de repli</span>
                   </button>
                 </li>
               ))}
             </ul>
-          )}
+          ) : null}
+
+          <Button
+            type="button"
+            size="lg"
+            className="mt-4 min-h-12 w-full"
+            onClick={onContinue}
+          >
+            Continuer
+          </Button>
         </div>
       ) : null}
 
@@ -2255,8 +2450,6 @@ function RecapStep({
   address,
   quote,
   frequency,
-  housingLabel,
-  surfaceSqm,
   startAt,
   contact,
   onContactChange,
@@ -2268,8 +2461,6 @@ function RecapStep({
   address: AddressChoice;
   quote: QuoteView;
   frequency: Frequency;
-  housingLabel: string | null;
-  surfaceSqm: number | null;
   startAt: string;
   contact: ContactInput;
   onContactChange: (contact: ContactInput) => void;
@@ -2312,15 +2503,16 @@ function RecapStep({
           onEdit={onChangeAddress}
           editLabel="Modifier l'adresse"
         />
+        {/* La durée affichée est celle du devis, pas celle qu'on recalculerait
+            depuis la surface : c'est la première qui sera facturée. */}
         <RecapLine
-          label="Logement"
-          value={
-            housingLabel
-              ? `${housingLabel} · ${surfaceSqm} m²`
-              : `${surfaceSqm} m²`
-          }
+          label="Durée"
+          value={`${formatDuration(quote.durationMinutes)} · idéal pour ${suggestedSurfaceFor(
+            quote.durationMinutes,
+            DURATION_SERVICE,
+          )} m²`}
           onEdit={() => onEdit("logement")}
-          editLabel="Modifier la taille du logement"
+          editLabel="Modifier la durée"
         />
         <RecapLine
           label="Rythme"
@@ -2645,7 +2837,44 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
           au {confirmation.addressLabel}, pour{" "}
           {formatEuros(confirmation.grossAmountCents)}.
         </p>
+
+        {/* L'heure retenue n'est pas celle qu'on venait de choisir : le dire
+            ici est la seule occasion de le faire lire. Découverte le jour
+            venu, la différence vaudrait un rendez-vous manqué — et la
+            réservation reste ferme, sur une heure que le client avait
+            lui-même déclarée acceptable. */}
+        {confirmation.usedAlternate ? (
+          <p className="mx-auto mt-4 max-w-prose rounded-lg bg-lemon-100 px-4 py-3 text-sm">
+            Votre créneau préféré est parti pendant que vous remplissiez le
+            formulaire. Nous avons retenu l&apos;un de ceux que vous aviez
+            acceptés — c&apos;est bien l&apos;heure ci-dessus qui est réservée.
+          </p>
+        ) : null}
       </div>
+
+      {/* L'espace client s'ouvre par un lien, pas par une session ouverte
+          d'office : réserver ne prouve pas qu'on possède l'adresse saisie, et
+          une session accordée sur parole laisserait entrer chez quelqu'un
+          d'autre. Le lien est parti seul, il n'y a rien à demander. */}
+      {confirmation.accessLinkSent ? (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="font-extrabold">Votre espace est prêt</h3>
+          <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+            Un lien de connexion vient de partir vers{" "}
+            <strong className="text-foreground">
+              {confirmation.accessLinkEmail}
+            </strong>
+            . Vous y retrouverez cette intervention, pourrez écrire à votre
+            intervenant et annuler si besoin.
+          </p>
+          <Link
+            href="/mon-espace"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-mint-400 hover:bg-mint-50"
+          >
+            Ouvrir mon espace
+          </Link>
+        </div>
+      ) : null}
 
       <IntervenantCard cleaner={confirmation.cleaner} />
 

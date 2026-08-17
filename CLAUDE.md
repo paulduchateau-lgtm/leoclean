@@ -438,6 +438,78 @@ d'un récépissé auprès de la DDETS — l'**agrément** étant réservé aux a
 auprès de publics fragiles. La copy dit donc « déclaration ». Formulation à
 faire confirmer par un conseil avant mise en production.
 
+### La seconde porte : `/travailler-avec-nous`
+
+**La thèse est la même contrainte, retournée.** Le client s'entend dire
+« une vingtaine de minutes de route, donc toujours la même personne » ;
+l'intervenant s'entend dire « une vingtaine de minutes de route, donc une
+journée remplie sans la passer en voiture ». Le premier poste de perte de
+revenu d'un intervenant à domicile n'est pas le tarif horaire mais le trajet
+non payé et les trous de planning : un périmètre court concentre là où une
+plateforme nationale disperse. On parle donc de kilomètres, d'heures et de
+délais de paiement, jamais de « rejoindre une aventure ».
+
+**La page n'est ni indexée ni annoncée tant qu'elle est incomplète.**
+`PENDING_INTERVENANT_FIELDS` suit la convention de `PENDING_IDENTITY_FIELDS` :
+tant qu'il manque une valeur — la rémunération nette au premier chef — la
+page porte `noindex`, reste hors du sitemap et de `llms.txt`, et aucun lien ne
+la désigne depuis l'en-tête, le pied de page ou l'accueil. Elle reste
+atteignable par son URL, pour être relue. Se classer sur « missions ménage
+Gironde » sans pouvoir dire ce qu'on paie ferait venir exactement les gens
+qu'on décevrait.
+
+**Le mot « garanti » est dérivé, pas écrit.** Il n'engage à rien tant qu'on
+n'a pas dit _contre quoi_ il garantit : `canSayGuaranteed()` n'est vrai que si
+les trois situations — retard de paiement, impayé, annulation tardive — ont
+une réponse écrite. À défaut, la page dit « net, versé à date fixe », qui est
+déjà un argument et qui est vrai.
+
+**Toute la copy du moteur de planning est en proposition.** « On vous
+propose » et jamais « on vous affecte », « une suggestion de tournée » et
+jamais « votre tournée », et le fait que l'ordre soit modifiable est écrit
+noir sur blanc. Ce n'est pas une préférence de ton : un logiciel qui ordonne
+la journée d'un indépendant est un indice de subordination s'il le subit, et
+n'en est pas un s'il le pilote. Un site qui promet la liberté pendant que le
+fonctionnement dit l'inverse est une pièce à charge, pas une protection. Un
+test interdit le vocabulaire d'affectation sur le HTML rendu.
+
+**Le bloc « ce qu'on lit de votre agenda » et le bloc qui demande l'accès ne
+font qu'un seul composant.** Le brief exigeait qu'ils soient adjacents ; les
+réunir rend la séparation impossible sans réécrire le fichier, ce qui vaut
+mieux qu'un test constatant l'erreur après coup. Deux consentements distincts
+— heures occupées d'un côté, lieux de l'autre — parce que les demander
+ensemble reviendrait à obtenir le second sans qu'il ait été posé.
+
+**`src/lib/features.ts` est au produit ce que `fiscal.ts` est au droit.**
+Trois états par fonction : `live` sans libellé, `beta` avec « En test », et
+`roadmap` avec « Disponible au lancement ». Le bloc reste visible en
+`roadmap` — on ne cache pas la fonction, on dit qu'elle n'existe pas encore.
+`savedTravelMinutes` vaut `null` et rien ne s'affiche : ni chiffre, ni
+fourchette, ni « jusqu'à ». Aucune capture d'écran d'une interface inexistante.
+`appleCalendar` est faux tant que la voie technique n'est pas tranchée, Apple
+ne fournissant pas d'API serveur équivalente à celle de Google.
+
+**Le parrainage n'est pas décidé sur cette page.** `referral/rules.ts`
+existait avant elle, verrouillé par ses propres tests : 5 % du chiffre
+d'affaires du filleul, à partir de sa cinquième mission, pendant douze mois,
+plafonné à 150 € par mois tous filleuls confondus. `FACTS.parrainage` ne fait
+que le lire. Le plafond **est annoncé** : c'est la seule limite du dispositif,
+et la taire reproduirait l'opacité reprochée aux plateformes nationales. Un
+seul niveau, `MAX_REFERRAL_DEPTH` à 1 — toucher sur les filleuls de ses
+filleuls ferait dépendre le gain du recrutement opéré par autrui, ce qui est
+la définition de la vente à la boule de neige à l'article L.121-15 du code de
+la consommation.
+
+**La commission n'est pas rétroactive**, conformément au calcul : les cinq
+premières missions du filleul ouvrent le droit sans être commissionnées, et la
+fenêtre de douze mois court à partir de la cinquième. La page l'écrit plutôt
+que de le laisser découvrir au premier versement.
+
+**La candidature est écrite dans `Lead`**, distinguée par son `sourcePath`.
+Créer un modèle demanderait une migration que rien ne justifie tant que le
+traitement d'une candidature est un coup de téléphone ; le jour où elle
+devient un dossier avec des pièces et des états, elle aura sa table.
+
 **Le JSON-LD n'invente rien.** Les champs inconnus sont omis plutôt que remplis.
 La note agrégée n'est émise que s'il existe des avis réels — la déclarer à vide
 est un motif de sanction manuelle. Le balisage est échappé à la sérialisation :
@@ -658,11 +730,56 @@ seule règle, et elle décide de tout l'ordre. Le tunnel demandait auparavant
 l'adresse complète en premier et n'affichait le prix qu'à la fin : friction
 maximale au moment où l'engagement est minimal.
 
-Six écrans : commune, logement, rythme, créneau, coordonnées, adresse. La
+Six écrans : commune, durée, rythme, créneau, coordonnées, adresse. La
 commune suffit à répondre « intervenez-vous chez moi ? » et à chercher des
 créneaux ; le prix apparaît au troisième, avant toute donnée personnelle ;
 l'adresse exacte, la plus coûteuse à donner, arrive en dernier et emporte le
 récapitulatif avec elle.
+
+**Le deuxième écran demande une durée, pas une surface.** On demandait une
+taille de logement pour en déduire des heures ; on demande les heures et on
+indique la surface qu'elles couvrent habituellement — « 3 h, idéal pour
+75 m² ». Personne ne connaît sa surface au mètre près, alors que tout le monde
+sait dire « deux heures, ça devrait suffire », et c'est la durée, non la
+surface, qui détermine le prix, la place occupée dans la tournée et donc la
+faisabilité du créneau. Demander directement la grandeur qui décide de tout
+supprime une conversion que le client faisait à l'aveugle.
+
+Le reste de la chaîne — devis, recherche de créneaux, création — continue de
+parler en surface, et `surfaceForDuration` fait le pont. Elle prend le plancher
+et non l'arrondi, parce que l'estimation arrondit au pas de trente minutes
+**supérieur** : 3 h 30 valent 87,5 m² en théorie, 88 m² donneraient 4 h,
+87 m² donnent bien 3 h 30. Un test vérifie l'aller-retour sur tous les pas de
+la grille — une surface qui rendrait une autre durée ferait facturer autre
+chose que ce qui a été affiché.
+
+**« Une fois par mois » n'est plus proposé.** À ce rythme l'entretien courant
+n'en est plus un, la durée nécessaire dérive vers le grand ménage et la
+promesse d'intervenant attitré ne tient plus. La valeur reste dans
+l'énumération et en base — des réservations la portent — mais `offeredFrequency`
+ramène au rythme par défaut tout parcours repris ou tout dernier choix qui la
+désignerait encore, faute de quoi l'écran s'afficherait sans sélection et la
+barre de prix sans prix.
+
+**Chaque montant du tunnel porte son unité.** « 116 € » sur un écran qui
+propose « chaque semaine » et « tous les quinze jours » se lit comme un prix
+mensuel : les cartes disent donc « par session ». La mention « avant crédit
+d'impôt » n'apparaît que si `canShowTaxCredit()` l'autorise — même règle que
+partout ailleurs, et tant que la déclaration SAP n'est pas obtenue, rien de ce
+qui touche au crédit d'impôt ne s'affiche, pas même le mot « avant ».
+
+**Le client désigne un créneau préféré, puis ceux qui lui iraient aussi.**
+Ce n'est pas un confort : entre l'affichage de la liste et la confirmation,
+une autre réservation peut prendre la place, la lecture des disponibilités ne
+voyant pas les transactions en cours — seule l'écriture les rencontre. Sans
+repli, ce client-là recommence tout son parcours pour une place perdue à la
+dernière seconde. `confirmBooking` essaie le préféré puis les replis dans
+l'ordre donné, et ne rattrape que `SlotTakenError` : une adresse hors zone
+échouerait de la même façon sur les quatre suivants. Quand un repli est
+retenu, `usedAlternate` le dit sur l'écran de confirmation — une heure
+différente de celle qu'on vient de choisir, découverte le jour venu, vaudrait
+un rendez-vous manqué. Les replis ne sont pas enregistrés dans le stockage
+local : ils décrivent un état du planning qui a une semaine.
 
 **Le prix n'a pas d'écran à lui.** L'écran du rythme porte les quatre formules
 avec leur montant et leur durée, et la barre basse l'annonce dès le premier
@@ -704,7 +821,7 @@ du barème des CGU.
 | Parcours                               | Cible | Mesuré |
 | -------------------------------------- | ----- | ------ |
 | Accueil → prix affiché                 | ≤ 4   | 3      |
-| Accueil → réservation confirmée        | ≤ 9   | 9      |
+| Accueil → réservation confirmée        | ≤ 9   | **10** |
 | Accueil → appel téléphonique           | ≤ 2   | 1      |
 | Reprise → confirmation (dernier écran) | ≤ 4   | 4      |
 
@@ -722,6 +839,15 @@ faudrait arrondir.
 Ce que le geste achète : un visiteur qui a compris pourquoi le rayon est court
 avant qu'on lui demande où il habite. Les seize communes ouvraient la page —
 seize choix réclamés à quelqu'un qui n'avait encore reçu aucun argument.
+
+**Un dixième geste a été ajouté depuis, et il dépasse la cible.** Choisir un
+créneau faisait avancer d'écran ; il faut désormais valider, puisque l'écran
+reste ouvert pour désigner des créneaux de repli. Ce que ce geste achète est
+une réservation qui aboutit quand le créneau préféré part pendant la saisie —
+c'est-à-dire précisément le cas où le parcours était perdu en entier. **La
+cible de neuf est donc à rediscuter, pas la mesure à arrondir** : soit on
+l'assume à dix, soit les créneaux de repli se choisissent au récapitulatif et
+le tunnel revient à neuf.
 
 L'appel se fait en un geste depuis l'en-tête, en deux depuis la barre
 d'onglets. La reprise n'atteint la cible que depuis les derniers écrans —
@@ -749,12 +875,95 @@ maison : le dépôt a tranché pour des sessions en base, révocables
 immédiatement. Un second système d'authentification à côté du premier ne serait
 pas un raccourci, ce serait une deuxième surface à sécuriser.
 
-**La replanification et l'annulation en autonomie n'y sont pas**, et c'est
-délibéré : elles supposent des transitions de statut, une notification de
-l'intervenant et une reprise du créneau libéré, qui n'existent pas encore. Un
-bouton « Annuler » qui n'annulerait rien serait pire que son absence. Le barème
-est affiché, lu depuis le module de tarification, et l'annulation se fait par
-téléphone — ce qui est le fonctionnement réel.
+**L'annulation en autonomie existe.** Elle supposait trois choses qui
+manquaient, et `client-space.ts` les fait dans une seule transaction : la
+transition de statut tracée par `BookingStatusEvent`, la fin des affectations
+en cours, et un message à l'intervenant. **C'est la deuxième qui libère le
+créneau** — la contrainte d'exclusion ignore les statuts terminaux, si bien
+qu'une affectation restée `ACCEPTED` gèlerait une heure pour une intervention
+qui n'a plus lieu.
+
+Le coût est annoncé **avant** la confirmation, calculé par `decideCancellation`
+— la même fonction pour l'écran et pour la mutation, sinon le bouton et le
+prélèvement finiraient par diverger.
+
+**L'appartenance ne passe pas par `requireOrganization`**, un client de la
+marketplace n'ayant pas de `Membership` : le profil est résolu depuis la
+session, jamais depuis l'entrée, et une réservation qui ne lui est pas
+rattachée est introuvable — le même message que si elle n'existait pas, pour
+ne pas confirmer un identifiant à un curieux.
+
+**Le chat est rattaché à l'intervention, pas au couple de personnes.** Un
+intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
+personnes mélangerait deux interventions sans rapport. Sans intervenant
+désigné, l'envoi est refusé plutôt que d'écrire à personne.
+
+**La replanification à l'initiative du client n'y est toujours pas** : elle
+suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
+entier. Annuler puis reprendre reste le chemin.
+
+### Espace intervenant
+
+**Les vérifications sont des fonctions pures, pas des appels réseau.**
+`cleaner/identifiants.ts` contrôle la clé de Luhn du SIRET — une faute de
+frappe sur un chiffre est détectée sans interroger personne, ce qui est la
+vérification la plus rentable du formulaire. L'exception de La Poste, dont les
+établissements suivent une règle différente, est traitée : l'ignorer
+rejetterait des SIRET valides.
+
+**Le numéro SAP se recoupe avec le SIRET.** Il s'écrit « SAP » suivi du SIREN,
+donc il doit porter le même SIREN que le SIRET déclaré. Deux identités
+différentes dans le même formulaire sont soit une faute de frappe, soit le
+numéro de quelqu'un d'autre — et un numéro emprunté ouvrirait un crédit
+d'impôt indu au client, qui le rembourserait.
+
+**`CleanerProfile.sapDeclarationNumber` est nullable et doit le rester.** La
+déclaration met des semaines à être instruite, et refuser de faire travailler
+quelqu'un en attendant reviendrait à ne recruter personne au lancement. Elle
+n'empêche donc pas l'activation, mais tant qu'elle manque la part de cet
+intervenant n'ouvre aucun crédit d'impôt, et `activationState` le dit en
+avertissement plutôt que de le taire.
+
+**Ce qui manque à un dossier est dérivé, jamais posé à la main.** Un drapeau
+« vérifié » levé séparément de l'état des pièces finirait par mentir. La liste
+est en outre exactement celle promise aux clients sous « professionnels
+vérifiés » et affichée aux candidats sur `/travailler-avec-nous` : trois
+surfaces, une seule vérité, vérifiable par n'importe qui.
+
+**Le parrain est le propriétaire du code, et rien d'autre.** `Referral` ne
+porte aucune colonne `referrerUserId` : on remonte au parrain par
+`referralCode.ownerUserId`. Le second niveau n'est donc pas interdit par une
+règle qu'on pourrait lever, il est **inexprimable** dans le schéma — ce qui
+est la seule forme solide de l'interdit posé par l'article L.121-15.
+
+### Quand personne n'accepte la mission
+
+Le tunnel vend un créneau **ferme**, et il arrive qu'il ne le soit pas : le
+dernier intervenant refuse, `reattribuer` ne trouve personne, la réservation
+retombe en `PENDING_ASSIGNMENT`. C'est le seul moment où la promesse n'est pas
+tenue, et le client attendait jusqu'ici un appel.
+
+**`SlotProposal` porte la sortie : un intervenant propose une autre heure, le
+client tranche.** Rien ne bouge tant qu'il n'a pas répondu — déplacer d'office
+le rendez-vous de quelqu'un parce que personne n'était libre lui ferait porter
+un manque qui n'est pas le sien. Refuser est donc un bouton de même poids
+qu'accepter.
+
+**La table ne porte aucune contrainte d'exclusion, et c'est voulu** : une
+proposition n'occupe personne. C'est l'écriture de l'`Assignment`, à la
+validation, qui rencontre `Assignment_no_overlap` — le conflit se décide sur
+la seule écriture qui engage un intervenant, jamais avant.
+
+**Accepter se fait en deux temps assumés**, pas en une transaction : on déplace
+la réservation, puis on demande une affectation restreinte à l'intervenant qui
+a proposé, ce qui réutilise `reattribuer` — trajets réels, tampons, et la
+contrainte. S'il s'est engagé ailleurs entre-temps, l'écriture échoue : la
+réservation revient à son heure d'origine et le client l'apprend, plutôt que
+de se retrouver déplacé sans personne pour venir.
+
+**La durée ne se renégocie pas** : `proposedEnd` se déduit de la durée de la
+réservation. Changer la durée changerait le prix, et un prix qui bouge après
+la réservation n'est plus une proposition.
 
 ## Espace intervenant
 
@@ -841,11 +1050,15 @@ rendre une suppression impossible sans que personne comprenne pourquoi.
 fichiers. Elle sert à montrer et à faire relire, jamais à prendre des
 réservations.
 
-**Elle n'est plus publiée automatiquement.** Le workflow GitHub Pages a été
-retiré le jour où une base de production a pu être installée en une commande
-(`npm run db:init`) : maintenir en ligne un double intégral du site pour montrer
-ce que le site montre déjà n'avait plus d'objet, et c'était une surface
-indexable de plus à surveiller. La construction reste vivante et testée.
+**Elle n'est publiée par aucun workflow.** Ce document a longtemps désigné un
+`.github/workflows/leoclean-pages.yml` qui n'existe pas : la publication GitHub
+Pages a été retirée le jour où une base de production a pu être installée en une
+commande (`npm run db:init`), et maintenir en ligne un double intégral du site
+pour montrer ce que le site montre déjà n'avait plus d'objet — c'était une
+surface indexable de plus à surveiller. `ci.yml` est désormais le seul workflow
+du dépôt ; il construit la vitrine sans la publier, et la commande se lance à la
+main. Le jour où la publication sera automatisée, c'est ici qu'il faudra
+l'écrire.
 
 **Le tunnel y fonctionne pour de bon**, et c'est le bénéfice concret d'avoir
 tenu les moteurs purs : tarification et disponibilité sont les mêmes fonctions
@@ -869,9 +1082,19 @@ vrai numéro et de vrais tarifs — quelqu'un pourrait croire y avoir réservé.
 
 **Le build écarte des fichiers plutôt que d'ajouter des conditions.**
 `scripts/build-demo-statique.mjs` déplace ce qu'un export ne peut pas produire
-— espaces connectés, server actions, middleware — pose les substituts de
-`demo/overlay/`, puis restaure l'arbre dans un `finally`. Une condition oubliée
-casserait le build de production ; un fichier déplacé ne casse que celui-ci.
+— espaces connectés, server actions, middleware, pages société, page d'offre —
+pose les substituts de `demo/overlay/`, puis restaure l'arbre dans un
+`finally`. Une condition oubliée casserait le build de production ; un fichier
+déplacé ne casse que celui-ci.
+
+**Une route ajoutée est une exclusion à envisager.** La liste n'est pas
+déductible du code : `/pro/[slug]` a cassé la vitrine pendant une journée
+parce que `dynamicParams` est incompatible avec `output: export`, et rien ne
+l'a signalé — `ci.yml` ne lance ni `npm run build` ni `npm run build:demo`.
+Une page qui porte une server action, lit la base ou se rend à la demande doit
+partir, **et ses composants avec elle** : un composant resté seul importerait
+une action qui n'est plus là, et c'est le typage qui échouerait, pas
+l'export.
 
 **`basePath` n'est pas appliqué au `src` d'une image non optimisée**, et
 l'export impose ce mode. D'où `lib/asset-path.ts` : tout fichier de `public/`
@@ -954,6 +1177,10 @@ src/
     db.ts              client Prisma et cloisonnement multi-tenant
     env.ts             variables d'environnement validées par Zod
     site.ts            NAP et identité publique — source unique
+    facts.ts           agrégateur des chiffres affichés, côté client et côté offre
+    fiscal.ts          ce que le site a le droit de dire du crédit d'impôt
+    features.ts        disponibilité des fonctions annoncées (live/beta/roadmap)
+    referral/          parrainage client et cooptation intervenant, un seul niveau
     territory.ts       les 16 communes (INSEE, CP, population, centroïde)
     communes-content.ts contenu éditorial des 16 pages locales
     intentions.ts      /femme-de-menage et /repassage, par commune

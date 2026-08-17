@@ -33,9 +33,34 @@ import { COMMUNES } from "@/lib/territory";
 export const revalidate = 86_400;
 export const dynamicParams = true;
 
+/**
+ * Slugs prégénérés au moment de la construction.
+ *
+ * La liste vient de la base, et la base n'est pas toujours joignable quand on
+ * construit — conteneur d'intégration continue, poste neuf, coupure du
+ * fournisseur. Faire échouer la construction entière pour cette raison-là
+ * revient à faire dépendre la mise en ligne des seize pages communes de
+ * l'existence de sociétés clientes, qui sont zéro aujourd'hui.
+ *
+ * On journalise et on rend une liste vide : `dynamicParams` étant vrai, les
+ * pages société se rendent alors à la demande, à la première visite. Le seul
+ * effet est qu'elles ne sont pas prégénérées, ce qui est exactement ce que le
+ * commentaire ci-dessus décrit comme acceptable.
+ *
+ * Le silence est ce qu'on ne fait pas : une base injoignable pendant une
+ * construction de production doit se lire dans le journal.
+ */
 export async function generateStaticParams() {
-  const slugs = await slugsSocietesPubliques();
-  return slugs.map((slug) => ({ slug }));
+  try {
+    const slugs = await slugsSocietesPubliques();
+    return slugs.map((slug) => ({ slug }));
+  } catch (error) {
+    console.error(
+      "Sociétés publiables illisibles à la construction : les pages /pro seront rendues à la demande.",
+      error,
+    );
+    return [];
+  }
 }
 
 export async function generateMetadata({

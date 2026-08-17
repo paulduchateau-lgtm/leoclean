@@ -162,7 +162,7 @@ test.describe("retour arrière dans le tunnel", () => {
     await expect(
       page.getByText("Étape 2 sur 6", { exact: true }),
     ).toBeVisible();
-    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await page.getByRole("button", { name: "2 h" }).click();
     await expect(
       page.getByText("Étape 3 sur 6", { exact: true }),
     ).toBeVisible();

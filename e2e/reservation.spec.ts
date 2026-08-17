@@ -73,15 +73,15 @@ test.describe("réservation", () => {
     await expect(page.getByText(/À partir de 29/)).toBeVisible();
     await choisirCommune(page);
 
-    // 2. Logement — un type de logement, pas une surface à saisir.
+    // 2. Durée — un nombre d'heures, pas une surface à estimer.
     await expect(
-      page.getByRole("heading", { name: /taille de votre logement/ }),
+      page.getByRole("heading", { name: /De combien de temps/ }),
     ).toBeVisible();
-    await page.getByRole("button", { name: /T3 ou petite maison/ }).click();
+    await page.getByRole("button", { name: "3 h" }).click();
 
     // 3. Rythme — c'est ici que le prix apparaît, avant toute donnée
     // personnelle. Chaque formule porte le sien, calculé par le serveur :
-    // 70 m² à 25 m²/h font 3 h, à 29 €/h en formule régulière.
+    // 3 h à 29 €/h en formule régulière.
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
     ).toBeVisible();
@@ -102,6 +102,7 @@ test.describe("réservation", () => {
     const chosenTime = await slot.first().innerText();
     await expect(page.getByText(/par intervention/)).toContainText("3 h");
     await slot.first().click();
+    await page.getByRole("button", { name: "Continuer" }).click();
 
     // 5. Coordonnées — demandées une fois la valeur visible et l'heure retenue.
     await expect(
@@ -166,7 +167,7 @@ test.describe("réservation", () => {
     // le prix était auparavant le dernier écran, l'adresse le premier.
     await page.goto("/reserver");
     await choisirCommune(page);
-    await page.getByRole("button", { name: /T3 ou petite maison/ }).click();
+    await page.getByRole("button", { name: "3 h" }).click();
 
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
@@ -183,7 +184,7 @@ test.describe("réservation", () => {
     // probable du parcours, et il vidait les six champs déjà remplis.
     await page.goto("/reserver");
     await choisirCommune(page);
-    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await page.getByRole("button", { name: "2 h" }).click();
     await page
       .getByRole("button", { name: /Tous les quinze jours/ })
       .click({ timeout: 30_000 });
@@ -193,6 +194,7 @@ test.describe("réservation", () => {
     });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     await slot.first().click();
+    await page.getByRole("button", { name: "Continuer" }).click();
 
     await saisirCoordonnees(page, "camille@exemple.fr");
     await saisirAdresseManuelle(page);
@@ -212,7 +214,7 @@ test.describe("réservation", () => {
   test("propose de reprendre un parcours interrompu", async ({ page }) => {
     await page.goto("/reserver");
     await choisirCommune(page);
-    await page.getByRole("button", { name: /Maison familiale/ }).click();
+    await page.getByRole("button", { name: "4 h" }).click();
 
     // Retour par une URL nue — le chemin de quelqu'un qui revient par
     // l'accueil ou par un favori, et non en rechargeant l'onglet ouvert.
@@ -230,7 +232,7 @@ test.describe("réservation", () => {
     // par l'accueil, et sans bandeau elle recommence de zéro.
     await page.goto("/reserver");
     await choisirCommune(page, "Cadaujac");
-    await page.getByRole("button", { name: /Maison familiale/ }).click();
+    await page.getByRole("button", { name: "4 h" }).click();
 
     await page.goto("/");
     const banner = page.getByText(/Reprendre ma réservation — étape/);
@@ -249,7 +251,7 @@ test.describe("réservation", () => {
     // n'en a pas besoin.
     await page.goto("/reserver");
     await choisirCommune(page);
-    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await page.getByRole("button", { name: "2 h" }).click();
 
     const saved = await page.evaluate(() =>
       window.localStorage.getItem("leoclean:booking:v1"),
@@ -265,7 +267,7 @@ test.describe("réservation", () => {
     // partagé doit rouvrir le tunnel au même endroit.
     await page.goto("/reserver");
     await choisirCommune(page, "Gradignan");
-    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await page.getByRole("button", { name: "2 h" }).click();
 
     const url = new URL(page.url());
     expect(url.searchParams.get("commune")).toBe("gradignan");
@@ -273,18 +275,19 @@ test.describe("réservation", () => {
     expect(url.searchParams.get("step")).toBe("rythme");
   });
 
-  test("accepte une surface exacte, repliée par défaut", async ({ page }) => {
+  test("accepte une durée libre, repliée par défaut", async ({ page }) => {
     await page.goto("/reserver");
     await choisirCommune(page);
 
-    await expect(page.locator("#surface")).toHaveCount(0);
+    await expect(page.locator("#duration")).toHaveCount(0);
     await page
-      .getByRole("button", { name: /Je connais ma surface exacte/ })
+      .getByRole("button", { name: /Il me faut une autre durée/ })
       .click();
-    await page.fill("#surface", "80");
+    await page.fill("#duration", "210");
     await page.getByRole("button", { name: "Choisir mon rythme" }).click();
 
-    // 80 m² à 25 m²/h font 3 h 30, à 29 €/h en formule régulière.
+    // 3 h 30 à 29 €/h en formule régulière, soit la surface de 87 m²
+    // que le tunnel déduit de la durée choisie.
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
     ).toContainText("101,50", { timeout: 20_000 });
@@ -326,7 +329,7 @@ test.describe("réservation", () => {
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
     ).toBeVisible();
-    // 100 m² à 25 m²/h font 4 h, à 29 €/h en formule régulière.
+    // 4 h à 29 €/h en formule régulière.
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
     ).toContainText("116,00", { timeout: 20_000 });
@@ -340,7 +343,7 @@ test.describe("réservation", () => {
     await page.goto("/reserver?commune=cestas&step=creneau");
 
     await expect(
-      page.getByRole("heading", { name: /taille de votre logement/ }),
+      page.getByRole("heading", { name: /De combien de temps/ }),
     ).toBeVisible();
   });
 
@@ -352,7 +355,7 @@ test.describe("réservation", () => {
     await page.goto("/reserver?commune=gradignan");
 
     await expect(
-      page.getByRole("heading", { name: /taille de votre logement/ }),
+      page.getByRole("heading", { name: /De combien de temps/ }),
     ).toBeVisible();
     await expect(
       page.getByText("Étape 2 sur 6", { exact: true }),
@@ -367,7 +370,7 @@ test.describe("réservation", () => {
     // la saisie manuelle, pas à une impasse.
     await page.goto("/reserver");
     await choisirCommune(page);
-    await page.getByRole("button", { name: /Studio ou T2/ }).click();
+    await page.getByRole("button", { name: "2 h" }).click();
     await page
       .getByRole("button", { name: /Tous les quinze jours/ })
       .click({ timeout: 30_000 });
@@ -377,6 +380,7 @@ test.describe("réservation", () => {
     });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     await slot.first().click();
+    await page.getByRole("button", { name: "Continuer" }).click();
     await saisirCoordonnees(page, `e2e-${Date.now()}@leoclean.test`);
 
     await page.fill("#address", "zzzz adresse qui n'existe pas quelque part");

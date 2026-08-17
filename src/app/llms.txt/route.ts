@@ -1,6 +1,7 @@
 import { publishedArticles } from "@/lib/blog";
 import { publishedCommunes } from "@/lib/communes-content";
 import { clientEnv } from "@/lib/env";
+import { INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { fillTemplate, publishedIntentionPages } from "@/lib/intentions";
 import { formatHourlyRate } from "@/lib/pricing";
 import {
@@ -128,7 +129,12 @@ ${articleLinks}
 ## Ressources
 
 - [Tarifs détaillés](${absoluteUrl("/tarifs")})
-- [À propos de Léo Clean](${absoluteUrl("/a-propos")})
+- [À propos de Léo Clean](${absoluteUrl("/a-propos")})${
+    INTERVENANT_PAGE_READY
+      ? `
+- [Travailler avec Léo Clean — missions pour intervenants et sociétés de ménage](${absoluteUrl("/travailler-avec-nous")})`
+      : ""
+  }
 - [Données ouvertes au format JSON](${absoluteUrl("/api/public/informations")})
 - [Texte intégral des pages publiques](${absoluteUrl("/llms-full.txt")})
 `;

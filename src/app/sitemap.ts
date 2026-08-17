@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { publishedArticles } from "@/lib/blog";
 import { publishedCommunes } from "@/lib/communes-content";
 import { clientEnv } from "@/lib/env";
+import { INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { publishedIntentionPages } from "@/lib/intentions";
 import { absoluteUrl } from "@/lib/site";
 
@@ -84,5 +85,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
     },
+    // Page d'offre : elle n'entre au sitemap qu'une fois ses conditions
+    // arbitrées. Se classer sur « missions ménage Gironde » sans pouvoir dire
+    // ce qu'on paie ferait venir précisément les gens qu'on décevrait.
+    ...(INTERVENANT_PAGE_READY
+      ? [
+          {
+            url: absoluteUrl("/travailler-avec-nous"),
+            lastModified,
+            changeFrequency: "monthly" as const,
+            priority: 0.7,
+          },
+        ]
+      : []),
   ];
 }

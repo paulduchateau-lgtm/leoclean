@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 
+import { INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { SITE } from "@/lib/site";
 
 /**
@@ -59,6 +60,17 @@ export function SiteHeader({
               >
                 À propos
               </Link>
+              {/* La porte côté offre, en desktop seulement : la barre
+                  d'onglets mobile reste réservée au parcours client, et un
+                  cinquième lien y prendrait la place de ce qui convertit. */}
+              {INTERVENANT_PAGE_READY && (
+                <Link
+                  href="/travailler-avec-nous"
+                  className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 lg:inline-block"
+                >
+                  Devenir intervenant
+                </Link>
+              )}
               <Link
                 href="/reserver"
                 className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"

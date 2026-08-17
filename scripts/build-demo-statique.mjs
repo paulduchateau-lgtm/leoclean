@@ -33,6 +33,16 @@ const ECARTES = [
   // Server actions : leur seule présence dans le graphe interdit l'export.
   "src/app/etre-rappele/actions.ts",
   "src/app/reserver/actions.ts",
+  // La page d'offre porte sa propre server action, et elle n'a rien à faire
+  // sur une vitrine destinée à montrer le parcours client. Ses composants
+  // partent avec elle : ils n'ont pas d'autre consommateur, et le formulaire
+  // de candidature importerait une action qui n'est plus là.
+  "src/app/travailler-avec-nous",
+  "src/components/intervenants",
+  // Les pages société lisent la base pour lister les slugs publiables, et
+  // `dynamicParams` est incompatible avec `output: export` — une page rendue
+  // à la demande n'existe pas dans un site de fichiers.
+  "src/app/pro",
   // Le middleware suppose un serveur devant les fichiers.
   "src/proxy.ts",
   // Un plan du site contredirait le `Disallow: /` de la vitrine.

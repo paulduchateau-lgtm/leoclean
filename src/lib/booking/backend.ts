@@ -64,6 +64,24 @@ export interface CleanerCardView {
 
 export interface ConfirmationView {
   bookingId: string;
+  /**
+   * Le créneau retenu n'est pas celui que le client préférait.
+   *
+   * Il est alors l'un de ceux qu'il avait déclarés acceptables : la
+   * réservation reste ferme, mais l'écran de confirmation doit le dire. Une
+   * heure différente de celle qu'on vient de choisir, découverte le jour
+   * venu, vaudrait un rendez-vous manqué.
+   */
+  usedAlternate: boolean;
+  /**
+   * Un lien de connexion vient de partir vers l'adresse du client.
+   *
+   * Faux quand il était déjà connecté, ou quand l'envoi a échoué — l'échec ne
+   * fait jamais échouer la réservation, qui est écrite.
+   */
+  accessLinkSent: boolean;
+  /** Adresse destinataire du lien, pour pouvoir la rappeler à l'écran. */
+  accessLinkEmail: string | null;
   startAt: string;
   endAt: string;
   grossAmountCents: number;
@@ -137,6 +155,8 @@ export interface ConfirmBookingInput {
   frequency: Frequency;
   optionSlugs: string[];
   startAt: string;
+  /** Créneaux acceptés à défaut du préféré, dans l'ordre de préférence. */
+  alternateStarts?: string[];
   clientNotes?: string;
 }
 
