@@ -7,10 +7,12 @@ import { getCommuneBySlug } from "../src/lib/territory";
 /**
  * Enregistrement d'un intervenant, à la main.
  *
- * Il n'existe pas encore d'espace intervenant — c'est la phase 8 — et une
- * plateforme sans personne à envoyer ne propose aucun créneau. Cette commande
- * comble l'intervalle : elle crée un intervenant réel, avec son adresse de
- * départ et ses heures déclarées, exactement comme le fera l'inscription.
+ * L'espace intervenant existe désormais — missions, réponses, semaine type —
+ * mais **il n'y a pas d'inscription** : personne ne peut y entrer sans exister
+ * en base d'abord, et une plateforme sans personne à envoyer ne propose aucun
+ * créneau. Cette commande comble l'intervalle : elle crée un intervenant réel,
+ * avec son adresse de départ et ses heures déclarées, exactement comme le fera
+ * l'inscription.
  *
  * **Ce n'est pas une donnée de démonstration.** Sur le site en production,
  * tout intervenant actif est réservable par un visiteur : les créneaux qu'il

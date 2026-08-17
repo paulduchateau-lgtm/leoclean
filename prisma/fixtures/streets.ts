@@ -1,5 +1,5 @@
 /**
- * Voies réelles des 13 communes du territoire, avec leurs coordonnées.
+ * Voies réelles des 16 communes du territoire, avec leurs coordonnées.
  *
  * Extraites de la Base Adresse Nationale (api-adresse.data.gouv.fr) et figées
  * ici pour que le seed reste déterministe et exécutable hors ligne. Les

@@ -141,6 +141,17 @@ secondes, sans service tiers ni captcha : un envoi automatisé reçoit la même
 confirmation qu'un envoi légitime, sans être enregistré, pour ne rien apprendre
 au robot.
 
+**Le champ piège et le délai n'arrêtent qu'un robot naïf**, d'où une limitation
+de débit en base (`src/lib/securite/limitation.ts`) sur les formulaires ouverts
+à tout le monde. Trois choix, tous conséquents : le compteur vit en base et non
+en mémoire, parce qu'un déploiement sans serveur n'a pas de mémoire partagée et
+qu'un compteur par instance laisse passer autant de requêtes qu'il y a
+d'instances ; l'adresse IP n'est jamais stockée en clair mais condensée avec
+`AUTH_SECRET`, un compteur n'ayant pas besoin de savoir qui mais combien ; la
+fenêtre est fixe et non glissante, une fenêtre glissante exigeant une ligne par
+requête. La purge des compteurs périmés (`purger()`) est écrite et **n'est
+appelée par personne** : elle attend l'ordonnanceur.
+
 L'organisation de rattachement est résolue côté serveur et jamais transmise par
 le navigateur : une valeur envoyée par le client ne doit pas déterminer dans
 quelle organisation une donnée atterrit.
@@ -486,6 +497,16 @@ s'applique qu'une fois `NEXT_PUBLIC_SITE_URL` configurée : sans elle, on ne
 sait pas ce qui est canonique, et refuser par défaut mettrait le site entier
 hors de l'index sur un oubli de variable.
 
+**`/pro/[slug]` dit autre chose qu'une page commune.** Léo Clean opère en mise
+en relation ; une société cliente du SaaS est prestataire et emploie ses propres
+agents. Sa page présente donc une entreprise, ses prestations et **ses** tarifs,
+qui ne sont pas ceux de la marketplace. Le catalogue est lu sur un client
+cloisonné à cette organisation : c'est ce qui garantit qu'une société ne peut ni
+voir ni faire voir les tarifs d'une autre, ce qui compte d'autant plus qu'elles
+se font concurrence sur le même territoire. La page est prérendue par
+`generateStaticParams` avec `dynamicParams` ouvert, si bien qu'une société
+enregistrée après la construction est servie sans redéploiement.
+
 ## Coque applicative
 
 Le site se consulte debout, dans la rue, à une main : c'est là que la décision
@@ -735,11 +756,96 @@ bouton « Annuler » qui n'annulerait rien serait pire que son absence. Le barè
 est affiché, lu depuis le module de tarification, et l'annulation se fait par
 téléphone — ce qui est le fonctionnement réel.
 
+## Espace intervenant
+
+**Deux listes, dans l'ordre de l'urgence.** Les propositions d'abord — elles ont
+un délai de réponse qui court, et c'est la seule chose à faire aujourd'hui — les
+missions acceptées ensuite, avec ce qu'il faut pour s'y rendre.
+
+**Accepter fait basculer la réservation et l'affectation ensemble**, dans une
+transaction : une mission acceptée dont la réservation resterait `ASSIGNED`
+laisserait le client sans confirmation, et l'écart ne se verrait qu'à la
+lecture. C'est l'acceptation, et elle seule, qui écrit `CONFIRMED`.
+
+**Un refus rejoue le moteur d'attribution.** Le refus humain mérite le même
+traitement que le refus technique de la base : `reattribuer()` recharge les
+plannings du jour, les temps de trajet réels et le classement par score, en
+écartant ceux qui ont déjà décliné. Si personne ne reste, la réservation revient
+en `PENDING_ASSIGNMENT` avec un événement qui le dit — un état visible, que le
+back-office liste, plutôt qu'un client qui attend quelqu'un qui ne viendra pas.
+
+**Le refus est enregistré hors de la transaction de réattribution**, et ce n'est
+pas un oubli : la contrainte d'exclusion se prononce à l'écriture de la nouvelle
+affectation, si bien qu'une transaction unique qui échouerait sur elle annulerait
+aussi le refus — l'intervenant se retrouverait avec la mission qu'il vient de
+décliner.
+
+**La semaine type est le seul chemin par lequel des heures entrent en base**, et
+sa capacité `availability:manage:own` n'est détenue par aucun rôle de gestion :
+le produit ne crée pas de lien de subordination. `src/lib/availability/semaine.ts`
+est pur et sert deux fois — l'écran empêche de se tromper, la server action
+empêche de contourner. Pas de 30 minutes, plage minimale de 2 h : une plage de
+dix minutes produirait des créneaux que le moteur ne peut pas remplir.
+
+**Ce qui n'y est pas, et pourquoi c'est bloquant pour la production** :
+l'inscription (un intervenant s'enregistre par `npm run db:intervenant`), le
+dépôt des pièces justificatives, la pose d'une absence — le moteur lit les
+`AvailabilityException`, rien ne les écrit — la clôture d'une mission et le suivi
+des revenus. Voir « Ce que la chaîne n'a pas encore ».
+
+## Back-office plateforme
+
+**Il montre du travail à faire, pas des indicateurs.** Une page
+d'administration qui affiche des courbes se consulte une fois ; une page qui dit
+ce qui attend s'ouvre tous les matins. Quatre listes, chacune correspondant à
+une situation où l'absence d'intervention humaine se paie : réservations sans
+intervenant, propositions dont le délai est passé, demandes de rappel non
+traitées, intervenants dont le SIRET, l'assurance ou la pièce d'identité
+conditionnent la première mission.
+
+La lecture traverse les organisations, ce que seul un administrateur plateforme
+peut faire : elle passe par le client non cloisonné, et `asPlatformAdmin()` est
+vérifié à l'entrée de la page, où cela se lit.
+
+**L'écran est en lecture seule** : il désigne le travail, il ne le fait pas
+encore. Rattraper une réservation orpheline ou relancer une proposition périmée
+se fait aujourd'hui à la main.
+
+## Données personnelles
+
+**Le droit d'accès rend tout ce qui est rattaché à la personne**, en un fichier,
+sans passer par un échange d'emails.
+
+**Le droit à l'effacement est tenu, et ses limites sont dites avant la
+confirmation.** L'article 17 du RGPD écarte l'effacement quand le traitement est
+nécessaire au respect d'une obligation légale, et le code de commerce impose dix
+ans de conservation des documents comptables : **une facture émise ne s'efface
+pas.** Promettre le contraire serait plus grave que de le refuser, parce que la
+promesse serait tenue à l'écran et démentie en base. D'où deux catégories
+annoncées à la personne : effacé — adresses, consignes d'accès, téléphone,
+notes, avis, demandes de rappel, sessions et connexions ; conservé mais détaché
+de l'identité — montants, factures et réservations qui les portent.
+
+**L'identité est neutralisée, pas supprimée.** Effacer la ligne `User`
+emporterait en cascade les réservations, donc la comptabilité. L'email est
+remplacé par un jeton sur un domaine `.invalid`, qui ne peut pas être enregistré
+et vers lequel aucun message ne partira jamais par erreur.
+
+L'effacement exige de recopier un mot, lu par l'écran et par le serveur dans le
+même module : afficher un mot et en attendre un autre est la meilleure façon de
+rendre une suppression impossible sans que personne comprenne pourquoi.
+
 ## Vitrine statique de démonstration
 
 `npm run build:demo -- --base-path /depot` produit dans `out/` un site de
-fichiers, publié sur GitHub Pages par `.github/workflows/leoclean-pages.yml`.
-Elle sert à montrer et à faire relire, jamais à prendre des réservations.
+fichiers. Elle sert à montrer et à faire relire, jamais à prendre des
+réservations.
+
+**Elle n'est plus publiée automatiquement.** Le workflow GitHub Pages a été
+retiré le jour où une base de production a pu être installée en une commande
+(`npm run db:init`) : maintenir en ligne un double intégral du site pour montrer
+ce que le site montre déjà n'avait plus d'objet, et c'était une surface
+indexable de plus à surveiller. La construction reste vivante et testée.
 
 **Le tunnel y fonctionne pour de bon**, et c'est le bénéfice concret d'avoir
 tenu les moteurs purs : tarification et disponibilité sont les mêmes fonctions
@@ -859,23 +965,44 @@ src/
       config.ts        configuration Auth.js
       permissions.ts   capacités par rôle
       session.ts       vérifications d'accès côté serveur
-  proxy.ts             redirection optimiste (ex-middleware.ts)
     catalogue.ts       lecture du catalogue et devis, sur client cloisonné
+    organizations.ts   résolution de l'organisation côté serveur
     booking/           création de réservation, transactionnelle (server-only)
+      known-client.ts  profil, adresses et dernier choix d'un client connu
+      client-bookings.ts réservations d'un client, pour son espace
+      horizon.ts       horizon de réservation et marge de trajet (constantes)
+    assignments/       missions de l'intervenant et réattribution après refus
+    availability/      semaine type déclarée — pur
+    administration/    tableau de bord plateforme, ce qui attend un humain
+    societes/          page publique d'une société cliente du SaaS
+    rgpd/              accès et effacement, avec leurs limites
+    securite/          limitation de débit des formulaires publics
+    referral/          parrainage — pur et testé, non branché
     geo/ban.ts         Base Adresse Nationale, géocodage et couverture
     phone.ts           normalisation des numéros français
     pricing/           moteur de tarification, pur et testé
     scheduling/        disponibilité, trajets, créneaux et score — pur
       repository.ts    chargement de l'instantané de planning (server-only)
       travel-cache.ts  cache des temps de trajet en base (server-only)
+  proxy.ts             répartition des hôtes et redirection optimiste
 prisma/
-  schema.prisma        31 modèles, tous cloisonnés sauf exception justifiée
+  schema.prisma        35 modèles, tous cloisonnés sauf exception justifiée
   migrations/          migrations versionnées, SQL PostGIS écrit à la main
+  socle.ts             organisation, catalogue et tarifs — le minimum vital
+  init.ts              installe une base de production, sans fiction
+  intervenant.ts       enregistre un intervenant réel, en attendant l'inscription
   seed.ts              3 organisations, 12 intervenants, 60 réservations
-  fixtures/streets.ts  156 voies réelles issues de la Base Adresse Nationale
+  fixtures/streets.ts  192 voies réelles issues de la Base Adresse Nationale
 test/                  amorçage des tests d'intégration
 e2e/                   Playwright
+docs/                  audits, journal de refonte, gel fonctionnel
 ```
+
+`prisma/seed.ts` **tronque toutes les tables** et n'a sa place que sur une base
+jetable. Une base de production s'installe par `db:init`, qui ne crée que
+l'organisation marketplace, son catalogue et ses tarifs : une base de production
+peuplée de douze intervenants fictifs proposerait de vrais créneaux tenus par des
+gens qui n'existent pas, et un client pourrait réserver l'un d'eux.
 
 `src/lib/territory.ts` est une constante du projet. Ses données proviennent de
 `geo.api.gouv.fr` et alimentent le contrôle de couverture, le géocodage, les
@@ -964,15 +1091,68 @@ npm run e2e          # Playwright (construit et démarre l'app)
 npm run format       # Prettier
 
 npm run db:migrate      # applique une nouvelle migration
-npm run db:seed         # remplit la base de développement
+npm run db:seed         # remplit la base de développement (tronque tout d'abord)
+npm run db:init         # installe une base de production, sans données fictives
+npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
+npm run build:demo      # vitrine statique de démonstration dans out/
 ```
 
 `npm run typecheck` lance `next typegen` au préalable : les types de routes
 (`LayoutProps`, `PageProps`) sont générés et absents d'un dépôt fraîchement
 cloné.
 
+## Ce que la chaîne n'a pas encore
+
+Le produit est complet du référencement jusqu'au rendez-vous confirmé. Ce qui
+suit est ce qui manque **après** la confirmation, écrit ici pour qu'aucune de ces
+absences ne soit redécouverte en production.
+
+**Un seul email part du produit : le lien de connexion.** Ni confirmation de
+réservation au client, ni notification de mission à l'intervenant, ni rappel
+avant le passage, ni alerte sur une demande de rappel. `sendEmail` existe,
+`react-email` est installé, et un seul appelant s'en sert. C'est le manque le
+moins coûteux à combler et le plus visible du dehors : aujourd'hui, un
+intervenant ne sait qu'on l'attend que s'il ouvre son espace.
+
+**Aucun ordonnanceur.** Les variables Inngest sont déclarées, rien ne les lit.
+Cinq travaux planifiés en dépendent, et aucun n'existe : l'expiration d'une
+proposition non répondue — `AssignmentStatus.EXPIRED` n'est écrit par personne,
+si bien qu'une proposition se périme en silence et n'apparaît que dans la liste
+du back-office —, la préautorisation à H-24, le prélèvement à H+24, le
+reversement hebdomadaire, la purge des compteurs de débit.
+
+**La vie d'une réservation s'arrête à `CONFIRMED`.** `IN_PROGRESS`, `COMPLETED`
+et `NO_SHOW` sont modélisés et jamais écrits. Sans clôture de mission : pas de
+facture émise, pas d'avis à demander, pas de reversement à déclencher, pas de
+passage suivant à caler. C'est le maillon qui manque pour que le service tourne
+au quotidien, et il ne dépend d'aucun tiers.
+
+**Modélisé, seedé, jamais écrit par le produit** : `Payment`, `Payout`,
+`Invoice`, `Review`, `Message`, `Subscription`, `Referral` et
+`ReferralCode`, `CalendarConnection` et `ExternalBusyBlock`, `WebhookEvent`. Le
+parrainage est le cas le plus trompeur : `src/lib/referral/` est écrit, pur et
+testé, sans un seul appelant ni écran. Les tables ne mentent pas sur l'intention,
+elles ne disent rien de ce qui est branché.
+
+**Le paiement n'est pas commencé.** Ce n'est pas une clé qui manque : le SDK
+Stripe n'est pas installé, et les deux routes de webhook annoncées par
+`.env.example` (`/api/webhooks/stripe`, `/api/webhooks/stripe-connect`) n'existent
+pas. À écrire en _separate charges and transfers_, le modèle à deux factures
+interdisant le _destination charge_.
+
+**Le temps de trajet réel non plus.** `TRAVEL_TIME_PROVIDER` accepte
+`openrouteservice` et `osrm`, et aucun des deux n'est implémenté : seul le
+fournisseur géométrique existe, derrière son cache. Ce n'est pas bloquant —
+1,4 minute d'erreur moyenne sur le territoire — mais la variable promet plus que
+le code ne tient.
+
 ## Avancement
+
+État au 17 août 2026 : **336 tests unitaires** (26 fichiers), **10 suites
+d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
+chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
+ils disent l'effort consenti à ce moment-là.
 
 - [x] **Phase 0 — Fondations.** Next 16, TypeScript strict, Tailwind 4 +
       shadcn/ui, identité visuelle, validation Zod de l'environnement,
@@ -988,11 +1168,11 @@ cloné.
       deux factures → crédit d'impôt → reste à charge, barème d'annulation à
       six paliers, catalogue cloisonné avec tarifs historisés.
 - [x] **Phase 4 — Site public, SEO local et GEO/AEO.** Les 16 communes
-      publiées, 12 pages d'intention secondaire (`/femme-de-menage/<commune>`,
-      `/repassage/<commune>`), 5 articles de conseil dont un retenu jusqu'à la
-      déclaration SAP, JSON-LD complet (dont `Article`),
-      robots/sitemap/llms.txt, API publique, pages tarifs et à propos,
-      formulaire de rappel, système de design appliqué. 49 pages prérendues.
+      publiées, 6 pages d'intention secondaire (`/femme-de-menage/<commune>`,
+      `/repassage/<commune>`, trois communes chacune), 5 articles de conseil
+      dont un retenu jusqu'à la déclaration SAP, JSON-LD complet (dont
+      `Article`), robots/sitemap/llms.txt, API publique, pages tarifs et à
+      propos, formulaire de rappel, système de design appliqué.
 - [x] **Phase 5 — Moteur de disponibilité et de tournée.** Algèbre
       d'intervalles, disponibilité comme source de vérité unique, temps de
       trajet calibré sur des itinéraires réels, coût d'insertion, score
@@ -1012,8 +1192,18 @@ cloné.
       l'accueil, les tarifs, l'index des communes et les pages d'intention.
       Journal et fiches d'évidence dans `docs/REFONTE-UX.md`, contrat de
       non-régression dans `docs/FEATURES-FREEZE.md`.
-- [ ] Phase 7 — Paiement Stripe _(bloquée : aucune clé Stripe)_
-- [ ] Phase 8 — Espace intervenant _(mise en production visée ici)_
+- [x] **Application installable et espace client.** Service worker limité aux
+      fichiers versionnés, `/hors-ligne`, invitation d'installation après une
+      réservation confirmée, `/mon-espace` sur le lien magique existant.
+- [ ] Phase 7 — Paiement Stripe _(non commencée : ni SDK, ni routes de webhook,
+      ni clés)_
+- [ ] **Phase 8 — Espace intervenant, partielle** _(mise en production visée
+      ici)_. **Fait** : missions et propositions, acceptation qui écrit `CONFIRMED`,
+      refus qui rejoue l'attribution en écartant ceux qui ont décliné, semaine
+      type déclarée par l'intéressé seul. **Manque** : inscription (aujourd'hui
+      `npm run db:intervenant`), pièces justificatives, absences, clôture de
+      mission, revenus. Et, hors de l'espace, les emails et l'ordonnanceur sans
+      lesquels rien ne prévient personne.
 - [x] **Phase 8 bis — Tunnel pour utilisateur connu.** `known-client.ts` lit le
       profil, le carnet d'adresses dédoublonné et le dernier choix, sur un
       client cloisonné et sans jamais désigner le profil lu ; le tunnel
@@ -1023,15 +1213,26 @@ cloné.
       de onze. Un client de la marketplace n'ayant pas de `Membership`,
       l'autorisation ne peut pas passer par `requireOrganization` — la raison
       est écrite dans le module.
-- [ ] Phase 9 — Synchronisation d'agenda externe
-- [ ] Phase 10 — Optimisation des temps de trajet
-- [ ] Phase 11 — Page `/pro/[slug]`
-- [ ] Phase 12 — Back-office plateforme
-- [ ] Phase 13 — Durcissement et conformité
-- [ ] Refonte UX, phase 5 — espace client (réservations, modification,
-      annulation, notation, adresses, moyens de paiement, parrainage). **Ne
-      peut pas précéder les fonctionnalités qu'elle refond** : à traiter une
-      fois le périmètre produit terminé, après la phase 12.
+- [ ] Phase 9 — Synchronisation d'agenda externe _(modèles seuls)_
+- [ ] Phase 10 — Optimisation des temps de trajet _(interface et cache prêts,
+      aucun fournisseur d'itinéraire implémenté)_
+- [x] **Phase 11 — Page `/pro/[slug]`.** Société présentée avec ses prestations
+      et ses tarifs à elle, catalogue lu sur un client cloisonné, prérendu avec
+      `dynamicParams` ouvert. Back-office société toujours repoussé.
+- [ ] **Phase 12 — Back-office plateforme, partielle.** Quatre listes de travail
+      à faire — réservations sans intervenant, propositions périmées, rappels non
+      traités, intervenants à vérifier — derrière `asPlatformAdmin()`. **En
+      lecture seule** : aucune action n'est encore proposée depuis l'écran.
+- [ ] **Phase 13 — Durcissement et conformité, partielle.** **Fait** : droits
+      d'accès et d'effacement avec leurs limites comptables, identité neutralisée
+      plutôt que supprimée, limitation de débit en base sur les formulaires
+      publics, IP condensée. **Manque** : la purge planifiée des compteurs, et
+      tout ce qui relève du paiement.
+- [ ] Refonte UX, phase 5 — espace client (modification, annulation, notation,
+      adresses, moyens de paiement, parrainage). La liste des réservations et les
+      droits RGPD existent déjà ; le reste **ne peut pas précéder les
+      fonctionnalités qu'il refond** — il n'y a rien à annuler tant qu'une
+      annulation n'existe pas, rien à noter tant qu'une mission ne se clôt pas.
 - [ ] Refonte UX, phase 7 — passe UI. Reportée : elle impliquerait une refonte
       du design system lui-même, pas un placage de palette.
 
@@ -1054,4 +1255,12 @@ espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalis
   retenu étant **leoclean.fr** et l'adresse de contact **menage@leoclean.fr**
 - L'accord de coresponsabilité de traitement nomme encore Wecasa et
   `bonjour@wecasa.fr` : à reprendre avant toute publication
-- Accès : base Neon ou Supabase, projet Google Cloud, Stripe, Resend, Inngest, nom de domaine
+- Accès **bloquants pour une mise en ligne**, dans cet ordre : une base
+  PostgreSQL avec PostGIS et `btree_gist` (Neon ou Supabase, extensions activées
+  **avant** la première migration) ; une clé Resend avec le domaine vérifié —
+  sans elle les liens de connexion restent dans la console, donc personne ne se
+  connecte ; le nom de domaine et ses deux sous-domaines, faute de quoi le
+  `noindex` des hôtes `*.vercel.app` ne s'applique pas.
+- Accès **non bloquants** : projet Google Cloud (connexion Google, puis
+  Calendar), Stripe, Inngest, OpenRouteService. Chacun dégrade une
+  fonctionnalité identifiée, aucun n'empêche le site de fonctionner.
