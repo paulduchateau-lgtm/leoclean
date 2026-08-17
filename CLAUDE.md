@@ -1354,6 +1354,7 @@ npm run db:migrate      # applique une nouvelle migration
 npm run db:seed         # remplit la base de développement (tronque tout d'abord)
 npm run db:init         # installe une base de production, sans données fictives
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
+npm run db:utilisateurs-test # comptes nominatifs pour parcourir les espaces
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
 npm run build:deploiement # migre puis construit — ce que Vercel exécute
