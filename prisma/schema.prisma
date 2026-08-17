@@ -305,6 +305,17 @@ model CleanerProfile {
   employmentType EmploymentType @default(INDEPENDENT)
 
   siret              String?
+  /// Numéro de déclaration Services à la personne de l'intervenant.
+  ///
+  /// La facturation en deux lignes suppose **deux** organismes déclarés : celui
+  /// de Léo Clean pour sa coordination, celui de l'intervenant pour le ménage.
+  /// Sans ce numéro, la part de l'intervenant n'ouvre aucun crédit d'impôt au
+  /// client, et la promesse faite en page tarifs ne tient qu'à moitié.
+  ///
+  /// Il s'écrit « SAP » suivi du SIREN, ce qui autorise un recoupement avec le
+  /// SIRET déclaré : deux identités différentes sont soit une faute de frappe,
+  /// soit le numéro de quelqu'un d'autre.
+  sapDeclarationNumber String?
   insuranceExpiresAt DateTime?
   stripeAccountId    String?
   /// Onboarding Stripe Connect achevé : sans cela, aucun reversement possible.

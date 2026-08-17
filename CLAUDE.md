@@ -881,6 +881,40 @@ désigné, l'envoi est refusé plutôt que d'écrire à personne.
 suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
 entier. Annuler puis reprendre reste le chemin.
 
+### Espace intervenant
+
+**Les vérifications sont des fonctions pures, pas des appels réseau.**
+`cleaner/identifiants.ts` contrôle la clé de Luhn du SIRET — une faute de
+frappe sur un chiffre est détectée sans interroger personne, ce qui est la
+vérification la plus rentable du formulaire. L'exception de La Poste, dont les
+établissements suivent une règle différente, est traitée : l'ignorer
+rejetterait des SIRET valides.
+
+**Le numéro SAP se recoupe avec le SIRET.** Il s'écrit « SAP » suivi du SIREN,
+donc il doit porter le même SIREN que le SIRET déclaré. Deux identités
+différentes dans le même formulaire sont soit une faute de frappe, soit le
+numéro de quelqu'un d'autre — et un numéro emprunté ouvrirait un crédit
+d'impôt indu au client, qui le rembourserait.
+
+**`CleanerProfile.sapDeclarationNumber` est nullable et doit le rester.** La
+déclaration met des semaines à être instruite, et refuser de faire travailler
+quelqu'un en attendant reviendrait à ne recruter personne au lancement. Elle
+n'empêche donc pas l'activation, mais tant qu'elle manque la part de cet
+intervenant n'ouvre aucun crédit d'impôt, et `activationState` le dit en
+avertissement plutôt que de le taire.
+
+**Ce qui manque à un dossier est dérivé, jamais posé à la main.** Un drapeau
+« vérifié » levé séparément de l'état des pièces finirait par mentir. La liste
+est en outre exactement celle promise aux clients sous « professionnels
+vérifiés » et affichée aux candidats sur `/travailler-avec-nous` : trois
+surfaces, une seule vérité, vérifiable par n'importe qui.
+
+**Le parrain est le propriétaire du code, et rien d'autre.** `Referral` ne
+porte aucune colonne `referrerUserId` : on remonte au parrain par
+`referralCode.ownerUserId`. Le second niveau n'est donc pas interdit par une
+règle qu'on pourrait lever, il est **inexprimable** dans le schéma — ce qui
+est la seule forme solide de l'interdit posé par l'article L.121-15.
+
 ### Quand personne n'accepte la mission
 
 Le tunnel vend un créneau **ferme**, et il arrive qu'il ne le soit pas : le
