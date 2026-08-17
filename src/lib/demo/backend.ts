@@ -174,6 +174,11 @@ export const demoBookingBackend: BookingBackend = {
       // La vitrine n'écrit rien, donc aucun créneau ne lui est jamais volé :
       // le repli ne peut pas s'y produire.
       usedAlternate: false,
+      // La vitrine n'a ni compte, ni email, ni session : il n'y a pas d'espace
+      // client à ouvrir, et promettre un lien qui ne partira jamais serait la
+      // seule chose que cette démonstration dirait de faux.
+      accessLinkSent: false,
+      accessLinkEmail: null,
       startAt: input.startAt,
       endAt: end.toISOString(),
       grossAmountCents: computed.grossAmountCents,

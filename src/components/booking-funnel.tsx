@@ -2852,6 +2852,30 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
         ) : null}
       </div>
 
+      {/* L'espace client s'ouvre par un lien, pas par une session ouverte
+          d'office : réserver ne prouve pas qu'on possède l'adresse saisie, et
+          une session accordée sur parole laisserait entrer chez quelqu'un
+          d'autre. Le lien est parti seul, il n'y a rien à demander. */}
+      {confirmation.accessLinkSent ? (
+        <div className="rounded-xl border border-border bg-card p-5">
+          <h3 className="font-extrabold">Votre espace est prêt</h3>
+          <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+            Un lien de connexion vient de partir vers{" "}
+            <strong className="text-foreground">
+              {confirmation.accessLinkEmail}
+            </strong>
+            . Vous y retrouverez cette intervention, pourrez écrire à votre
+            intervenant et annuler si besoin.
+          </p>
+          <Link
+            href="/mon-espace"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-mint-400 hover:bg-mint-50"
+          >
+            Ouvrir mon espace
+          </Link>
+        </div>
+      ) : null}
+
       <IntervenantCard cleaner={confirmation.cleaner} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">

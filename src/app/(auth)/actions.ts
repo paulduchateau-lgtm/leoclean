@@ -3,8 +3,7 @@
 import { z } from "zod";
 
 import { publicAction } from "@/lib/actions";
-import { signIn } from "@/lib/auth/config";
-import { prisma } from "@/lib/db";
+import { sendMagicLink } from "@/lib/auth/magic-link";
 import { exigerQuota } from "@/lib/securite/limitation";
 
 /**
@@ -28,10 +27,6 @@ const signInSchema = z.object({
     ),
 });
 
-/** Fenêtre et quota d'envoi de liens de connexion pour une même adresse. */
-const THROTTLE_WINDOW_MINUTES = 10;
-const THROTTLE_MAX_LINKS = 3;
-
 export const requestMagicLink = publicAction(
   signInSchema,
   async ({ email, callbackUrl }) => {
@@ -43,37 +38,12 @@ export const requestMagicLink = publicAction(
      */
     await exigerQuota("connexion");
 
-    /**
-     * Limitation du renvoi de liens.
-     *
-     * Ce formulaire déclenche l'envoi d'un email à une adresse fournie par
-     * l'internaute : sans garde-fou, il sert à inonder la boîte d'un tiers.
-     * Le compte se fait sur les jetons encore valides, donc en base — un
-     * compteur en mémoire ne survivrait pas au caractère distribué du
-     * déploiement.
+    /*
+     * Limitation du renvoi de liens : ce formulaire déclenche un email vers
+     * une adresse fournie par l'internaute, donc sans garde-fou il sert à
+     * inonder la boîte d'un tiers. La règle vit dans `magic-link.ts`, que la
+     * confirmation de réservation appelle aussi.
      */
-    const recent = await prisma.verificationToken.count({
-      where: {
-        identifier: email,
-        expires: {
-          gt: new Date(Date.now() - THROTTLE_WINDOW_MINUTES * 60_000),
-        },
-      },
-    });
-
-    if (recent >= THROTTLE_MAX_LINKS) {
-      return {
-        sent: true as const,
-        throttled: true as const,
-      };
-    }
-
-    await signIn("resend", {
-      email,
-      redirectTo: callbackUrl,
-      redirect: false,
-    });
-
-    return { sent: true as const, throttled: false as const };
+    return sendMagicLink({ email, callbackUrl });
   },
 );

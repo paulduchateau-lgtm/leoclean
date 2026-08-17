@@ -73,6 +73,15 @@ export interface ConfirmationView {
    * venu, vaudrait un rendez-vous manqué.
    */
   usedAlternate: boolean;
+  /**
+   * Un lien de connexion vient de partir vers l'adresse du client.
+   *
+   * Faux quand il était déjà connecté, ou quand l'envoi a échoué — l'échec ne
+   * fait jamais échouer la réservation, qui est écrite.
+   */
+  accessLinkSent: boolean;
+  /** Adresse destinataire du lien, pour pouvoir la rappeler à l'écran. */
+  accessLinkEmail: string | null;
   startAt: string;
   endAt: string;
   grossAmountCents: number;

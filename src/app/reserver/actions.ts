@@ -7,6 +7,8 @@ import type { CleanerCardView } from "@/lib/booking/backend";
 import { bookingCalendar } from "@/lib/booking/ics";
 import { createBooking, listAvailableSlots } from "@/lib/booking/create";
 import { SlotTakenError } from "@/lib/booking/errors";
+import { sendMagicLink } from "@/lib/auth/magic-link";
+import { getCurrentUser } from "@/lib/auth/session";
 import { OutsideCoverageError } from "@/lib/booking/errors";
 import {
   BOOKING_HORIZON_DAYS,
@@ -387,10 +389,45 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
     const cleaner = await cleanerCard(db, created.cleanerProfileId, now);
     const addressLabel = `${input.street}, ${input.postalCode} ${input.cityName}`;
 
+    /*
+     * Ouvrir l'espace client, sans ouvrir de session sur parole.
+     *
+     * Réserver ne prouve pas qu'on possède l'adresse saisie : ouvrir une
+     * session d'office permettrait de réserver avec l'email d'un tiers et
+     * d'atterrir dans son espace, avec son historique et ses adresses. Le lien
+     * de connexion fait exactement le travail qui manque — il prouve la
+     * possession de la boîte — et c'est déjà le mécanisme du dépôt partout
+     * ailleurs.
+     *
+     * Il ne part que si personne n'est connecté : un client déjà identifié n'a
+     * rien à recevoir, il lui suffit d'ouvrir son espace.
+     *
+     * L'échec de l'envoi ne fait pas échouer la réservation. Elle est écrite,
+     * le client doit repartir avec son rendez-vous, et l'accès à l'espace
+     * reste possible par le formulaire de connexion.
+     */
+    let accessLinkSent = false;
+    const alreadySignedIn = (await getCurrentUser()) !== null;
+
+    if (!alreadySignedIn) {
+      try {
+        await sendMagicLink({ email, callbackUrl: "/mon-espace" });
+        accessLinkSent = true;
+      } catch (error) {
+        console.error(
+          "Lien d'accès à l'espace client non envoyé après une réservation confirmée",
+          error,
+        );
+      }
+    }
+
     return {
       bookingId: created.bookingId,
       /** Le créneau préféré a été pris : c'est un repli qui a été retenu. */
       usedAlternate: usedStart !== input.startAt,
+      /** Un lien d'accès à l'espace client vient de partir vers cette adresse. */
+      accessLinkSent,
+      accessLinkEmail: accessLinkSent ? email : null,
       startAt: created.scheduledStart.toISOString(),
       endAt: created.scheduledEnd.toISOString(),
       grossAmountCents: created.grossAmountCents,
