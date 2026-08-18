@@ -1,3 +1,4 @@
+import { SERVICES } from "@/components/home/services";
 import { FACTS } from "@/lib/facts";
 import { formatHourlyRate } from "@/lib/pricing";
 
@@ -20,26 +21,33 @@ import { formatHourlyRate } from "@/lib/pricing";
  * mangue, papaye, ananas — pour que le bandeau annonce la palette entière dès
  * le premier écran. Les fonds restent aux crans 50 : la couleur pleine est
  * réservée à l'action et aux pilules.
+ *
+ * Ce sont les chiffres du prototype, orientés offre, à une exception près :
+ * son « −50 % de crédit d'impôt » est interdit par `fiscal.ts` tant que la
+ * déclaration SAP n'est pas obtenue — les seize communes tiennent la
+ * quatrième tuile. Le nombre de prestations est compté sur la grille de
+ * `services.tsx`, jamais écrit : une cinquième prestation ajoutée là-bas se
+ * répercuterait ici sans qu'on y pense.
  */
 const FIGURES = [
   {
-    value: String(FACTS.communeCount),
-    label: "communes desservies",
+    value: formatHourlyRate(FACTS.lowestHourlyRateCents),
+    label: "en formule régulière",
     tone: "bg-teal-50",
   },
   {
-    value: `${FACTS.maxDriveMinutes} min`,
-    label: "de route au maximum",
+    value: `${FACTS.freeCancellationHours} h`,
+    label: "pour annuler sans rien payer",
     tone: "bg-mango-50",
   },
   {
-    value: formatHourlyRate(FACTS.lowestHourlyRateCents),
-    label: `minimum ${FACTS.minimumBillableMinutes / 60} heures`,
+    value: String(SERVICES.length),
+    label: "prestations, du ménage courant à la fin de bail",
     tone: "bg-papaya-50",
   },
   {
-    value: "1",
-    label: "vrai numéro, quelqu'un décroche",
+    value: String(FACTS.communeCount),
+    label: "communes desservies, au même tarif",
     tone: "bg-pineapple-50",
   },
 ];

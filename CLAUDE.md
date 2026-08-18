@@ -1202,10 +1202,16 @@ le reste vers le bas. Il se pose avant le premier rendu, si bien que le
 décalage ne compte pas — mais la mesure est faite dans les deux états, avec et
 sans parcours enregistré, précisément parce que ce n'est pas évident.
 
-**Le site ne contient aucune image.** La typographie fait tout le travail
-visuel, et les trois familles sont chargées par `next/font` — Alan Sans
-préchargée (chaque titre la demande au premier rendu), JetBrains Mono sans
-préchargement, elle n'apparaît qu'au fil de la lecture.
+**Le site porte deux photos, et seulement en desktop.** Fournies par le
+porteur du projet avec le prototype (héros et bande sombre de l'accueil),
+elles sont importées statiquement — dimensions connues, aucun décalage de mise
+en page, `basePath` de la vitrine géré par Next — et masquées sous `lg:` : en
+mobile, elles coûteraient le premier écran entier là où la thèse doit se lire
+avant tout défilement. Elles semblent générées (le logo du t-shirt est déformé
+sur l'une) : à faire valider avant une communication publique. Les trois
+familles sont chargées par `next/font` — Alan Sans préchargée (chaque titre la
+demande au premier rendu), JetBrains Mono sans préchargement, elle
+n'apparaît qu'au fil de la lecture.
 
 **Deux dépendances ne descendent plus dans le premier octet.** `ContactSheet`
 embarque le `Dialog` de Base UI et n'est chargé qu'à l'ouverture du panneau —
@@ -1426,9 +1432,10 @@ double.
   pas repris** : il contredit `src/lib/fiscal.ts` tant que la déclaration SAP
   n'est pas obtenue. La quatrième tuile reste « un vrai numéro, quelqu'un
   décroche ».
-- Les emplacements photographiques du prototype ne sont pas repris : le site
-  reste sans image (contrainte de performance mesurée), et aucune photo ne doit
-  y entrer sans arbitrage — jamais d'image de banque ou générée.
+- Les deux photos du prototype sont reprises sur arbitrage du porteur du
+  projet (18 août 2026), en desktop seulement. Elles paraissent générées — à
+  faire valider avant une communication publique — et aucune autre image ne
+  doit entrer sans le même arbitrage.
 - Le prototype ouvre le tunnel sur l'adresse ; le produit garde son écran
   commune (même fonction, la couverture se dit tout de suite) et l'adresse
   exacte reste au dernier écran, conformément à « plus une information coûte à

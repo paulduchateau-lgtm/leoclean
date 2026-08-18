@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 
+import { clientEnv } from "@/lib/env";
 import { INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { SITE } from "@/lib/site";
 
@@ -70,6 +71,25 @@ export function SiteHeader({
                 >
                   Devenir intervenant
                 </Link>
+              )}
+              {/* Les deux espaces connectés, en desktop seulement — le mobile
+                  garde ce qui convertit. La vitrine statique ne les embarque
+                  pas : les liens y pointeraient vers des pages absentes. */}
+              {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
+                <>
+                  <Link
+                    href="/mon-espace"
+                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
+                  >
+                    Espace client
+                  </Link>
+                  <Link
+                    href="/intervenant"
+                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
+                  >
+                    Espace cleaner
+                  </Link>
+                </>
               )}
               <Link
                 href="/reserver"

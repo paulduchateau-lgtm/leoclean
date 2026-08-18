@@ -1,4 +1,5 @@
 import {
+  CheckIcon,
   ClockIcon,
   MailIcon,
   MapPinIcon,
@@ -6,7 +7,17 @@ import {
   ShieldCheckIcon,
 } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+
+/*
+ * Les photos sont importées statiquement : Next connaît leurs dimensions —
+ * aucun décalage de mise en page — et applique lui-même le `basePath` de la
+ * vitrine statique, ce que `assetPath()` devrait faire à la main pour un
+ * fichier de `public/`.
+ */
+import photoIntervenante from "@/components/home/photos/intervenante-salon.webp";
+import photoInterieur from "@/components/home/photos/interieur.webp";
 
 import { ContactChannels } from "@/components/contact-channels";
 import { Comparison } from "@/components/home/comparison";
@@ -108,90 +119,126 @@ export default function Home() {
             aria-hidden
           />
 
-          <div className="relative mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
-            {/* Un parcours interrompu se retrouve ici, pas dans la mémoire de
-                la personne : elle revient par l'accueil, et sans ce bandeau
-                elle recommence de zéro. Posé avant le premier rendu, il ne
-                décale rien. */}
-            <ResumeBookingBanner />
+          <div className="relative mx-auto grid w-full max-w-5xl items-center gap-14 px-6 py-10 sm:py-20 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              {/* Un parcours interrompu se retrouve ici, pas dans la mémoire
+                  de la personne : elle revient par l'accueil, et sans ce
+                  bandeau elle recommence de zéro. Posé avant le premier rendu,
+                  il ne décale rien. */}
+              <ResumeBookingBanner />
 
-            {/* La pilule ananas : le badge des moments d'accroche, texte
+              {/* La pilule ananas : le badge des moments d'accroche, texte
                 encre — la signature la plus pétillante de la palette. */}
-            <Badge className="mb-5 gap-1.5 bg-pineapple-300 text-ink-900">
-              <MapPinIcon className="size-3.5" aria-hidden />
-              {FACTS.communeCount} communes au sud de Bordeaux
-            </Badge>
+              <Badge className="mb-5 gap-1.5 bg-pineapple-300 text-ink-900">
+                <MapPinIcon className="size-3.5" aria-hidden />
+                {FACTS.communeCount} communes au sud de Bordeaux
+              </Badge>
 
-            {/* Un seul mot d'accent, en sarcelle : le tropical punch accentue
+              {/* Un seul mot d'accent, en sarcelle : le tropical punch accentue
                 par la couleur, pas par un changement de plume. */}
-            <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
-              Le ménage à domicile, par des personnes qui habitent{" "}
-              <span className="accent-word">à côté</span> de chez vous.
-            </h1>
+              <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
+                Le ménage à domicile, par des personnes qui habitent{" "}
+                <span className="accent-word">à côté</span> de chez vous.
+              </h1>
 
-            {/* La thèse, dite en personnes plutôt qu'en minutes : c'est la
+              {/* La thèse, dite en personnes plutôt qu'en minutes : c'est la
                 proximité qui rend possible la seule promesse qui compte. */}
-            <p className="mt-6 max-w-prose text-lg text-pretty">
-              Nos intervenants vivent dans les communes où ils travaillent.
-              C&apos;est ce qui rend possible la seule promesse qui compte
-              vraiment : la même personne chez vous, à chaque passage.
-            </p>
+              <p className="mt-6 max-w-prose text-lg text-pretty">
+                Nos intervenants vivent dans les communes où ils travaillent.
+                C&apos;est ce qui rend possible la seule promesse qui compte
+                vraiment : la même personne chez vous, à chaque passage.
+              </p>
 
-            {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
+              {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
                 deux appels à l'action visibles demanderaient de choisir lequel
                 compte. */}
-            <div
-              className="mt-8 flex flex-col gap-3 sm:flex-row"
-              data-booking-cta
-            >
-              <Link
-                href="/reserver"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+              <div
+                className="mt-8 flex flex-col gap-3 sm:flex-row"
+                data-booking-cta
               >
-                Réserver un ménage
-              </Link>
-              <a
-                href="#contact"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
-              >
-                Nous écrire
-              </a>
+                <Link
+                  href="/reserver"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+                >
+                  Réserver un ménage
+                </Link>
+                <a
+                  href="#contact"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
+                >
+                  Nous écrire
+                </a>
+              </div>
+
+              {/* Les trois objections qu'on ne pose pas à voix haute, levées
+                sous le geste plutôt qu'en bas de page. */}
+              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-1.5">
+                  <ShieldCheckIcon
+                    className="size-4 shrink-0 text-brand"
+                    aria-hidden
+                  />
+                  Intervenants vérifiés et assurés
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <ClockIcon
+                    className="size-4 shrink-0 text-brand"
+                    aria-hidden
+                  />
+                  Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours}{" "}
+                  h avant
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <RepeatIcon
+                    className="size-4 shrink-0 text-brand"
+                    aria-hidden
+                  />
+                  Sans abonnement
+                </li>
+              </ul>
+
+              {/* La vitrine statique n'embarque pas les espaces connectés : le
+                lien y pointerait vers une page qui n'existe pas. */}
+              {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
+                <p className="mt-5 text-sm text-muted-foreground">
+                  Déjà client ?{" "}
+                  <Link href="/mon-espace" className="text-brand underline">
+                    Accéder à mes interventions
+                  </Link>
+                </p>
+              )}
             </div>
 
-            {/* Les trois objections qu'on ne pose pas à voix haute, levées
-                sous le geste plutôt qu'en bas de page. */}
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              <li className="flex items-center gap-1.5">
-                <ShieldCheckIcon
-                  className="size-4 shrink-0 text-brand"
-                  aria-hidden
+            {/* La photo n'apparaît qu'en desktop : en mobile elle coûterait
+                le premier écran entier, là où la thèse doit se lire avant
+                tout défilement. La carte flottante ne porte que des promesses
+                vraies — pas de personne inventée. */}
+            <div className="relative hidden lg:block">
+              <div className="relative h-[420px] overflow-hidden rounded-[var(--r-2xl)]">
+                <Image
+                  src={photoInterieur}
+                  alt="Un intervenant Léo Clean aspire un canapé dans un salon lumineux"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 480px, 0px"
+                  className="object-cover"
                 />
-                Intervenants vérifiés et assurés
-              </li>
-              <li className="flex items-center gap-1.5">
-                <ClockIcon className="size-4 shrink-0 text-brand" aria-hidden />
-                Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
-                avant
-              </li>
-              <li className="flex items-center gap-1.5">
-                <RepeatIcon
-                  className="size-4 shrink-0 text-brand"
-                  aria-hidden
-                />
-                Sans abonnement
-              </li>
-            </ul>
-
-            {/* La vitrine statique n'embarque pas les espaces connectés : le
-                lien y pointerait vers une page qui n'existe pas. */}
-            {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
-              <p className="mt-5 text-sm text-muted-foreground">
-                Déjà client ?{" "}
-                <Link href="/mon-espace" className="text-brand underline">
-                  Accéder à mes interventions
-                </Link>
-              </p>
-            )}
+              </div>
+              <div className="absolute bottom-8 -left-7 flex max-w-72 items-center gap-3 rounded-[var(--r-l)] bg-card p-4 shadow-xl">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700">
+                  <CheckIcon className="size-5" strokeWidth={3} aria-hidden />
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="font-bold">
+                    Le même intervenant à chaque passage
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Il habite l&apos;une des {FACTS.communeCount} communes du
+                    secteur
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -229,37 +276,52 @@ export default function Home() {
             profondeur de la palette, et les numéros en pilule ananas y portent
             du texte encre — le duo signature du tropical punch. */}
         <section className="bg-teal-900 text-white">
-          <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="text-2xl font-black tracking-tight text-balance text-white">
-              Vous demandez une heure. Quelqu&apos;un l&apos;accepte.
-            </h2>
+          <div className="mx-auto grid w-full max-w-5xl items-center gap-14 px-6 py-16 lg:grid-cols-2">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-balance text-white">
+                Vous demandez une heure. Quelqu&apos;un l&apos;accepte.
+              </h2>
 
-            <ol className="mt-8 grid gap-6 sm:grid-cols-3">
-              {STEPS.map((step) => (
-                <li key={step.number}>
-                  <span
-                    className="flex size-9 items-center justify-center rounded-full bg-pineapple-300 font-display text-base font-bold text-ink-900 tabular-nums"
-                    aria-hidden
-                  >
-                    {step.number}
-                  </span>
-                  <h3 className="mt-3 font-extrabold text-white">
-                    {step.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm text-pretty text-teal-200">
-                    {step.body}
-                  </p>
-                </li>
-              ))}
-            </ol>
+              <ol className="mt-8 space-y-6">
+                {STEPS.map((step) => (
+                  <li key={step.number} className="flex gap-4">
+                    <span
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-pineapple-300 font-display text-base font-bold text-ink-900 tabular-nums"
+                      aria-hidden
+                    >
+                      {step.number}
+                    </span>
+                    <span>
+                      <h3 className="font-extrabold text-white">
+                        {step.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-pretty text-teal-200">
+                        {step.body}
+                      </p>
+                    </span>
+                  </li>
+                ))}
+              </ol>
 
-            {/* L'accent de la bande sombre : la pilule ananas, texte encre. */}
-            <Link
-              href="/reserver"
-              className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-pineapple-300 px-8 font-bold text-ink-900 transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
-            >
-              Commencer
-            </Link>
+              {/* L'accent de la bande sombre : la pilule ananas, texte
+                  encre. */}
+              <Link
+                href="/reserver"
+                className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-pineapple-300 px-8 font-bold text-ink-900 transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
+              >
+                Commencer
+              </Link>
+            </div>
+
+            <div className="relative hidden h-[380px] overflow-hidden rounded-[var(--r-2xl)] lg:block">
+              <Image
+                src={photoIntervenante}
+                alt="Une intervenante Léo Clean nettoie une table basse en bois"
+                fill
+                sizes="(min-width: 1024px) 480px, 0px"
+                className="object-cover"
+              />
+            </div>
           </div>
         </section>
 

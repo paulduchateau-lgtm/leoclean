@@ -28,7 +28,7 @@ import { PUBLIC_RATES } from "@/lib/pricing/public-grid";
 const REGULAR_RATE = PUBLIC_RATES.find((rate) => rate.key === "REGULIER");
 const ONE_OFF_RATE = PUBLIC_RATES.find((rate) => rate.key === "PONCTUEL");
 
-const SERVICES = [
+export const SERVICES = [
   {
     title: "Ménage",
     tagline: "Entretien courant, régulier ou ponctuel",
