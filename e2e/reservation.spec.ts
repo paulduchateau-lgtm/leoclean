@@ -70,7 +70,7 @@ test.describe("réservation", () => {
     await expect(
       page.getByRole("heading", { name: "Où habitez-vous ?" }),
     ).toBeVisible();
-    await expect(page.getByText(/À partir de 29/)).toBeVisible();
+    await expect(page.getByText(/À partir de 28/)).toBeVisible();
     await choisirCommune(page);
 
     // 2. Durée — un nombre d'heures, pas une surface à estimer.
@@ -81,14 +81,14 @@ test.describe("réservation", () => {
 
     // 3. Rythme — c'est ici que le prix apparaît, avant toute donnée
     // personnelle. Chaque formule porte le sien, calculé par le serveur :
-    // 3 h à 29 €/h en formule régulière.
+    // 3 h à 28 €/h en formule régulière.
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
     ).toBeVisible();
     const biweekly = page.getByRole("button", {
       name: /Tous les quinze jours/,
     });
-    await expect(biweekly).toContainText("87,00", { timeout: 20_000 });
+    await expect(biweekly).toContainText("84,00", { timeout: 20_000 });
     await biweekly.click();
 
     // 4. Créneau — le prix reste affiché pendant qu'on choisit son jour.
@@ -137,7 +137,7 @@ test.describe("réservation", () => {
     // Les montants portent une espace fine insécable avant l'euro : on
     // normalise toutes les espaces Unicode plutôt que d'en énumérer deux.
     const main = await page.locator("main").innerText();
-    expect(main.replace(/\s+/g, " ")).toContain("87,00 €");
+    expect(main.replace(/\s+/g, " ")).toContain("84,00 €");
     expect(chosenTime).toMatch(/^\d{2}:\d{2}$/);
 
     // « Le même intervenant, chaque semaine » est la promesse centrale : la
@@ -171,7 +171,7 @@ test.describe("réservation", () => {
 
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
-    ).toContainText("87,00", { timeout: 20_000 });
+    ).toContainText("84,00", { timeout: 20_000 });
 
     // Aucun champ de coordonnées ni d'adresse n'a été rencontré en chemin.
     await expect(page.locator("#firstName")).toHaveCount(0);
@@ -290,11 +290,11 @@ test.describe("réservation", () => {
     await page.fill("#duration", "210");
     await page.getByRole("button", { name: "Choisir mon rythme" }).click();
 
-    // 3 h 30 à 29 €/h en formule régulière, soit la surface de 87 m²
+    // 3 h 30 à 28 €/h en formule régulière, soit la surface de 87 m²
     // que le tunnel déduit de la durée choisie.
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
-    ).toContainText("101,50", { timeout: 20_000 });
+    ).toContainText("98,00", { timeout: 20_000 });
     await expect(page.getByText(/par intervention/)).toContainText("3 h 30");
   });
 
@@ -333,10 +333,10 @@ test.describe("réservation", () => {
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
     ).toBeVisible();
-    // 4 h à 29 €/h en formule régulière.
+    // 4 h à 28 €/h en formule régulière.
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
-    ).toContainText("116,00", { timeout: 20_000 });
+    ).toContainText("112,00", { timeout: 20_000 });
   });
 
   test("ne va jamais plus loin que ce que l'URL rend atteignable", async ({

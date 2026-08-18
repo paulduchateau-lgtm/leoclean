@@ -43,6 +43,11 @@ const ECARTES = [
   // `dynamicParams` est incompatible avec `output: export` — une page rendue
   // à la demande n'existe pas dans un site de fichiers.
   "src/app/pro",
+  // L'ordonnanceur se rend à la demande, et un site de fichiers n'a rien à
+  // ordonner. C'est le cas type de la règle « une route ajoutée est une
+  // exclusion à envisager » : `force-dynamic` est incompatible avec
+  // `output: export`, et rien ne le signale avant la construction.
+  "src/app/api/taches",
   // Le middleware suppose un serveur devant les fichiers.
   "src/proxy.ts",
   // Un plan du site contredirait le `Disallow: /` de la vitrine.
