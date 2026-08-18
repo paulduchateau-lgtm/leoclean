@@ -1,63 +1,75 @@
+import { HouseIcon, RepeatIcon, ShieldCheckIcon, UserIcon } from "lucide-react";
+
 import { Avis } from "@/components/avis";
-import { FACTS } from "@/lib/facts";
 import { SITE } from "@/lib/site";
 
 /**
- * Ce sur quoi Léo Clean s'engage, à la place des avis clients.
+ * Ce que la proximité change concrètement — à la place des avis clients.
  *
  * Il n'y a aucun avis à afficher aujourd'hui, et en fabriquer serait une
  * pratique commerciale trompeuse au sens de l'article L121-2 du code de la
- * consommation — pour un gain sans rapport avec le risque. Un carrousel vide
- * ou des témoignages inventés diraient de toute façon la même chose à qui sait
- * lire : que le service est neuf.
+ * consommation — pour un gain sans rapport avec le risque. Un engagement
+ * vérifiable est l'inverse d'un avis : il n'est pas une preuve du passé mais
+ * une promesse tenue par quelqu'un dont le nom et l'adresse sont sur la page.
  *
- * Un engagement signé est l'inverse d'un avis : il n'est pas une preuve du
- * passé mais une promesse vérifiable, et il est tenu par quelqu'un dont le nom
- * et le numéro sont sur la page. C'est la seule forme de confiance qu'un
- * service qui démarre peut offrir honnêtement.
- *
- * Chaque ligne est une promesse que le produit tient réellement : le délai
- * d'annulation est lu dans le barème, pas recopié.
+ * Le dernier bloc nomme le fondateur et le siège : il n'apparaît que si les
+ * deux sont renseignés — une carte de visite à moitié vide dirait le
+ * contraire de ce qu'elle veut dire.
  */
-const ENGAGEMENTS: readonly { title: string; body: string }[] = [
+
+const ENGAGEMENTS = [
   {
-    title: "Nous arrivons à l'heure",
-    body: "Et si un retard est inévitable, vous êtes prévenu avant l'heure du rendez-vous, pas après.",
+    icon: RepeatIcon,
+    title: "Le même intervenant, chaque semaine",
+    body: "Sur une formule régulière, vous retrouvez la même personne à chaque passage. Elle finit par connaître votre logement, vos habitudes et votre chien.",
   },
   {
-    title: "C'est la même personne qui revient",
-    body: "Sur une formule régulière, vous ne redécouvrez pas quelqu'un de nouveau chaque semaine.",
+    icon: HouseIcon,
+    title: "Des gens qui habitent à côté",
+    body: "Nos intervenants vivent dans les communes où ils travaillent. Un trajet court, c'est une tournée qui tient — et c'est ce qui permet de vous garder le même créneau.",
   },
   {
-    title: `Annulation gratuite jusqu'à ${FACTS.freeCancellationHours} h avant`,
-    body: "Sans motif à donner. Au-delà, un barème plafonné s'applique, et il est affiché avant que vous réserviez.",
+    icon: ShieldCheckIcon,
+    title: "Des professionnels vérifiés",
+    body: "SIRET actif, attestation de responsabilité civile professionnelle, pièce d'identité et RIB contrôlés avant la première intervention.",
   },
   {
-    title: "Le numéro affiché est le nôtre",
-    body: "Vous appelez, quelqu'un décroche. Pas de standard, pas de formulaire resté sans réponse.",
+    icon: UserIcon,
+    title: "Une vraie personne en face",
+    body:
+      SITE.founder !== null && SITE.address.street !== null
+        ? `${SITE.founder}, ${SITE.address.street} à ${SITE.address.city}. Vous écrivez, quelqu'un répond. Pas de standard, pas de message resté sans réponse.`
+        : "Vous écrivez, quelqu'un répond. Pas de standard, pas de message resté sans réponse.",
   },
 ];
 
 export function Engagement() {
   return (
     <section className="mx-auto w-full max-w-4xl px-6 py-16">
-      <h2 className="text-2xl font-black tracking-tight">Nos engagements</h2>
+      <h2 className="text-2xl font-black tracking-tight">
+        Ce que ça change chez vous
+      </h2>
       <p className="mt-2 max-w-prose text-muted-foreground">
-        Léo Clean est un service récent : nous n&apos;avons pas encore
-        d&apos;avis clients à vous montrer, et nous préférons ne pas en
-        inventer. Voici ce sur quoi vous pouvez nous tenir.
+        Léo Clean vient d&apos;ouvrir : nous n&apos;avons pas d&apos;avis
+        clients à vous montrer, et nous n&apos;en inventerons pas. Voici ce qui
+        est vérifiable dès aujourd&apos;hui.
       </p>
 
       <ul className="mt-8 grid gap-5 sm:grid-cols-2">
         {ENGAGEMENTS.map((engagement) => (
           <li
             key={engagement.title}
-            className="rounded-[var(--r-l)] border border-border bg-card p-5"
+            className="flex gap-4 rounded-[var(--r-l)] border border-border bg-card p-5"
           >
-            <h3 className="font-extrabold">{engagement.title}</h3>
-            <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
-              {engagement.body}
-            </p>
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-[var(--r-m)] bg-teal-100 text-teal-700">
+              <engagement.icon className="size-5" aria-hidden />
+            </span>
+            <span>
+              <h3 className="font-extrabold">{engagement.title}</h3>
+              <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+                {engagement.body}
+              </p>
+            </span>
           </li>
         ))}
       </ul>

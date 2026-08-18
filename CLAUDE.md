@@ -387,11 +387,20 @@ rend tenable « la même personne chaque semaine ». Ce n'est pas une faiblesse 
 excuser ni une couverture en construction, c'est le mécanisme. La phrase qui
 le dit ouvre désormais la page au lieu d'être enterrée en milieu de parcours.
 
-**L'ordre des blocs découle de là** : thèse, preuves chiffrées, cadre qui
-sécurise, conséquences concrètes, offre, déroulé, comparatif des modèles,
-communes, engagements, sortie. Le visiteur comprend _pourquoi_ avant qu'on lui
+**L'ordre des blocs découle de là**, repris du prototype à la refonte d'août
+2026 : thèse (avec la réassurance sous le geste), preuves chiffrées,
+paragraphe d'identité, quatre prestations, offre à deux tarifs, déroulé sur la
+bande sombre — qui raconte la diffusion par lots réelle, plus l'attribution
+d'avant —, comparatif des modèles, engagements (« Ce que ça change chez
+vous », fusion des anciennes promesses et du bloc de confiance), communes,
+conseils lus dans `blog.ts`, questions fréquentes aux chiffres dérivés du
+barème, formulaire de contact (le `LeadForm` de `/etre-rappele`, distingué par
+son `sourcePath`), sortie. Le visiteur comprend _pourquoi_ avant qu'on lui
 demande _où_ — l'accueil s'ouvrait auparavant sur « Où habitez-vous ? » et
 seize liens, soit un effort de sélection réclamé avant le premier argument.
+Les engagements précèdent les communes, seule entorse à l'ordre du prototype :
+le test de la page impose qu'aucun lien commune n'apparaisse avant les
+conséquences de la thèse.
 
 **Les seize communes n'ont pas disparu, elles ont changé de fonction.**
 Placées en fin de page et groupées en deux familles, chaque pastille portant

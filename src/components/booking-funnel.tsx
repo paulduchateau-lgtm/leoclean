@@ -1970,9 +1970,8 @@ function HousingStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Personne ne connaît sa surface au mètre près, mais tout le monde sait
-        dire combien de temps il faut. Choisissez une durée : nous indiquons le
-        logement qu&apos;elle couvre habituellement. Elle reste ajustable avec
+        À titre indicatif, un intervenant traite environ {STANDARD_SQM_PER_HOUR}{" "}
+        m² à l&apos;heure. Choisissez une durée : elle reste ajustable avec
         l&apos;intervenant.
       </p>
 
@@ -2124,9 +2123,16 @@ function FrequencyStep({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        En formule régulière, nous calons les passages suivants avec vous après
-        le premier ménage, et nous cherchons à vous envoyer la même personne à
-        chaque fois. Vous ne vous engagez sur rien aujourd&apos;hui.
+        Aucun abonnement à résilier : vous arrêtez quand vous voulez. En formule
+        régulière, nous calons les passages suivants avec vous après le premier
+        ménage, et nous cherchons à vous envoyer la même personne à chaque fois.
+      </p>
+
+      {/* Dire pourquoi un rythme manque vaut mieux que le laisser chercher. */}
+      <p className="text-xs text-muted-foreground">
+        « Une fois par mois » n&apos;est pas proposé : à ce rythme,
+        l&apos;entretien courant n&apos;en est plus un et la promesse d&apos;un
+        intervenant attitré ne tient plus.
       </p>
 
       <Reassurance />
@@ -2248,6 +2254,11 @@ function SlotStep({
 
   return (
     <div className="space-y-5">
+      <p className="text-sm text-muted-foreground">
+        Choisissez l&apos;heure qui vous arrange le mieux, puis celles qui vous
+        iraient aussi.
+      </p>
+
       {/* Les journées complètes restent visibles, barrées : ce que le planning
           ne peut pas offrir se lit, au lieu de disparaître. */}
       {/* Le bandeau s'accroche : un défilement horizontal libre laisse une
@@ -2507,6 +2518,11 @@ function RecapStep({
         onSubmit();
       }}
     >
+      <p className="text-sm text-muted-foreground">
+        Dernière étape : vérifions ensemble. Nous recalculons le trajet sur
+        votre adresse exacte avant de proposer la mission.
+      </p>
+
       <dl className="rounded-xl border border-border bg-card px-5 py-1">
         <RecapLine
           label="Rendez-vous"
@@ -2585,6 +2601,19 @@ function RecapStep({
           Ajouter l&apos;accès au logement et vos priorités
         </button>
       )}
+
+      {/* Ce que la demande devient : la diffusion par lots, dite avant le
+          geste qui engage — personne ne doit découvrir après coup que le
+          rendez-vous dépend d'une acceptation. */}
+      <div className="rounded-xl bg-cream-50 p-5">
+        <p className="font-extrabold">Ce que nous faisons de votre demande</p>
+        <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+          Elle part chez les cinq intervenants qui habitent le plus près de chez
+          vous. Le premier qui accepte l&apos;emporte, et vous êtes prévenu sous
+          24 h. Sans acceptation, la recherche s&apos;élargit puis s&apos;arrête
+          au bout d&apos;une semaine — et nous vous écrivons.
+        </p>
+      </div>
 
       <ul className="space-y-2 text-sm text-muted-foreground">
         <li className="flex items-baseline gap-2">
@@ -2674,7 +2703,7 @@ function ContactStep({
       <p className="text-sm text-muted-foreground">
         {known
           ? "Ces coordonnées sont celles de votre compte. Corrigez-les si besoin."
-          : "Votre compte se crée avec ces informations — aucun mot de passe à choisir."}
+          : "Votre compte se crée à la réservation. Rien à retenir : la connexion se fait par un lien envoyé par email."}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">

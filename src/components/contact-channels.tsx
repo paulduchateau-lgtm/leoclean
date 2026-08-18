@@ -14,13 +14,23 @@ import { SITE, whatsappLink } from "@/lib/site";
 export function ContactChannels({
   communeName,
   className,
+  stacked = false,
 }: {
   communeName?: string;
   className?: string;
+  /** Empilés à toutes les largeurs — pour une colonne étroite, où trois
+      pilules en ligne s'écraseraient. */
+  stacked?: boolean;
 }) {
   return (
     <div className={className}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+      <div
+        className={
+          stacked
+            ? "flex max-w-xs flex-col items-stretch gap-3"
+            : "flex flex-col gap-3 sm:flex-row sm:justify-center"
+        }
+      >
         <a
           href={`tel:${SITE.phoneE164}`}
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"

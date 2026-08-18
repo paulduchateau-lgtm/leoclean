@@ -1,14 +1,23 @@
-import { CheckIcon, MapPinIcon } from "lucide-react";
+import {
+  ClockIcon,
+  MailIcon,
+  MapPinIcon,
+  RepeatIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ContactChannels } from "@/components/contact-channels";
 import { Comparison } from "@/components/home/comparison";
+import { Conseils } from "@/components/home/conseils";
 import { Engagement } from "@/components/home/engagement";
+import { Faq } from "@/components/home/faq";
 import { KeyFigures } from "@/components/home/key-figures";
 import { Prestations } from "@/components/home/prestations";
-import { TrustStrip } from "@/components/home/trust-strip";
+import { Services } from "@/components/home/services";
 import { Zones } from "@/components/home/zones";
+import { LeadForm } from "@/components/lead-form";
 import { ResumeBookingBanner } from "@/components/resume-booking-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -35,47 +44,30 @@ export const metadata: Metadata = pageMetadata({
 export const revalidate = 86_400;
 
 /**
- * Ce que la limite de {@link FACTS.maxDriveMinutes} minutes change chez vous.
+ * Le déroulé réel : diffusion par lots, acceptation explicite.
  *
- * Ces quatre arguments existaient déjà et ne sont pas réécrits : ils sont bons,
- * et le seul défaut de leur ancienne place était de venir avant qu'on ait dit
- * pourquoi. Ils suivent désormais la thèse dont ils sont la conséquence.
+ * L'ancienne copy annonçait « nous choisissons la personne la plus proche »,
+ * ce qui décrivait le modèle d'avant : depuis la diffusion par lots, personne
+ * ne se voit imposer une mission — la demande part chez cinq intervenants et
+ * le premier qui accepte l'emporte. Le déroulé raconte ce qui se passe
+ * vraiment, parce qu'une promesse de fonctionnement fausse se découvre à la
+ * première réservation.
  */
-const PROMISES = [
-  {
-    title: "Le même intervenant, chaque semaine",
-    body: "Sur une formule régulière, vous retrouvez la même personne à chaque passage. Elle finit par connaître votre logement, vos habitudes et votre chien.",
-  },
-  {
-    title: "Des gens qui habitent à côté",
-    body: "Nos intervenants vivent dans les communes où ils travaillent. Quinze minutes de route, pas quarante : c'est ce qui rend possible de tenir un créneau.",
-  },
-  {
-    title: "Un vrai numéro, une vraie personne",
-    body: "Vous appelez, quelqu'un décroche. Pas de standard, pas de formulaire resté sans réponse.",
-  },
-  {
-    title: "Des professionnels vérifiés",
-    body: "SIRET actif, attestation d'assurance responsabilité civile professionnelle, pièce d'identité et RIB contrôlés avant la première intervention.",
-  },
-];
-
-/** Le déroulé, en trois temps. Ce sont les écrans réels du tunnel. */
 const STEPS = [
   {
-    number: "01",
-    title: "Votre commune et votre logement",
-    body: "Deux questions, pas de compte à créer. La surface suffit à estimer la durée.",
+    number: "1",
+    title: "Vous choisissez votre créneau",
+    body: "Six écrans, deux minutes. Le prix s'affiche avant qu'on vous demande la moindre donnée personnelle.",
   },
   {
-    number: "02",
-    title: "Votre créneau, prix affiché",
-    body: "Du lundi au vendredi de 8 h à 19 h, le samedi de 9 h à 13 h. Le prix est connu avant de confirmer.",
+    number: "2",
+    title: "La mission part chez cinq intervenants",
+    body: "Ceux qui habitent le plus près de chez vous et connaissent déjà le secteur. Personne ne se voit imposer une mission.",
   },
   {
-    number: "03",
-    title: "Votre intervenant confirmé",
-    body: "Nous choisissons la personne disponible la plus proche de chez vous, et nous vous la présentons.",
+    number: "3",
+    title: "Le premier qui accepte l'emporte",
+    body: "Vous êtes prévenu sous 24 h, avec son prénom, sa commune et son ancienneté.",
   },
 ];
 
@@ -96,11 +88,6 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col">
         {/* Bloc 1 — la thèse.
-            La page s'ouvrait sur « Où habitez-vous ? » et seize communes :
-            un effort de sélection demandé à quelqu'un à qui on n'avait encore
-            donné aucune raison de rester. Les seize liens sont maintenant en
-            fin de page, où ils servent de preuve au lieu de servir de menu.
-
             Le héros est un lever de soleil — papaye vers le blanc chaud de la
             page — et ses taches colorées sont la signature du système : une
             pièce aérée, pas un bandeau. Elles se posent en absolu derrière le
@@ -142,16 +129,12 @@ export default function Home() {
               <span className="accent-word">à côté</span> de chez vous.
             </h1>
 
-            {/* La thèse du site, et elle n'est pas une excuse. Un périmètre
-                court n'est pas une couverture en construction : c'est le
-                mécanisme qui rend tenable la promesse de revoir la même
-                personne. Cette phrase était enterrée en milieu de page. */}
+            {/* La thèse, dite en personnes plutôt qu'en minutes : c'est la
+                proximité qui rend possible la seule promesse qui compte. */}
             <p className="mt-6 max-w-prose text-lg text-pretty">
-              Nous ne dépassons pas une vingtaine de minutes de route depuis{" "}
-              {SITE.address.city}. C&apos;est une limite que nous nous imposons,
-              et c&apos;est elle qui rend le reste possible : des intervenants
-              qui habitent votre commune, et la même personne chez vous à chaque
-              passage.
+              Nos intervenants vivent dans les communes où ils travaillent.
+              C&apos;est ce qui rend possible la seule promesse qui compte
+              vraiment : la même personne chez vous, à chaque passage.
             </p>
 
             {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
@@ -165,15 +148,39 @@ export default function Home() {
                 href="/reserver"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
               >
-                Réserver
+                Réserver un ménage
               </Link>
-              <Link
-                href="/tarifs"
+              <a
+                href="#contact"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
               >
-                Voir les tarifs
-              </Link>
+                Nous écrire
+              </a>
             </div>
+
+            {/* Les trois objections qu'on ne pose pas à voix haute, levées
+                sous le geste plutôt qu'en bas de page. */}
+            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-1.5">
+                <ShieldCheckIcon
+                  className="size-4 shrink-0 text-brand"
+                  aria-hidden
+                />
+                Intervenants vérifiés et assurés
+              </li>
+              <li className="flex items-center gap-1.5">
+                <ClockIcon className="size-4 shrink-0 text-brand" aria-hidden />
+                Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
+                avant
+              </li>
+              <li className="flex items-center gap-1.5">
+                <RepeatIcon
+                  className="size-4 shrink-0 text-brand"
+                  aria-hidden
+                />
+                Sans abonnement
+              </li>
+            </ul>
 
             {/* La vitrine statique n'embarque pas les espaces connectés : le
                 lien y pointerait vers une page qui n'existe pas. */}
@@ -193,13 +200,11 @@ export default function Home() {
         {/* Bloc 2 — les preuves chiffrées. */}
         <KeyFigures />
 
-        {/* Bloc 3 — le cadre : ce qui sécurise, avant l'objection. */}
-        <TrustStrip />
-
-        {/* Bloc 4 — le paragraphe d'identité.
+        {/* Bloc 3 — le paragraphe d'identité.
             Dense et factuel : c'est celui que les moteurs et les modèles de
             langage citent. Il reste vrai hors de sa page, et chaque chiffre
-            n'y apparaît qu'une fois. */}
+            n'y apparaît qu'une fois. Il porte aussi la mention fiscale — le
+            statut du dossier, rien de plus. */}
         <section className="mx-auto w-full max-w-4xl px-6 pt-16">
           <p className="max-w-prose text-pretty">
             {SITE.description} Nos intervenants se déplacent à{" "}
@@ -214,42 +219,19 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Bloc 5 — la conséquence concrète de la thèse. */}
-        <section className="mx-auto w-full max-w-4xl px-6 py-16">
-          <h2 className="text-2xl font-black tracking-tight">
-            Ce que ça change chez vous
-          </h2>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            {PROMISES.map((promise) => (
-              <div
-                key={promise.title}
-                className="rounded-[var(--r-l)] border border-border bg-card p-5"
-              >
-                <h3 className="flex items-baseline gap-2 text-lg font-extrabold">
-                  <CheckIcon
-                    className="size-4 shrink-0 translate-y-0.5 text-brand"
-                    aria-hidden
-                  />
-                  {promise.title}
-                </h3>
-                <p className="mt-2 text-pretty text-muted-foreground">
-                  {promise.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Bloc 4 — les quatre prestations. */}
+        <Services />
 
-        {/* Bloc 6 — l'offre. */}
+        {/* Bloc 5 — l'offre : deux tarifs, pas de forfait, pas d'abonnement. */}
         <Prestations />
 
-        {/* Bloc 7 — le déroulé, sur la bande sombre sarcelle : c'est la
+        {/* Bloc 6 — le déroulé, sur la bande sombre sarcelle : c'est la
             profondeur de la palette, et les numéros en pilule ananas y portent
             du texte encre — le duo signature du tropical punch. */}
         <section className="bg-teal-900 text-white">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="text-2xl font-black tracking-tight text-white">
-              Comment ça se passe
+            <h2 className="text-2xl font-black tracking-tight text-balance text-white">
+              Vous demandez une heure. Quelqu&apos;un l&apos;accepte.
             </h2>
 
             <ol className="mt-8 grid gap-6 sm:grid-cols-3">
@@ -270,27 +252,104 @@ export default function Home() {
                 </li>
               ))}
             </ol>
+
+            {/* L'accent de la bande sombre : la pilule ananas, texte encre. */}
+            <Link
+              href="/reserver"
+              className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-pineapple-300 px-8 font-bold text-ink-900 transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
+            >
+              Commencer
+            </Link>
           </div>
         </section>
 
-        {/* Bloc 8 — l'alternative. */}
+        {/* Bloc 7 — le comparatif de modèles. */}
         <Comparison />
+
+        {/* Bloc 8 — la conséquence concrète, sans avis inventés.
+            Il précède les communes : le test de la page l'impose — la
+            première commune n'apparaît qu'après la thèse et ses conséquences,
+            jamais avant le premier argument. */}
+        <Engagement />
 
         {/* Bloc 9 — le lieu, en fin de parcours. */}
         <Zones />
 
-        {/* Bloc 10 — la confiance, sans avis inventés. */}
-        <Engagement />
+        {/* Bloc 10 — les conseils : les questions sans nom de ville. */}
+        <Conseils />
 
-        {/* Bloc 11 — la sortie. Le panneau porte LE rose de la palette, en
-            surface arrondie et texte encre — jamais de blanc sur papaye — et
-            le reste de la section demeure sur le fond de page. */}
+        {/* Bloc 11 — les questions fréquentes. */}
+        <Faq />
+
+        {/* Bloc 12 — le contact : un formulaire, à côté des trois canaux.
+            Écrire est le canal de ceux qui ne réserveront pas seuls et
+            n'appellent pas non plus — le formulaire est le même que celui de
+            /etre-rappele, distingué par son chemin d'origine. */}
+        <section
+          id="contact"
+          className="border-t border-border-subtle bg-cream-50"
+        >
+          <div className="mx-auto w-full max-w-4xl px-6 py-16">
+            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-balance">
+                  Une question avant de réserver ?
+                </h2>
+                <p className="mt-2 max-w-prose text-muted-foreground">
+                  Écrivez-nous
+                  {SITE.founder !== null
+                    ? ` : c'est ${SITE.founder.split(" ")[0]} qui lit, et qui répond`
+                    : ""}{" "}
+                  — dans la journée, en semaine.
+                </p>
+
+                <ul className="mt-6 space-y-3 text-sm">
+                  <li className="flex items-center gap-2">
+                    <MailIcon
+                      className="size-4 shrink-0 text-brand"
+                      aria-hidden
+                    />
+                    <a href={`mailto:${SITE.email}`} className="font-medium">
+                      {SITE.email}
+                    </a>
+                  </li>
+                  {SITE.address.street !== null && (
+                    <li className="flex items-center gap-2">
+                      <MapPinIcon
+                        className="size-4 shrink-0 text-brand"
+                        aria-hidden
+                      />
+                      {SITE.address.street}, {SITE.address.postalCode}{" "}
+                      {SITE.address.city}
+                    </li>
+                  )}
+                </ul>
+
+                <div className="mt-8">
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Vous préférez en parler à quelqu&apos;un ?
+                  </p>
+                  <ContactChannels stacked />
+                </div>
+              </div>
+
+              <LeadForm sourcePath="/" />
+            </div>
+          </div>
+        </section>
+
+        {/* Bloc 13 — la sortie. Le panneau porte LE rose de la palette, en
+            surface arrondie et texte encre — jamais de blanc sur papaye. */}
         <section className="border-t border-border-subtle">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
             <div className="rounded-[var(--r-2xl)] bg-papaya-200 p-8 sm:p-12">
               <h2 className="text-2xl font-black tracking-tight text-balance">
-                Une personne qui habite à côté, chez vous cette semaine
+                Votre premier ménage, en deux minutes
               </h2>
+              <p className="mt-2 text-ink-800">
+                Sans engagement. Annulation gratuite jusqu&apos;à{" "}
+                {FACTS.freeCancellationHours} h avant.
+              </p>
 
               <div
                 className="mt-8 flex flex-col gap-3 sm:flex-row"
@@ -309,21 +368,6 @@ export default function Home() {
                   Voir les tarifs
                 </Link>
               </div>
-
-              <p className="mt-4 text-sm text-ink-800">
-                Prix affiché avant de réserver · Rien à payer aujourd&apos;hui ·
-                Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
-                avant
-              </p>
-            </div>
-
-            {/* Les trois canaux directs restent, en second rang : ils servent
-                ceux qui ne réserveront pas seuls, pas ceux qui le feraient. */}
-            <div className="mt-10 border-t border-border/60 pt-6">
-              <p className="mb-4 text-sm text-muted-foreground">
-                Vous préférez en parler à quelqu&apos;un ?
-              </p>
-              <ContactChannels className="[&>div]:sm:justify-start" />
             </div>
 
             {/* La porte côté offre, discrète et tout en bas : quelqu'un qui
