@@ -13,6 +13,11 @@ import { estimateDuration } from "@/lib/pricing";
 import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
+  TARIF_PONCTUEL,
+  TARIF_PONCTUEL_HEURE,
+  TARIF_REGULIER,
+  TARIF_REGULIER_HEURE,
+  totalRegulier,
   STANDARD_SQM_PER_HOUR,
 } from "@/lib/pricing/public-grid";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
@@ -30,8 +35,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/tarifs",
   summary: `Le ménage à domicile Léo Clean coûte ${formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)} en formule régulière et ${formatHourlyRate(PUBLIC_RATES[1]!.hourlyRateCents)} en intervention ponctuelle, minimum ${MINIMUM_BILLABLE_MINUTES / 60} heures, au même tarif dans les ${COMMUNES.length} communes du sud de Bordeaux.`,
   title: "Tarifs du ménage à domicile",
-  description:
-    "Ménage à domicile à partir de 29 €/h en formule régulière, 33 €/h en ponctuel. Minimum 2 heures. Tarifs identiques dans les 16 communes desservies au sud de Bordeaux.",
+  description: `Ménage à domicile à partir de ${TARIF_REGULIER_HEURE} en formule régulière, ${TARIF_PONCTUEL_HEURE} en ponctuel. Minimum ${MINIMUM_BILLABLE_MINUTES / 60} heures. Tarifs identiques dans les ${COMMUNES.length} communes desservies au sud de Bordeaux.`,
 });
 
 export const revalidate = 86_400;
@@ -47,8 +51,7 @@ const EXAMPLES = [
 const FAQ = [
   {
     question: "Combien coûte une femme de ménage à Léognan ?",
-    answer:
-      "Chez Léo Clean, le ménage à domicile coûte 29 € de l'heure en formule régulière et 33 € de l'heure pour une intervention ponctuelle, avec un minimum de deux heures. Un logement de 80 m² demande environ 3 h 30, soit 101,50 € en formule régulière.",
+    answer: `Chez Léo Clean, le ménage à domicile coûte ${TARIF_REGULIER} de l'heure en formule régulière et ${TARIF_PONCTUEL} de l'heure pour une intervention ponctuelle, avec un minimum de deux heures. Un logement de 80 m² demande environ 3 h 30, soit ${totalRegulier(3.5)} en formule régulière.`,
   },
   {
     question: "Y a-t-il des frais d'abonnement ou de dossier ?",

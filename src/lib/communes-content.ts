@@ -1,4 +1,9 @@
 import {
+  TARIF_PONCTUEL,
+  TARIF_REGULIER,
+  totalRegulier,
+} from "./pricing/public-grid";
+import {
   estimateDuration,
   formatDuration,
   formatEuros,
@@ -158,8 +163,7 @@ const CONTENT: Record<string, CommuneContent> = {
     faq: [
       {
         question: "Intervenez-vous en appartement à Villenave-d'Ornon ?",
-        answer:
-          "Oui. Villenave-d'Ornon compte davantage d'appartements que le reste de notre zone. Un T3 d'environ 65 m² demande environ trois heures d'entretien, soit 87 € en formule régulière.",
+        answer: `Oui. Villenave-d'Ornon compte davantage d'appartements que le reste de notre zone. Un T3 d'environ 65 m² demande environ trois heures d'entretien, soit ${totalRegulier(3)} en formule régulière.`,
       },
       {
         question:
@@ -191,8 +195,7 @@ const CONTENT: Record<string, CommuneContent> = {
       },
       {
         question: "Proposez-vous un ménage de fin de bail à Gradignan ?",
-        answer:
-          "Oui, au tarif de 33 € de l'heure. La demande est fréquente à Gradignan compte tenu de la proximité du campus universitaire, avec des états des lieux concentrés en juin et en septembre.",
+        answer: `Oui, au tarif de ${TARIF_PONCTUEL} de l'heure. La demande est fréquente à Gradignan compte tenu de la proximité du campus universitaire, avec des états des lieux concentrés en juin et en septembre.`,
       },
     ],
   },
@@ -272,8 +275,7 @@ const CONTENT: Record<string, CommuneContent> = {
       },
       {
         question: "Cadaujac est-il couvert aux mêmes tarifs que Léognan ?",
-        answer:
-          "Oui. Le tarif est identique dans les treize communes de la Communauté de communes de Montesquieu : 29 € de l'heure en formule régulière, 33 € de l'heure pour une intervention ponctuelle.",
+        answer: `Oui. Le tarif est identique dans les treize communes de la Communauté de communes de Montesquieu : ${TARIF_REGULIER} de l'heure en formule régulière, ${TARIF_PONCTUEL} de l'heure pour une intervention ponctuelle.`,
       },
     ],
   },
@@ -299,8 +301,7 @@ const CONTENT: Record<string, CommuneContent> = {
       },
       {
         question: "Peut-on réserver un ménage ponctuel avant une réception ?",
-        answer:
-          "Oui. Une intervention ponctuelle se réserve au tarif de 33 € de l'heure, avec un minimum de deux heures, et sans engagement.",
+        answer: `Oui. Une intervention ponctuelle se réserve au tarif de ${TARIF_PONCTUEL} de l'heure, avec un minimum de deux heures, et sans engagement.`,
       },
     ],
   },
@@ -410,8 +411,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question:
           "Le tarif est-il le même qu'à Léognan, à huit kilomètres de là ?",
-        answer:
-          "Oui. Les deux communes partagent l'appellation Pessac-Léognan mais aussi la même grille : 29 € de l'heure en formule régulière, 33 € de l'heure en ponctuel, dans les seize communes desservies.",
+        answer: `Oui. Les deux communes partagent l'appellation Pessac-Léognan mais aussi la même grille : ${TARIF_REGULIER} de l'heure en formule régulière, ${TARIF_PONCTUEL} de l'heure en ponctuel, dans les seize communes desservies.`,
       },
     ],
   },
@@ -462,7 +462,7 @@ const CONTENT: Record<string, CommuneContent> = {
       {
         question: "Deux heures suffisent-elles pour un logement à Beautiran ?",
         answer:
-          "Souvent, oui. Deux heures correspondent à environ 50 m² d'entretien courant, soit 58 € en formule régulière — un format adapté aux maisons de bourg et aux logements de lotissement de la commune. Deux heures sont par ailleurs le minimum facturé.",
+          "Souvent, oui. Deux heures correspondent à environ 50 m² d'entretien courant, soit ${totalRegulier(2)} en formule régulière — un format adapté aux maisons de bourg et aux logements de lotissement de la commune. Deux heures sont par ailleurs le minimum facturé.",
       },
       {
         question: "Intervenez-vous avant ou après un trajet en train ?",

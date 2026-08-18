@@ -1,3 +1,5 @@
+import { formatEuros, formatHourlyRate } from "./money";
+
 /**
  * Grille tarifaire publique de Léo Clean.
  *
@@ -61,6 +63,49 @@ export const STANDARD_SQM_PER_HOUR = 25;
 
 /** Taux du crédit d'impôt services à la personne, en points de base. */
 export const TAX_CREDIT_RATE_BP = 5000;
+
+/** Tarif d'une formule, en centimes, cherché par sa clé. */
+function tarif(key: "REGULIER" | "PONCTUEL"): number {
+  return PUBLIC_RATES.find((rate) => rate.key === key)!.hourlyRateCents;
+}
+
+/**
+ * Les tarifs, tels qu'une phrase les écrit.
+ *
+ * Le contenu éditorial cite des prix — pages communes, pages d'intention, page
+ * tarifs. Recopiés à la main, ils survivent à un changement de grille et
+ * laissent derrière eux des pages qui annoncent un tarif que le tunnel ne
+ * pratique plus. C'est arrivé : la page tarifs a affiché 28 € dans son tableau
+ * et 29 € dans sa prose, sur le même écran.
+ *
+ * Deux formes, parce que la langue en demande deux : « 28 €/h » dans un
+ * tableau ou une méta-description, « 28 € de l'heure » dans une phrase.
+ */
+export const TARIF_REGULIER_HEURE = formatHourlyRate(tarif("REGULIER"));
+export const TARIF_PONCTUEL_HEURE = formatHourlyRate(tarif("PONCTUEL"));
+export const TARIF_REGULIER = formatHourlyRate(tarif("REGULIER")).replace(
+  "/h",
+  "",
+);
+export const TARIF_PONCTUEL = formatHourlyRate(tarif("PONCTUEL")).replace(
+  "/h",
+  "",
+);
+
+/**
+ * Total d'un nombre d'heures, tel qu'une phrase l'écrit.
+ *
+ * Le contenu éditorial illustre les tarifs par des exemples — « trois heures,
+ * soit 84 € ». Recopiés, ces totaux mentent au premier changement de grille, et
+ * plus discrètement qu'un tarif horaire : personne ne les recalcule en lisant.
+ */
+export function totalRegulier(heures: number): string {
+  return formatEuros(tarif("REGULIER") * heures);
+}
+
+export function totalPonctuel(heures: number): string {
+  return formatEuros(tarif("PONCTUEL") * heures);
+}
 
 /** Tarif le plus bas de la grille : le « à partir de » des pages publiques. */
 export const LOWEST_HOURLY_RATE_CENTS = Math.min(
