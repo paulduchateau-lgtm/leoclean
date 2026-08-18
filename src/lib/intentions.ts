@@ -1,3 +1,10 @@
+import {
+  TARIF_PONCTUEL,
+  TARIF_REGULIER,
+  TARIF_REGULIER_HEURE,
+  totalPonctuel,
+  totalRegulier,
+} from "./pricing/public-grid";
 import { type Commune, getCommuneBySlug } from "./territory";
 
 /**
@@ -59,8 +66,7 @@ const INTENTIONS: readonly Intention[] = [
   {
     slug: "femme-de-menage",
     titleTemplate: "Femme de ménage à {commune} : comment en trouver une",
-    descriptionTemplate:
-      "Trouver une femme de ménage à {commune} : emploi direct, mandataire ou prestation, ce que chaque solution implique. Léo Clean intervient à {commune} à partir de 29 €/h, sans lien d'employeur.",
+    descriptionTemplate: `Trouver une femme de ménage à {commune} : emploi direct, mandataire ou prestation, ce que chaque solution implique. Léo Clean intervient à {commune} à partir de ${TARIF_REGULIER_HEURE}, sans lien d'employeur.`,
     lede: "« Femme de ménage » est le mot que tout le monde emploie, et le métier est très majoritairement exercé par des femmes. Il recouvre pourtant trois situations juridiques différentes, qui n'engagent pas du tout la même chose de votre part. Savoir laquelle vous cherchez évite la plupart des mauvaises surprises.",
     sections: [
       {
@@ -134,8 +140,7 @@ const INTENTIONS: readonly Intention[] = [
         faq: [
           {
             question: "Intervenez-vous dans les logements étudiants ?",
-            answer:
-              "Oui, essentiellement pour des ménages de fin de bail, au tarif ponctuel de 33 € de l'heure. Un studio ou un T1 se traite en deux heures, la durée minimale facturée. À Gradignan, ces demandes se concentrent en juin et en septembre : réservez dix jours à l'avance sur ces deux mois.",
+            answer: `Oui, essentiellement pour des ménages de fin de bail, au tarif ponctuel de ${TARIF_PONCTUEL} de l'heure. Un studio ou un T1 se traite en deux heures, la durée minimale facturée. À Gradignan, ces demandes se concentrent en juin et en septembre : réservez dix jours à l'avance sur ces deux mois.`,
           },
           {
             question:
@@ -167,8 +172,7 @@ const INTENTIONS: readonly Intention[] = [
           {
             question:
               "Combien coûte un ménage d'appartement à Villenave-d'Ornon ?",
-            answer:
-              "Un appartement de 60 m² demande environ deux heures et demie, soit 72,50 € en formule régulière à 29 € de l'heure et 82,50 € en intervention ponctuelle à 33 €. C'est la configuration la plus fréquente le long du tramway.",
+            answer: `Un appartement de 60 m² demande environ deux heures et demie, soit ${totalRegulier(2.5)} en formule régulière à ${TARIF_REGULIER} de l'heure et ${totalPonctuel(2.5)} en intervention ponctuelle à ${TARIF_PONCTUEL}. C'est la configuration la plus fréquente le long du tramway.`,
           },
           {
             question: "Le quartier compte-t-il pour être servi rapidement ?",
@@ -183,8 +187,7 @@ const INTENTIONS: readonly Intention[] = [
   {
     slug: "repassage",
     titleTemplate: "Repassage à domicile à {commune}",
-    descriptionTemplate:
-      "Repassage à domicile à {commune} : en option d'un ménage ou en prestation seule, à partir de 29 €/h, minimum 2 heures. Votre linge reste chez vous.",
+    descriptionTemplate: `Repassage à domicile à {commune} : en option d'un ménage ou en prestation seule, à partir de ${TARIF_REGULIER_HEURE}, minimum 2 heures. Votre linge reste chez vous.`,
     lede: "Le repassage se compte en corbeilles, pas en mètres carrés. Une corbeille familiale de deux à trois jours représente environ une heure de travail — chemises, draps et linge délicat compris, qui prennent chacun beaucoup plus de temps qu'un tee-shirt.",
     sections: [
       {
@@ -222,22 +225,20 @@ const INTENTIONS: readonly Intention[] = [
       },
       {
         question: "Le repassage coûte-t-il plus cher que le ménage ?",
-        answer:
-          "Non, c'est le même tarif horaire : 29 € de l'heure en formule régulière, 33 € en intervention ponctuelle. Le repassage n'est pas une prestation majorée, c'est une prestation plus lente au kilo.",
+        answer: `Non, c'est le même tarif horaire : ${TARIF_REGULIER} de l'heure en formule régulière, ${TARIF_PONCTUEL} en intervention ponctuelle. Le repassage n'est pas une prestation majorée, c'est une prestation plus lente au kilo.`,
       },
     ],
     communes: {
       leognan: {
         paragraphs: [
-          "À Léognan, le repassage est presque toujours demandé en complément d'un ménage régulier plutôt que seul, et c'est la formule qui a du sens ici : la plupart de nos intervenants habitent la commune, si bien qu'une heure supplémentaire sur un créneau déjà réservé ne coûte aucun déplacement. Ajouter le repassage à un entretien hebdomadaire revient à passer de trois heures à quatre, au même tarif horaire de 29 € en formule régulière, sans nouveau rendez-vous à caler.",
+          `À Léognan, le repassage est presque toujours demandé en complément d'un ménage régulier plutôt que seul, et c'est la formule qui a du sens ici : la plupart de nos intervenants habitent la commune, si bien qu'une heure supplémentaire sur un créneau déjà réservé ne coûte aucun déplacement. Ajouter le repassage à un entretien hebdomadaire revient à passer de trois heures à quatre, au même tarif horaire de ${TARIF_REGULIER} en formule régulière, sans nouveau rendez-vous à caler.`,
           "Le bâti de la commune explique le volume. Les maisons de Léognan font le plus souvent 90 à 140 m², avec un cellier ou une buanderie où la corbeille s'accumule à l'abri des regards — donc plus longtemps qu'ailleurs. Une corbeille de foyer de quatre personnes accumulée sur deux à trois jours représente environ une heure ; celle qui attend depuis une semaine en demande deux, et il vaut mieux le savoir avant de réserver deux heures en pensant que ce sera large.",
           "Une demande revient régulièrement dans les propriétés de l'appellation Pessac-Léognan : le linge de table. Nappes et grandes serviettes se repassent lentement et occupent toute la table à repasser, ce qui rend le poste peu compatible avec un créneau serré. Signalez-le à la réservation, que nous prévoyions le temps plutôt que de le prendre sur le reste.",
         ],
         faq: [
           {
             question: "Le repassage est-il facturé au même tarif à Léognan ?",
-            answer:
-              "Oui, 29 € de l'heure en formule régulière et 33 € en intervention ponctuelle, comme le ménage et comme dans les quinze autres communes desservies. Le repassage n'est pas une prestation à part au tarif : c'est du temps de travail, compté comme le reste.",
+            answer: `Oui, ${TARIF_REGULIER} de l'heure en formule régulière et ${TARIF_PONCTUEL} en intervention ponctuelle, comme le ménage et comme dans les quinze autres communes desservies. Le repassage n'est pas une prestation à part au tarif : c'est du temps de travail, compté comme le reste.`,
           },
           {
             question:
@@ -255,7 +256,7 @@ const INTENTIONS: readonly Intention[] = [
       gradignan: {
         paragraphs: [
           "À Gradignan, le repassage suit le rythme scolaire, et c'est ce qui le distingue des autres communes du territoire. Les maisons de 100 à 130 m² du secteur abritent majoritairement des familles, et la corbeille se remplit du lundi au vendredi : chemises, polos d'école, tenues de sport. Elle se vide mal le week-end, précisément parce que c'est le moment où l'on préfère être ailleurs. Un passage hebdomadaire fixe, en milieu de semaine, empêche l'accumulation bien mieux qu'un rattrapage mensuel — deux heures régulières valent mieux que quatre heures tous les mois, pour le même prix horaire.",
-          "La proximité du campus crée une seconde demande, sans rapport avec la première. Les logements étudiants ne génèrent pratiquement pas de repassage pendant l'année ; ils en génèrent au moment du départ, avec le linge de lit et les rideaux d'un état des lieux de sortie. Ce n'est pas la même prestation, et elle se réserve en ponctuel, à 33 € de l'heure.",
+          `La proximité du campus crée une seconde demande, sans rapport avec la première. Les logements étudiants ne génèrent pratiquement pas de repassage pendant l'année ; ils en génèrent au moment du départ, avec le linge de lit et les rideaux d'un état des lieux de sortie. Ce n'est pas la même prestation, et elle se réserve en ponctuel, à ${TARIF_PONCTUEL} de l'heure.`,
           "Deuxième commune la plus peuplée de la zone avec 26 952 habitants, Gradignan est aussi celle où l'on nous demande le plus souvent d'intervenir en l'absence des occupants. Le repassage s'y prête bien : contrairement au ménage, il ne dérange personne et ne demande aucun accès particulier, hors la table, le fer et l'endroit où poser ce qui est fait.",
         ],
         faq: [
