@@ -48,6 +48,21 @@ const HOSTS = {
   app: hostOf(process.env.NEXT_PUBLIC_APP_URL),
 };
 
+/**
+ * Contexte d'indexation, hôtes et environnement déclaré réunis.
+ *
+ * Tout ce qui n'est pas explicitement `dev` est tenu pour la production : la
+ * valeur par défaut du schéma Zod est la même, et un oubli de variable ne doit
+ * pas mettre le site entier hors de l'index.
+ */
+const CONTEXTE_INDEXATION = {
+  environnement:
+    process.env.NEXT_PUBLIC_ENVIRONMENT === "dev"
+      ? ("dev" as const)
+      : ("production" as const),
+  ...HOSTS,
+};
+
 export function proxy(request: NextRequest): NextResponse {
   const requestHost = request.headers.get("host") ?? "";
   return withIndexingPolicy(route(request), requestHost);
@@ -66,7 +81,7 @@ function withIndexingPolicy(
   response: NextResponse,
   requestHost: string,
 ): NextResponse {
-  if (!isIndexableHost(HOSTS, requestHost)) {
+  if (!isIndexableHost(CONTEXTE_INDEXATION, requestHost)) {
     response.headers.set("X-Robots-Tag", "noindex");
   }
   return response;

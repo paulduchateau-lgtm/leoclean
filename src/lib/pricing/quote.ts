@@ -5,7 +5,6 @@ import {
   amountForDuration,
   applyRate,
   effectiveRateBp,
-  split,
 } from "./money";
 import { type DurationParameters, estimateDuration } from "./duration";
 
@@ -41,10 +40,18 @@ export interface QuoteInput {
   frequency: Frequency;
   hourlyRateCents: number;
   /**
-   * Part de coordination revenant à la plateforme, en points de base.
-   * Zéro pour une société qui opère en prestataire et encaisse la totalité.
+   * Ce que perçoit l'intervenant, par heure.
+   *
+   * **C'est la grandeur primaire de la répartition**, et la coordination est ce
+   * qui reste — jamais l'inverse. La raison n'est pas comptable mais juridique :
+   * la rémunération est un montant proposé à l'intervenant, qu'il accepte avant
+   * de prendre la mission. Un pourcentage appliqué après coup décrirait une
+   * relation que le modèle refuse.
+   *
+   * Égale au tarif horaire pour une société qui opère en prestataire : elle
+   * encaisse la totalité, la marge de coordination est nulle.
    */
-  commissionRateBp: BasisPoints;
+  professionalHourlyRateCents: number;
   /** Taux du crédit d'impôt services à la personne. 5 000 = 50 %. */
   taxCreditRateBp: BasisPoints;
   /** Durée choisie par le client, si différente de l'estimation. */
@@ -108,7 +115,7 @@ export function quote(input: QuoteInput): Quote {
     surfaceSqm,
     frequency,
     hourlyRateCents,
-    commissionRateBp,
+    professionalHourlyRateCents,
     taxCreditRateBp,
     durationOverrideMinutes,
   } = input;
@@ -138,8 +145,27 @@ export function quote(input: QuoteInput): Quote {
   );
   const grossAmountCents = timeAmountCents + optionSurchargeCents;
 
-  const { share: platformFeeAmountCents, remainder: professionalAmountCents } =
-    split(grossAmountCents, commissionRateBp);
+  if (professionalHourlyRateCents > hourlyRateCents) {
+    throw new Error(
+      `La rémunération horaire de l'intervenant (${professionalHourlyRateCents} c) ` +
+        `dépasse le tarif client (${hourlyRateCents} c) : la coordination serait négative.`,
+    );
+  }
+
+  /*
+   * On calcule la part de l'intervenant, et la coordination est le reste. C'est
+   * la règle de toutes les répartitions du dépôt : deux parts calculées
+   * séparément finissent par ne plus retomber sur le total, et c'est le client
+   * qui lit la différence.
+   *
+   * Le supplément forfaitaire d'une option suit l'intervenant : il paie des
+   * fournitures, pas une prestation de coordination. La marge de la plateforme
+   * reste donc exactement l'écart horaire, ni plus ni moins.
+   */
+  const professionalAmountCents =
+    amountForDuration(professionalHourlyRateCents, durationMinutes) +
+    optionSurchargeCents;
+  const platformFeeAmountCents = grossAmountCents - professionalAmountCents;
 
   const professionalTaxCreditCents = applyRate(
     professionalAmountCents,

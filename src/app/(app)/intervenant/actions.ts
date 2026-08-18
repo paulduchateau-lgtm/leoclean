@@ -4,10 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { authedAction } from "@/lib/actions";
-import { reattribuer } from "@/lib/assignments/reattribution";
 import { requireOrganization } from "@/lib/auth/session";
 import { proposeSlot } from "@/lib/booking/slot-proposal-store";
-import { BusinessError } from "@/lib/booking/errors";
+import { BusinessError, isRaceLost } from "@/lib/booking/errors";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
 /**
@@ -29,6 +28,21 @@ const reponseSchema = z.object({
 const refusSchema = reponseSchema.extend({
   motif: z.string().trim().max(300).optional(),
 });
+
+/**
+ * La course est perdue : quelqu'un du même lot a accepté le premier.
+ *
+ * Le message dit ce qui s'est passé sans le déguiser en erreur technique ni en
+ * reproche : la personne a répondu de bonne foi, quelques secondes trop tard.
+ */
+class MissionDejaPriseError extends BusinessError {
+  constructor() {
+    super(
+      "Cette mission vient d'être acceptée par quelqu'un de plus rapide. " +
+        "Elle ne vous est plus proposée.",
+    );
+  }
+}
 
 /** Erreurs métier écrites pour être lues par l'intervenant. */
 class MissionIntrouvableError extends BusinessError {
@@ -93,28 +107,62 @@ export const accepterMission = authedAction(
     );
 
     /*
-     * L'affectation et la réservation changent d'état ensemble : une mission
-     * acceptée dont la réservation resterait « attribuée » laisserait le client
-     * sans confirmation, et l'écart ne se verrait qu'à la lecture.
+     * L'acceptation, la réservation et le sort des autres propositions
+     * changent ensemble : une mission acceptée dont la réservation resterait en
+     * recherche laisserait le client sans confirmation, et des propositions
+     * restées ouvertes feraient répondre quatre personnes à une mission déjà
+     * prise.
+     *
+     * **La course se tranche en base, pas ici.** Vérifier d'abord que personne
+     * n'a accepté ne servirait à rien : entre la lecture et l'écriture, une
+     * autre transaction passe. C'est l'index unique partiel
+     * `Assignment_one_accepted_per_booking` qui départage, et le refus se
+     * traduit en message lisible.
      */
-    await db.$transaction(async (tx) => {
-      await tx.assignment.update({
-        where: { id: affectation.id },
-        data: { status: "ACCEPTED", respondedAt: new Date() },
+    try {
+      await db.$transaction(async (tx) => {
+        await tx.assignment.update({
+          where: { id: affectation.id },
+          data: { status: "ACCEPTED", respondedAt: new Date() },
+        });
+
+        /*
+         * Les autres passent en `SUPERSEDED`, et non en `DECLINED` : ils n'ont
+         * rien refusé, leur taux d'acceptation ne doit pas en souffrir. Ni en
+         * `CANCELLED`, qui laisserait croire à une décision de la plateforme.
+         */
+        await tx.assignment.updateMany({
+          where: {
+            bookingId: affectation.bookingId,
+            status: "PROPOSED",
+            id: { not: affectation.id },
+          },
+          data: { status: "SUPERSEDED" },
+        });
+
+        await tx.booking.update({
+          where: { id: affectation.bookingId },
+          data: {
+            status: "CONFIRMED",
+            // La recherche est finie : plus d'échéance à surveiller.
+            diffusionDeadlineAt: null,
+          },
+        });
+        await tx.bookingStatusEvent.create({
+          data: {
+            organizationId,
+            bookingId: affectation.bookingId,
+            toStatus: "CONFIRMED",
+            reason: "Mission acceptée par l'intervenant",
+          },
+        });
       });
-      await tx.booking.update({
-        where: { id: affectation.bookingId },
-        data: { status: "CONFIRMED" },
-      });
-      await tx.bookingStatusEvent.create({
-        data: {
-          organizationId,
-          bookingId: affectation.bookingId,
-          toStatus: "CONFIRMED",
-          reason: "Mission acceptée par l'intervenant",
-        },
-      });
-    });
+    } catch (error) {
+      if (isRaceLost(error)) {
+        throw new MissionDejaPriseError();
+      }
+      throw error;
+    }
 
     revalidatePath("/intervenant");
     return { accepte: true as const };
@@ -155,21 +203,22 @@ export const proposerUnAutreCreneau = authedAction(
 export const refuserMission = authedAction(
   refusSchema,
   async ({ assignmentId, motif }, user) => {
-    const { db, organizationId, affectation } = await affectationEnAttente(
+    const { db, affectation } = await affectationEnAttente(
       assignmentId,
       user.id,
     );
     const now = new Date();
 
     /*
-     * Le refus est enregistré avant la réattribution, et séparément.
+     * Le refus n'a plus à déclencher de réattribution, et c'est la diffusion
+     * par lots qui l'a rendu inutile : quatre autres personnes tiennent la même
+     * proposition. Rejouer le moteur ici solliciterait quelqu'un de plus mal
+     * classé alors que les mieux classés n'ont pas encore répondu.
      *
-     * Les tenir dans une même transaction paraîtrait plus propre, mais la
-     * contrainte d'exclusion se prononce à l'écriture de la nouvelle
-     * affectation : une transaction unique qui échouerait sur elle annulerait
-     * aussi le refus, et l'intervenant se retrouverait avec la mission qu'il
-     * vient de décliner. Un refus enregistré et une réattribution qui échoue
-     * laisse une réservation à traiter — un état visible, pas un mensonge.
+     * Ce qui arrive ensuite est affaire d'échéance, pas de refus : à la fin du
+     * lot, l'ordonnanceur élargit au secteur ou rend la main au client s'il a
+     * reçu des horaires alternatifs. Un refus n'avance donc rien — il retire
+     * seulement une chance sur cinq, et le dit.
      */
     await db.assignment.update({
       where: { id: affectation.id },
@@ -180,49 +229,11 @@ export const refuserMission = authedAction(
       },
     });
 
-    const dejaRefuse = await db.assignment.findMany({
-      where: { bookingId: affectation.bookingId, status: "DECLINED" },
-      select: { cleanerProfileId: true },
+    const restantes = await db.assignment.count({
+      where: { bookingId: affectation.bookingId, status: "PROPOSED" },
     });
 
-    const remplacant = await reattribuer(
-      db,
-      { id: organizationId },
-      {
-        bookingId: affectation.bookingId,
-        exclureCleanerProfileIds: dejaRefuse.map(
-          (ligne) => ligne.cleanerProfileId,
-        ),
-        now,
-      },
-    );
-
-    if (!remplacant) {
-      /*
-       * Personne d'autre ne peut prendre ce créneau. La réservation revient en
-       * attente d'attribution et l'événement le dit : c'est ce qui permettra à
-       * la plateforme de rattraper la situation — appeler le client, élargir la
-       * recherche — au lieu de laisser quelqu'un attendre une personne qui ne
-       * viendra pas.
-       */
-      await db.$transaction(async (tx) => {
-        await tx.booking.update({
-          where: { id: affectation.bookingId },
-          data: { status: "PENDING_ASSIGNMENT" },
-        });
-        await tx.bookingStatusEvent.create({
-          data: {
-            organizationId,
-            bookingId: affectation.bookingId,
-            toStatus: "PENDING_ASSIGNMENT",
-            reason:
-              "Mission refusée, aucun autre intervenant disponible sur ce créneau",
-          },
-        });
-      });
-    }
-
     revalidatePath("/intervenant");
-    return { refuse: true as const, reattribuee: remplacant !== null };
+    return { refuse: true as const, restantes };
   },
 );

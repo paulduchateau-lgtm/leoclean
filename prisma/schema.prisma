@@ -533,6 +533,16 @@ model PricingRule {
   frequency      Frequency
 
   hourlyRateCents Int
+
+  /// Ce que perçoit l'intervenant, par heure.
+  ///
+  /// Grandeur primaire de la répartition : la coordination est ce qui reste.
+  /// C'est la traduction en base du modèle juridique — une rémunération
+  /// proposée et acceptée avant la mission, jamais un pourcentage appliqué
+  /// après coup. Elle vit sur la règle et non sur l'organisation, la marge
+  /// n'étant pas la même en régulier et en ponctuel : 5 € de l'heure contre 9 €.
+  professionalHourlyRateCents Int
+
   /// Taux du crédit d'impôt services à la personne, en points de base.
   taxCreditRateBp Int       @default(5000)
 
@@ -630,6 +640,24 @@ model Booking {
 
   cancellationFeeCents Int @default(0)
 
+  /// Lot de diffusion en cours, et instant de son émission.
+  ///
+  /// Le second lot n'est pas émis à la suite du premier : quand des horaires
+  /// alternatifs ont été proposés, on rend la main au client et l'émission
+  /// attend sa décision. L'instant d'émission est donc distinct de celui de la
+  /// demande, et c'est lui qui datte l'échéance du lot.
+  diffusionLot       Int       @default(1)
+  diffusionLotSentAt DateTime?
+
+  /// Échéance du lot en cours.
+  ///
+  /// **Dérivée**, jamais décidée ici : `echeanceDuLot` en est la seule règle.
+  /// Elle est écrite en colonne pour que l'ordonnanceur trouve les demandes
+  /// échues par un index au lieu de relire toutes les réservations ouvertes.
+  /// Une valeur recalculée à chaque écriture ne peut pas diverger de la règle ;
+  /// une requête qui balaierait la table, si.
+  diffusionDeadlineAt DateTime?
+
   clientNotes   String?
   internalNotes String?
 
@@ -657,6 +685,9 @@ model Booking {
   @@index([organizationId, status, scheduledStart])
   @@index([organizationId, clientProfileId])
   @@index([scheduledStart])
+  /// L'ordonnanceur cherche « ce qui est échu », toutes organisations
+  /// confondues : l'index porte donc l'échéance en tête.
+  @@index([diffusionDeadlineAt, status])
 }
 
 enum BookingItemKind {
@@ -928,6 +959,10 @@ enum AssignmentStatus {
   DECLINED
   /// Délai de réponse dépassé : réattribution automatique.
   EXPIRED
+  /// Un autre intervenant du lot a accepté le premier. Ce n'est ni un refus,
+  /// qui pèserait sur son taux d'acceptation, ni une annulation, qui laisserait
+  /// croire à une décision de la plateforme : c'est une course perdue.
+  SUPERSEDED
   CANCELLED
   COMPLETED
 }
@@ -944,6 +979,13 @@ model Assignment {
   bookingId        String
   cleanerProfileId String
   status           AssignmentStatus @default(PROPOSED)
+
+  /// Lot de diffusion dont cette proposition est issue : 1 pour les mieux
+  /// classés sollicités d'emblée, 2 pour l'élargissement au secteur. Conservé
+  /// parce qu'il explique pourquoi telle personne a été sollicitée, et qu'une
+  /// diffusion qu'on ne peut pas relire est une décision qu'on ne peut pas
+  /// défendre.
+  lot              Int              @default(1)
 
   /// Créneau de la mission, recopié depuis la réservation pour que la
   /// contrainte d'exclusion puisse s'appliquer sans jointure.

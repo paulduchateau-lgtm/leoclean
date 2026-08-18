@@ -88,7 +88,7 @@ test.describe("pages par commune", () => {
 
     const table = page.locator("table").first();
     await expect(table).toBeVisible();
-    await expect(table.getByText("29 €/h")).toBeVisible();
+    await expect(table.getByText("28 €/h")).toBeVisible();
   });
 
   test("ne mentionne pas le crédit d'impôt sans déclaration SAP", async ({
@@ -133,8 +133,8 @@ test.describe("fichiers machine", () => {
       " ",
     );
 
-    expect(body).toContain("29 €/h");
-    expect(body).toContain("33 €/h");
+    expect(body).toContain("28 €/h");
+    expect(body).toContain("30 €/h");
     expect(body).toContain("16 communes");
     expect(body).toContain("06 84 36 38 62");
   });
@@ -146,7 +146,7 @@ test.describe("fichiers machine", () => {
     const data = await response.json();
     expect(data.zoneIntervention.nombreCommunes).toBe(16);
     expect(data.zoneIntervention.populationDesservie).toBe(133834);
-    expect(data.tarifs.formules[0].tarifHoraireEuros).toBe(29);
+    expect(data.tarifs.formules[0].tarifHoraireEuros).toBe(28);
   });
 
   test("le sitemap référence chaque commune publiée", async ({ request }) => {
@@ -468,8 +468,8 @@ test.describe("référencement par les modèles de langage", () => {
     const normalise = answer.replace(/\s+/g, " ");
     expect(normalise).toContain("Léo Clean");
     expect(normalise).toContain("Gradignan");
-    expect(normalise).toContain("29 €/h");
-    expect(normalise).toContain("101,50 €");
+    expect(normalise).toContain("28 €/h");
+    expect(normalise).toContain("98,00 €");
   });
 
   test("le même balisage FAQPage que le bloc affiché", async ({ page }) => {
@@ -504,7 +504,7 @@ test.describe("référencement par les modèles de langage", () => {
     }
     expect(body).toContain("## Ménage à domicile à Gradignan (33170)");
     expect(body).toContain("Femme de ménage à");
-    expect(body).toContain("29 €/h");
+    expect(body).toContain("28 €/h");
 
     // Les espaces connectés n'y sont pas : ils ne répondent à rien.
     expect(body).not.toContain("/mon-compte");

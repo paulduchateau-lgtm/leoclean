@@ -117,31 +117,60 @@ describe("lecture d'une origine", () => {
 });
 
 describe("hôtes indexables", () => {
+  const PRODUCTION = { environnement: "production" as const, ...HOSTS };
+
   it("indexe les deux domaines de production", () => {
-    expect(isIndexableHost(HOSTS, "leoclean.fr")).toBe(true);
-    expect(isIndexableHost(HOSTS, "app.leoclean.fr")).toBe(true);
+    expect(isIndexableHost(PRODUCTION, "leoclean.fr")).toBe(true);
+    expect(isIndexableHost(PRODUCTION, "app.leoclean.fr")).toBe(true);
   });
 
   it("refuse l'indexation du domaine Vercel et des prévisualisations", () => {
     // Le doublon le plus coûteux : même contenu, même mots-clés, autre domaine.
-    expect(isIndexableHost(HOSTS, "leoclean.vercel.app")).toBe(false);
-    expect(isIndexableHost(HOSTS, "leoclean-git-refonte.vercel.app")).toBe(
+    expect(isIndexableHost(PRODUCTION, "leoclean.vercel.app")).toBe(false);
+    expect(isIndexableHost(PRODUCTION, "leoclean-git-refonte.vercel.app")).toBe(
       false,
     );
   });
 
   it("n'a pas d'opinion tant que l'origine canonique n'est pas configurée", () => {
     // Un oubli de variable ne doit pas mettre le site entier hors de l'index.
-    expect(isIndexableHost({ site: null, app: null }, "leoclean.fr")).toBe(
-      true,
-    );
-    expect(isIndexableHost({ site: null, app: null }, "localhost:3000")).toBe(
-      true,
-    );
+    const sansOrigine = {
+      environnement: "production" as const,
+      site: null,
+      app: null,
+    };
+    expect(isIndexableHost(sansOrigine, "leoclean.fr")).toBe(true);
+    expect(isIndexableHost(sansOrigine, "localhost:3000")).toBe(true);
   });
 
   it("indexe le développement, où la vitrine est son propre domaine", () => {
-    const local = { site: "localhost:3000", app: null };
+    const local = {
+      environnement: "production" as const,
+      site: "localhost:3000",
+      app: null,
+    };
     expect(isIndexableHost(local, "localhost:3000")).toBe(true);
+  });
+
+  it("refuse un environnement de test, fût-il sur son propre domaine déclaré", () => {
+    /*
+     * Le cas qui a motivé la déclaration d'environnement. La dev reçoit
+     * `dev.leoclean.fr` et déclare cette origine : la comparaison des noms
+     * d'hôte l'autoriserait, et le site se retrouverait dans l'index en double,
+     * face à sa propre production, sur les requêtes qu'elle sert à gagner.
+     */
+    const dev = {
+      environnement: "dev" as const,
+      site: "dev.leoclean.fr",
+      app: null,
+    };
+    expect(isIndexableHost(dev, "dev.leoclean.fr")).toBe(false);
+  });
+
+  it("refuse un environnement de test même sans origine configurée", () => {
+    // La tolérance à l'oubli de variable ne vaut que pour la production.
+    const dev = { environnement: "dev" as const, site: null, app: null };
+    expect(isIndexableHost(dev, "dev.leoclean.fr")).toBe(false);
+    expect(isIndexableHost(dev, "localhost:3000")).toBe(false);
   });
 });

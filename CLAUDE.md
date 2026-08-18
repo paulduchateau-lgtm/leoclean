@@ -28,7 +28,7 @@ Prises avec le porteur du projet, à ne pas rouvrir sans discussion.
 | Sujet                   | Décision                                                                                                                                                                                                                                                                    |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tarification            | Taux horaire × durée estimée depuis la surface, ajustable par le client. Pas de forfait.                                                                                                                                                                                    |
-| Attribution             | 100 % automatique. Le client réserve un créneau, la plateforme choisit l'intervenant.                                                                                                                                                                                       |
+| Attribution             | **Diffusion par lots, acceptation explicite.** Le client demande un créneau ; la mission est proposée aux 5 mieux classés, et le premier qui accepte l'emporte. Sans acceptation sous 24 h, elle est élargie au secteur ; la recherche dure une semaine.                    |
 | Multi-tenant            | `Organization` sur toutes les tables métier dès la phase 1, scoping imposé par le data layer.                                                                                                                                                                               |
 | Promesse de récurrence  | Le tunnel vend un **tarif**, pas un abonnement : `createBooking` n'écrit pas de `Subscription`. On annonce que les passages suivants sont calés avec le client après le premier ménage, ce qui est le fonctionnement réel. À reprendre le jour où les abonnements existent. |
 | Mode société            | Schéma multi-tenant + page publique `/pro/[slug]` dans le MVP. Back-office société repoussé.                                                                                                                                                                                |
@@ -57,9 +57,9 @@ d'impôt pour sa part. Trois raisons, toutes structurantes :
   requalification de la relation en contrat de travail ;
 - cela rend la marge de coordination elle-même éligible au crédit d'impôt, à
   condition que la plateforme soit déclarée SAP pour cette activité ;
-- cela évite de gonfler le chiffre d'affaires de l'intervenant : à 29 € payés
-  par le client dont 18 € pour lui, il atteint le plafond de la micro-entreprise
-  un tiers plus tard que si la totalité transitait par sa facture.
+- cela évite de gonfler le chiffre d'affaires de l'intervenant : à 28 € payés
+  par le client dont 23 € pour lui, il atteint le plafond de la micro-entreprise
+  plus tard que si la totalité transitait par sa facture.
 
 L'avance immédiate impose de toute façon ce découpage : elle fonctionne par
 demande de paiement déposée par chaque organisme déclaré, avec son SIRET.
@@ -80,10 +80,14 @@ régulier et 32,90 €/h en ponctuel, minimum 2 h, sans frais d'abonnement : la
 parité est délibérée, l'avantage de Léo Clean n'étant pas le prix mais la
 proximité.
 
-- Tarifs : **29 €/h en régulier, 33 €/h en ponctuel**, minimum 2 h, estimation
+- Tarifs : **28 €/h en régulier, 30 €/h en ponctuel**, minimum 2 h, estimation
   à 25 m²/h, +30 min par option.
-- Marge de coordination : **38 %** — 29 € payés, 18 € pour l'intervenant, 11 €
-  de coordination, conformément à l'exemple des CGU.
+- Marge de coordination : **un écart, pas un taux** — 23 €/h pour l'intervenant
+  en régulier et 21 €/h en ponctuel, soit 5 € et 9 € de coordination. Une
+  mission unique coûte davantage à placer : trajet non amorti, aucune tournée à
+  remplir, aucune récurrence pour rentabiliser la mise en relation. Les taux
+  effectifs qui en découlent — 17,9 % et 30 % — ne sont jamais saisis : ils sont
+  calculés et stockés sur la réservation pour l'audit.
 - Barème d'annulation des CGU, à six paliers plafonnés : gratuit au-delà de
   24 h, 5 € entre 8 et 24 h, 10 € entre 4 et 8 h, 50 % (max 20 €) entre 2 et
   4 h, 80 % (max 30 €) en deçà de 2 h, 100 % (max 40 €) en cas d'absence.
@@ -263,6 +267,15 @@ jamais deux parts indépendamment en espérant qu'elles retombent juste : on
 calcule l'une et on déduit l'autre. Un test le vérifie sur des milliers de
 combinaisons montant/taux.
 
+**La part calculée est celle de l'intervenant**, et la coordination est le
+reste. Ce sens-là n'est pas comptable mais juridique : la rémunération est un
+montant proposé et accepté avant la mission, jamais un pourcentage appliqué
+après coup. `PricingRule.professionalHourlyRateCents` la porte donc, par
+prestation et par fréquence — et non `Organization.commissionRateBp`, qui ne
+pouvait exprimer qu'un taux unique et n'est plus lu par le devis. Le supplément
+forfaitaire d'une option suit l'intervenant : il paie des fournitures, pas de la
+coordination.
+
 **Le crédit d'impôt est calculé facture par facture, pas sur le total.** Chaque
 organisme déclaré émet sa propre attestation fiscale sur son propre montant.
 Conséquence assumée : quand les deux arrondis tombent du même côté, le crédit
@@ -353,8 +366,17 @@ Le champ `inMontesquieu` porte la distinction et un test l'impose.
 **`src/lib/pricing/public-grid.ts` est la source unique des prix affichés.**
 Les pages publiques ne lisent pas la base : un tarif marketing n'a pas à
 dépendre d'une connexion. `PricingRule` reste la source opérationnelle, propre
-à chaque organisation ; le seed importe la même grille pour que les deux ne
-divergent pas.
+à chaque organisation ; le socle, le seed et `facts.ts` importent la même grille
+pour que rien ne diverge.
+
+**Changer la grille ne suffit pas à changer les prix facturés.** Le socle ne
+crée une règle que s'il n'en existe aucune : sur une base vivante, une
+modification de `public-grid.ts` ne toucherait que le site, qui afficherait un
+tarif pendant que le tunnel en chiffrerait un autre. `npm run db:tarifs` fait le
+pont — il montre l'écart, puis, avec `--confirmer`, ferme les règles en vigueur
+par un `validUntil` et en ouvre de nouvelles. Rien n'est écrasé : une
+réservation passée continue de pointer sur le tarif qui l'a chiffrée. Seule la
+marketplace est touchée, une société cliente fixant ses propres prix.
 
 ### L'accueil raconte pourquoi le rayon est court
 
@@ -560,6 +582,20 @@ valeur porte le nom de son token. Figtree y est versionnée en TrueType dans
 `assets/fonts/`, avec sa licence — `next/font` ne sert que du woff2, que ce
 moteur ne lit pas.
 
+**Seule la production a le droit d'être indexée**, et cela se déclare plutôt
+que se déduire. `NEXT_PUBLIC_ENVIRONMENT` vaut `production` ou `dev` ; hors
+production, le proxy pose `X-Robots-Tag: noindex` sur tout, `robots.txt` refuse
+tout, le gabarit racine émet `index: false` et un bandeau non fermable annonce
+l'environnement de test — le site affiche un vrai numéro et de vrais tarifs, et
+la dev est une copie conforme jusqu'à la confirmation de réservation.
+
+La déclaration ne dépend d'aucun nom d'hôte, et c'est tout son intérêt : la
+règle ci-dessous, fondée sur la comparaison des domaines, suffisait tant qu'un
+environnement de test n'avait pas de domaine à lui, mais elle autorise
+`dev.leoclean.fr` dès que la dev déclare cette origine comme la sienne. La
+valeur par défaut reste `production`, pour la même raison qu'ailleurs : un
+oubli de variable ne doit pas mettre le site entier hors de l'index.
+
 **On n'indexe que l'hôte qu'on a déclaré.** Un déploiement Vercel répond aussi
 sur son `*.vercel.app`, mot pour mot le même contenu : `src/proxy.ts` pose un
 `X-Robots-Tag: noindex` sur tout hôte qui n'est ni la vitrine ni
@@ -568,6 +604,15 @@ l'application. L'en-tête plutôt que la balise, parce qu'il couvre aussi
 s'applique qu'une fois `NEXT_PUBLIC_SITE_URL` configurée : sans elle, on ne
 sait pas ce qui est canonique, et refuser par défaut mettrait le site entier
 hors de l'index sur un oubli de variable.
+
+**`NEXT_PUBLIC_APP_URL` ne se déclare qu'une fois le sous-domaine vivant.**
+Le proxy renvoie les chemins applicatifs vers l'hôte déclaré, sans pouvoir
+vérifier qu'il résout : déclarée avant que `app.leoclean.fr` existe, la variable
+redirige `/reserver` en 308 vers un domaine introuvable et fait tomber le canal
+de conversion principal — sans qu'aucune erreur ne remonte côté serveur, puisque
+le serveur fait précisément ce qu'on lui a demandé. L'ordre est donc : créer le
+sous-domaine, l'attacher au projet, vérifier qu'il répond, puis seulement
+renseigner la variable. Le cas s'est produit en production.
 
 **`/pro/[slug]` dit autre chose qu'une page commune.** Léo Clean opère en mise
 en relation ; une société cliente du SaaS est prestataire et emploie ses propres
@@ -680,31 +725,63 @@ suivant une mission à la même adresse. Deux tests protègent les deux sens.
 ## Réservation
 
 `src/lib/booking/create.ts` fait trois choses ensemble ou pas du tout : la
-réservation, ses lignes facturables, et l'affectation de l'intervenant. Une
-réservation sans affectation est un client qui attend quelqu'un qui ne viendra
-pas ; une affectation sans réservation est une heure bloquée pour rien.
+demande, ses lignes facturables, et les propositions du lot. Une demande sans
+proposition est un client qui attend un appel que personne n'a reçu ; des
+propositions sans demande sont des sollicitations pour une mission qui n'existe
+pas.
 
-**Le verrou anti-double-réservation n'est pas dans ce code.** Il est en base.
-Vérifier la disponibilité avant d'écrire ne sert qu'à donner un bon message :
-entre la vérification et l'écriture, une autre requête peut passer. Le code sait
-donc qu'il peut échouer, et traduit le refus de la base en `SlotTakenError`.
+**Ce n'est plus une attribution.** Le modèle précédent désignait le mieux classé
+et lui bloquait la place : le client repartait avec un rendez-vous ferme, et
+quelqu'un se voyait assigner une mission qu'il n'avait pas acceptée. La demande
+naît désormais en `PENDING_ASSIGNMENT`, proposée aux cinq mieux classés, et
+**seule une acceptation écrit `CONFIRMED`**.
 
-**Deux codes PostgreSQL signalent ce refus, pas un.** `23P01` est la violation
-de la contrainte d'exclusion ; `40P01` est l'interblocage, qui survient dans
-exactement la même situation — deux transactions écrivent réservation, lignes
-puis affectation, se croisent, et la base en sacrifie une. Ne reconnaître que
-le premier laissait remonter une erreur Prisma brute au client. `nativeErrorCodes`
-cherche le code natif où qu'il soit : Prisma l'a déplacé de `code` à `meta.code`
-puis à `meta.driverAdapterError.cause.code`, le message n'étant plus qu'un
-« Database error. ». Chercher à un seul endroit revient à ne plus rien
-reconnaître.
+**Le lot n'est pas « les cinq plus proches ».** Ce sont les cinq premiers du
+score existant, dont le trajet est déjà la composante dominante mais qui porte
+aussi la continuité. Composer sur la distance seule ferait changer d'intervenant
+un client régulier dès qu'un autre habite cent mètres plus près, alors que « la
+même personne chaque semaine » est la promesse centrale. Les quatre minuteries —
+24 h, 6 jours, une semaine, quinze jours — vivent dans
+`src/lib/assignments/diffusion.ts`, pur et testé à la milliseconde.
 
-**Sur refus, on essaie le candidat suivant.** Sans cela, deux réservations
-simultanées désigneraient toutes deux le mieux classé, la seconde échouerait, et
-le client s'entendrait dire que le créneau est pris alors qu'une autre
-intervenante était libre — la lecture des disponibilités ne voit pas les
-transactions en cours, seule l'écriture les rencontre. C'est un test
-d'intégration à deux réservations concurrentes qui a révélé le manque.
+**Le verrou anti-double-réservation n'est pas dans ce code**, il est en base, et
+il s'exerce désormais à l'acceptation. Deux garanties SQL s'y partagent le
+travail : `Assignment_no_overlap` interdit à _une personne_ deux missions qui se
+chevauchent, `Assignment_one_accepted_per_booking` interdit à _une mission_ deux
+personnes. La seconde existait depuis la phase 1, avant qu'on en ait besoin :
+c'est elle qui départage la course, et son refus se traduit en « cette mission
+vient d'être acceptée par quelqu'un de plus rapide ».
+
+**Une proposition ne réserve plus rien**, ni en base ni dans le moteur. Les deux
+doivent le dire de la même façon, sans quoi l'un propose ce que l'autre refuse :
+`BLOCKING_ASSIGNMENT_STATUSES` ne contient donc plus que `ACCEPTED`. Compter une
+proposition comme du temps occupé retirerait cinq plannings de la circulation
+pour une seule mission, et empêcherait un intervenant de recevoir deux offres
+concurrentes — c'est-à-dire de choisir.
+
+**Conséquence assumée : deux clients peuvent demander le même créneau.** Celui
+dont un intervenant accepte le premier l'obtient, l'autre continue de chercher.
+L'ancien modèle répondait « créneau pris » au second alors que rien n'était
+pris, seulement proposé.
+
+**La boucle « candidat suivant » a disparu avec sa raison d'être.** Elle
+existait parce que deux réservations simultanées désignaient le même intervenant
+et que la seconde échouait ; cinq propositions concurrentes ne se heurtent à
+rien. Le repli du tunnel sur les créneaux alternatifs, lui, reste — il rattrape
+désormais « aucun intervenant disponible » et non « créneau pris ».
+
+**Un refus ne déclenche plus de réattribution.** Quatre autres personnes
+tiennent la même proposition : rejouer le moteur solliciterait quelqu'un de plus
+mal classé avant que les mieux classés aient répondu. Ce qui suit un lot sans
+acceptation est affaire d'échéance, pas de refus.
+
+**Deux codes PostgreSQL signalent un refus de créneau, pas un.** `23P01` est la
+violation de la contrainte d'exclusion ; `40P01` est l'interblocage, qui survient
+dans la même situation. `23505` s'y ajoute pour la course perdue.
+`nativeErrorCodes` cherche le code natif où qu'il soit : Prisma l'a déplacé de
+`code` à `meta.code` puis à `meta.driverAdapterError.cause.code`, le message
+n'étant plus qu'un « Database error. ». Chercher à un seul endroit revient à ne
+plus rien reconnaître.
 
 **Rien de ce que renvoie le navigateur n'est cru sur parole.** Le prix est
 recalculé côté serveur à la confirmation, jamais repris du formulaire, et
@@ -1152,8 +1229,12 @@ parce qu'aucun contrôle applicatif n'y résiste :
   intervenant deux missions qui se chevauchent. Elle porte sur
   `blockStartAt`/`blockEndAt`, c'est-à-dire créneau **plus temps de trajet** :
   deux ménages jointifs à quinze kilomètres l'un de l'autre sont refusés par la
-  base. Les statuts terminaux sont hors du filtre, sinon l'historique gèlerait
-  le planning.
+  base. Elle ne filtre plus que `ACCEPTED` : une proposition ne réserve rien,
+  sans quoi un intervenant ne pourrait pas recevoir deux offres concurrentes.
+- `Assignment_one_accepted_per_booking` est l'autre moitié : un index unique
+  partiel sur `("bookingId") WHERE status = 'ACCEPTED'`, qui interdit à une
+  mission d'avoir deux intervenants. C'est lui qui tranche « le premier qui
+  accepte l'emporte », et il existe depuis la migration initiale.
 
 On emploie `tsrange` et non `tstzrange` dans cette contrainte : Prisma projette
 `DateTime` sur `timestamp without time zone` et y écrit de l'UTC ; une
@@ -1217,7 +1298,9 @@ src/
       known-client.ts  profil, adresses et dernier choix d'un client connu
       client-bookings.ts réservations d'un client, pour son espace
       horizon.ts       horizon de réservation et marge de trajet (constantes)
-    assignments/       missions de l'intervenant et réattribution après refus
+    assignments/       diffusion par lots, échéances et classement des candidats
+      diffusion.ts     les quatre minuteries et leur ordre — pur
+      echeances.ts     ce qui arrive quand personne ne fait rien (server-only)
     availability/      semaine type déclarée — pur
     administration/    tableau de bord plateforme, ce qui attend un humain
     societes/          page publique d'une société cliente du SaaS
@@ -1323,7 +1406,7 @@ double.
   accroche qui n'est pas la nôtre : à trancher avec le client.
 - Le document décrit un périmètre et des tarifs qui ne correspondent pas aux
   décisions prises depuis — communes hors zone, « 23 € / h » quand la grille
-  est à 29 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
+  est à 28 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
   sont des exemples de rédaction, pas des tokens : le code suit les décisions
   du projet.
 
@@ -1340,6 +1423,8 @@ npm run db:migrate      # applique une nouvelle migration
 npm run db:seed         # remplit la base de développement (tronque tout d'abord)
 npm run db:init         # installe une base de production, sans données fictives
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
+npm run db:utilisateurs-test # comptes nominatifs pour parcourir les espaces
+npm run db:tarifs       # applique la grille publique aux tarifs en base
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
 npm run build:deploiement # migre puis construit — ce que Vercel exécute
@@ -1362,12 +1447,30 @@ avant le passage, ni alerte sur une demande de rappel. `sendEmail` existe,
 moins coûteux à combler et le plus visible du dehors : aujourd'hui, un
 intervenant ne sait qu'on l'attend que s'il ouvre son espace.
 
-**Aucun ordonnanceur.** Les variables Inngest sont déclarées, rien ne les lit.
-Cinq travaux planifiés en dépendent, et aucun n'existe : l'expiration d'une
-proposition non répondue — `AssignmentStatus.EXPIRED` n'est écrit par personne,
-si bien qu'une proposition se périme en silence et n'apparaît que dans la liste
-du back-office —, la préautorisation à H-24, le prélèvement à H+24, le
-reversement hebdomadaire, la purge des compteurs de débit.
+**L'ordonnanceur existe, et il est frappé par un travail planifié.**
+`vercel.json` déclare un appel horaire à `/api/taches`, protégée par
+`CRON_SECRET` — Vercel l'envoie en `Authorization: Bearer`. La route refuse si
+le secret manque, direction inverse de celle retenue pour l'indexation et pour
+une raison inverse : un oubli qui désindexe se voit, un oubli qui ouvre un
+déclencheur ne se voit pas. Ouverte, elle permettrait de solliciter tous les
+intervenants d'un secteur autant de fois qu'on le voudrait.
+
+`src/lib/assignments/echeances.ts` exécute ce que `prochaineEtape` décide, et
+rien de plus : la règle reste pure et testable à la milliseconde, l'exécution
+reste vérifiable sans rejouer une semaine. Quatre travaux tournent —
+élargissement au second lot, main rendue au client quand des horaires
+alternatifs existent, arrêt de la recherche au bout d'une semaine, expiration
+des propositions et des contre-propositions — plus la purge des compteurs de
+débit, qui attendait depuis la phase 13. Chaque demande est traitée séparément :
+une erreur sur l'une ne doit pas arrêter les autres.
+
+**Restent deux travaux, tous deux liés au paiement** : la préautorisation à
+H-24 et le prélèvement à H+24, plus le reversement hebdomadaire. Ils viendront
+avec Stripe, sur la même route.
+
+Les variables Inngest restent déclarées et inutilisées. Le travail planifié de
+Vercel suffit à des échéances qui se comptent en heures ; Inngest apportera la
+durabilité et les reprises le jour où de l'argent transitera.
 
 **La vie d'une réservation s'arrête à `CONFIRMED`.** `IN_PROGRESS`, `COMPLETED`
 et `NO_SHOW` sont modélisés et jamais écrits. Sans clôture de mission : pas de

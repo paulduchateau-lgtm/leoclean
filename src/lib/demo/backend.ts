@@ -42,15 +42,20 @@ const HORIZON_DAYS = BOOKING_HORIZON_DAYS;
  * Elle n'apparaît pas au client — il ne voit qu'un total — mais elle entre
  * dans le calcul du crédit d'impôt, qui se fait ligne par ligne.
  */
-const DEMO_COMMISSION_RATE_BP = 3800;
 
-function hourlyRateFor(frequency: Frequency): number {
+function ratesFor(frequency: Frequency): {
+  hourlyRateCents: number;
+  professionalHourlyRateCents: number;
+} {
   const key = frequency === "ONE_OFF" ? "PONCTUEL" : "REGULIER";
   const rate = PUBLIC_RATES.find((entry) => entry.key === key);
   if (!rate) {
     throw new Error(`Aucun tarif public pour la fréquence ${frequency}.`);
   }
-  return rate.hourlyRateCents;
+  return {
+    hourlyRateCents: rate.hourlyRateCents,
+    professionalHourlyRateCents: rate.professionalHourlyRateCents,
+  };
 }
 
 export const demoBookingBackend: BookingBackend = {
@@ -72,8 +77,7 @@ export const demoBookingBackend: BookingBackend = {
       options: [],
       surfaceSqm,
       frequency,
-      hourlyRateCents: hourlyRateFor(frequency),
-      commissionRateBp: DEMO_COMMISSION_RATE_BP,
+      ...ratesFor(frequency),
       taxCreditRateBp: TAX_CREDIT_RATE_BP,
     });
 
@@ -129,7 +133,7 @@ export const demoBookingBackend: BookingBackend = {
 
   confirmBooking(input) {
     const start = new Date(input.startAt);
-    const rate = hourlyRateFor(input.frequency);
+    const rates = ratesFor(input.frequency);
     const computed = quote({
       service: {
         slug: "menage-regulier",
@@ -140,8 +144,7 @@ export const demoBookingBackend: BookingBackend = {
       options: [],
       surfaceSqm: input.surfaceSqm,
       frequency: input.frequency,
-      hourlyRateCents: rate,
-      commissionRateBp: DEMO_COMMISSION_RATE_BP,
+      ...rates,
       taxCreditRateBp: TAX_CREDIT_RATE_BP,
     });
 

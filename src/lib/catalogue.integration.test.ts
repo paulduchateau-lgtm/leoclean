@@ -23,7 +23,7 @@ let concurrentId: string;
 
 async function seedCatalogue(
   organizationId: string,
-  options: { hourlyRateCents: number; commissionRateBp: number },
+  options: { hourlyRateCents: number; professionalHourlyRateCents: number },
 ): Promise<void> {
   const db = forOrganization(organizationId);
 
@@ -66,6 +66,11 @@ async function seedCatalogue(
         serviceId: service.id,
         frequency,
         hourlyRateCents: rate,
+        // La marge de coordination suit le tarif : le supplément d'une
+        // prestation exigeante va à celui qui fournit l'effort.
+        professionalHourlyRateCents:
+          options.professionalHourlyRateCents +
+          (rate - options.hourlyRateCents),
         validFrom: new Date("2026-01-01T00:00:00Z"),
       },
     });
@@ -97,12 +102,14 @@ beforeEach(async () => {
   concurrentId = concurrent.id;
 
   await seedCatalogue(leocleanId, {
-    hourlyRateCents: 2900,
-    commissionRateBp: 3800,
+    hourlyRateCents: 2800,
+    professionalHourlyRateCents: 2300,
   });
+  // Une société prestataire encaisse la totalité : sa marge de coordination est
+  // nulle, l'intervenant étant son salarié.
   await seedCatalogue(concurrentId, {
     hourlyRateCents: 2600,
-    commissionRateBp: 1200,
+    professionalHourlyRateCents: 2600,
   });
 });
 
@@ -115,8 +122,8 @@ describe("lecture du catalogue", () => {
       "repassage",
       "vitres",
     ]);
-    expect(services[0]?.hourlyRatesByFrequency.WEEKLY).toBe(2900);
-    expect(services[0]?.hourlyRatesByFrequency.ONE_OFF).toBe(3300);
+    expect(services[0]?.hourlyRatesByFrequency.WEEKLY).toBe(2800);
+    expect(services[0]?.hourlyRatesByFrequency.ONE_OFF).toBe(3200);
   });
 
   it("masque les prestations désactivées", async () => {
@@ -131,7 +138,7 @@ describe("lecture du catalogue", () => {
     // données commerciales sensibles.
     const services = await listServices(forOrganization(leocleanId));
 
-    expect(services[0]?.hourlyRatesByFrequency.WEEKLY).toBe(2900);
+    expect(services[0]?.hourlyRatesByFrequency.WEEKLY).toBe(2800);
     expect(
       (await listServices(forOrganization(concurrentId)))[0]
         ?.hourlyRatesByFrequency.WEEKLY,
@@ -143,7 +150,7 @@ describe("lecture du catalogue", () => {
 
     // Cette valeur alimente le « à partir de … » des pages publiques : elle
     // doit être exacte et vérifiable.
-    expect(lowestHourlyRate(services)).toBe(2900);
+    expect(lowestHourlyRate(services)).toBe(2800);
   });
 });
 
@@ -159,6 +166,7 @@ describe("historisation des tarifs", () => {
         serviceId: service!.id,
         frequency: "WEEKLY",
         hourlyRateCents: 3100,
+        professionalHourlyRateCents: 2500,
         validFrom: new Date("2027-01-01T00:00:00Z"),
       },
     });
@@ -176,7 +184,7 @@ describe("historisation des tarifs", () => {
       new Date("2027-02-01T00:00:00Z"),
     );
 
-    expect(today.hourlyRateCents).toBe(2900);
+    expect(today.hourlyRateCents).toBe(2800);
     expect(later.hourlyRateCents).toBe(3100);
   });
 
@@ -197,63 +205,49 @@ describe("historisation des tarifs", () => {
 
 describe("devis", () => {
   it("chiffre un ménage hebdomadaire de 80 m²", async () => {
-    const result = await quoteFromCatalogue(
-      forOrganization(leocleanId),
-      { commissionRateBp: 3800 },
-      {
-        serviceSlug: "menage-regulier",
-        optionSlugs: [],
-        surfaceSqm: 80,
-        frequency: "WEEKLY",
-      },
-    );
+    const result = await quoteFromCatalogue(forOrganization(leocleanId), {
+      serviceSlug: "menage-regulier",
+      optionSlugs: [],
+      surfaceSqm: 80,
+      frequency: "WEEKLY",
+    });
 
     expect(result.durationMinutes).toBe(210);
-    expect(result.grossAmountCents).toBe(10_150);
+    expect(result.grossAmountCents).toBe(9800);
     // 5074 et non 5075 : le crédit est calculé sur chacune des deux factures,
     // et les deux arrondis tombent du même côté. L'écart d'un centime avec un
     // calcul sur le total est assumé — il profite au client, et il garantit que
     // les deux attestations fiscales s'additionnent exactement.
-    expect(result.netAmountCents).toBe(5074);
+    expect(result.netAmountCents).toBe(4900);
   });
 
   it("applique la marge propre à chaque organisation", async () => {
-    const marketplace = await quoteFromCatalogue(
-      forOrganization(leocleanId),
-      { commissionRateBp: 3800 },
-      {
-        serviceSlug: "menage-regulier",
-        optionSlugs: [],
-        surfaceSqm: 80,
-        frequency: "WEEKLY",
-      },
-    );
-    const company = await quoteFromCatalogue(
-      forOrganization(concurrentId),
-      { commissionRateBp: 1200 },
-      {
-        serviceSlug: "menage-regulier",
-        optionSlugs: [],
-        surfaceSqm: 80,
-        frequency: "WEEKLY",
-      },
-    );
+    const marketplace = await quoteFromCatalogue(forOrganization(leocleanId), {
+      serviceSlug: "menage-regulier",
+      optionSlugs: [],
+      surfaceSqm: 80,
+      frequency: "WEEKLY",
+    });
+    const company = await quoteFromCatalogue(forOrganization(concurrentId), {
+      serviceSlug: "menage-regulier",
+      optionSlugs: [],
+      surfaceSqm: 80,
+      frequency: "WEEKLY",
+    });
 
-    expect(marketplace.platformFeeAmountCents).toBe(3857);
-    expect(company.platformFeeAmountCents).toBe(1092);
+    // 3 h 30 : la marketplace prend 5 € de l'heure, la société prestataire
+    // rien — elle encaisse la totalité et paie ses salariés.
+    expect(marketplace.platformFeeAmountCents).toBe(1750);
+    expect(company.platformFeeAmountCents).toBe(0);
   });
 
   it("allonge la durée à mesure des options retenues", async () => {
-    const result = await quoteFromCatalogue(
-      forOrganization(leocleanId),
-      { commissionRateBp: 3800 },
-      {
-        serviceSlug: "menage-regulier",
-        optionSlugs: ["repassage", "vitres"],
-        surfaceSqm: 60,
-        frequency: "WEEKLY",
-      },
-    );
+    const result = await quoteFromCatalogue(forOrganization(leocleanId), {
+      serviceSlug: "menage-regulier",
+      optionSlugs: ["repassage", "vitres"],
+      surfaceSqm: 60,
+      frequency: "WEEKLY",
+    });
 
     expect(result.durationMinutes).toBe(240);
     expect(result.lines).toHaveLength(3);
@@ -261,16 +255,12 @@ describe("devis", () => {
 
   it("refuse une option qui n'appartient pas à la prestation", async () => {
     await expect(
-      quoteFromCatalogue(
-        forOrganization(leocleanId),
-        { commissionRateBp: 3800 },
-        {
-          serviceSlug: "menage-regulier",
-          optionSlugs: ["balcon"],
-          surfaceSqm: 60,
-          frequency: "WEEKLY",
-        },
-      ),
+      quoteFromCatalogue(forOrganization(leocleanId), {
+        serviceSlug: "menage-regulier",
+        optionSlugs: ["balcon"],
+        surfaceSqm: 60,
+        frequency: "WEEKLY",
+      }),
     ).rejects.toThrow(/n'est pas proposée/);
   });
 
@@ -283,16 +273,12 @@ describe("devis", () => {
     });
 
     await expect(
-      quoteFromCatalogue(
-        forOrganization(leocleanId),
-        { commissionRateBp: 3800 },
-        {
-          serviceSlug: "menage-regulier",
-          optionSlugs: [],
-          surfaceSqm: 60,
-          frequency: "WEEKLY",
-        },
-      ),
+      quoteFromCatalogue(forOrganization(leocleanId), {
+        serviceSlug: "menage-regulier",
+        optionSlugs: [],
+        surfaceSqm: 60,
+        frequency: "WEEKLY",
+      }),
     ).rejects.toThrow(/n'existe pas/);
   });
 
@@ -301,16 +287,12 @@ describe("devis", () => {
     // contraintes CHECK. S'il produisait un total incohérent, l'insertion
     // échouerait — ce test le vérifie de bout en bout.
     const db = forOrganization(leocleanId);
-    const result = await quoteFromCatalogue(
-      db,
-      { commissionRateBp: 3800 },
-      {
-        serviceSlug: "menage-regulier",
-        optionSlugs: ["repassage"],
-        surfaceSqm: 95,
-        frequency: "BIWEEKLY",
-      },
-    );
+    const result = await quoteFromCatalogue(db, {
+      serviceSlug: "menage-regulier",
+      optionSlugs: ["repassage"],
+      surfaceSqm: 95,
+      frequency: "BIWEEKLY",
+    });
 
     const user = await prisma.user.create({ data: { email: "c@test.fr" } });
     const clientProfile = await db.clientProfile.create({

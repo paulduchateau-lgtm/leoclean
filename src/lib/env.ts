@@ -68,6 +68,16 @@ const serverSchema = z.object({
   /** Instance OSRM auto-hébergée, ex. https://osrm.leoclean.fr */
   OSRM_BASE_URL: z.url().optional(),
 
+  /**
+   * Secret des travaux planifiés.
+   *
+   * Vercel l'envoie en `Authorization: Bearer` sur ses appels programmés.
+   * Absente, la route d'ordonnancement refuse de s'exécuter : un déclencheur
+   * ouvert permettrait de solliciter tous les intervenants d'un secteur à
+   * volonté.
+   */
+  CRON_SECRET: z.string().min(16).optional(),
+
   // --- Jobs asynchrones (phase 8) ----------------------------------------
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).optional(),
@@ -99,6 +109,29 @@ const clientSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+
+  /**
+   * Environnement déclaré du déploiement.
+   *
+   * Il ne sert qu'à une chose, et cette chose est coûteuse à rater :
+   * **seule la production a le droit d'être indexée**. Un environnement de
+   * test est un double intégral du site, rédigé pour se classer sur les mêmes
+   * requêtes ; laissé indexable, il concurrence `leoclean.fr` sur les requêtes
+   * mêmes qu'il sert à gagner.
+   *
+   * Pourquoi une déclaration plutôt que l'hôte. Le refus d'indexation reposait
+   * jusqu'ici sur la seule comparaison des noms de domaine : tout hôte autre
+   * que celui de `NEXT_PUBLIC_SITE_URL` était refusé. Cela suffisait tant que
+   * les environnements de test n'avaient pas de domaine à eux — mais le jour
+   * où l'on donne à la dev sa propre origine canonique, elle devient son
+   * propre hôte déclaré, et la règle l'autorise. La déclaration ferme cette
+   * porte : elle ne dépend d'aucun nom.
+   *
+   * La valeur par défaut est `production`, pour la même raison qu'ailleurs
+   * dans ce fichier — un oubli de variable ne doit pas mettre le site entier
+   * hors de l'index.
+   */
+  NEXT_PUBLIC_ENVIRONMENT: z.enum(["production", "dev"]).default("production"),
 
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_").optional(),
 
@@ -176,6 +209,7 @@ const rawClientEnv = {
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_SAP_DECLARED: process.env.NEXT_PUBLIC_SAP_DECLARED,
+  NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   NEXT_PUBLIC_DEMO_STATIQUE: process.env.NEXT_PUBLIC_DEMO_STATIQUE,

@@ -26,6 +26,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import { quote } from "../src/lib/pricing";
 import { STREETS_BY_INSEE, type SeedStreet } from "./fixtures/streets";
+import { RATES } from "./socle";
 import { COMMUNES, type Commune } from "../src/lib/territory";
 import { parisDayMinuteToUtc, utcToParisWallClock } from "../src/lib/time";
 
@@ -272,20 +273,11 @@ const CATALOGUE: ServiceSeed[] = [
 /**
  * Tarif horaire en centimes, par fréquence.
  *
- * Grille retenue : 29 € en régulier, 33 € en ponctuel. Wecasa affiche 28,90 €
- * et 32,90 € — la parité est délibérée, l'avantage de Léo Clean n'étant pas le
- * prix mais la proximité.
+ * Grille retenue : elle vient de `RATES`, dans le socle, qui la tient lui-même
+ * de la grille publique. Une troisième copie vivait ici et affichait encore
+ * l'ancienne — 29 € et 33 € — ce qui aurait fait diverger le jeu de données du
+ * produit au premier changement de prix.
  */
-const HOURLY_RATES: Record<
-  "ONE_OFF" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
-  number
-> = {
-  ONE_OFF: 3300,
-  WEEKLY: 2900,
-  BIWEEKLY: 2900,
-  MONTHLY: 2900,
-};
-
 const TAX_CREDIT_RATE_BP = 5000;
 
 // ---------------------------------------------------------------------------
@@ -564,19 +556,25 @@ async function main(): Promise<void> {
         sqmPerHour: service.sqmPerHour,
       });
 
-      for (const [frequency, rate] of Object.entries(HOURLY_RATES)) {
+      for (const frequency of Object.keys(RATES) as (keyof typeof RATES)[]) {
+        const rate = RATES[frequency];
         await prisma.pricingRule.create({
           data: {
             organizationId: organization.id,
             serviceId: service.id,
-            frequency: frequency as keyof typeof HOURLY_RATES,
-            // Le grand ménage et la fin de bail sont plus exigeants : ils se
-            // facturent quelques euros de plus de l'heure.
+            frequency,
+            // Le supplément des prestations exigeantes va à l'intervenant :
+            // c'est lui qui fournit l'effort supplémentaire.
             hourlyRateCents:
               serviceSeed.kind === "MENAGE_REGULIER" ||
               serviceSeed.kind === "REPASSAGE"
-                ? rate
-                : rate + 400,
+                ? rate.hourlyRateCents
+                : rate.hourlyRateCents + 400,
+            professionalHourlyRateCents:
+              serviceSeed.kind === "MENAGE_REGULIER" ||
+              serviceSeed.kind === "REPASSAGE"
+                ? rate.professionalHourlyRateCents
+                : rate.professionalHourlyRateCents + 400,
             taxCreditRateBp: TAX_CREDIT_RATE_BP,
           },
         });
@@ -943,7 +941,7 @@ async function main(): Promise<void> {
           surfaceSqm: surface,
           frequency,
           hourlyRateCents: rule.hourlyRateCents,
-          commissionRateBp: organization.commissionRateBp,
+          professionalHourlyRateCents: rule.professionalHourlyRateCents,
           taxCreditRateBp: rule.taxCreditRateBp,
         });
 

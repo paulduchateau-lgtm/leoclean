@@ -29,11 +29,18 @@ export const FEATURES = {
   /**
    * Espace intervenant : missions, planning, factures, messagerie.
    *
-   * La phase 8 du dépôt, non commencée. Le drapeau existe pour que la page
-   * d'offre décrive l'outil sans laisser croire qu'on peut s'y connecter
-   * aujourd'hui.
+   * `beta`, et le mot est à prendre au sérieux : la moitié de la liste
+   * annoncée existe et fonctionne — les missions proposées, la réponse à une
+   * mission, la contre-proposition d'horaire, la semaine déclarée, le dossier
+   * qui conditionne l'activation. L'autre moitié n'existe pas : la validation
+   * d'une intervention, les factures, la messagerie côté intervenant.
+   *
+   * D'où `beta` plutôt que `roadmap` ou `live`. `roadmap` disait à un candidat
+   * qu'il n'aurait pas d'outil, ce qui est faux et se paie en confiance ;
+   * `live` promettrait une facturation qui n'existe pas, ce qui se paie plus
+   * cher encore — un indépendant qui compte sur elle pour sa comptabilité.
    */
-  espaceIntervenant: "roadmap" as FeatureStage,
+  espaceIntervenant: "beta" as FeatureStage,
 
   /**
    * Minutes de route économisées, mesurées.

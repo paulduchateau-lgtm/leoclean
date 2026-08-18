@@ -236,9 +236,20 @@ describe("chargement du planning", () => {
     expect(schedule!.availability[1]!.start).toBe(paris(13, 14, 15).getTime());
   });
 
-  it("bloque aussi sur une proposition en attente de réponse", async () => {
-    // L'intervenant peut accepter d'une seconde à l'autre : proposer le même
-    // créneau à un autre client fabriquerait le conflit qu'on veut éviter.
+  it("ne bloque pas sur une proposition en attente de réponse", async () => {
+    /*
+     * L'inverse était vrai tant qu'une mission n'était proposée qu'à une
+     * personne. Depuis la diffusion par lots, cinq intervenants tiennent la
+     * même proposition et aucun ne détient rien : compter une proposition comme
+     * du temps occupé retirerait cinq plannings de la circulation pour une seule
+     * mission, et empêcherait quelqu'un de recevoir deux offres concurrentes —
+     * c'est-à-dire de choisir.
+     *
+     * La règle est la même que celle de la contrainte d'exclusion, qui ne
+     * couvre plus que l'accepté. C'est cet accord que le reste du fichier
+     * vérifie, et c'est lui qui empêche le moteur de proposer ce que la base
+     * refuserait.
+     */
     const fixture = await seedOrganization("leoclean");
     await createBookingWithAssignment(
       fixture,
@@ -253,7 +264,8 @@ describe("chargement du planning", () => {
       forOrganization(fixture.organizationId),
       { window: TUESDAY },
     );
-    expect(schedule!.availability).toHaveLength(2);
+    // La journée reste d'un seul tenant : rien n'a été retiré.
+    expect(schedule!.availability).toHaveLength(1);
   });
 
   it("libère le créneau d'une mission annulée", async () => {

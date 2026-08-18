@@ -132,6 +132,26 @@ export function isExclusionViolation(error: unknown): boolean {
 }
 
 /**
+ * Violation d'unicité.
+ *
+ * Deux emplois, tous deux liés à la diffusion : `Assignment_one_accepted_per_booking`
+ * quand deux intervenants acceptent la même mission — le second a perdu la
+ * course — et l'unicité d'une contre-proposition.
+ */
+export const UNIQUE_VIOLATION_CODE = "23505";
+
+/**
+ * Vraie si un autre intervenant a accepté la mission le premier.
+ *
+ * L'index unique partiel sur `("bookingId") WHERE status = 'ACCEPTED'` est ce
+ * qui départage la course. Le perdant ne doit pas lire une erreur technique : il
+ * a répondu de bonne foi, quelques secondes trop tard.
+ */
+export function isRaceLost(error: unknown): boolean {
+  return nativeErrorCodes(error).has(UNIQUE_VIOLATION_CODE);
+}
+
+/**
  * Vraie si la base a refusé l'écriture parce qu'une autre transaction
  * réservait le même créneau au même instant.
  *

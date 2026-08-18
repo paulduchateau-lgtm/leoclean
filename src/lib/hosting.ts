@@ -78,6 +78,15 @@ export function canonicalHost(
   return null;
 }
 
+/** Environnement déclaré du déploiement, par `NEXT_PUBLIC_ENVIRONMENT`. */
+export type Environnement = "production" | "dev";
+
+export interface ContexteIndexation {
+  environnement: Environnement;
+  site: string | null;
+  app: string | null;
+}
+
 /**
  * Cet hôte a-t-il le droit d'être indexé ?
  *
@@ -87,16 +96,28 @@ export function canonicalHost(
  * et c'est le domaine sans notoriété qui absorbe une partie des liens. Il en va
  * de même des URL de prévisualisation, publiques et devinables.
  *
- * La règle est donc : on n'indexe que l'hôte qu'on a déclaré. Elle ne
- * s'applique qu'une fois l'origine canonique configurée — sans elle, on ne sait
- * pas ce qui est canonique, et refuser l'indexation par défaut mettrait tout le
- * site hors de l'index sur un oubli de variable.
+ * Deux conditions, dans cet ordre.
+ *
+ * **L'environnement d'abord.** Un environnement de test n'est jamais
+ * indexable, quel que soit son hôte — y compris quand cet hôte est sa propre
+ * origine canonique. C'est le cas qui a motivé la déclaration : le jour où la
+ * dev reçoit `dev.leoclean.fr` et déclare cette origine, la comparaison des
+ * noms de domaine l'autorise, et l'on obtient dans l'index un double intégral
+ * du site, rédigé pour se classer sur les mêmes requêtes. Aucun nom d'hôte ne
+ * peut fermer cette porte ; une déclaration le peut.
+ *
+ * **L'hôte ensuite.** On n'indexe que celui qu'on a déclaré. Cette seconde
+ * règle ne s'applique qu'une fois l'origine canonique configurée — sans elle,
+ * on ne sait pas ce qui est canonique, et refuser l'indexation par défaut
+ * mettrait tout le site hors de l'index sur un oubli de variable.
  */
 export function isIndexableHost(
-  hosts: { site: string | null; app: string | null },
+  contexte: ContexteIndexation,
   requestHost: string,
 ): boolean {
-  const { site, app } = hosts;
+  if (contexte.environnement !== "production") return false;
+
+  const { site, app } = contexte;
   if (!site) return true;
   return requestHost === site || requestHost === app;
 }

@@ -1,5 +1,6 @@
 import type { BookingStatus, SlotProposalStatus } from "@prisma/client";
 
+import { CONTRE_PROPOSITION_JOURS } from "@/lib/assignments/diffusion";
 import { SLOT_GRANULARITY_MINUTES } from "@/lib/pricing/duration";
 
 /**
@@ -21,8 +22,16 @@ import { SLOT_GRANULARITY_MINUTES } from "@/lib/pricing/duration";
  * proposition, c'est une renégociation.
  */
 
-/** Fenêtre par défaut laissée au client pour répondre, en heures. */
-export const PROPOSAL_RESPONSE_WINDOW_HOURS = 24;
+/**
+ * Fenêtre laissée au client pour répondre, en heures.
+ *
+ * Dérivée de la validité décidée pour la diffusion, et non écrite ici : le
+ * client doit pouvoir demander qu'on continue à chercher son heure exacte sans
+ * perdre les alternatives, puis y revenir plus tard. Une fenêtre de vingt-quatre
+ * heures — celle des débuts — les aurait éteintes avant même la fin du premier
+ * lot.
+ */
+export const PROPOSAL_RESPONSE_WINDOW_HOURS = CONTRE_PROPOSITION_JOURS * 24;
 
 /**
  * Avance minimale d'un créneau proposé.

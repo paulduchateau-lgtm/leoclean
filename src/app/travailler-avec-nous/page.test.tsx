@@ -59,12 +59,12 @@ describe("landing intervenants — ce que la page ne doit jamais dire", () => {
   });
 
   it("affiche le partage complet, chaque ligne déduite des deux autres", () => {
-    // 29 € payés, 18 € nets, 11 € de coordination sur une heure — soit 87 €,
-    // 54 € et 33 € sur l'exemple de trois heures. Aucune des trois n'est
+    // 28 € payés, 23 € nets, 5 € de coordination sur une heure — soit 84 €,
+    // 69 € et 15 € sur l'exemple de trois heures. Aucune des trois n'est
     // écrite : la page les calcule, donc elles ne peuvent pas se contredire.
-    expect(text).toContain("87,00 €");
-    expect(text).toContain("54,00 €");
-    expect(text).toContain("33,00 €");
+    expect(text).toContain("84,00 €");
+    expect(text).toContain("69,00 €");
+    expect(text).toContain("15,00 €");
   });
 
   it("marque encore ce qui n'est pas arbitré, sans l'inventer", () => {
