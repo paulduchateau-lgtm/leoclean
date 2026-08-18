@@ -7,6 +7,7 @@ import { authedAction } from "@/lib/actions";
 import { requireOrganization } from "@/lib/auth/session";
 import { proposeSlot } from "@/lib/booking/slot-proposal-store";
 import { BusinessError, isRaceLost } from "@/lib/booking/errors";
+import { annoncerLAcceptation } from "@/lib/notifications/evenements";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
 /**
@@ -119,6 +120,16 @@ export const accepterMission = authedAction(
      * `Assignment_one_accepted_per_booking` qui départage, et le refus se
      * traduit en message lisible.
      */
+    // Relevés avant la transaction : après, ils ne sont plus `PROPOSED`.
+    const perdants = await db.assignment.findMany({
+      where: {
+        bookingId: affectation.bookingId,
+        status: "PROPOSED",
+        id: { not: affectation.id },
+      },
+      select: { cleanerProfileId: true },
+    });
+
     try {
       await db.$transaction(async (tx) => {
         await tx.assignment.update({
@@ -163,6 +174,13 @@ export const accepterMission = authedAction(
       }
       throw error;
     }
+
+    void annoncerLAcceptation(
+      db,
+      affectation.bookingId,
+      affectation.cleanerProfileId,
+      perdants.map((perdant) => perdant.cleanerProfileId),
+    );
 
     revalidatePath("/intervenant");
     return { accepte: true as const };

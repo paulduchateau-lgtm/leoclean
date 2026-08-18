@@ -1440,12 +1440,29 @@ Le produit est complet du référencement jusqu'au rendez-vous confirmé. Ce qui
 suit est ce qui manque **après** la confirmation, écrit ici pour qu'aucune de ces
 absences ne soit redécouverte en production.
 
-**Un seul email part du produit : le lien de connexion.** Ni confirmation de
-réservation au client, ni notification de mission à l'intervenant, ni rappel
-avant le passage, ni alerte sur une demande de rappel. `sendEmail` existe,
-`react-email` est installé, et un seul appelant s'en sert. C'est le manque le
-moins coûteux à combler et le plus visible du dehors : aujourd'hui, un
-intervenant ne sait qu'on l'attend que s'il ouvre son espace.
+**Le produit prend la parole à huit moments.** Demande reçue, mission proposée,
+intervenant trouvé, mission prise de vitesse, recherche élargie, horaires
+alternatifs disponibles, recherche interrompue, rappel de la veille — client et
+intervenant, chacun son texte.
+
+`src/lib/notifications/messages.ts` est **pur** : il compose, il n'envoie rien.
+Le contenu d'un email est du texte, donc l'endroit où une promesse se glisse le
+plus facilement, et le seul que le destinataire garde. Des tests tiennent donc
+les règles que le produit tient déjà à l'écran — ne rien confirmer tant que
+personne n'a accepté, ne nommer personne avant l'acceptation, ne pas s'excuser
+auprès de qui a perdu la course, présenter à égalité l'alternative et la
+poursuite de la recherche. L'un d'eux a d'ailleurs attrapé une faute : la
+proposition annonçait à l'intervenant le prix client à côté de sa rémunération.
+
+**Une notification qui échoue ne défait pas ce qu'elle annonce.** L'envoi est
+appelé après l'écriture, hors transaction, sans être attendu, et son échec est
+journalisé sans être propagé. C'est le seul endroit du dépôt où une erreur est
+volontairement avalée : une panne de messagerie ne doit pas annuler une
+réservation ni faire échouer l'acceptation d'une mission.
+
+**Un seul gabarit visuel pour les huit**, dans `gabarit.tsx`. C'est la deuxième
+surface après `magic-link-email.tsx` où les couleurs sont recopiées plutôt que
+référencées : un client de messagerie ne lit pas de feuille de styles.
 
 **L'ordonnanceur existe, et il est frappé par un travail planifié.**
 `vercel.json` déclare un appel horaire à `/api/taches`, protégée par

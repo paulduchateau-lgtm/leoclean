@@ -13,6 +13,8 @@ import { pointsOf } from "@/lib/scheduling/repository";
 
 import { composerLots, echeanceDuLot } from "@/lib/assignments/diffusion";
 
+import { annoncerLaDiffusion } from "@/lib/notifications/evenements";
+
 import { NoCleanerAvailableError } from "./errors";
 
 /**
@@ -184,7 +186,17 @@ export async function createBooking(
     ),
   );
 
-  return diffuser(premier, respondBy);
+  const cree = await diffuser(premier, respondBy);
+
+  /*
+   * Les notifications partent après la transaction, jamais dedans : un envoi
+   * lent tiendrait la base ouverte, et un envoi qui échoue ne doit pas défaire
+   * une demande enregistrée. On ne les attend pas non plus — le client a déjà
+   * son écran de confirmation.
+   */
+  void annoncerLaDiffusion(db, cree.bookingId, cree.proposedTo);
+
+  return cree;
 
   /**
    * La demande, ses lignes facturables et les propositions du lot : ensemble ou
