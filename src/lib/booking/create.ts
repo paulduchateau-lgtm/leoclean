@@ -101,7 +101,7 @@ export interface CreatedBooking {
  */
 export async function createBooking(
   db: TenantClient,
-  organization: { id: string; commissionRateBp: number },
+  organization: { id: string },
   input: CreateBookingInput,
 ): Promise<CreatedBooking> {
   const now = input.now ?? new Date();
@@ -112,7 +112,7 @@ export async function createBooking(
   });
   const destination: GeoPoint = { lat: address.lat, lng: address.lng };
 
-  const quote = await quoteFromCatalogue(db, organization, {
+  const quote = await quoteFromCatalogue(db, {
     serviceSlug: input.serviceSlug,
     optionSlugs: input.optionSlugs ?? [],
     surfaceSqm: input.surfaceSqm,

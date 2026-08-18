@@ -256,7 +256,7 @@ async function main(): Promise<void> {
     surfaceSqm: surface,
     frequency: "WEEKLY",
     hourlyRateCents: rule.hourlyRateCents,
-    commissionRateBp: organization.commissionRateBp,
+    professionalHourlyRateCents: rule.professionalHourlyRateCents,
     taxCreditRateBp: rule.taxCreditRateBp,
   });
 

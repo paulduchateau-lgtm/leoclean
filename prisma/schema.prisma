@@ -533,6 +533,16 @@ model PricingRule {
   frequency      Frequency
 
   hourlyRateCents Int
+
+  /// Ce que perçoit l'intervenant, par heure.
+  ///
+  /// Grandeur primaire de la répartition : la coordination est ce qui reste.
+  /// C'est la traduction en base du modèle juridique — une rémunération
+  /// proposée et acceptée avant la mission, jamais un pourcentage appliqué
+  /// après coup. Elle vit sur la règle et non sur l'organisation, la marge
+  /// n'étant pas la même en régulier et en ponctuel : 5 € de l'heure contre 9 €.
+  professionalHourlyRateCents Int
+
   /// Taux du crédit d'impôt services à la personne, en points de base.
   taxCreditRateBp Int       @default(5000)
 

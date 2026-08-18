@@ -75,6 +75,9 @@ async function seed({ cleaners = 1, clients = 2 } = {}): Promise<Fixture> {
         serviceId: service.id,
         frequency,
         hourlyRateCents: frequency === "ONE_OFF" ? 3300 : 2900,
+        professionalHourlyRateCents: Math.round(
+          (frequency === "ONE_OFF" ? 3300 : 2900) * 0.8,
+        ),
         taxCreditRateBp: 5000,
         validFrom: new Date(Date.UTC(2020, 0, 1)),
       },
@@ -159,10 +162,7 @@ function book(fixture: Fixture, clientIndex: number, start: Date) {
   const db = forOrganization(fixture.organizationId);
   return createBooking(
     db,
-    {
-      id: fixture.organizationId,
-      commissionRateBp: fixture.commissionRateBp,
-    },
+    { id: fixture.organizationId },
     {
       organizationId: fixture.organizationId,
       clientProfileId: fixture.clientProfileIds[clientIndex]!,

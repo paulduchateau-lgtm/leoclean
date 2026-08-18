@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
+import { PUBLIC_RATES } from "../src/lib/pricing/public-grid";
+
 /**
  * Socle d'une organisation : ce sans quoi le produit ne répond pas.
  *
@@ -124,19 +126,36 @@ export const CATALOGUE: ServiceSeed[] = [
 /**
  * Tarif horaire en centimes, par fréquence.
  *
- * Grille retenue : 29 € en régulier, 33 € en ponctuel. Wecasa affiche 28,90 €
- * et 32,90 € — la parité est délibérée, l'avantage de Léo Clean n'étant pas le
- * prix mais la proximité.
+ * Grille retenue : 28 € de l'heure en régulier, 30 € en ponctuel, dont 23 € et
+ * 21 € pour l'intervenant. La marge de coordination n'est donc pas un taux mais
+ * un écart — 5 € et 9 € de l'heure — plus élevé sur une intervention unique,
+ * dont le placement coûte davantage : trajet non amorti, aucune tournée à
+ * remplir, aucune récurrence pour rentabiliser la mise en relation.
+ *
+ * Les valeurs viennent de `PUBLIC_RATES` et ne sont pas recopiées ici : le
+ * guide affirme depuis toujours que le seed importe la grille publique pour que
+ * les deux ne puissent pas diverger, et ce fichier en tenait pourtant une
+ * seconde copie.
  */
-export const HOURLY_RATES: Record<
+export const RATES: Record<
   "ONE_OFF" | "WEEKLY" | "BIWEEKLY" | "MONTHLY",
-  number
-> = {
-  ONE_OFF: 3300,
-  WEEKLY: 2900,
-  BIWEEKLY: 2900,
-  MONTHLY: 2900,
-};
+  { hourlyRateCents: number; professionalHourlyRateCents: number }
+> = (() => {
+  const par = (key: "REGULIER" | "PONCTUEL") => {
+    const rate = PUBLIC_RATES.find((candidate) => candidate.key === key)!;
+    return {
+      hourlyRateCents: rate.hourlyRateCents,
+      professionalHourlyRateCents: rate.professionalHourlyRateCents,
+    };
+  };
+  const regulier = par("REGULIER");
+  return {
+    ONE_OFF: par("PONCTUEL"),
+    WEEKLY: regulier,
+    BIWEEKLY: regulier,
+    MONTHLY: regulier,
+  };
+})();
 
 export const TAX_CREDIT_RATE_BP = 5000;
 
@@ -232,12 +251,12 @@ export async function ensureSocle(prisma: PrismaClient): Promise<SocleResult> {
       servicesCreated += 1;
     }
 
-    for (const [frequency, rate] of Object.entries(HOURLY_RATES)) {
+    for (const [frequency, rate] of Object.entries(RATES)) {
       const tarifExistant = await prisma.pricingRule.findFirst({
         where: {
           organizationId: organization.id,
           serviceId,
-          frequency: frequency as keyof typeof HOURLY_RATES,
+          frequency: frequency as keyof typeof RATES,
           validUntil: null,
         },
         select: { id: true },
@@ -248,14 +267,24 @@ export async function ensureSocle(prisma: PrismaClient): Promise<SocleResult> {
         data: {
           organizationId: organization.id,
           serviceId,
-          frequency: frequency as keyof typeof HOURLY_RATES,
-          // Le grand ménage et la fin de bail sont plus exigeants : ils se
-          // facturent quelques euros de plus de l'heure.
+          frequency: frequency as keyof typeof RATES,
+          /*
+           * Le grand ménage et la fin de bail sont plus exigeants : quatre
+           * euros de l'heure de plus. Le supplément va **à l'intervenant**,
+           * c'est lui qui fournit l'effort — la marge de coordination reste la
+           * même, le placement d'une mission n'étant pas plus difficile parce
+           * qu'elle est plus dure.
+           */
           hourlyRateCents:
             serviceSeed.kind === "MENAGE_REGULIER" ||
             serviceSeed.kind === "REPASSAGE"
-              ? rate
-              : rate + 400,
+              ? rate.hourlyRateCents
+              : rate.hourlyRateCents + 400,
+          professionalHourlyRateCents:
+            serviceSeed.kind === "MENAGE_REGULIER" ||
+            serviceSeed.kind === "REPASSAGE"
+              ? rate.professionalHourlyRateCents
+              : rate.professionalHourlyRateCents + 400,
           taxCreditRateBp: TAX_CREDIT_RATE_BP,
           validFrom: new Date(Date.UTC(2026, 0, 1)),
         },

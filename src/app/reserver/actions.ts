@@ -93,21 +93,13 @@ const quoteSchema = z.object({
 
 export const getQuote = publicAction(quoteSchema, async (input) => {
   const organizationId = await marketplaceOrganizationId();
-  const organization = await prisma.organization.findUniqueOrThrow({
-    where: { id: organizationId },
-    select: { id: true, commissionRateBp: true },
-  });
 
-  const quote = await quoteFromCatalogue(
-    forOrganization(organizationId),
-    organization,
-    {
-      serviceSlug: SERVICE_SLUG,
-      optionSlugs: input.optionSlugs,
-      surfaceSqm: input.surfaceSqm,
-      frequency: input.frequency,
-    },
-  );
+  const quote = await quoteFromCatalogue(forOrganization(organizationId), {
+    serviceSlug: SERVICE_SLUG,
+    optionSlugs: input.optionSlugs,
+    surfaceSqm: input.surfaceSqm,
+    frequency: input.frequency,
+  });
 
   // Le client n'a pas à connaître la ventilation entre les deux factures avant
   // d'avoir réservé : elle apparaît sur les documents, pas dans le tunnel.
@@ -236,7 +228,7 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
   const organizationId = await marketplaceOrganizationId();
   const organization = await prisma.organization.findUniqueOrThrow({
     where: { id: organizationId },
-    select: { id: true, commissionRateBp: true },
+    select: { id: true },
   });
   const db = forOrganization(organizationId);
   const now = new Date();

@@ -127,7 +127,11 @@ export async function resolveHourlyRate(
   serviceId: string,
   frequency: Frequency,
   at: Date = new Date(),
-): Promise<{ hourlyRateCents: number; taxCreditRateBp: number }> {
+): Promise<{
+  hourlyRateCents: number;
+  professionalHourlyRateCents: number;
+  taxCreditRateBp: number;
+}> {
   const rule = await db.pricingRule.findFirst({
     where: {
       serviceId,
@@ -147,6 +151,7 @@ export async function resolveHourlyRate(
 
   return {
     hourlyRateCents: rule.hourlyRateCents,
+    professionalHourlyRateCents: rule.professionalHourlyRateCents,
     taxCreditRateBp: rule.taxCreditRateBp,
   };
 }
@@ -171,10 +176,14 @@ export interface CatalogueQuote extends Quote {
  * Le devis affiché au client et les montants enregistrés proviennent de cet
  * unique appel : c'est ce qui garantit qu'on ne facture pas autre chose que ce
  * qui a été montré.
+ *
+ * L'organisation n'entre plus ici. Elle portait le taux de commission, devenu
+ * sans objet : la répartition se lit sur la règle tarifaire, qui dit ce que
+ * perçoit l'intervenant. Garder le paramètre aurait laissé croire qu'il
+ * décidait encore de quelque chose.
  */
 export async function quoteFromCatalogue(
   db: TenantClient,
-  organization: { commissionRateBp: number },
   request: QuoteRequest,
 ): Promise<CatalogueQuote> {
   const at = request.at ?? new Date();
@@ -196,12 +205,8 @@ export async function quoteFromCatalogue(
     return option;
   });
 
-  const { hourlyRateCents, taxCreditRateBp } = await resolveHourlyRate(
-    db,
-    service.id,
-    request.frequency,
-    at,
-  );
+  const { hourlyRateCents, professionalHourlyRateCents, taxCreditRateBp } =
+    await resolveHourlyRate(db, service.id, request.frequency, at);
 
   const quoteOptions: QuoteOption[] = options.map((option) => ({
     slug: option.slug,
@@ -221,7 +226,7 @@ export async function quoteFromCatalogue(
     surfaceSqm: request.surfaceSqm,
     frequency: request.frequency,
     hourlyRateCents,
-    commissionRateBp: organization.commissionRateBp,
+    professionalHourlyRateCents,
     taxCreditRateBp,
     ...(request.durationOverrideMinutes !== undefined
       ? { durationOverrideMinutes: request.durationOverrideMinutes }

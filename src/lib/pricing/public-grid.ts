@@ -16,7 +16,22 @@ export interface PublicRate {
   key: "REGULIER" | "PONCTUEL";
   label: string;
   description: string;
+  /** Ce que paie le client, par heure. */
   hourlyRateCents: number;
+  /**
+   * Ce que perçoit l'intervenant, par heure.
+   *
+   * C'est la grandeur primaire, et la marge de coordination s'en déduit — pas
+   * l'inverse. Le modèle du dépôt le dit depuis le début : la rémunération est
+   * un montant proposé à l'intervenant, qu'il accepte avant de prendre la
+   * mission, jamais un pourcentage appliqué après coup.
+   *
+   * Conséquence directe : la marge n'est pas un taux unique. Elle vaut 5 € de
+   * l'heure en régulier et 9 € en ponctuel, parce qu'une mission unique coûte
+   * davantage à placer — trajet non amorti, pas de tournée à remplir, aucune
+   * récurrence pour rentabiliser la mise en relation.
+   */
+  professionalHourlyRateCents: number;
 }
 
 export const PUBLIC_RATES: readonly PublicRate[] = [
@@ -25,14 +40,16 @@ export const PUBLIC_RATES: readonly PublicRate[] = [
     label: "Ménage régulier",
     description:
       "Toutes les semaines, tous les quinze jours ou une fois par mois, avec un intervenant attitré.",
-    hourlyRateCents: 2900,
+    hourlyRateCents: 2800,
+    professionalHourlyRateCents: 2300,
   },
   {
     key: "PONCTUEL",
     label: "Intervention ponctuelle",
     description:
       "Une seule fois, sans engagement : grand ménage, fin de bail, après réception.",
-    hourlyRateCents: 3300,
+    hourlyRateCents: 3000,
+    professionalHourlyRateCents: 2100,
   },
 ];
 

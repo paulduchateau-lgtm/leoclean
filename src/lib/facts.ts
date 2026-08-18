@@ -3,6 +3,7 @@ import { CANCELLATION_TIERS } from "./pricing/cancellation";
 import {
   LOWEST_HOURLY_RATE_CENTS,
   MINIMUM_BILLABLE_MINUTES,
+  PUBLIC_RATES,
 } from "./pricing/public-grid";
 import { MAX_REFERRAL_DEPTH, REFERRAL_PROGRAMS } from "./referral/rules";
 import { SITE } from "./site";
@@ -119,15 +120,17 @@ export const INTERVENANTS = {
   /**
    * Rémunération nette horaire, en centimes.
    *
-   * 18 € pour 29 € payés par le client en formule régulière, soit une marge de
-   * coordination de 38 % — c'est l'exemple des CGU, et le dépôt en portait
-   * déjà la décision sans qu'aucune constante ne la tienne. Ce montant est le
-   * seul chiffre de la page qu'un intervenant vérifiera sur son relevé
-   * bancaire : le bloc rémunération en déduit les deux autres lignes plutôt
-   * que de les écrire, de sorte qu'aucune des trois ne peut contredire les
-   * autres.
+   * **Dérivée de la grille publique, plus écrite ici.** Elle y valait 18 € en
+   * dur, à côté d'une grille qui portait déjà la réponse : deux vérités pour un
+   * seul chiffre, et c'est celle de la page qui aurait vieilli — un intervenant
+   * vérifie ce montant sur son relevé bancaire.
+   *
+   * 23 € de l'heure en formule régulière, sur 28 € payés par le client : la
+   * coordination est l'écart, cinq euros, et le bloc rémunération déduit les
+   * deux autres lignes de celle-ci plutôt que de les écrire.
    */
-  netHourlyRateCents: 1800 as number | null,
+  netHourlyRateCents: (PUBLIC_RATES.find((rate) => rate.key === "REGULIER")
+    ?.professionalHourlyRateCents ?? null) as number | null,
 
   /**
    * Délai de paiement, tel qu'il se dit.

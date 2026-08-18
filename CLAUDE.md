@@ -57,9 +57,9 @@ d'impôt pour sa part. Trois raisons, toutes structurantes :
   requalification de la relation en contrat de travail ;
 - cela rend la marge de coordination elle-même éligible au crédit d'impôt, à
   condition que la plateforme soit déclarée SAP pour cette activité ;
-- cela évite de gonfler le chiffre d'affaires de l'intervenant : à 29 € payés
-  par le client dont 18 € pour lui, il atteint le plafond de la micro-entreprise
-  un tiers plus tard que si la totalité transitait par sa facture.
+- cela évite de gonfler le chiffre d'affaires de l'intervenant : à 28 € payés
+  par le client dont 23 € pour lui, il atteint le plafond de la micro-entreprise
+  plus tard que si la totalité transitait par sa facture.
 
 L'avance immédiate impose de toute façon ce découpage : elle fonctionne par
 demande de paiement déposée par chaque organisme déclaré, avec son SIRET.
@@ -80,10 +80,14 @@ régulier et 32,90 €/h en ponctuel, minimum 2 h, sans frais d'abonnement : la
 parité est délibérée, l'avantage de Léo Clean n'étant pas le prix mais la
 proximité.
 
-- Tarifs : **29 €/h en régulier, 33 €/h en ponctuel**, minimum 2 h, estimation
+- Tarifs : **28 €/h en régulier, 30 €/h en ponctuel**, minimum 2 h, estimation
   à 25 m²/h, +30 min par option.
-- Marge de coordination : **38 %** — 29 € payés, 18 € pour l'intervenant, 11 €
-  de coordination, conformément à l'exemple des CGU.
+- Marge de coordination : **un écart, pas un taux** — 23 €/h pour l'intervenant
+  en régulier et 21 €/h en ponctuel, soit 5 € et 9 € de coordination. Une
+  mission unique coûte davantage à placer : trajet non amorti, aucune tournée à
+  remplir, aucune récurrence pour rentabiliser la mise en relation. Les taux
+  effectifs qui en découlent — 17,9 % et 30 % — ne sont jamais saisis : ils sont
+  calculés et stockés sur la réservation pour l'audit.
 - Barème d'annulation des CGU, à six paliers plafonnés : gratuit au-delà de
   24 h, 5 € entre 8 et 24 h, 10 € entre 4 et 8 h, 50 % (max 20 €) entre 2 et
   4 h, 80 % (max 30 €) en deçà de 2 h, 100 % (max 40 €) en cas d'absence.
@@ -263,6 +267,15 @@ jamais deux parts indépendamment en espérant qu'elles retombent juste : on
 calcule l'une et on déduit l'autre. Un test le vérifie sur des milliers de
 combinaisons montant/taux.
 
+**La part calculée est celle de l'intervenant**, et la coordination est le
+reste. Ce sens-là n'est pas comptable mais juridique : la rémunération est un
+montant proposé et accepté avant la mission, jamais un pourcentage appliqué
+après coup. `PricingRule.professionalHourlyRateCents` la porte donc, par
+prestation et par fréquence — et non `Organization.commissionRateBp`, qui ne
+pouvait exprimer qu'un taux unique et n'est plus lu par le devis. Le supplément
+forfaitaire d'une option suit l'intervenant : il paie des fournitures, pas de la
+coordination.
+
 **Le crédit d'impôt est calculé facture par facture, pas sur le total.** Chaque
 organisme déclaré émet sa propre attestation fiscale sur son propre montant.
 Conséquence assumée : quand les deux arrondis tombent du même côté, le crédit
@@ -353,8 +366,17 @@ Le champ `inMontesquieu` porte la distinction et un test l'impose.
 **`src/lib/pricing/public-grid.ts` est la source unique des prix affichés.**
 Les pages publiques ne lisent pas la base : un tarif marketing n'a pas à
 dépendre d'une connexion. `PricingRule` reste la source opérationnelle, propre
-à chaque organisation ; le seed importe la même grille pour que les deux ne
-divergent pas.
+à chaque organisation ; le socle, le seed et `facts.ts` importent la même grille
+pour que rien ne diverge.
+
+**Changer la grille ne suffit pas à changer les prix facturés.** Le socle ne
+crée une règle que s'il n'en existe aucune : sur une base vivante, une
+modification de `public-grid.ts` ne toucherait que le site, qui afficherait un
+tarif pendant que le tunnel en chiffrerait un autre. `npm run db:tarifs` fait le
+pont — il montre l'écart, puis, avec `--confirmer`, ferme les règles en vigueur
+par un `validUntil` et en ouvre de nouvelles. Rien n'est écrasé : une
+réservation passée continue de pointer sur le tarif qui l'a chiffrée. Seule la
+marketplace est touchée, une société cliente fixant ses propres prix.
 
 ### L'accueil raconte pourquoi le rayon est court
 
@@ -1384,7 +1406,7 @@ double.
   accroche qui n'est pas la nôtre : à trancher avec le client.
 - Le document décrit un périmètre et des tarifs qui ne correspondent pas aux
   décisions prises depuis — communes hors zone, « 23 € / h » quand la grille
-  est à 29 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
+  est à 28 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
   sont des exemples de rédaction, pas des tokens : le code suit les décisions
   du projet.
 
@@ -1402,6 +1424,7 @@ npm run db:seed         # remplit la base de développement (tronque tout d'abor
 npm run db:init         # installe une base de production, sans données fictives
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
 npm run db:utilisateurs-test # comptes nominatifs pour parcourir les espaces
+npm run db:tarifs       # applique la grille publique aux tarifs en base
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
 npm run build:deploiement # migre puis construit — ce que Vercel exécute

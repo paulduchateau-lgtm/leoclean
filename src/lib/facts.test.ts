@@ -14,7 +14,10 @@ import {
   netRatePhrase,
 } from "@/lib/facts";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
-import { LOWEST_HOURLY_RATE_CENTS } from "@/lib/pricing/public-grid";
+import {
+  LOWEST_HOURLY_RATE_CENTS,
+  PUBLIC_RATES,
+} from "@/lib/pricing/public-grid";
 import { MAX_REFERRAL_DEPTH, REFERRAL_PROGRAMS } from "@/lib/referral/rules";
 import { SITE } from "@/lib/site";
 import { COMMUNES } from "@/lib/territory";
@@ -124,16 +127,32 @@ describe("conditions faites aux intervenants", () => {
     expect(netRatePhrase()).not.toContain("date fixe");
   });
 
-  it("annonce un net cohérent avec la marge de coordination du dépôt", () => {
-    // 18 € nets pour 29 € payés : 38 % de coordination, l'exemple des CGU.
-    // Le test tient le rapport, pas le chiffre — si le tarif client bouge, il
-    // faudra rouvrir la question plutôt que laisser filer la marge.
-    const net = INTERVENANTS.netHourlyRateCents;
-    expect(net).not.toBeNull();
+  it("annonce exactement ce que la grille paie", () => {
+    /*
+     * Le net affiché aux candidats n'est plus une constante : il est lu sur la
+     * grille publique. Ce test interdit qu'on l'en détache — un chiffre écrit à
+     * la main ici serait celui qu'un intervenant nous opposerait, son relevé
+     * bancaire à la main, et il aurait raison.
+     */
+    const regulier = PUBLIC_RATES.find((rate) => rate.key === "REGULIER")!;
+    expect(INTERVENANTS.netHourlyRateCents).toBe(
+      regulier.professionalHourlyRateCents,
+    );
 
-    const margin = 1 - net! / LOWEST_HOURLY_RATE_CENTS;
-    expect(margin).toBeGreaterThan(0.35);
-    expect(margin).toBeLessThan(0.4);
+    /*
+     * La coordination est un écart, pas un taux : 5 € de l'heure en régulier,
+     * 9 € en ponctuel — une mission unique coûte davantage à placer. Les deux
+     * valeurs sont épinglées ici pour la raison qui présidait déjà à l'ancien
+     * test : si le tarif client bouge, il faut rouvrir la question plutôt que
+     * laisser filer la marge dans un sens ou dans l'autre.
+     */
+    const ponctuel = PUBLIC_RATES.find((rate) => rate.key === "PONCTUEL")!;
+    expect(
+      regulier.hourlyRateCents - regulier.professionalHourlyRateCents,
+    ).toBe(500);
+    expect(
+      ponctuel.hourlyRateCents - ponctuel.professionalHourlyRateCents,
+    ).toBe(900);
   });
 
   it("écrit « garanti » dès que les trois ont une réponse", () => {

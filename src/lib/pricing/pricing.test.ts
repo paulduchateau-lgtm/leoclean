@@ -47,9 +47,10 @@ const VITRES = {
 };
 
 /** Grille retenue : 29 €/h en régulier, 33 €/h en ponctuel, marge 38 %. */
-const REGULAR_RATE = 2900;
-const ONE_OFF_RATE = 3300;
-const COMMISSION_BP = 3800;
+const REGULAR_RATE = 2800;
+const REGULAR_PRO_RATE = 2300;
+const ONE_OFF_RATE = 3000;
+const ONE_OFF_PRO_RATE = 2100;
 const TAX_CREDIT_BP = 5000;
 
 describe("arithmétique monétaire", () => {
@@ -71,9 +72,9 @@ describe("arithmétique monétaire", () => {
   });
 
   it("calcule le montant d'une durée au taux horaire", () => {
-    expect(amountForDuration(REGULAR_RATE, 120)).toBe(5800);
-    expect(amountForDuration(REGULAR_RATE, 150)).toBe(7250);
-    expect(amountForDuration(REGULAR_RATE, 90)).toBe(4350);
+    expect(amountForDuration(REGULAR_RATE, 120)).toBe(5600);
+    expect(amountForDuration(REGULAR_RATE, 150)).toBe(7000);
+    expect(amountForDuration(REGULAR_RATE, 90)).toBe(4200);
   });
 
   it("déduit le taux effectif d'une part", () => {
@@ -175,13 +176,13 @@ describe("devis", () => {
       surfaceSqm: 80,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
     expect(result.durationMinutes).toBe(210);
-    expect(result.grossAmountCents).toBe(10_150); // 3 h 30 à 29 €
-    expect(formatEuros(result.grossAmountCents)).toMatch(/^101,50/);
+    expect(result.grossAmountCents).toBe(9800); // 3 h 30 à 28 €
+    expect(formatEuros(result.grossAmountCents)).toMatch(/^98,00/);
   });
 
   it("répartit exactement le total entre les deux factures", () => {
@@ -191,15 +192,16 @@ describe("devis", () => {
       surfaceSqm: 80,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
     expect(result.professionalAmountCents + result.platformFeeAmountCents).toBe(
       result.grossAmountCents,
     );
-    expect(result.platformFeeAmountCents).toBe(3857);
-    expect(result.professionalAmountCents).toBe(6293);
+    // 3 h 30 : 23 € l'heure pour l'intervenant, 5 € pour la coordination.
+    expect(result.professionalAmountCents).toBe(8050);
+    expect(result.platformFeeAmountCents).toBe(1750);
   });
 
   it("respecte l'économie annoncée dans les conditions générales", () => {
@@ -211,59 +213,71 @@ describe("devis", () => {
       surfaceSqm: 25,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
-    expect(result.grossAmountCents).toBe(2900);
-    expect(result.professionalAmountCents).toBe(1798);
-    expect(result.platformFeeAmountCents).toBe(1102);
+    expect(result.grossAmountCents).toBe(2800);
+    // 23 € pour l'intervenant, 5 € de coordination : la marge est un écart
+    // horaire, pas un pourcentage.
+    expect(result.professionalAmountCents).toBe(2300);
+    expect(result.platformFeeAmountCents).toBe(500);
   });
 
   it("calcule le crédit d'impôt facture par facture", () => {
-    // Chaque organisme déclaré émet sa propre attestation fiscale : le crédit
-    // total doit être la somme des deux, pas un calcul séparé sur le total.
+    /*
+     * Chaque organisme déclaré émet sa propre attestation sur son propre
+     * montant : le crédit se calcule facture par facture, jamais sur le total.
+     *
+     * Conséquence assumée : quand les deux arrondis tombent du même côté, la
+     * somme dépasse d'un centime ce qu'un calcul global aurait donné. L'écart
+     * profite au client, et vaut mieux que deux attestations dont la somme ne
+     * retombe pas juste.
+     *
+     * La grille actuelle ne le produit pas : ses tarifs sont des euros ronds et
+     * les durées des multiples de trente minutes, si bien que les deux parts
+     * tombent toujours sur des centimes pairs. Le second cas force donc la
+     * situation, pour que la règle reste vérifiée le jour où un tarif cesse
+     * d'être rond.
+     */
     const result = quote({
       service: MENAGE_REGULIER,
       options: [],
       surfaceSqm: 80,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
+    expect(result.taxCreditAmountCents).toBe(
+      Math.round((result.grossAmountCents * TAX_CREDIT_BP) / 10_000),
+    );
     expect(
       result.professionalTaxCreditCents + result.platformTaxCreditCents,
     ).toBe(result.taxCreditAmountCents);
-    expect(result.netAmountCents).toBe(
-      result.grossAmountCents - result.taxCreditAmountCents,
-    );
-  });
 
-  it("assume l'écart d'arrondi né du calcul ligne par ligne", () => {
-    // Le crédit est calculé sur chaque facture séparément, parce que chaque
-    // organisme déclaré émet la sienne. Quand les deux arrondis tombent du même
-    // côté, le total dépasse d'un centime le crédit qu'un calcul global aurait
-    // donné. On préfère cet écart — qui profite au client — à des attestations
-    // dont la somme ne retomberait pas juste.
-    const result = quote({
-      service: MENAGE_REGULIER,
+    // Deux parts impaires : chaque arrondi monte d'un demi-centime.
+    const impair = quote({
+      // Le plancher de deux heures ramènerait la durée sur un multiple qui
+      // annule l'effet : on l'abaisse pour obtenir une heure et demie.
+      service: { ...MENAGE_REGULIER, minDurationMinutes: 60 },
       options: [],
-      surfaceSqm: 80,
+      surfaceSqm: 37,
       frequency: "WEEKLY",
-      hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      hourlyRateCents: 2704,
+      professionalHourlyRateCents: 2202,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
-    const creditOnTotal = Math.round(
-      (result.grossAmountCents * TAX_CREDIT_BP) / 10_000,
+    expect(impair.professionalAmountCents % 2).toBe(1);
+    expect(impair.platformFeeAmountCents % 2).toBe(1);
+    expect(impair.taxCreditAmountCents).toBe(
+      Math.round((impair.grossAmountCents * TAX_CREDIT_BP) / 10_000) + 1,
     );
-    expect(result.taxCreditAmountCents).toBe(creditOnTotal + 1);
     expect(
-      result.professionalTaxCreditCents + result.platformTaxCreditCents,
-    ).toBe(result.taxCreditAmountCents);
+      impair.professionalTaxCreditCents + impair.platformTaxCreditCents,
+    ).toBe(impair.taxCreditAmountCents);
   });
 
   it("laisse un reste à charge de moitié", () => {
@@ -273,12 +287,12 @@ describe("devis", () => {
       surfaceSqm: 100,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
-    expect(result.grossAmountCents).toBe(11_600);
-    expect(result.netAmountCents).toBe(5800);
+    expect(result.grossAmountCents).toBe(11_200);
+    expect(result.netAmountCents).toBe(5600);
   });
 
   it("facture les options en temps, pas en supplément de taux", () => {
@@ -288,12 +302,12 @@ describe("devis", () => {
       surfaceSqm: 60,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
     expect(withOptions.durationMinutes).toBe(240);
-    expect(withOptions.grossAmountCents).toBe(11_600);
+    expect(withOptions.grossAmountCents).toBe(11_200);
     expect(withOptions.lines).toHaveLength(3);
     expect(withOptions.lines[1]?.label).toBe("Repassage");
   });
@@ -303,7 +317,6 @@ describe("devis", () => {
       service: MENAGE_REGULIER,
       options: [],
       surfaceSqm: 80,
-      commissionRateBp: COMMISSION_BP,
       taxCreditRateBp: TAX_CREDIT_BP,
     };
 
@@ -311,15 +324,17 @@ describe("devis", () => {
       ...commonInput,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
     });
     const oneOff = quote({
       ...commonInput,
       frequency: "ONE_OFF",
       hourlyRateCents: ONE_OFF_RATE,
+      professionalHourlyRateCents: ONE_OFF_PRO_RATE,
     });
 
     expect(oneOff.grossAmountCents).toBeGreaterThan(regular.grossAmountCents);
-    expect(oneOff.grossAmountCents - regular.grossAmountCents).toBe(1400);
+    expect(oneOff.grossAmountCents - regular.grossAmountCents).toBe(700);
   });
 
   it("prend en compte la durée ajustée par le client", () => {
@@ -329,7 +344,7 @@ describe("devis", () => {
       surfaceSqm: 80,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: COMMISSION_BP,
+      professionalHourlyRateCents: REGULAR_PRO_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
       durationOverrideMinutes: 180,
     });
@@ -337,7 +352,7 @@ describe("devis", () => {
     expect(result.durationMinutes).toBe(180);
     expect(result.estimatedDurationMinutes).toBe(210);
     expect(result.durationAdjusted).toBe(true);
-    expect(result.grossAmountCents).toBe(8700);
+    expect(result.grossAmountCents).toBe(8400);
   });
 
   it("refuse une durée inférieure au minimum de la prestation", () => {
@@ -348,7 +363,7 @@ describe("devis", () => {
         surfaceSqm: 80,
         frequency: "WEEKLY",
         hourlyRateCents: REGULAR_RATE,
-        commissionRateBp: COMMISSION_BP,
+        professionalHourlyRateCents: REGULAR_PRO_RATE,
         taxCreditRateBp: TAX_CREDIT_BP,
         durationOverrideMinutes: 60,
       }),
@@ -362,7 +377,9 @@ describe("devis", () => {
       surfaceSqm: 80,
       frequency: "WEEKLY",
       hourlyRateCents: REGULAR_RATE,
-      commissionRateBp: 0,
+      // Une société prestataire encaisse la totalité : sa rémunération horaire
+      // est le tarif lui-même, et la coordination tombe à zéro.
+      professionalHourlyRateCents: REGULAR_RATE,
       taxCreditRateBp: TAX_CREDIT_BP,
     });
 
@@ -378,7 +395,7 @@ describe("devis", () => {
         surfaceSqm: 95,
         frequency: "BIWEEKLY",
         hourlyRateCents: REGULAR_RATE,
-        commissionRateBp: COMMISSION_BP,
+        professionalHourlyRateCents: REGULAR_PRO_RATE,
         taxCreditRateBp: TAX_CREDIT_BP,
       }),
     );
