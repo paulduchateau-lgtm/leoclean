@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Espace client — Léo Clean</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="stylesheet" href="assets/leo-clean.css" />
+    <link rel="stylesheet" href="assets/theme-menthe.css" />
+    <link rel="stylesheet" href="assets/theme-pop.css" />
+    <link rel="stylesheet" href="assets/theme-tropical.css" />
+    <script src="assets/theme.js"></script>
+    <link rel="stylesheet" href="assets/login.css" />
+  </head>
+  <body>
+    <script src="assets/icons.js"></script>
+
+    <p class="proto-banner">
+      Prototype — maquette non contractuelle. Aucun compte n’est créé.
+    </p>
+
+    <header class="site-header">
+      <div class="bar">
+        <a class="wordmark" href="index.html">Léo Clean</a>
+        <nav></nav>
+        <div class="actions">
+          <a class="btn btn-secondary btn-sm" href="espace-cleaner.html"
+            ><svg class="i i-16"><use href="#i-sparkles" /></svg
+            ><span class="tel-label">Espace cleaner</span></a
+          >
+          <a class="btn btn-sm" href="reserver.html"
+            >Réserver<svg class="i i-16"><use href="#i-arrow-right" /></svg
+          ></a>
+        </div>
+      </div>
+    </header>
+
+    <main class="login">
+      <div class="login-card card card-feature">
+        <span class="login-seal"
+          ><svg class="i i-24"><use href="#i-user" /></svg
+        ></span>
+        <h1>Votre espace client</h1>
+        <p class="muted">
+          Vos réservations, vos adresses et vos factures. Pas de mot de passe :
+          on vous envoie un lien de connexion.
+        </p>
+
+        <form class="stack" style="gap: 16px" id="form">
+          <label class="field"
+            ><span class="label">Votre email</span>
+            <span class="input-shell"
+              ><svg class="i i-18"><use href="#i-mail" /></svg>
+              <input
+                type="email"
+                placeholder="camille@exemple.fr"
+                autocomplete="email"
+                required
+            /></span>
+            <span class="hint"
+              >Celui que vous avez donné lors de votre réservation.</span
+            ></label
+          >
+          <button class="btn btn-lg btn-block" type="submit">
+            Recevoir mon lien de connexion<svg class="i i-18">
+              <use href="#i-arrow-right" />
+            </svg>
+          </button>
+        </form>
+
+        <div class="sep"><span>ou</span></div>
+        <button class="btn btn-lg btn-secondary btn-block" type="button">
+          Continuer avec Google
+        </button>
+
+        <p class="caption">
+          Pas encore de réservation ?
+          <a href="reserver.html">Réservez d’abord</a> : votre compte se crée
+          tout seul à ce moment-là.
+        </p>
+      </div>
+
+      <div class="login-card card card-feature sent">
+        <span class="login-seal"
+          ><svg class="i i-24" style="stroke-width: 3">
+            <use href="#i-check" /></svg
+        ></span>
+        <h1>Regardez vos emails</h1>
+        <p class="muted">
+          Nous venons d’envoyer un lien de connexion. Il est valable une heure
+          et ne fonctionne qu’une fois.
+        </p>
+        <a class="btn btn-lg btn-secondary btn-block" href="index.html"
+          >Retour à l’accueil</a
+        >
+      </div>
+    </main>
+
+    <script src="assets/login.js"></script>
+  </body>
+</html>

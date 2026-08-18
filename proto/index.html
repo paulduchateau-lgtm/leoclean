@@ -1,0 +1,1470 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Léo Clean — ménage à domicile au sud de Bordeaux</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="stylesheet" href="assets/leo-clean.css" />
+    <link rel="stylesheet" href="assets/theme-menthe.css" />
+    <link rel="stylesheet" href="assets/theme-pop.css" />
+    <link rel="stylesheet" href="assets/theme-tropical.css" />
+    <script src="assets/theme.js"></script>
+    <style>
+      /* Mises en page propres à l'accueil. Tout le reste vient de leo-clean.css. */
+      .hero {
+        background: linear-gradient(180deg, var(--cream-200), var(--cream-100));
+      }
+      .hero .grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 56px;
+        align-items: center;
+        padding-top: 72px;
+        padding-bottom: 88px;
+      }
+      .hero .pitch {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .hero .reassure {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        font: var(--text-body-sm);
+        color: var(--text-muted);
+      }
+      .hero .reassure span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .hero .visual {
+        position: relative;
+      }
+      .hero .floating {
+        position: absolute;
+        left: -28px;
+        bottom: 32px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 280px;
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .band-dark {
+        background: var(--leaf-900);
+        color: var(--white);
+      }
+      .band-dark h2,
+      .band-dark .display-md {
+        color: var(--white);
+      }
+      .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .steps-list .item {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .steps-list .item b {
+        font: var(--text-h4);
+        color: var(--white);
+        display: block;
+      }
+      .steps-list .item span {
+        font: var(--text-body);
+        color: var(--leaf-200);
+      }
+      /* Après « .item span », qui l'emporterait sinon et délaverait le numéro. */
+      .steps-list .item .n {
+        width: 36px;
+        height: 36px;
+        flex: none;
+        border-radius: var(--radius-pill);
+        background: var(--marigold-300);
+        color: var(--ink-900);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: 700 16px/1 var(--font-display);
+      }
+
+      /* Comparatif — la colonne Léo Clean est une surface menthe continue, et
+     chaque ligne porte un marqueur lisible sans lire la phrase. */
+      .compare {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: var(--white);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+      }
+      .compare th,
+      .compare td {
+        padding: 16px 20px;
+        text-align: left;
+        font: var(--text-body-sm);
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: top;
+      }
+      .compare thead th {
+        font: var(--text-label);
+        color: var(--text-muted);
+        background: var(--ink-50);
+      }
+      .compare thead th.mine {
+        background: var(--leaf-600);
+        color: var(--white);
+        font: var(--text-h4);
+      }
+      .compare td.mine {
+        background: var(--leaf-50);
+        color: var(--text-strong);
+      }
+      .compare tbody tr:last-child th,
+      .compare tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .compare tbody th {
+        font: var(--text-body-sm);
+        font-weight: 600;
+        color: var(--text-strong);
+      }
+      .compare .mark {
+        display: inline-flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .compare .mark .i {
+        flex: none;
+        margin-top: 2px;
+      }
+      .compare .yes .i {
+        color: var(--leaf-600);
+      }
+      .compare .no .i {
+        color: var(--ink-400);
+      }
+      .compare .no {
+        color: var(--text-muted);
+      }
+      .compare .mine .mark {
+        font-weight: 600;
+      }
+
+      .communes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .commune {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: var(--radius-pill);
+        background: var(--white);
+        border: 1px solid var(--border-subtle);
+        font: var(--text-body-sm);
+        font-weight: 600;
+        color: var(--text-body);
+        text-decoration: none;
+        transition: var(--transition-control);
+      }
+      .commune:hover {
+        background: var(--leaf-50);
+        color: var(--leaf-700);
+        text-decoration: none;
+        transform: translateY(var(--hover-lift));
+      }
+      .commune .t {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--text-subtle);
+      }
+      .commune:hover .t {
+        color: var(--leaf-600);
+      }
+
+      .cta-panel {
+        max-width: var(--container-max);
+        margin: 0 auto;
+        background: var(--clay-500);
+        border-radius: var(--radius-2xl);
+        padding: 64px 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 40px;
+        flex-wrap: wrap;
+      }
+      .cta-panel h2 {
+        color: var(--white);
+      }
+      .cta-panel p {
+        font: var(--text-body-lg);
+        color: rgba(255, 255, 255, 0.86);
+      }
+      .engagement {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .engagement .bubble {
+        width: 44px;
+        height: 44px;
+        flex: none;
+        border-radius: var(--radius-md);
+        background: var(--leaf-100);
+        color: var(--leaf-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Conseils */
+      .article {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 24px;
+        border-radius: var(--radius-xl);
+        background: var(--white);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition-control);
+        text-decoration: none;
+      }
+      .article:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-4px);
+        text-decoration: none;
+      }
+      .article h3 {
+        font: var(--text-h4);
+        color: var(--text-strong);
+      }
+      .article p {
+        font: var(--text-body-sm);
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+      .article .more {
+        margin-top: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: var(--text-label);
+        color: var(--text-brand);
+      }
+
+      /* Questions — un <details> par question, aucun script. */
+      .faq {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: var(--container-narrow);
+      }
+      .faq details {
+        background: var(--white);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        transition: var(--transition-control);
+      }
+      .faq details[open] {
+        box-shadow: var(--shadow-md);
+      }
+      .faq summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        cursor: pointer;
+        font: var(--text-h4);
+        color: var(--text-strong);
+        list-style: none;
+      }
+      .faq summary::-webkit-details-marker {
+        display: none;
+      }
+      .faq summary .i {
+        color: var(--leaf-600);
+        flex: none;
+        transition: transform var(--duration-base) var(--ease-out);
+      }
+      .faq details[open] summary .i {
+        transform: rotate(180deg);
+      }
+      .faq p {
+        margin-top: 12px;
+        font: var(--text-body);
+        color: var(--text-muted);
+      }
+
+      /* Contact — remplace l'appel téléphonique. */
+      .contact {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 40px;
+        align-items: start;
+      }
+      .contact .form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .contact .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .contact .sent {
+        display: none;
+        gap: 14px;
+        align-items: flex-start;
+      }
+      .contact.is-sent .sent {
+        display: flex;
+      }
+      .contact.is-sent .form {
+        display: none;
+      }
+
+      @media (max-width: 920px) {
+        .hero .grid {
+          grid-template-columns: 1fr;
+          gap: 32px;
+          padding-top: 40px;
+          padding-bottom: 48px;
+        }
+        .hero .visual {
+          display: none;
+        }
+        .grid-4,
+        .grid-3,
+        .grid-2,
+        .contact,
+        .contact .two {
+          grid-template-columns: 1fr;
+        }
+        .band-dark .grid-2 {
+          gap: 32px;
+        }
+        .cta-panel {
+          padding: 32px 24px;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .compare-scroll {
+          overflow-x: auto;
+        }
+        .compare {
+          min-width: 820px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="assets/icons.js"></script>
+
+    <p class="proto-banner">
+      Prototype — maquette non contractuelle. Aucune réservation n’est
+      enregistrée.
+    </p>
+
+    <header class="site-header">
+      <div class="bar">
+        <a class="wordmark" href="index.html">Léo Clean</a>
+        <nav>
+          <a href="#prestations">Prestations</a>
+          <a href="#offre">Tarifs</a>
+          <a href="#blog">Conseils</a>
+          <a href="#faq">Questions</a>
+        </nav>
+        <div class="actions">
+          <a class="btn btn-ghost btn-sm" href="espace-client.html"
+            ><svg class="i i-16"><use href="#i-user" /></svg
+            ><span class="tel-label">Espace client</span></a
+          >
+          <a class="btn btn-secondary btn-sm" href="espace-cleaner.html"
+            ><svg class="i i-16"><use href="#i-sparkles" /></svg
+            ><span class="tel-label">Espace cleaner</span></a
+          >
+          <a class="btn btn-sm" href="reserver.html"
+            >Réserver<svg class="i i-16"><use href="#i-arrow-right" /></svg
+          ></a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- 1. La thèse : la proximité, dite en personnes plutôt qu'en minutes. -->
+      <section class="hero">
+        <div class="container grid">
+          <div class="pitch">
+            <span class="badge badge-highlight"
+              ><svg class="i i-14"><use href="#i-map-pin" /></svg>16 communes du
+              sud de Bordeaux</span
+            >
+            <h1 class="display-xl">
+              Le ménage à domicile, par des personnes qui habitent à côté de
+              chez vous.
+            </h1>
+            <p class="lead" style="max-width: 500px">
+              Nos intervenants vivent dans les communes où ils travaillent.
+              C’est ce qui rend possible la seule promesse qui compte vraiment :
+              la même personne chez vous, à chaque passage.
+            </p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap">
+              <a class="btn btn-lg" href="reserver.html"
+                >Réserver un ménage<svg class="i i-18">
+                  <use href="#i-arrow-right" /></svg
+              ></a>
+              <a class="btn btn-lg btn-secondary" href="#contact"
+                >Nous écrire</a
+              >
+            </div>
+            <div class="reassure">
+              <span
+                ><svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-shield-check" /></svg
+                >Intervenants vérifiés et assurés</span
+              >
+              <span
+                ><svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-clock" /></svg
+                >Annulation gratuite jusqu’à 24 h avant</span
+              >
+              <span
+                ><svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-repeat" /></svg
+                >Sans abonnement</span
+              >
+            </div>
+          </div>
+          <div class="visual">
+            <div
+              class="photo"
+              style="height: 420px; background: var(--clay-100)"
+            >
+              <span
+                ><svg class="i i-18"><use href="#i-image" /></svg>photo —
+                intérieur, lumière naturelle</span
+              >
+              <img
+                src="assets/img/interieur-menthe.jpg"
+                alt="Un intervenant Léo Clean aspire un canapé dans un salon lumineux"
+                onerror="this.remove()"
+              />
+            </div>
+            <div class="card card-lg floating">
+              <span
+                style="
+                  width: 44px;
+                  height: 44px;
+                  border-radius: var(--radius-pill);
+                  background: var(--leaf-100);
+                  color: var(--leaf-700);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <svg class="i i-24" style="stroke-width: 3">
+                  <use href="#i-check" /></svg
+              ></span>
+              <span class="stack">
+                <b style="font: var(--text-body); color: var(--text-strong)"
+                  >Camille vient mardi à 9 h</b
+                >
+                <span class="caption"
+                  >Ménage 3 h · elle habite la commune d’à côté</span
+                >
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Les quatre chiffres du bandeau de crédibilité. -->
+      <section
+        class="container"
+        style="padding-top: var(--section-y); padding-bottom: 0"
+      >
+        <div class="grid-4">
+          <div class="stat">
+            <svg class="i i-26"><use href="#i-banknote" /></svg>
+            <span class="stat-value">28 €</span
+            ><span class="stat-label">de l’heure en formule régulière</span>
+          </div>
+          <div class="stat tone-cream">
+            <svg class="i i-26"><use href="#i-calendar-days" /></svg>
+            <span class="stat-value">24 h</span
+            ><span class="stat-label">pour annuler sans rien payer</span>
+          </div>
+          <div class="stat tone-clay">
+            <svg class="i i-26"><use href="#i-sparkles" /></svg>
+            <span class="stat-value">4</span
+            ><span class="stat-label"
+              >prestations, du ménage courant à la fin de bail</span
+            >
+          </div>
+          <div class="stat tone-marigold">
+            <svg class="i i-26"><use href="#i-badge-percent" /></svg>
+            <span class="stat-value">-50 %</span
+            ><span class="stat-label"
+              >de crédit d’impôt services à la personne</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Les quatre prestations. -->
+      <section class="section container" id="prestations">
+        <h2 class="display-md" style="margin-bottom: 8px">
+          Ce dont vous avez besoin
+        </h2>
+        <p class="lead" style="margin-bottom: 32px; max-width: 620px">
+          Quatre prestations, un seul tarif horaire, et la même personne quand
+          vous la reprenez.
+        </p>
+        <div class="grid-4">
+          <a class="service" href="reserver.html">
+            <span class="service-bubble"
+              ><svg class="i i-30"><use href="#i-sparkles" /></svg
+            ></span>
+            <span class="stack" style="gap: 4px">
+              <span class="service-title">Ménage</span>
+              <span class="service-tagline"
+                >Entretien courant, régulier ou ponctuel</span
+              >
+            </span>
+            <span class="service-price"
+              >dès 28 €/h<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+          <a class="service tone-clay" href="reserver.html">
+            <span class="service-bubble"
+              ><svg class="i i-30"><use href="#i-shirt" /></svg
+            ></span>
+            <span class="stack" style="gap: 4px">
+              <span class="service-title">Repassage</span>
+              <span class="service-tagline"
+                >Seul, ou ajouté à votre ménage</span
+              >
+            </span>
+            <span class="service-price"
+              >dès 28 €/h<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+          <a class="service tone-marigold" href="reserver.html">
+            <span class="service-bubble"
+              ><svg class="i i-30"><use href="#i-spray-can" /></svg
+            ></span>
+            <span class="stack" style="gap: 4px">
+              <span class="service-title">Grand ménage</span>
+              <span class="service-tagline">De fond en comble, une fois</span>
+            </span>
+            <span class="service-price"
+              >dès 30 €/h<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+          <a class="service tone-cream" href="reserver.html">
+            <span class="service-bubble"
+              ><svg class="i i-30"><use href="#i-key" /></svg
+            ></span>
+            <span class="stack" style="gap: 4px">
+              <span class="service-title">Fin de bail</span>
+              <span class="service-tagline">Avant l’état des lieux</span>
+            </span>
+            <span class="service-price"
+              >dès 30 €/h<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 4. L'offre. Deux tarifs, pas de forfait, pas d'abonnement. -->
+      <section
+        class="container"
+        style="padding-bottom: var(--section-y)"
+        id="offre"
+      >
+        <h2 class="display-md" style="margin-bottom: 8px">
+          Deux tarifs, et c’est tout
+        </h2>
+        <p class="lead" style="margin-bottom: 32px; max-width: 620px">
+          Le prix, c’est le taux horaire multiplié par la durée. Vous choisissez
+          la durée, nous vous disons la surface qu’elle couvre habituellement.
+        </p>
+        <div class="grid-2" style="align-items: stretch">
+          <div
+            class="card card-feature"
+            style="display: flex; flex-direction: column; gap: 16px"
+          >
+            <div class="row" style="gap: 12px">
+              <span
+                style="
+                  width: 56px;
+                  height: 56px;
+                  border-radius: var(--radius-md);
+                  background: var(--leaf-100);
+                  color: var(--leaf-700);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <svg class="i i-24"><use href="#i-repeat" /></svg
+              ></span>
+              <span class="badge badge-highlight">Le + choisi</span>
+            </div>
+            <h3>Ménage régulier</h3>
+            <p class="muted">
+              Chaque semaine ou tous les quinze jours, avec un intervenant
+              attitré. Sans engagement : vous arrêtez quand vous voulez.
+            </p>
+            <p>
+              <span class="display-md">28 €</span>
+              <span class="muted">/ heure</span>
+            </p>
+            <ul
+              class="stack"
+              style="gap: 10px; padding: 0; margin: 0; list-style: none"
+            >
+              <li class="row sm" style="gap: 8px">
+                <svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-check" /></svg
+                >Minimum 2 h par passage
+              </li>
+              <li class="row sm" style="gap: 8px">
+                <svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-check" /></svg
+                >Le même intervenant à chaque fois
+              </li>
+              <li class="row sm" style="gap: 8px">
+                <svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-check" /></svg
+                >Les passages suivants se calent avec vous après le premier
+                ménage
+              </li>
+            </ul>
+            <a
+              class="btn btn-block"
+              style="margin-top: auto"
+              href="reserver.html"
+              >Voir mes créneaux<svg class="i i-18">
+                <use href="#i-arrow-right" /></svg
+            ></a>
+          </div>
+          <div
+            class="card card-feature"
+            style="display: flex; flex-direction: column; gap: 16px"
+          >
+            <div class="row" style="gap: 12px">
+              <span
+                style="
+                  width: 56px;
+                  height: 56px;
+                  border-radius: var(--radius-md);
+                  background: var(--clay-100);
+                  color: var(--clay-700);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                <svg class="i i-24"><use href="#i-spray-can" /></svg
+              ></span>
+            </div>
+            <h3>Intervention ponctuelle</h3>
+            <p class="muted">
+              Une seule fois : grand ménage, fin de bail, remise en état après
+              réception. Rien à résilier, rien à prévoir ensuite.
+            </p>
+            <p>
+              <span class="display-md">30 €</span>
+              <span class="muted">/ heure</span>
+            </p>
+            <ul
+              class="stack"
+              style="gap: 10px; padding: 0; margin: 0; list-style: none"
+            >
+              <li class="row sm" style="gap: 8px">
+                <svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-check" /></svg
+                >Minimum 2 h, jusqu’à 6 h en une fois
+              </li>
+              <li class="row sm" style="gap: 8px">
+                <svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-check" /></svg
+                >Repassage, vitres ou four : 30 min de plus par option
+              </li>
+              <li class="row sm" style="gap: 8px">
+                <svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-check" /></svg
+                >Estimation : environ 25 m² à l’heure
+              </li>
+            </ul>
+            <a
+              class="btn btn-block btn-secondary"
+              style="margin-top: auto"
+              href="reserver.html"
+              >Voir mes créneaux<svg class="i i-18">
+                <use href="#i-arrow-right" /></svg
+            ></a>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Le déroulé réel : diffusion par lots, acceptation explicite. -->
+      <section class="band-dark" id="deroule">
+        <div
+          class="section grid-2 container"
+          style="align-items: center; gap: 56px"
+        >
+          <div class="stack" style="gap: 24px">
+            <h2 class="display-md">
+              Vous demandez une heure. Quelqu’un l’accepte.
+            </h2>
+            <div class="steps-list">
+              <div class="item">
+                <span class="n">1</span
+                ><span
+                  ><b>Vous choisissez votre créneau</b
+                  ><span
+                    >Six écrans, deux minutes. Le prix s’affiche avant qu’on
+                    vous demande la moindre donnée personnelle.</span
+                  ></span
+                >
+              </div>
+              <div class="item">
+                <span class="n">2</span
+                ><span
+                  ><b>La mission part chez cinq intervenants</b
+                  ><span
+                    >Ceux qui habitent le plus près de chez vous et connaissent
+                    déjà le secteur. Personne ne se voit imposer une
+                    mission.</span
+                  ></span
+                >
+              </div>
+              <div class="item">
+                <span class="n">3</span
+                ><span
+                  ><b>Le premier qui accepte l’emporte</b
+                  ><span
+                    >Vous êtes prévenu sous 24 h, avec son prénom, sa commune et
+                    son ancienneté.</span
+                  ></span
+                >
+              </div>
+            </div>
+            <div>
+              <a class="btn btn-accent btn-lg" href="reserver.html"
+                >Commencer<svg class="i i-18"><use href="#i-arrow-right" /></svg
+              ></a>
+            </div>
+          </div>
+          <div
+            class="photo"
+            style="
+              height: 380px;
+              background: rgba(255, 255, 255, 0.08);
+              color: var(--leaf-200);
+            "
+          >
+            <span
+              ><svg class="i i-18"><use href="#i-image" /></svg>photo —
+              intervenante en mission</span
+            >
+            <img
+              src="assets/img/intervenante-salon.jpg"
+              alt="Une intervenante Léo Clean nettoie une table basse en bois"
+              onerror="this.remove()"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Comparatif de modèles. Aucune société n'est nommée, aucun superlatif :
+       chaque case défavorable doit rester défendable devant qui l'opère. -->
+      <section class="section container">
+        <h2 class="display-md" style="margin-bottom: 8px">
+          Comment Léo Clean se distingue des autres offres
+        </h2>
+        <p class="lead" style="margin-bottom: 32px; max-width: 680px">
+          Trois façons de faire venir quelqu’un chez soi. Nous ne nommons
+          personne : ce sont des modèles, et chacun a ses raisons.
+        </p>
+        <div class="compare-scroll">
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col">Ce qui change pour vous</th>
+                <th scope="col">Plateforme nationale</th>
+                <th scope="col">Agence de services</th>
+                <th scope="col" class="mine">Léo Clean</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Toujours la même personne</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Celui qui est
+                    libre ce jour-là</span
+                  >
+                </td>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Remplacé en
+                    cas d’absence</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Votre
+                    intervenant attitré</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Elle habite près de chez vous</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Recrutement à
+                    l’échelle d’une ville</span
+                  >
+                </td>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Selon le
+                    secteur commercial</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Elle vit
+                    dans l’une des 16 communes</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sans abonnement ni préavis</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Abonnement,
+                    souvent avec frais</span
+                  >
+                </td>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Contrat et
+                    préavis de résiliation</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Vous
+                    réservez, ou vous ne réservez pas</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Un prix sans frais ajoutés</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Frais de
+                    service en supplément</span
+                  >
+                </td>
+                <td>
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Tarif
+                    contractuel</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>28 €/h,
+                    rien d’autre</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Annulation gratuite jusqu’à 24 h</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Barème
+                    variable selon l’offre</span
+                  >
+                </td>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Préavis
+                    contractuel</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Gratuite,
+                    barème public ensuite</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">L’intervenant sait ce qu’il gagne</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Pourcentage
+                    prélevé après coup</span
+                  >
+                </td>
+                <td>
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Grille
+                    salariale</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Montant
+                    accepté avant la mission</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Quelqu’un vous répond</th>
+                <td>
+                  <span class="mark no"
+                    ><svg class="i i-18"><use href="#i-x" /></svg>Support en
+                    ligne</span
+                  >
+                </td>
+                <td>
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Une
+                    agence, aux heures de bureau</span
+                  >
+                </td>
+                <td class="mine">
+                  <span class="mark yes"
+                    ><svg class="i i-18"><use href="#i-check" /></svg>Une
+                    personne, nommée sur le site</span
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 7. Les seize communes, avec leur code postal. -->
+      <section
+        class="container"
+        style="padding-bottom: var(--section-y)"
+        id="communes"
+      >
+        <h2 class="display-md" style="margin-bottom: 8px">
+          Les communes desservies dans le sud de Bordeaux
+        </h2>
+        <p class="lead" style="margin-bottom: 32px; max-width: 680px">
+          Seize communes, le même tarif partout. Si la vôtre n’y figure pas,
+          nous ne viendrons pas — et nous préférons vous le dire tout de suite.
+        </p>
+        <div class="communes">
+          <a class="commune" href="#"
+            >Villenave-d’Ornon <span class="t">33140</span></a
+          >
+          <a class="commune" href="#">Gradignan <span class="t">33170</span></a>
+          <a class="commune" href="#">Cestas <span class="t">33610</span></a>
+          <a class="commune" href="#">Léognan <span class="t">33850</span></a>
+          <a class="commune" href="#">Cadaujac <span class="t">33140</span></a>
+          <a class="commune" href="#">La Brède <span class="t">33650</span></a>
+          <a class="commune" href="#"
+            >Saint-Selve <span class="t">33650</span></a
+          >
+          <a class="commune" href="#">Martillac <span class="t">33650</span></a>
+          <a class="commune" href="#">Saucats <span class="t">33650</span></a>
+          <a class="commune" href="#"
+            >Saint-Médard-d’Eyrans <span class="t">33650</span></a
+          >
+          <a class="commune" href="#"
+            >Castres-Gironde <span class="t">33640</span></a
+          >
+          <a class="commune" href="#">Beautiran <span class="t">33640</span></a>
+          <a class="commune" href="#"
+            >Cabanac-et-Villagrains <span class="t">33650</span></a
+          >
+          <a class="commune" href="#"
+            >Saint-Morillon <span class="t">33650</span></a
+          >
+          <a class="commune" href="#"
+            >Ayguemorte-les-Graves <span class="t">33640</span></a
+          >
+          <a class="commune" href="#"
+            >Isle-Saint-Georges <span class="t">33640</span></a
+          >
+        </div>
+      </section>
+
+      <!-- 8. Les engagements portent le discours de proximité. -->
+      <section
+        class="container"
+        style="padding-bottom: var(--section-y)"
+        id="engagements"
+      >
+        <h2 class="display-md" style="margin-bottom: 8px">
+          Ce que ça change chez vous
+        </h2>
+        <p class="lead" style="margin-bottom: 32px; max-width: 680px">
+          Léo Clean vient d’ouvrir : nous n’avons pas d’avis clients à vous
+          montrer, et nous n’en inventerons pas. Voici ce qui est vérifiable dès
+          aujourd’hui.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="engagement">
+              <span class="bubble"
+                ><svg class="i i-24"><use href="#i-repeat" /></svg
+              ></span>
+              <span class="stack" style="gap: 6px"
+                ><b>Le même intervenant, chaque semaine</b>
+                <span class="sm muted"
+                  >Sur une formule régulière, vous retrouvez la même personne à
+                  chaque passage. Elle finit par connaître votre logement, vos
+                  habitudes et votre chien.</span
+                ></span
+              >
+            </div>
+          </div>
+          <div class="card">
+            <div class="engagement">
+              <span class="bubble"
+                ><svg class="i i-24"><use href="#i-house" /></svg
+              ></span>
+              <span class="stack" style="gap: 6px"
+                ><b>Des gens qui habitent à côté</b>
+                <span class="sm muted"
+                  >Nos intervenants vivent dans les communes où ils travaillent.
+                  Un trajet court, c’est une tournée qui tient — et c’est ce qui
+                  permet de vous garder le même créneau.</span
+                ></span
+              >
+            </div>
+          </div>
+          <div class="card">
+            <div class="engagement">
+              <span class="bubble"
+                ><svg class="i i-24"><use href="#i-shield-check" /></svg
+              ></span>
+              <span class="stack" style="gap: 6px"
+                ><b>Des professionnels vérifiés</b>
+                <span class="sm muted"
+                  >SIRET actif, attestation de responsabilité civile
+                  professionnelle, pièce d’identité et RIB contrôlés avant la
+                  première intervention.</span
+                ></span
+              >
+            </div>
+          </div>
+          <div class="card">
+            <div class="engagement">
+              <span class="bubble"
+                ><svg class="i i-24"><use href="#i-user" /></svg
+              ></span>
+              <span class="stack" style="gap: 6px"
+                ><b>Une vraie personne en face</b>
+                <span class="sm muted"
+                  >Paul Duchateau, 2 ter rue Camille Desmoulins à Léognan. Vous
+                  écrivez, quelqu’un répond. Pas de standard, pas de message
+                  resté sans réponse.</span
+                ></span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. Conseils — les articles répondent aux questions sans nom de ville. -->
+      <section
+        class="container"
+        style="padding-bottom: var(--section-y)"
+        id="blog"
+      >
+        <div
+          class="row"
+          style="
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+          "
+        >
+          <div class="stack" style="gap: 8px">
+            <h2 class="display-md">Nos conseils</h2>
+            <p class="lead">
+              Ce qu’on nous demande le plus souvent, écrit une fois pour toutes.
+            </p>
+          </div>
+          <a class="btn btn-secondary" href="#"
+            >Tous les articles<svg class="i i-18">
+              <use href="#i-arrow-right" /></svg
+          ></a>
+        </div>
+        <div class="grid-4">
+          <a class="article" href="#">
+            <span class="overline">Prix</span>
+            <h3>Combien coûte une femme de ménage dans le sud de Bordeaux ?</h3>
+            <p>
+              Le prix d’une heure en formule régulière et en intervention
+              ponctuelle, et ce qui le fait varier.
+            </p>
+            <span class="more"
+              >Lire<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+          <a class="article" href="#">
+            <span class="overline">Durée</span>
+            <h3>Combien de temps pour le ménage d’une maison de 100 m² ?</h3>
+            <p>
+              Environ quatre heures pour un entretien courant, sur la base de
+              25 m² traités par heure.
+            </p>
+            <span class="more"
+              >Lire<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+          <a class="article" href="#">
+            <span class="overline">Fin de bail</span>
+            <h3>Ménage de fin de bail : ce qu’un état des lieux peut exiger</h3>
+            <p>
+              Ce qu’un bailleur peut réclamer, ce qu’il ne peut pas, et comment
+              s’applique la vétusté.
+            </p>
+            <span class="more"
+              >Lire<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+          <a class="article" href="#">
+            <span class="overline">Statuts</span>
+            <h3>CESU, mandataire, prestataire : quel statut choisir ?</h3>
+            <p>
+              Trois façons de faire faire son ménage, trois répartitions de
+              responsabilité très différentes.
+            </p>
+            <span class="more"
+              >Lire<svg class="i i-16"><use href="#i-arrow-right" /></svg
+            ></span>
+          </a>
+        </div>
+      </section>
+
+      <!-- 10. Questions fréquentes. -->
+      <section
+        class="container"
+        style="padding-bottom: var(--section-y)"
+        id="faq"
+      >
+        <h2 class="display-md" style="margin-bottom: 8px">Vos questions</h2>
+        <p class="lead" style="margin-bottom: 32px; max-width: 660px">
+          Si la vôtre n’y est pas, écrivez-nous : la réponse arrive dans la
+          journée.
+        </p>
+        <div class="faq">
+          <details open>
+            <summary>
+              Est-ce que ce sera toujours la même personne ?<svg class="i i-18">
+                <use href="#i-chevron-down" />
+              </svg>
+            </summary>
+            <p>
+              Sur une formule régulière, oui. Votre intervenant garde votre
+              créneau d’une semaine sur l’autre, et il habite l’une des seize
+              communes du secteur — c’est ce qui rend cette régularité tenable
+              pour lui. En cas d’empêchement, nous vous proposons quelqu’un
+              d’autre plutôt que d’annuler, et vous restez libre de refuser.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Comment se passe le paiement ?<svg class="i i-18">
+                <use href="#i-chevron-down" />
+              </svg>
+            </summary>
+            <p>
+              Rien n’est prélevé à la réservation. Votre carte est préautorisée
+              24 h avant l’intervention, et débitée 24 h après. Vous ne payez
+              donc que ce qui a réellement eu lieu.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Puis-je annuler ou déplacer un passage ?<svg class="i i-18">
+                <use href="#i-chevron-down" />
+              </svg>
+            </summary>
+            <p>
+              Gratuitement jusqu’à 24 h avant. En deçà, un barème s’applique,
+              plafonné et public : 5 € entre 8 et 24 h, 10 € entre 4 et 8 h,
+              puis 50 % du montant — 20 € au plus — entre 2 et 4 h. Il existe
+              pour protéger la journée de travail de l’intervenant, pas pour
+              vous sanctionner.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Faut-il fournir les produits et le matériel ?<svg class="i i-18">
+                <use href="#i-chevron-down" />
+              </svg>
+            </summary>
+            <p>
+              Les produits et l’aspirateur sont les vôtres : c’est votre
+              logement, vos surfaces et vos allergies. Si vous préférez que
+              l’intervenant apporte les siens, dites-le dans vos consignes et
+              nous en tenons compte pour la mise en relation.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Que se passe-t-il en cas de casse ?<svg class="i i-18">
+                <use href="#i-chevron-down" />
+              </svg>
+            </summary>
+            <p>
+              Chaque intervenant est couvert par une responsabilité civile
+              professionnelle, vérifiée avant sa première mission.
+              L’indemnisation va jusqu’à 1 000 €, avec 200 € de franchise et une
+              vétusté de 10 % par an plafonnée à 50 %. Le barème est public
+              avant le sinistre, pas après.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Suis-je engagé sur une durée ?<svg class="i i-18">
+                <use href="#i-chevron-down" />
+              </svg>
+            </summary>
+            <p>
+              Non, et il n’y a rien à résilier. Vous réservez un passage, puis
+              vous décidez de la suite. Nous calons les passages suivants avec
+              vous après le premier ménage, une fois que vous savez si le rythme
+              et la personne vous conviennent.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <!-- 11. Contact — un formulaire, en remplacement de l'appel téléphonique. -->
+      <section
+        class="container"
+        style="padding-bottom: var(--section-y)"
+        id="contact"
+      >
+        <div class="contact" id="contact-block">
+          <div class="stack" style="gap: 16px">
+            <h2 class="display-md">Une question avant de réserver ?</h2>
+            <p class="lead">
+              Écrivez-nous. C’est Paul qui lit, et qui répond — dans la journée,
+              en semaine.
+            </p>
+            <div class="stack" style="gap: 12px">
+              <span class="row sm" style="gap: 8px"
+                ><svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-mail" /></svg
+                >menage@leoclean.fr</span
+              >
+              <span class="row sm" style="gap: 8px"
+                ><svg class="i i-16" style="color: var(--leaf-500)">
+                  <use href="#i-map-pin" /></svg
+                >2 ter rue Camille Desmoulins, 33850 Léognan</span
+              >
+            </div>
+          </div>
+
+          <form class="card card-feature form" id="contact-form" novalidate>
+            <div class="two">
+              <label class="field"
+                ><span class="label">Prénom et nom</span>
+                <span class="input-shell"
+                  ><svg class="i i-18"><use href="#i-user" /></svg
+                  ><input
+                    type="text"
+                    placeholder="Camille Bertin"
+                    autocomplete="name"
+                    required /></span
+              ></label>
+              <label class="field"
+                ><span class="label">Commune</span>
+                <span class="input-shell"
+                  ><svg class="i i-18"><use href="#i-map-pin" /></svg
+                  ><input type="text" placeholder="Léognan" required /></span
+              ></label>
+            </div>
+            <div class="two">
+              <label class="field"
+                ><span class="label">Email</span>
+                <span class="input-shell"
+                  ><svg class="i i-18"><use href="#i-mail" /></svg
+                  ><input
+                    type="email"
+                    placeholder="camille@exemple.fr"
+                    autocomplete="email"
+                    required /></span
+              ></label>
+              <label class="field"
+                ><span class="label">Téléphone</span>
+                <span class="input-shell"
+                  ><svg class="i i-18"><use href="#i-phone" /></svg
+                  ><input
+                    type="tel"
+                    placeholder="Facultatif"
+                    autocomplete="tel"
+                /></span>
+                <span class="hint"
+                  >Si vous préférez qu’on vous rappelle.</span
+                ></label
+              >
+            </div>
+            <label class="field"
+              ><span class="label">Votre message</span>
+              <textarea
+                rows="4"
+                placeholder="Un appartement de 60 m² à Gradignan, plutôt le vendredi matin…"
+                required
+              ></textarea>
+            </label>
+            <button class="btn btn-lg" type="submit">
+              Envoyer mon message<svg class="i i-18">
+                <use href="#i-arrow-right" />
+              </svg>
+            </button>
+            <p class="caption">
+              Prototype : le message n’est envoyé nulle part.
+            </p>
+          </form>
+
+          <div class="card card-feature sent">
+            <span
+              style="
+                width: 44px;
+                height: 44px;
+                flex: none;
+                border-radius: var(--radius-pill);
+                background: var(--leaf-100);
+                color: var(--leaf-600);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <svg class="i i-24" style="stroke-width: 3">
+                <use href="#i-check" /></svg
+            ></span>
+            <span class="stack" style="gap: 6px">
+              <b style="font: var(--text-h4)">Message reçu</b>
+              <span class="sm muted"
+                >Nous revenons vers vous dans la journée. En attendant, vous
+                pouvez déjà voir vos créneaux et votre prix, sans rien
+                engager.</span
+              >
+              <a
+                class="btn btn-secondary btn-sm"
+                style="align-self: flex-start; margin-top: 8px"
+                href="reserver.html"
+                >Voir mes créneaux<svg class="i i-16">
+                  <use href="#i-arrow-right" /></svg
+              ></a>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. Sortie. -->
+      <section style="padding: 0 var(--gutter-page-lg) var(--section-y)">
+        <div class="cta-panel">
+          <div class="stack" style="gap: 12px">
+            <h2 class="display-md">Votre premier ménage, en deux minutes</h2>
+            <p>Sans engagement. Annulation gratuite jusqu’à 24 h avant.</p>
+          </div>
+          <a class="btn btn-dark btn-lg" href="reserver.html"
+            >Réserver<svg class="i i-18"><use href="#i-arrow-right" /></svg
+          ></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="cols">
+        <div class="col">
+          <span class="wordmark" style="color: var(--white)">Léo Clean</span>
+          <p class="baseline">
+            Le ménage à domicile au sud de Bordeaux, par des personnes qui
+            habitent à côté de chez vous.
+          </p>
+        </div>
+        <div class="col">
+          <span class="overline">Prestations</span>
+          <a href="#prestations">Ménage</a><a href="#prestations">Repassage</a
+          ><a href="#prestations">Grand ménage</a
+          ><a href="#prestations">Fin de bail</a>
+        </div>
+        <div class="col">
+          <span class="overline">Léo Clean</span>
+          <a href="#communes">Nos communes</a
+          ><a href="#engagements">Nos engagements</a
+          ><a href="#blog">Nos conseils</a
+          ><a href="espace-cleaner.html">Travailler avec nous</a>
+        </div>
+        <div class="col">
+          <span class="overline">Votre compte</span>
+          <a href="espace-client.html">Espace client</a
+          ><a href="espace-cleaner.html">Espace cleaner</a
+          ><a href="#contact">Nous écrire</a
+          ><a href="#faq">Questions fréquentes</a>
+        </div>
+      </div>
+      <div class="legal">
+        <span
+          >Léo Clean est exploitée par PAPER PLANE, SASU — 2 ter rue Camille
+          Desmoulins, 33850 Léognan</span
+        >
+        <span>Mentions légales · Conditions générales</span>
+      </div>
+    </footer>
+
+    <script>
+      /* Le formulaire ne part nulle part : il bascule sur son accusé de réception. */
+      document
+        .getElementById("contact-form")
+        .addEventListener("submit", (e) => {
+          e.preventDefault();
+          document.getElementById("contact-block").classList.add("is-sent");
+        });
+    </script>
+  </body>
+</html>

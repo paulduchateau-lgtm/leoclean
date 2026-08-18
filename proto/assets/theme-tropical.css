@@ -1,0 +1,130 @@
+/* ==========================================================================
+   Variante « tropical punch » — #FF8243 · #FFC0CB · #FCE883 · #069494.
+
+   Elle hérite de la base commune de theme-menthe.css (états sélectionnés en
+   texte encre, héros dérivé des variables, surfaces translucides), puis
+   substitue les quatre échelles. La distribution par rôle change de logique :
+   dans cette palette, la couleur sombre n'est plus verte mais sarcelle, et
+   c'est la mangue qui a l'énergie d'un bouton.
+
+   - sarcelle #069494 : la profondeur ET la marque — bandes sombres, liens,
+     logotype, états sélectionnés ;
+   - mangue   #FF8243 : l'action principale, texte encre (6,8:1) ;
+   - ananas   #FCE883 : les pilules et les moments de joie ;
+   - papaye   #FFC0CB : les surfaces douces — panneau de sortie, héros.
+
+   Chargée en dernier : à spécificité égale, ces règles gagnent.
+   ========================================================================== */
+
+html[data-theme="tropical"] {
+  /* --- Sarcelle (remplace leaf) — dérivée de #069494 --- */
+  --leaf-50: #e6f7f7;
+  --leaf-100: #c3eded;
+  --leaf-200: #8fdede;
+  --leaf-300: #55c7c7;
+  --leaf-400: #25adad;
+  --leaf-500: #069494;
+  --leaf-600: #057c7c;
+  --leaf-700: #056363;
+  --leaf-800: #044c4c;
+  --leaf-900: #033a3a;
+
+  /* --- Papaye (remplace clay) — dérivée de #FFC0CB --- */
+  --clay-50: #fff5f7;
+  --clay-100: #ffe3e8;
+  --clay-200: #ffc0cb;
+  --clay-300: #ff9dae;
+  --clay-400: #fb7690;
+  --clay-500: #ef4d6f;
+  --clay-600: #d42a52;
+  --clay-700: #b01c41;
+
+  /* --- Ananas (remplace marigold) — dérivée de #FCE883 --- */
+  --marigold-50: #fffbe9;
+  --marigold-100: #fef4c5;
+  --marigold-300: #fce883;
+  --marigold-500: #e3b60d;
+  --marigold-700: #91700a;
+
+  /* --- Mangue — l'échelle nouvelle, dérivée de #FF8243 --- */
+  --mango-50: #fff4ec;
+  --mango-100: #ffe4d1;
+  --mango-200: #ffc9a4;
+  --mango-300: #ffa670;
+  --mango-400: #ff8243;
+  --mango-500: #f4661f;
+  --mango-600: #d15112;
+  --mango-700: #a63f0e;
+
+  /* --- Crème, réchauffée d'un souffle de papaye --- */
+  --cream-100: #fffaf6;
+  --cream-200: #fff1ec;
+  --cream-300: #ffe4dc;
+
+  /* Fond de page : blanc chaud — le tropical est solaire, pas clinique. */
+  --surface-page: #fffcf9;
+
+  /* L'action principale est mangue pleine, texte encre — même règle que la
+     menthe : une couleur claire et saturée ne porte jamais du blanc. */
+  --action-primary-bg: var(--mango-400);
+  --action-primary-bg-hover: var(--mango-500);
+  --action-primary-bg-active: var(--mango-600);
+  --action-primary-fg: var(--ink-900);
+
+  /* L'accent de la bande sombre : pilule ananas, texte encre. */
+  --action-accent-bg: var(--marigold-300);
+  --action-accent-bg-hover: var(--marigold-500);
+  --action-accent-fg: var(--ink-900);
+
+  /* Liens et marque : sarcelle foncée, lisible sur blanc. */
+  --text-brand: var(--leaf-600);
+  --text-link: var(--leaf-600);
+  --text-link-hover: var(--leaf-800);
+  --focus-ring: 0 0 0 4px rgba(6, 148, 148, 0.35);
+}
+
+/* L'ombre du bouton principal vire à la mangue — la base commune la pose en
+   menthe, et une lueur verte sous un bouton orange dirait deux marques. */
+html[data-theme="tropical"]
+  .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(.btn-accent) {
+  box-shadow: 0 10px 24px -8px rgba(244, 102, 31, 0.4);
+}
+
+/* Le héros est un lever de soleil : papaye vers blanc chaud. */
+html[data-theme="tropical"] .hero {
+  background: linear-gradient(180deg, var(--clay-100), var(--surface-page));
+}
+
+/* Les surfaces translucides suivent le fond chaud. */
+html[data-theme="tropical"] .site-header {
+  background: rgba(255, 252, 249, 0.88);
+}
+html[data-theme="tropical"] .sticky-bar {
+  background: rgba(255, 252, 249, 0.94);
+}
+
+/* Le panneau de sortie porte LE rose de la palette, texte encre. */
+html[data-theme="tropical"] .cta-panel {
+  background: var(--clay-200);
+}
+
+/* La quatrième teinte de soutien devient mangue : les quatre tuiles de
+   chiffres et les quatre prestations portent les quatre couleurs. */
+html[data-theme="tropical"] .stat.tone-cream {
+  background: var(--mango-50);
+}
+html[data-theme="tropical"] .stat.tone-cream .i {
+  color: var(--mango-600);
+}
+html[data-theme="tropical"] .service.tone-cream .service-bubble {
+  background: var(--mango-100);
+  color: var(--mango-700);
+}
+
+/* Dans le héros, le bloc photo quitte la papaye du dégradé pour la sarcelle,
+   sinon il se fond dans son propre fond. !important : la teinte est posée en
+   style en ligne dans la page. */
+html[data-theme="tropical"] .hero .photo {
+  background: var(--leaf-100) !important;
+  color: var(--leaf-700) !important;
+}

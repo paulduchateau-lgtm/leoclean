@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Variante « pop » — coolors.co/6a46b8-63e6be-fec601-ea7317.
+
+   Elle hérite de toute la base menthe (theme-menthe.css s'applique aussi à
+   `pop`), puis redistribue les trois autres teintes par rôle — c'est la
+   hiérarchie qui empêche quatre couleurs saturées de virer au cirque :
+
+   - menthe  #63e6be : l'action, inchangée — c'est la signature ;
+   - violet  #6a46b8 : la profondeur — bandes sombres, liens, logotype —
+     à la place du vert sapin ;
+   - or      #fec601 : les pilules et les moments de joie, à la place du citron ;
+   - orange  #ea7317 : une surface chaude par écran, à la place de la pêche.
+
+   Chargée APRÈS theme-menthe.css : à spécificité égale, ces règles gagnent.
+   ========================================================================== */
+
+html[data-theme="pop"] {
+  /* --- Violet — la seule échelle nouvelle, dérivée de #6a46b8 --- */
+  --violet-50: #f3effb;
+  --violet-100: #e6ddf7;
+  --violet-200: #cfbfef;
+  --violet-300: #a98fe0;
+  --violet-400: #8a68cf;
+  --violet-500: #6a46b8;
+  --violet-600: #5a3aa0;
+  --violet-700: #4a2f85;
+  --violet-800: #3a2568;
+  --violet-900: #2b1b4e;
+
+  /* --- Orange (remplace la pêche de la variante menthe) --- */
+  --clay-50: #fdf3ea;
+  --clay-100: #fbe3cd;
+  --clay-200: #f7c69b;
+  --clay-300: #f2a463;
+  --clay-400: #ee8b3b;
+  --clay-500: #ea7317;
+  --clay-600: #c55e0f;
+  --clay-700: #9a480b;
+
+  /* --- Or (remplace le citron) --- */
+  --marigold-50: #fffbe8;
+  --marigold-100: #fff3c2;
+  --marigold-300: #fec601;
+  --marigold-500: #e0ae00;
+  --marigold-700: #8a6a00;
+
+  /* Le violet prend les liens et la marque : à 7:1 sur blanc, il est le
+     candidat idéal pour du texte coloré — la menthe ne l'a jamais été. */
+  --text-brand: var(--violet-500);
+  --text-link: var(--violet-500);
+  --text-link-hover: var(--violet-700);
+  --focus-ring: 0 0 0 4px rgba(106, 70, 184, 0.35);
+
+  /* L'accent de la bande sombre : une pilule or, texte encre. */
+  --action-accent-bg: var(--marigold-300);
+  --action-accent-bg-hover: var(--marigold-500);
+  --action-accent-fg: var(--ink-900);
+
+  /* La profondeur est violette : pied de page, bouton sombre. */
+  --surface-dark: var(--violet-700);
+}
+
+/* Le logotype passe au violet — la version menthe le mettait en menthe 700. */
+html[data-theme="pop"] .wordmark {
+  color: var(--violet-500);
+}
+
+/* La bande sombre est LE moment violet : #6a46b8 plein, texte blanc (7:1),
+   numéros or, bouton or — le contraste le plus pétillant de la palette. */
+html[data-theme="pop"] .band-dark {
+  background: var(--violet-500);
+}
+html[data-theme="pop"] .steps-list .item span {
+  color: var(--violet-100);
+}
+/* !important : la couleur du libellé est posée en style en ligne dans la page,
+   et un libellé menthe sur violet dirait la mauvaise famille. */
+html[data-theme="pop"] .band-dark .photo {
+  color: var(--violet-100) !important;
+}
+
+/* Le bouton sombre fonce d'un cran au survol, comme partout. */
+html[data-theme="pop"] .btn-dark:hover {
+  background: var(--violet-800);
+}
+
+/* Le jour actif du calendrier rejoint le violet plutôt que l'encre. */
+html[data-theme="pop"] .day-btn.is-on {
+  background: var(--violet-500);
+  border-color: var(--violet-500);
+}
+
+/* Le panneau de sortie : orange plein, texte encre (5,5:1) — une seule
+   surface orange par écran, et c'est celle-ci. */
+html[data-theme="pop"] .cta-panel {
+  background: var(--clay-500);
+}
+html[data-theme="pop"] .cta-panel p {
+  color: var(--ink-900);
+}
+
+/* La quatrième teinte de soutien devient violette : les quatre tuiles de
+   chiffres et les quatre prestations portent ainsi les quatre couleurs. */
+html[data-theme="pop"] .stat.tone-cream {
+  background: var(--violet-50);
+}
+html[data-theme="pop"] .stat.tone-cream .i {
+  color: var(--violet-500);
+}
+html[data-theme="pop"] .service.tone-cream .service-bubble {
+  background: var(--violet-100);
+  color: var(--violet-700);
+}
+
+/* Les surtitres or sur fond blanc ne tiennent pas : ils restent neutres,
+   sauf dans le pied de page violet où la menthe claire dit la marque. */
+html[data-theme="pop"] .site-footer .overline {
+  color: var(--leaf-300);
+}

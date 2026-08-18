@@ -1,0 +1,65 @@
+/* Pages de connexion — client et intervenant.
+   Connexion sans mot de passe : lien envoyé par email, ou Google. */
+
+.login {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 64px var(--gutter-page) 120px;
+}
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.login-card h1 {
+  font: var(--text-h1);
+  letter-spacing: var(--tracking-heading);
+}
+.login-seal {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--leaf-100);
+  color: var(--leaf-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Séparateur « ou », filet de part et d'autre. */
+.sep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-subtle);
+  font: var(--text-caption);
+}
+.sep::before,
+.sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.login-card .pitch {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+.login-card .pitch b {
+  font: var(--text-h4);
+  color: var(--text-strong);
+}
+
+/* L'accusé de réception prend la place du formulaire, il ne s'ajoute pas. */
+.login .sent {
+  display: none;
+}
+.login.is-sent .sent {
+  display: flex;
+}
+.login.is-sent .login-card:not(.sent) {
+  display: none;
+}
