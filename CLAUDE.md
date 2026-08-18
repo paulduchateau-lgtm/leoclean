@@ -583,6 +583,15 @@ s'applique qu'une fois `NEXT_PUBLIC_SITE_URL` configurée : sans elle, on ne
 sait pas ce qui est canonique, et refuser par défaut mettrait le site entier
 hors de l'index sur un oubli de variable.
 
+**`NEXT_PUBLIC_APP_URL` ne se déclare qu'une fois le sous-domaine vivant.**
+Le proxy renvoie les chemins applicatifs vers l'hôte déclaré, sans pouvoir
+vérifier qu'il résout : déclarée avant que `app.leoclean.fr` existe, la variable
+redirige `/reserver` en 308 vers un domaine introuvable et fait tomber le canal
+de conversion principal — sans qu'aucune erreur ne remonte côté serveur, puisque
+le serveur fait précisément ce qu'on lui a demandé. L'ordre est donc : créer le
+sous-domaine, l'attacher au projet, vérifier qu'il répond, puis seulement
+renseigner la variable. Le cas s'est produit en production.
+
 **`/pro/[slug]` dit autre chose qu'une page commune.** Léo Clean opère en mise
 en relation ; une société cliente du SaaS est prestataire et emploie ses propres
 agents. Sa page présente donc une entreprise, ses prestations et **ses** tarifs,
