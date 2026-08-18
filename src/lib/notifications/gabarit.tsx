@@ -95,9 +95,9 @@ const text = {
   margin: "0 0 16px",
 };
 
-/** mint-400 sur ink-950 : la menthe pleine ne porte jamais de blanc. */
+/** mango-400 sur ink-950 : la mangue pleine ne porte jamais de blanc. */
 const button = {
-  backgroundColor: "#6BE3B4",
+  backgroundColor: "#FF8243",
   borderRadius: "999px",
   color: "#0B1B16",
   display: "inline-block",

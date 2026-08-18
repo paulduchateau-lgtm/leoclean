@@ -101,7 +101,7 @@ export function JourneeRangee() {
                 elle vous est proposée. Vous acceptez ou vous refusez.
               </p>
 
-              <blockquote className="mt-4 max-w-prose border-l-2 border-mint-400 pl-4 text-pretty text-muted-foreground">
+              <blockquote className="mt-4 max-w-prose border-l-2 border-teal-400 pl-4 text-pretty text-muted-foreground">
                 Mardi, votre client de 14 h annule. Vous avez une intervention à
                 11 h à Cadaujac et une autre à 17 h à Léognan. Léo Clean vous
                 propose une mission à Martillac à 14 h 30 : sept minutes de
@@ -124,7 +124,7 @@ export function JourneeRangee() {
                 cases vides.
               </p>
 
-              <blockquote className="mt-4 max-w-prose border-l-2 border-mint-400 pl-4 text-pretty text-muted-foreground">
+              <blockquote className="mt-4 max-w-prose border-l-2 border-teal-400 pl-4 text-pretty text-muted-foreground">
                 Si votre agenda indique « école, 16 h 30, Gradignan », aucune
                 mission ne vous sera proposée à 15 h 45 à l&apos;autre bout du
                 secteur.

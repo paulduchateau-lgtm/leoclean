@@ -338,7 +338,7 @@ export default async function CommunePage({
           </div>
         </section>
 
-        <section className="border-t border-border bg-mint-50">
+        <section className="border-t border-border bg-teal-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
             <h2 className="text-2xl font-black tracking-tight">
               Un ménage à {commune.name} ?
@@ -358,7 +358,7 @@ export default async function CommunePage({
                  deux appels à l'action concurrents demanderaient de choisir
                  lequel compte. */
               data-booking-cta
-              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
             >
               Voir les créneaux à {commune.name}
             </Link>

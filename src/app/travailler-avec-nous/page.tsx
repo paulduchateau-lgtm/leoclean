@@ -236,13 +236,13 @@ export default function TravaillerAvecNousPage() {
         {/* Bloc 1 — la thèse, et la double porte dès le premier écran.
             Un gérant de société ne doit pas lire trois écrans destinés aux
             indépendants avant de comprendre qu'on lui parle aussi. */}
-        <section className="relative overflow-hidden border-b border-border-subtle bg-mint-50">
+        <section className="relative overflow-hidden border-b border-border-subtle bg-teal-50">
           <div
-            className="blob top-[-160px] right-[-90px] size-[360px] bg-mint-200"
+            className="blob top-[-160px] right-[-90px] size-[360px] bg-teal-200"
             aria-hidden
           />
           <div
-            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-lemon-200 opacity-70"
+            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-pineapple-200 opacity-70"
             aria-hidden
           />
 
@@ -267,13 +267,13 @@ export default function TravaillerAvecNousPage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="#candidature"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
               >
                 Déposer ma candidature
               </Link>
               <Link
                 href="#societes"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
               >
                 Je représente une société de ménage
               </Link>
@@ -347,7 +347,7 @@ export default function TravaillerAvecNousPage() {
               {ETAPES.map((etape) => (
                 <li key={etape.number}>
                   <span
-                    className="block text-3xl font-black tracking-tight text-mint-300"
+                    className="block text-3xl font-black tracking-tight text-teal-300"
                     aria-hidden
                   >
                     {etape.number}

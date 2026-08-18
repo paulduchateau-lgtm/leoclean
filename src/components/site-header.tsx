@@ -40,23 +40,23 @@ export function SiteHeader({
         >
           {variant === "site" ? (
             <>
-              {/* Les liens de contenu se survolent en pastille menthe : c'est
+              {/* Les liens de contenu se survolent en pastille sarcelle : c'est
                   la même grammaire que les listes du reste du système. */}
               <Link
                 href="/tarifs"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 sm:inline-block"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
               >
                 Tarifs
               </Link>
               <Link
                 href="/blog"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 sm:inline-block"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
               >
                 Conseils
               </Link>
               <Link
                 href="/a-propos"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 sm:inline-block"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
               >
                 À propos
               </Link>
@@ -66,14 +66,14 @@ export function SiteHeader({
               {INTERVENANT_PAGE_READY && (
                 <Link
                   href="/travailler-avec-nous"
-                  className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-mint-50 hover:text-mint-800 lg:inline-block"
+                  className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
                 >
                   Devenir intervenant
                 </Link>
               )}
               <Link
                 href="/reserver"
-                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
               >
                 Réserver
               </Link>
@@ -81,7 +81,7 @@ export function SiteHeader({
           ) : null}
           <a
             href={`tel:${SITE.phoneE164}`}
-            className="inline-flex h-10 items-center rounded-full px-3 font-bold whitespace-nowrap text-brand transition-colors hover:bg-mint-50"
+            className="inline-flex h-10 items-center rounded-full px-3 font-bold whitespace-nowrap text-brand transition-colors hover:bg-teal-50"
             aria-label={`Appeler ${SITE.name} au ${SITE.phone}`}
           >
             <PhoneIcon className="size-5 sm:hidden" aria-hidden />

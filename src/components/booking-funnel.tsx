@@ -1348,7 +1348,7 @@ function ResumePrompt({
   const position = STEPS.indexOf(saved.step) + 1;
 
   return (
-    <div className="rounded-xl border border-mint-200 bg-mint-50 p-5">
+    <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
       <p className="font-medium">
         Reprendre ma réservation — étape {position} sur {STEPS.length}
       </p>
@@ -1538,8 +1538,8 @@ function CommuneStep({
                 aria-pressed={selected?.slug === commune.slug}
                 className={`inline-flex min-h-12 items-center gap-2 rounded-full border-2 px-4 text-sm font-bold transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] motion-reduce:active:scale-100 ${
                   selected?.slug === commune.slug
-                    ? "border-mint-500 bg-mint-50 ring-3 ring-mint-100"
-                    : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
+                    ? "border-teal-500 bg-teal-50 ring-3 ring-teal-100"
+                    : "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
                 }`}
               >
                 {commune.name}
@@ -1570,7 +1570,7 @@ function CommuneStep({
 /*
  * Carte de choix — le `selectable` du design system.
  *
- * Retenue, elle prend la bordure menthe, le fond menthe très clair et un halo :
+ * Retenue, elle prend la bordure sarcelle, le fond sarcelle très clair et un halo :
  * trois signaux plutôt qu'un, pour que le choix se voie sans dépendre de la
  * seule couleur. Le texte reste encre, donc lisible dans tous les états.
  */
@@ -1599,8 +1599,8 @@ function ChoiceCard({
       aria-pressed={selected}
       className={`flex min-h-16 w-full items-center justify-between gap-4 rounded-lg border-2 p-4.5 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-50 motion-reduce:active:scale-100 ${
         selected
-          ? "border-mint-500 bg-mint-50 ring-3 ring-mint-100"
-          : "border-border bg-card hover:border-mint-400 enabled:hover:bg-mint-50"
+          ? "border-teal-500 bg-teal-50 ring-3 ring-teal-100"
+          : "border-border bg-card hover:border-teal-300 enabled:hover:bg-teal-50"
       } ${className}`}
     >
       <span>
@@ -1608,7 +1608,7 @@ function ChoiceCard({
         {hint ? (
           <span
             className={`mt-0.5 block text-sm ${
-              selected ? "text-mint-800" : "text-muted-foreground"
+              selected ? "text-teal-800" : "text-muted-foreground"
             }`}
           >
             {hint}
@@ -1789,7 +1789,7 @@ function AddressStep({
                 <span
                   className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
                     address.isCovered
-                      ? "bg-mint-100 text-mint-800"
+                      ? "bg-teal-100 text-teal-800"
                       : "border-[1.5px] border-border text-muted-foreground"
                   }`}
                 >
@@ -1952,20 +1952,12 @@ function HousingStep({
       : estimateDuration({ surfaceSqm, service: DURATION_SERVICE })
           .durationMinutes;
 
-  const matchesWholeHour =
-    chosenMinutes !== null && WHOLE_HOUR_CHOICES.includes(chosenMinutes);
-
-  const [custom, setCustom] = useState(
-    chosenMinutes !== null && !matchesWholeHour,
-  );
-  const [value, setValue] = useState(String(chosenMinutes ?? 180));
-
-  const parsedMinutes = Number(value);
-  const validCustom =
-    Number.isInteger(parsedMinutes) &&
-    parsedMinutes % SLOT_GRANULARITY_MINUTES === 0 &&
-    parsedMinutes >= MINIMUM_BILLABLE_MINUTES &&
-    parsedMinutes <= MAX_DURATION_MINUTES;
+  /**
+   * Le curseur au pas de 30 minutes, synchronisé avec les cartes : glisser ne
+   * fait qu'ajuster la valeur, c'est le bouton qui engage — un curseur qui
+   * ferait avancer l'écran à chaque cran serait inutilisable au pouce.
+   */
+  const [sliderMinutes, setSliderMinutes] = useState(chosenMinutes ?? 180);
 
   /** Une durée choisie devient la surface qui la produit, à l'unité près. */
   function chooseDuration(minutes: number, fromPreset: boolean) {
@@ -1996,51 +1988,50 @@ function HousingStep({
         ))}
       </div>
 
-      {/* Repliée par défaut : la demi-heure d'appoint est une précision, pas
-          le chemin principal. */}
-      {custom ? (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <Label htmlFor="duration">Autre durée</Label>
-          <div className="mt-3 flex items-center gap-3">
-            <Input
-              id="duration"
-              type="number"
-              inputMode="numeric"
-              min={MINIMUM_BILLABLE_MINUTES}
-              max={MAX_DURATION_MINUTES}
-              step={SLOT_GRANULARITY_MINUTES}
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              className="min-h-12 w-28"
-            />
-            <span className="text-muted-foreground">minutes</span>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Par tranches de {SLOT_GRANULARITY_MINUTES} minutes, de{" "}
-            {formatDuration(MINIMUM_BILLABLE_MINUTES)} à{" "}
-            {formatDuration(MAX_DURATION_MINUTES)}. Au-delà, il vaut mieux deux
-            passages qu&apos;une journée intenable : appelez-nous.
-          </p>
-          <Button
-            type="button"
-            size="lg"
-            className="mt-4 min-h-12 w-full"
-            disabled={!validCustom}
-            onClick={() => chooseDuration(parsedMinutes, false)}
-          >
-            Choisir mon rythme
-          </Button>
+      {/* Le curseur remplace l'ancien champ « minutes » : la demi-heure
+          d'appoint se règle au pouce, entre les mêmes bornes que la grille. */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <Label htmlFor="duration-slider">
+            Ajuster par pas de {SLOT_GRANULARITY_MINUTES} minutes
+          </Label>
+          <span className="font-display text-xl font-extrabold tabular-nums">
+            {formatDuration(sliderMinutes)}
+          </span>
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setCustom(true)}
-          className="flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline"
+        <input
+          id="duration-slider"
+          type="range"
+          className="range-slider mt-4"
+          min={MINIMUM_BILLABLE_MINUTES}
+          max={MAX_DURATION_MINUTES}
+          step={SLOT_GRANULARITY_MINUTES}
+          value={sliderMinutes}
+          onChange={(event) => setSliderMinutes(Number(event.target.value))}
+          aria-label="Durée de l'intervention, par pas de 30 minutes"
+        />
+        <div
+          className="mt-2 flex justify-between font-mono text-xs text-muted-foreground"
+          aria-hidden
         >
-          <ChevronDownIcon className="size-4" aria-hidden />
-          Il me faut une autre durée
-        </button>
-      )}
+          {WHOLE_HOUR_CHOICES.map((minutes) => (
+            <span key={minutes}>{formatDuration(minutes)}</span>
+          ))}
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Idéal pour {suggestedSurfaceFor(sliderMinutes, DURATION_SERVICE)} m²
+          environ. Au-delà de {formatDuration(MAX_DURATION_MINUTES)}, il vaut
+          mieux deux passages qu&apos;une journée intenable : appelez-nous.
+        </p>
+        <Button
+          type="button"
+          size="lg"
+          className="mt-4 min-h-12 w-full"
+          onClick={() => chooseDuration(sliderMinutes, false)}
+        >
+          Choisir mon rythme
+        </Button>
+      </div>
 
       <Reassurance />
     </div>
@@ -2098,7 +2089,7 @@ function FrequencyStep({
                     <span
                       className={`block text-xs ${
                         selected === option.value
-                          ? "text-mint-800"
+                          ? "text-teal-800"
                           : "text-muted-foreground"
                       }`}
                     >
@@ -2112,7 +2103,7 @@ function FrequencyStep({
                       <span
                         className={`block text-xs ${
                           selected === option.value
-                            ? "text-mint-800"
+                            ? "text-teal-800"
                             : "text-muted-foreground"
                         }`}
                       >
@@ -2247,7 +2238,7 @@ function SlotStep({
         </p>
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
         >
           Appeler le {SITE.phone}
         </a>
@@ -2278,7 +2269,7 @@ function SlotStep({
                     isActive
                       ? "border-ink-900 bg-ink-900 text-white"
                       : open
-                        ? "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
+                        ? "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
                         : "border-border-subtle bg-muted text-ink-300 line-through"
                   }`}
                 >
@@ -2342,8 +2333,8 @@ function SlotStep({
                         preferred
                           ? "border-ink-900 bg-ink-900 text-white"
                           : alternate
-                            ? "border-mint-400 bg-mint-50 text-mint-800"
-                            : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
+                            ? "border-teal-400 bg-teal-50 text-teal-800"
+                            : "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
                       }`}
                     >
                       {timeFormatter.format(new Date(slot.start))}
@@ -2355,6 +2346,32 @@ function SlotStep({
           )}
         </div>
       ) : null}
+
+      {/* La légende dit ce que les couleurs disent : personne ne devine
+          qu'encre veut dire « préféré » et sarcelle « repli ». */}
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <li className="flex items-center gap-1.5">
+          <span
+            className="inline-block size-3.5 rounded-xs bg-ink-900"
+            aria-hidden
+          />
+          Votre préféré
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span
+            className="inline-block size-3.5 rounded-xs border-2 border-teal-400 bg-teal-50"
+            aria-hidden
+          />
+          Repli accepté
+        </li>
+        <li className="flex items-center gap-1.5">
+          <span
+            className="inline-block size-3.5 rounded-xs border border-border bg-muted"
+            aria-hidden
+          />
+          Déjà pris
+        </li>
+      </ul>
 
       {chosen !== null ? (
         <div className="rounded-xl border border-border bg-card p-4">
@@ -2384,7 +2401,7 @@ function SlotStep({
                   <button
                     type="button"
                     onClick={() => onToggleAlternate(start)}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-mint-400 bg-mint-50 px-3 text-sm font-medium text-mint-800"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-teal-400 bg-teal-50 px-3 text-sm font-medium text-teal-800"
                   >
                     {dayFormatter.format(new Date(start)).split(" ")[0]}{" "}
                     {timeFormatter.format(new Date(start))}
@@ -2396,13 +2413,15 @@ function SlotStep({
             </ul>
           ) : null}
 
+          {/* Le bouton annonce l'écran suivant plutôt que « Continuer », qui
+              ne dit pas vers quoi. */}
           <Button
             type="button"
             size="lg"
             className="mt-4 min-h-12 w-full"
             onClick={onContinue}
           >
-            Continuer
+            Saisir mes coordonnées
           </Button>
         </div>
       ) : null}
@@ -2710,8 +2729,9 @@ function ContactStep({
         </div>
       </div>
 
+      {/* Le bouton annonce l'écran suivant plutôt que « Continuer ». */}
       <Button type="submit" size="lg" className="min-h-12 w-full">
-        Continuer
+        Indiquer mon adresse
       </Button>
       <Reassurance />
     </form>
@@ -2762,7 +2782,7 @@ function IntervenantCard({ cleaner }: { cleaner: CleanerCardView | null }) {
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 text-left">
       <span
         aria-hidden
-        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-mint-100 text-lg font-black text-mint-800"
+        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-teal-100 text-lg font-black text-teal-800"
       >
         {cleaner.firstName.slice(0, 2).toUpperCase()}
       </span>
@@ -2811,7 +2831,7 @@ function AddToCalendar({ confirmation }: { confirmation: ConfirmationView }) {
     <a
       href={href}
       download={bookingCalendarFilename(new Date(confirmation.startAt))}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-mint-400 hover:bg-mint-50"
+      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-teal-300 hover:bg-teal-50"
     >
       <CalendarPlusIcon className="size-4" aria-hidden />
       Ajouter à mon calendrier
@@ -2824,7 +2844,7 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-mint-200 bg-mint-50 p-8 text-center">
+      <div className="rounded-xl border border-teal-200 bg-teal-50 p-8 text-center">
         <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <CheckIcon className="size-6" aria-hidden />
         </span>
@@ -2844,7 +2864,7 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
             réservation reste ferme, sur une heure que le client avait
             lui-même déclarée acceptable. */}
         {confirmation.usedAlternate ? (
-          <p className="mx-auto mt-4 max-w-prose rounded-lg bg-lemon-100 px-4 py-3 text-sm">
+          <p className="mx-auto mt-4 max-w-prose rounded-lg bg-pineapple-100 px-4 py-3 text-sm">
             Votre créneau préféré est parti pendant que vous remplissiez le
             formulaire. Nous avons retenu l&apos;un de ceux que vous aviez
             acceptés — c&apos;est bien l&apos;heure ci-dessus qui est réservée.
@@ -2869,7 +2889,7 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
           </p>
           <Link
             href="/mon-espace"
-            className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-mint-400 hover:bg-mint-50"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-teal-300 hover:bg-teal-50"
           >
             Ouvrir mon espace
           </Link>
@@ -2882,7 +2902,7 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
         <AddToCalendar confirmation={confirmation} />
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-mint-400 hover:bg-mint-50"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-teal-300 hover:bg-teal-50"
         >
           Appeler le {SITE.phone}
         </a>

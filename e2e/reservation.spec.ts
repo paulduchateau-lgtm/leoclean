@@ -34,7 +34,7 @@ async function saisirCoordonnees(page: Page, email: string) {
   await page.fill("#lastName", "Durand");
   await page.fill("#phone", "06 12 34 56 78");
   await page.fill("#email", email);
-  await page.getByRole("button", { name: "Continuer" }).click();
+  await page.getByRole("button", { name: "Indiquer mon adresse" }).click();
 }
 
 /** Écran 6 : l'adresse exacte, en saisie manuelle. */
@@ -102,7 +102,7 @@ test.describe("réservation", () => {
     const chosenTime = await slot.first().innerText();
     await expect(page.getByText(/par intervention/)).toContainText("3 h");
     await slot.first().click();
-    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.getByRole("button", { name: "Saisir mes coordonnées" }).click();
 
     // 5. Coordonnées — demandées une fois la valeur visible et l'heure retenue.
     await expect(
@@ -194,7 +194,7 @@ test.describe("réservation", () => {
     });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     await slot.first().click();
-    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.getByRole("button", { name: "Saisir mes coordonnées" }).click();
 
     await saisirCoordonnees(page, "camille@exemple.fr");
     await saisirAdresseManuelle(page);
@@ -279,15 +279,15 @@ test.describe("réservation", () => {
     expect(url.searchParams.get("step")).toBe("rythme");
   });
 
-  test("accepte une durée libre, repliée par défaut", async ({ page }) => {
+  test("accepte une durée libre, au curseur", async ({ page }) => {
     await page.goto("/reserver");
     await choisirCommune(page);
 
-    await expect(page.locator("#duration")).toHaveCount(0);
-    await page
-      .getByRole("button", { name: /Il me faut une autre durée/ })
-      .click();
-    await page.fill("#duration", "210");
+    // Le curseur part de 3 h ; un cran à droite fait 3 h 30 — le pas de
+    // 30 minutes que l'ancien champ « minutes » demandait de taper.
+    await page.locator("#duration-slider").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.locator("#duration-slider")).toHaveValue("210");
     await page.getByRole("button", { name: "Choisir mon rythme" }).click();
 
     // 3 h 30 à 28 €/h en formule régulière, soit la surface de 87 m²
@@ -384,7 +384,7 @@ test.describe("réservation", () => {
     });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     await slot.first().click();
-    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.getByRole("button", { name: "Saisir mes coordonnées" }).click();
     await saisirCoordonnees(page, `e2e-${Date.now()}@leoclean.test`);
 
     await page.fill("#address", "zzzz adresse qui n'existe pas quelque part");

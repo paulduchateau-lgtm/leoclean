@@ -68,10 +68,12 @@ export function Zones() {
                 <li key={commune.slug}>
                   <Link
                     href={`/menage-a-domicile/${commune.slug}`}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium transition-colors hover:border-mint-400 hover:bg-mint-50"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium transition-colors hover:border-teal-300 hover:bg-teal-50"
                   >
                     {commune.name}
-                    <span className="text-xs whitespace-nowrap text-muted-foreground">
+                    {/* Le chiffre en mono : un temps de route est une donnée,
+                        pas un mot. */}
+                    <span className="font-mono text-xs whitespace-nowrap text-muted-foreground">
                       {commune.isHeadquarters
                         ? "siège"
                         : `${content.driveMinutesFromLeognan} min`}

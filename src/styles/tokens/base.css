@@ -14,15 +14,15 @@ body {
   font-synthesis-weight: none;
 }
 /*
- * Les titres ne changent pas de famille : Figtree porte tout le système, et
- * c'est la graisse — 900 pour trancher, 800 en dessous — qui fait la
- * hiérarchie. Fraunces reste réservée au mot d'accent, via `.serif`.
+ * Les titres passent en Alan Sans : la famille tranche, la graisse gradue —
+ * 900 pour les titres de page, 800 en dessous. Figtree reste la famille de
+ * lecture.
  */
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   color: var(--text);
   letter-spacing: var(--ls-heading);
   line-height: var(--lh-snug);
@@ -35,16 +35,16 @@ h4 {
   font-weight: var(--fw-extrabold);
 }
 a {
-  color: var(--mint-700);
-  text-decoration-color: var(--mint-300);
+  color: var(--teal-600);
+  text-decoration-color: var(--teal-300);
   text-underline-offset: 4px;
 }
 a:hover {
-  color: var(--mint-800);
-  text-decoration-color: var(--mint-600);
+  color: var(--teal-800);
+  text-decoration-color: var(--teal-500);
 }
 ::selection {
-  background: var(--mint-200);
+  background: var(--teal-200);
   color: var(--ink-900);
 }
 :focus-visible {

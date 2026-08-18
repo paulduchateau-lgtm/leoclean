@@ -91,7 +91,7 @@ export default async function DossierPage() {
           {dossier.activation.warnings.map((warning) => (
             <p
               key={warning}
-              className="mt-3 flex gap-2 rounded-[var(--r-m)] bg-lemon-100 px-4 py-3 text-sm text-pretty"
+              className="mt-3 flex gap-2 rounded-[var(--r-m)] bg-pineapple-100 px-4 py-3 text-sm text-pretty"
             >
               <AlertTriangleIcon className="size-4 shrink-0" aria-hidden />
               {warning}
@@ -121,7 +121,7 @@ export default async function DossierPage() {
             automatiquement : vous n&apos;avez rien à demander.
           </p>
 
-          <p className="mt-4 inline-flex rounded-[var(--r-m)] border-2 border-mint-400 bg-mint-50 px-5 py-3 font-black tracking-widest text-mint-800 tabular-nums">
+          <p className="mt-4 inline-flex rounded-[var(--r-m)] border-2 border-teal-400 bg-teal-50 px-5 py-3 font-black tracking-widest text-teal-800 tabular-nums">
             {parrainage.code}
           </p>
 

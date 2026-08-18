@@ -94,7 +94,7 @@ export function ContactSheet({
         <div className="flex flex-col gap-3 px-4 pt-2 pb-2">
           <a
             href={`tel:${SITE.phoneE164}`}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-mint-500"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-mango-500"
             onClick={() => onOpenChange(false)}
           >
             <PhoneIcon className="size-4" aria-hidden />
@@ -105,7 +105,7 @@ export function ContactSheet({
             href={whatsappLink(communeName)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-mint-400 hover:bg-mint-50"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-teal-300 hover:bg-teal-50"
             onClick={() => onOpenChange(false)}
           >
             <MessageCircleIcon className="size-4" aria-hidden />
@@ -118,7 +118,7 @@ export function ContactSheet({
                 ? `?subject=${encodeURIComponent(`Ménage à domicile à ${communeName}`)}`
                 : ""
             }`}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-mint-400 hover:bg-mint-50"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-teal-300 hover:bg-teal-50"
             onClick={() => onOpenChange(false)}
           >
             <MailIcon className="size-4" aria-hidden />

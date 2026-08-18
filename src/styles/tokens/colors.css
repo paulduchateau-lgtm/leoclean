@@ -1,40 +1,60 @@
 :root {
-  /* --- Primary · Menthe (la couleur signature, 50 → 950) --- */
-  --mint-50: #edfdf6;
-  --mint-100: #d2faeb;
-  --mint-200: #a8f4d9;
-  --mint-300: #7debc5;
-  --mint-400: #63e6be;
-  --mint-500: #35cfa1;
-  --mint-600: #16b189;
-  --mint-700: #0a7c61;
-  --mint-800: #0b6350;
-  --mint-900: #0c4f41;
-  --mint-950: #04302a;
-  /* --- Secondary · Pêche (la chaleur qui empêche le rendu clinique) --- */
-  --peach-50: #fff4ee;
-  --peach-100: #ffe6d8;
-  --peach-200: #ffcfb6;
-  --peach-300: #ffb08c;
-  --peach-400: #ff9e70;
-  --peach-500: #f97e48;
-  --peach-600: #e4632c;
-  --peach-700: #bc4b1d;
-  --peach-800: #963d1a;
-  --peach-900: #7a341a;
-  /* --- Accent · Citron (moments de joie : notes, promos, récompenses) --- */
-  --lemon-50: #fffbe6;
-  --lemon-100: #fef6c4;
-  --lemon-200: #fcec90;
-  --lemon-300: #fadf54;
-  --lemon-400: #f5d423;
-  --lemon-500: #e0bc0a;
-  --lemon-600: #b99508;
-  --lemon-700: #8f7107;
+  /*
+   * Palette « tropical punch » — FF8243 · FFC0CB · FCE883 · 069494.
+   *
+   * La logique de rôles s'inverse par rapport à l'ancienne palette menthe :
+   * la couleur sombre n'est plus verte mais sarcelle, et c'est la mangue qui
+   * a l'énergie d'un bouton. Sarcelle = profondeur et marque, mangue = action,
+   * ananas = joie, papaye = douceur.
+   */
+  /* --- Profondeur & marque · Sarcelle (dérivée de #069494) --- */
+  --teal-50: #e6f7f7;
+  --teal-100: #c3eded;
+  --teal-200: #8fdede;
+  --teal-300: #55c7c7;
+  --teal-400: #25adad;
+  --teal-500: #069494;
+  --teal-600: #057c7c;
+  --teal-700: #056363;
+  --teal-800: #044c4c;
+  --teal-900: #033a3a;
+  --teal-950: #022727;
+  /* --- Action · Mangue (dérivée de #FF8243) --- */
+  --mango-50: #fff4ec;
+  --mango-100: #ffe4d1;
+  --mango-200: #ffc9a4;
+  --mango-300: #ffa670;
+  --mango-400: #ff8243;
+  --mango-500: #f4661f;
+  --mango-600: #d15112;
+  --mango-700: #a63f0e;
+  --mango-800: #85330f;
+  --mango-900: #6e2b10;
+  /* --- Douceur · Papaye (dérivée de #FFC0CB) --- */
+  --papaya-50: #fff5f7;
+  --papaya-100: #ffe3e8;
+  --papaya-200: #ffc0cb;
+  --papaya-300: #ff9dae;
+  --papaya-400: #fb7690;
+  --papaya-500: #ef4d6f;
+  --papaya-600: #d42a52;
+  --papaya-700: #b01c41;
+  --papaya-800: #8f1636;
+  --papaya-900: #75112c;
+  /* --- Joie · Ananas (dérivée de #FCE883) : pilules, promos, récompenses --- */
+  --pineapple-50: #fffbe9;
+  --pineapple-100: #fef4c5;
+  --pineapple-200: #fdee9f;
+  --pineapple-300: #fce883;
+  --pineapple-400: #f2d34a;
+  --pineapple-500: #e3b60d;
+  --pineapple-600: #b98f0b;
+  --pineapple-700: #91700a;
   /* --- Teintes de soutien (fonds de catégories, blocs éditoriaux) --- */
-  --cream-50: #fffaf2;
-  --cream-100: #fff3e3;
-  --cream-200: #f8e8d2;
+  /* Crème réchauffée d'un souffle de papaye : le tropical est solaire. */
+  --cream-50: #fffaf6;
+  --cream-100: #fff1ec;
+  --cream-200: #ffe4dc;
   --sky-50: #eff7fd;
   --sky-100: #dbedfa;
   --sky-200: #b9dcf4;
@@ -45,7 +65,7 @@
   --warm-50: #f8f7f4;
   --warm-100: #efede7;
   --warm-200: #e2dfd6;
-  /* --- Neutres · Ink (légèrement teintés vert pour rester dans la famille) --- */
+  /* --- Neutres · Ink (légèrement teintés vert, la famille de la sarcelle) --- */
   --ink-0: #ffffff;
   --ink-25: #fafcfb;
   --ink-50: #f4f8f6;
@@ -77,27 +97,34 @@
   --info-border: #bbdcf3;
   --info-dark: #17639a;
   /* --- Rôles & surfaces --- */
-  --bg: #ffffff;
+  /* Le fond de page est un blanc chaud, pas clinique : #fffcf9. */
+  --bg: #fffcf9;
   --bg-alt: var(--ink-50);
-  --bg-mint: var(--mint-50);
+  --bg-brand: var(--teal-50);
   --bg-cream: var(--cream-50);
-  --bg-ink: var(--ink-900);
+  --bg-ink: var(--teal-900);
   --surface: #ffffff;
   --surface-alt: var(--ink-50);
   --surface-sunken: var(--ink-100);
-  --surface-brand: var(--mint-400);
-  --surface-brand-soft: var(--mint-50);
+  /*
+   * L'action principale est mangue pleine et porte du texte encre — même
+   * règle que la menthe d'avant : une couleur claire et saturée ne porte
+   * jamais du blanc.
+   */
+  --surface-brand: var(--mango-400);
+  --surface-brand-soft: var(--teal-50);
   --text: var(--ink-900);
   --text-secondary: var(--ink-600);
   --text-tertiary: var(--ink-500);
   --text-inverse: #ffffff;
-  --text-brand: var(--mint-700);
+  /* Liens et marque : sarcelle foncée, la seule lisible sur blanc. */
+  --text-brand: var(--teal-600);
   --text-on-brand: var(--ink-900);
   --border: var(--ink-200);
   --border-subtle: var(--ink-100);
   --border-strong: var(--ink-300);
-  --border-brand: var(--mint-300);
-  --focus: var(--mint-700);
-  --focus-halo: rgba(53, 207, 161, 0.35);
+  --border-brand: var(--teal-300);
+  --focus: var(--teal-600);
+  --focus-halo: rgba(6, 148, 148, 0.35);
   --overlay-scrim: rgba(11, 27, 22, 0.5);
 }

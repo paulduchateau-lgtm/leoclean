@@ -10,7 +10,7 @@ import { SITE } from "@/lib/site";
  */
 export function DemoBanner() {
   return (
-    <p className="border-b border-peach-200 bg-peach-50 px-6 py-2 text-center text-sm font-medium text-peach-800">
+    <p className="border-b border-papaya-200 bg-papaya-50 px-6 py-2 text-center text-sm font-medium text-papaya-800">
       Démonstration — aucune réservation n&apos;est enregistrée. Pour une
       demande réelle&nbsp;:{" "}
       <a href={`tel:${SITE.phoneE164}`} className="font-medium underline">

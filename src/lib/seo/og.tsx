@@ -45,12 +45,12 @@ const [figtreeRegular, figtreeBlack] = await Promise.all([
  * de la palette se retrouve ici.
  */
 const COLORS = {
-  /* cream-50 */ background: "#fffaf2",
+  /* cream-50 */ background: "#fffaf6",
   /* ink-900 */ text: "#16261f",
   /* ink-600 */ textSecondary: "#5a6b65",
   /* ink-500 */ textTertiary: "#74857e",
-  /* mint-400 */ brand: "#63e6be",
-  /* mint-700 */ brandInk: "#0a7c61",
+  /* mango-400 */ brand: "#ff8243",
+  /* teal-600 */ brandInk: "#057c7c",
   /* ink-100 */ border: "#eaf0ed",
 } as const;
 
@@ -59,7 +59,7 @@ const COLORS = {
  *
  * Le moteur de rendu traite les images bien mieux que le SVG en ligne, et
  * `currentColor` n'y a de toute façon aucun sens : le tracé porte donc la
- * menthe 700, la seule valeur de la palette qui tienne le contraste sur fond
+ * sarcelle 600, la seule teinte de marque qui tienne le contraste sur fond
  * clair.
  */
 const SYMBOL = `data:image/svg+xml;base64,${Buffer.from(

@@ -575,7 +575,7 @@ celle de la route.
 
 **La carte de partage est générée, une par commune.** `src/lib/seo/og.tsx`
 compose l'image dans le langage du système — surtitre en capitales, titre en
-graisse 900, prix en pilule menthe sur texte encre. C'est la deuxième surface,
+graisse 900, prix en pilule mangue sur texte encre. C'est la deuxième surface,
 après `magic-link-email.tsx`, où les couleurs sont recopiées plutôt que
 référencées : le moteur de rendu ne voit pas la feuille de styles. Chaque
 valeur porte le nom de son token. Figtree y est versionnée en TrueType dans
@@ -1194,8 +1194,9 @@ décalage ne compte pas — mais la mesure est faite dans les deux états, avec 
 sans parcours enregistré, précisément parce que ce n'est pas évident.
 
 **Le site ne contient aucune image.** La typographie fait tout le travail
-visuel, et les deux familles sont chargées par `next/font`, Fraunces sans
-préchargement — aucun écran ne la demande au premier rendu.
+visuel, et les trois familles sont chargées par `next/font` — Alan Sans
+préchargée (chaque titre la demande au premier rendu), JetBrains Mono sans
+préchargement, elle n'apparaît qu'au fil de la lecture.
 
 **Deux dépendances ne descendent plus dans le premier octet.** `ContactSheet`
 embarque le `Dialog` de Base UI et n'est chargé qu'à l'ouverture du panneau —
@@ -1343,31 +1344,40 @@ ne doit être ressaisie en dur dans une page.
 
 ## Design
 
-Le design system fait foi. Ses tokens vivent dans `src/styles/tokens/` et sont
-**importés tels quels**, jamais recopiés : une valeur dupliquée finit toujours
-par diverger. Ils portent les noms du système — `--mint-400`, `--r-l`,
-`--sp-6`, `--sh-m` — pour qu'une valeur du document se retrouve dans le code
-sans traduction.
+Le design system fait foi, et depuis la refonte d'août 2026 c'est la variante
+**« tropical punch »** du prototype (`proto/`, thème `theme-tropical.css`) qui
+en est la source : FF8243 · FFC0CB · FCE883 · 069494. Ses tokens vivent dans
+`src/styles/tokens/` et sont **importés tels quels**, jamais recopiés : une
+valeur dupliquée finit toujours par diverger. Ils portent les noms du système —
+`--mango-400`, `--teal-600`, `--r-l`, `--sp-6`, `--sh-m` — pour qu'une valeur
+du document se retrouve dans le code sans traduction.
 
 `globals.css` câble ensuite les variables sémantiques de shadcn/ui dessus —
-`--primary` sur `--mint-400`, `--background` sur `--bg`, et ainsi de suite.
+`--primary` sur `--mango-400`, `--background` sur `--bg`, et ainsi de suite.
 Aucun composant ne connaît la marque, ce qui permet de changer l'identité en un
-seul fichier. **Ne jamais écrire de couleur en dur.** Seule exception,
-documentée sur place : `magic-link-email.tsx`, les clients de messagerie
-n'acceptant pas les variables CSS.
+seul fichier. **Ne jamais écrire de couleur en dur.** Trois exceptions,
+documentées sur place : `magic-link-email.tsx`, `notifications/gabarit.tsx` et
+`seo/og.tsx`, rendus hors du navigateur où les variables CSS n'existent pas.
 
 ### Ce que le système impose
 
-Palettes : **menthe** en primaire, **pêche** en secondaire pour la chaleur,
-**citron** en accent des moments de joie, **ciel**, **sauge**, **crème** en
-teintes de soutien, et des neutres **ink** légèrement teintés vert. Les
-couleurs sémantiques — succès, alerte, erreur, information — gardent la même
-teinte quel que soit le thème.
+Palettes, distribuées par rôle : **sarcelle** (`teal`) porte la profondeur et
+la marque — bandes sombres, pied de page, liens, logotype, états sélectionnés ;
+**mangue** (`mango`) porte l'action principale ; **ananas** (`pineapple`) les
+pilules et les moments de joie ; **papaye** (`papaya`) les surfaces douces —
+héros en lever de soleil, panneau de sortie. **Ciel**, **sauge**, **crème**
+(réchauffée d'un souffle de papaye) en teintes de soutien, et des neutres
+**ink** légèrement teintés vert. Le fond de page est un blanc chaud
+(`#fffcf9`) : le tropical est solaire, pas clinique. Les couleurs sémantiques —
+succès, alerte, erreur, information — gardent la même teinte quel que soit le
+thème.
 
-**La menthe pleine ne sert qu'à l'action principale : un écran, un seul bouton
-menthe.** Elle porte du texte encre, jamais du blanc — à 400, elle ne tient pas
-le contraste. Pour écrire, une icône ou un trait fin, employer `text-brand`
-(menthe 700), jamais `text-primary`.
+**La mangue pleine ne sert qu'à l'action principale : un écran, un seul bouton
+mangue.** Elle porte du texte encre, jamais du blanc — à 400, elle ne tient pas
+le contraste ; sa lueur est `shadow-mango`. La même règle vaut pour la sarcelle
+pleine des états sélectionnés (cases cochées, créneaux retenus) : texte encre.
+Pour écrire, une icône ou un trait fin, employer `text-brand` (sarcelle 600),
+jamais `text-primary`. `src/styles/contrast.test.ts` verrouille ces couples.
 
 **Toute action est une pilule** — boutons, tags, badges, avatars. Le reste de
 l'échelle grandit avec l'élément : 6 px pour une case à cocher, 14 px pour un
@@ -1377,15 +1387,19 @@ section ou un hero. Aucun angle vif.
 Gabarits tactiles : bouton primaire à 48 px, champ à 52 px, case à cocher et
 radio à 24 px. Rien qui porte une conversion ne descend sous 44 px.
 
-Typographie : **Figtree** porte 98 % du système, titres compris — la hiérarchie
-vient de la graisse (900 pour trancher, 800 en dessous, 400 pour lire), pas
-d'un changement de famille. **Fraunces** en italique ne sert qu'au mot d'accent
-d'un titre marketing, via la classe `.accent-word` : un mot, jamais dans le
-tunnel ni le tableau de bord. Les deux sont chargées par `next/font` plutôt que
-par l'`@import` Google Fonts du système, qui bloquerait le rendu.
+Typographie : **Alan Sans** porte les titres et les grands chiffres — la
+famille tranche, la graisse gradue (900 pour les titres de page, 800 en
+dessous). **Figtree** reste la famille de lecture, **JetBrains Mono** celle des
+chiffres posés — prix, codes postaux, temps de trajet. Alan Sans est
+auto-hébergée (`src/app/fonts/`, `next/font/local`, absente de
+`next/font/google`), les deux autres viennent de `next/font/google` — jamais
+l'`@import` Google Fonts du système, qui bloquerait le rendu. **Fraunces a
+disparu avec la refonte** : `.accent-word` ne change plus de plume, il colore
+le mot en sarcelle.
 
 Le thème sombre n'est pas défini par le système : celui du projet en est une
-dérivation, à revoir si le système en fournit un.
+dérivation — fonds sarcelle profonde, action mangue — à revoir si le système
+en fournit un.
 
 **Ton éditorial**, repris du système : vouvoiement du client, « nous » pour ce
 que l'entreprise organise, intervenants nommés par prénom. Phrases courtes, une
@@ -1394,21 +1408,22 @@ capitales complètes sont réservées aux surtitres, avec la classe `.overline`.
 Typographie française : espace insécable avant les unités et la ponctuation
 double.
 
-### Divergences avec le système, à arbitrer
+### Divergences avec le prototype, assumées
 
-- Le document est rédigé sous une marque de démonstration, **MENTA**, avec son
-  propre logotype et sa baseline. Le code n'en reprend que le langage visuel :
-  la marque reste **Léo Clean**, et le symbole est l'étoile fournie par le
-  client, incrustée en `currentColor` pour respecter la règle de contraste du
-  système — jamais de monochrome menthe sur blanc.
-- Le mot d'accent en Fraunces est posé au milieu du titre d'accueil, quand le
-  système le veut en fin de phrase. Déplacer l'accent supposait de réécrire une
-  accroche qui n'est pas la nôtre : à trancher avec le client.
-- Le document décrit un périmètre et des tarifs qui ne correspondent pas aux
-  décisions prises depuis — communes hors zone, « 23 € / h » quand la grille
-  est à 28 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
-  sont des exemples de rédaction, pas des tokens : le code suit les décisions
-  du projet.
+- Le symbole reste l'étoile fournie par le client, incrustée en `currentColor`
+  — jamais de monochrome sarcelle sur blanc, où le contraste ne tient pas. Le
+  pied de page sombre la passe en blanc via la prop `inverse` du logo.
+- **Le « −50 % crédit d'impôt » du bandeau de crédibilité du prototype n'est
+  pas repris** : il contredit `src/lib/fiscal.ts` tant que la déclaration SAP
+  n'est pas obtenue. La quatrième tuile reste « un vrai numéro, quelqu'un
+  décroche ».
+- Les emplacements photographiques du prototype ne sont pas repris : le site
+  reste sans image (contrainte de performance mesurée), et aucune photo ne doit
+  y entrer sans arbitrage — jamais d'image de banque ou générée.
+- Le prototype ouvre le tunnel sur l'adresse ; le produit garde son écran
+  commune (même fonction, la couverture se dit tout de suite) et l'adresse
+  exacte reste au dernier écran, conformément à « plus une information coûte à
+  donner, plus tard on la demande ».
 
 ## Commandes
 

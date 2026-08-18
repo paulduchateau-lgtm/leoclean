@@ -106,7 +106,7 @@ function BookingCard({
         <p className="mt-3 flex items-center gap-3 text-sm">
           <span
             aria-hidden
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-100 text-xs font-black text-mint-800"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-black text-teal-800"
           >
             {booking.cleaner.firstName.slice(0, 2).toUpperCase()}
           </span>

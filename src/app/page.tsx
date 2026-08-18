@@ -101,22 +101,23 @@ export default function Home() {
             donné aucune raison de rester. Les seize liens sont maintenant en
             fin de page, où ils servent de preuve au lieu de servir de menu.
 
-            Le fond menthe et ses taches colorées sont la signature du système :
-            une pièce aérée, pas un bandeau. Elles se posent en absolu derrière
-            le contenu, et `overflow-hidden` les empêche d'élargir la page. */}
-        <section className="relative overflow-hidden border-b border-border-subtle bg-mint-50">
+            Le héros est un lever de soleil — papaye vers le blanc chaud de la
+            page — et ses taches colorées sont la signature du système : une
+            pièce aérée, pas un bandeau. Elles se posent en absolu derrière le
+            contenu, et `overflow-hidden` les empêche d'élargir la page. */}
+        <section className="relative overflow-hidden border-b border-border-subtle bg-gradient-to-b from-papaya-100 to-background">
           <div
-            className="blob top-[-160px] right-[-90px] size-[360px] bg-mint-200"
+            className="blob top-[-160px] right-[-90px] size-[360px] bg-papaya-200 opacity-60"
             aria-hidden
           />
           <div
-            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-lemon-200 opacity-70"
+            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-pineapple-200 opacity-70"
             aria-hidden
           />
-          {/* La tache pêche passe derrière le titre : elle ne paraît qu'à
+          {/* La tache sarcelle passe derrière le titre : elle ne paraît qu'à
               partir du moment où la ligne de texte ne la traverse plus. */}
           <div
-            className="blob top-[120px] left-[64%] hidden size-[150px] bg-peach-200 opacity-40 lg:block"
+            className="blob top-[120px] left-[64%] hidden size-[150px] bg-teal-200 opacity-40 lg:block"
             aria-hidden
           />
 
@@ -127,13 +128,15 @@ export default function Home() {
                 décale rien. */}
             <ResumeBookingBanner />
 
-            <Badge variant="secondary" className="mb-5 gap-1.5">
+            {/* La pilule ananas : le badge des moments d'accroche, texte
+                encre — la signature la plus pétillante de la palette. */}
+            <Badge className="mb-5 gap-1.5 bg-pineapple-300 text-ink-900">
               <MapPinIcon className="size-3.5" aria-hidden />
               {FACTS.communeCount} communes au sud de Bordeaux
             </Badge>
 
-            {/* Un seul mot en Fraunces, en fin de phrase : c'est la respiration
-                humaine qui empêche le rendu SaaS, et elle ne se répète pas. */}
+            {/* Un seul mot d'accent, en sarcelle : le tropical punch accentue
+                par la couleur, pas par un changement de plume. */}
             <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
               Le ménage à domicile, par des personnes qui habitent{" "}
               <span className="accent-word">à côté</span> de chez vous.
@@ -160,13 +163,13 @@ export default function Home() {
             >
               <Link
                 href="/reserver"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
               >
                 Réserver
               </Link>
               <Link
                 href="/tarifs"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
               >
                 Voir les tarifs
               </Link>
@@ -240,10 +243,12 @@ export default function Home() {
         {/* Bloc 6 — l'offre. */}
         <Prestations />
 
-        {/* Bloc 7 — le déroulé. */}
-        <section className="border-y border-border-subtle bg-sky-50">
+        {/* Bloc 7 — le déroulé, sur la bande sombre sarcelle : c'est la
+            profondeur de la palette, et les numéros en pilule ananas y portent
+            du texte encre — le duo signature du tropical punch. */}
+        <section className="bg-teal-900 text-white">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="text-2xl font-black tracking-tight">
+            <h2 className="text-2xl font-black tracking-tight text-white">
               Comment ça se passe
             </h2>
 
@@ -251,13 +256,15 @@ export default function Home() {
               {STEPS.map((step) => (
                 <li key={step.number}>
                   <span
-                    className="block text-3xl font-black tracking-tight text-mint-300"
+                    className="flex size-9 items-center justify-center rounded-full bg-pineapple-300 font-display text-base font-bold text-ink-900 tabular-nums"
                     aria-hidden
                   >
                     {step.number}
                   </span>
-                  <h3 className="mt-1 font-extrabold">{step.title}</h3>
-                  <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+                  <h3 className="mt-3 font-extrabold text-white">
+                    {step.title}
+                  </h3>
+                  <p className="mt-1.5 text-sm text-pretty text-teal-200">
                     {step.body}
                   </p>
                 </li>
@@ -275,36 +282,40 @@ export default function Home() {
         {/* Bloc 10 — la confiance, sans avis inventés. */}
         <Engagement />
 
-        {/* Bloc 11 — la sortie. */}
-        <section className="border-t border-border-subtle bg-mint-50">
+        {/* Bloc 11 — la sortie. Le panneau porte LE rose de la palette, en
+            surface arrondie et texte encre — jamais de blanc sur papaye — et
+            le reste de la section demeure sur le fond de page. */}
+        <section className="border-t border-border-subtle">
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="text-2xl font-black tracking-tight text-balance">
-              Une personne qui habite à côté, chez vous cette semaine
-            </h2>
+            <div className="rounded-[var(--r-2xl)] bg-papaya-200 p-8 sm:p-12">
+              <h2 className="text-2xl font-black tracking-tight text-balance">
+                Une personne qui habite à côté, chez vous cette semaine
+              </h2>
 
-            <div
-              className="mt-8 flex flex-col gap-3 sm:flex-row"
-              data-booking-cta
-            >
-              <Link
-                href="/reserver"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+              <div
+                className="mt-8 flex flex-col gap-3 sm:flex-row"
+                data-booking-cta
               >
-                Réserver
-              </Link>
-              <Link
-                href="/tarifs"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
-              >
-                Voir les tarifs
-              </Link>
+                <Link
+                  href="/reserver"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+                >
+                  Réserver
+                </Link>
+                <Link
+                  href="/tarifs"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-transparent bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
+                >
+                  Voir les tarifs
+                </Link>
+              </div>
+
+              <p className="mt-4 text-sm text-ink-800">
+                Prix affiché avant de réserver · Rien à payer aujourd&apos;hui ·
+                Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
+                avant
+              </p>
             </div>
-
-            <p className="mt-4 text-sm text-muted-foreground">
-              Prix affiché avant de réserver · Rien à payer aujourd&apos;hui ·
-              Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
-              avant
-            </p>
 
             {/* Les trois canaux directs restent, en second rang : ils servent
                 ceux qui ne réserveront pas seuls, pas ceux qui le feraient. */}

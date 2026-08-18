@@ -113,10 +113,10 @@ const text = {
   margin: "0 0 12px",
 };
 
-/* Menthe pleine et texte encre : le bouton primaire du système, en pilule. */
+/* Mangue pleine et texte encre : le bouton primaire du système, en pilule. */
 const button = {
-  /* mint-400 */
-  backgroundColor: "#63e6be",
+  /* mango-400 */
+  backgroundColor: "#ff8243",
   borderRadius: "999px",
   /* ink-900 */
   color: "#16261f",
@@ -136,8 +136,8 @@ const muted = {
 };
 
 const link = {
-  /* mint-700 */
-  color: "#0a7c61",
+  /* teal-600 */
+  color: "#057c7c",
   fontSize: "13px",
   lineHeight: "20px",
   margin: "0 0 8px",
