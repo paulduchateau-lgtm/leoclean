@@ -19,6 +19,8 @@
 @import "../styles/tokens/spacing.css";
 @import "../styles/tokens/radius-shadow.css";
 @import "../styles/tokens/motion.css";
+/* Variante dense de la console : densité seule, aucune couleur touchée. */
+@import "../styles/tokens/density.css";
 
 @custom-variant dark (&:is(.dark *));
 
