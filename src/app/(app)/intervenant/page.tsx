@@ -80,12 +80,18 @@ export default async function MissionsPage() {
       <h1 className="font-heading text-3xl font-semibold tracking-tight">
         Bonjour {profil.displayName}
       </h1>
-      <p className="mt-3 text-sm">
+      <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <Link
           href="/intervenant/disponibilites"
           className="text-primary hover:underline"
         >
           Mes disponibilités →
+        </Link>
+        <Link
+          href="/intervenant/absences"
+          className="text-primary hover:underline"
+        >
+          Mes absences →
         </Link>
       </p>
 
