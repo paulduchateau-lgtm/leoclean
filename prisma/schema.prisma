@@ -135,6 +135,8 @@ model Organization {
   referralRewards        ReferralReward[]
   analyticsEvents        AnalyticsEvent[]
   pricingSurcharges      PricingSurcharge[]
+  propertyKeyLogs        PropertyKeyLog[]
+  accessSecretReads      AccessSecretRead[]
 
   @@index([type, status])
 }
@@ -354,6 +356,8 @@ model CleanerProfile {
   reviews                   Review[]
   issuedInvoices            Invoice[]
   preferredForSubscriptions Subscription[]          @relation("PreferredCleaner")
+  propertyKeyLogs           PropertyKeyLog[]
+  accessSecretReads         AccessSecretRead[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, status])
@@ -433,22 +437,118 @@ model Address {
   /// a été résolue automatiquement.
   banId String?
 
-  /// Informations d'accès : étage, ascenseur, digicode, stationnement.
+  /// Informations d'accès non sensibles : étage, ascenseur, stationnement.
+  /// Le digicode, lui, ne passe pas par ici — voir `accessSecretEnc`.
   accessNotes String?
   floor       String?
   hasElevator Boolean?
 
+  // --- Le logement, et non plus seulement le point postal -------------------
+
+  /// `APPARTEMENT` · `MAISON`
+  propertyType String?
+  rooms        Int?
+  bathrooms    Int?
+  wc           Int?
+  parkingNotes String?
+
+  /// Ce à quoi on ne touche pas. Écrit par le client, lu par l'intervenant.
+  forbiddenZones   String?
+  /// Animaux : nom, tempérament, consigne. Un chien qu'on ne sait pas nommer
+  /// est un chien qu'on n'ose pas approcher.
+  pets             Json?
+  /// Allergies et produits à éviter. Sécurité avant confort.
+  allergies        String?
+  /// Matériel disponible sur place : aspirateur, serpillère, produits.
+  supplies         Json?
+  /// Le client fournit ses produits, ou l'intervenant apporte les siens.
+  ownProducts      Boolean?
+  /// Tâches habituelles par pièce, reprises à chaque passage.
+  defaultChecklist Json?
+
+  /// Consigne d'accès sensible — digicode, emplacement d'une clé.
+  ///
+  /// Chiffrée en AES-256-GCM, jamais lisible par une requête ordinaire, jamais
+  /// écrite dans un journal. Elle ne se déchiffre que par
+  /// `logement/secret.ts`, pour un intervenant affecté et dans la fenêtre
+  /// J-24 h → J+2 h. Hors de cette fenêtre, un compte compromis ne donne accès
+  /// à aucun domicile.
+  accessSecretEnc   Bytes?
+  /// Instant de la dernière modification, pour dire « code enregistré · le … »
+  /// au client sans jamais le lui réafficher.
+  accessSecretSetAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clientProfile ClientProfile?  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
-  cleanerHome   CleanerProfile? @relation("CleanerHome")
-  bookings      Booking[]
-  subscriptions Subscription[]
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile  ClientProfile?     @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  cleanerHome    CleanerProfile?    @relation("CleanerHome")
+  bookings       Booking[]
+  subscriptions  Subscription[]
+  keyLogs        PropertyKeyLog[]
+  secretAccesses AccessSecretRead[]
 
   @@index([organizationId])
   @@index([inseeCode])
+}
+
+/// Journal de remise de clés.
+///
+/// Sans lui, une clé perdue est une discussion sans pièce. Chaque mouvement est
+/// horodaté et porte l'accord des deux parties : ce n'est pas une formalité,
+/// c'est ce qui permet de dire qui détenait quoi et depuis quand.
+model PropertyKeyLog {
+  id               String  @id @default(cuid())
+  organizationId   String
+  addressId        String
+  cleanerProfileId String?
+
+  /// `HANDED_OVER` · `RETURNED` · `LOST`
+  action String
+  notes  String?
+
+  /// Confirmé par le client, et par l'intervenant. Les deux, ou aucun des deux
+  /// ne vaut preuve.
+  confirmedByClientAt  DateTime?
+  confirmedByCleanerAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  address      Address         @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile? @relation(fields: [cleanerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, addressId, createdAt])
+}
+
+/// Journal des lectures de consigne d'accès.
+///
+/// Obligation RGPD, et protection en cas de litige : le jour où un client
+/// signale une entrée qu'il n'attendait pas, la question « qui a lu le code, et
+/// quand » doit avoir une réponse. Le journal est écrit par le module qui
+/// déchiffre, jamais par l'appelant — sinon il finirait par être oublié.
+model AccessSecretRead {
+  id               String  @id @default(cuid())
+  organizationId   String
+  addressId        String
+  cleanerProfileId String?
+  bookingId        String?
+
+  /// Lecture refusée : hors fenêtre, ou sans affectation. Conservée aussi, et
+  /// c'est le plus intéressant à relire.
+  granted Boolean
+
+  reason String?
+
+  readAt DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  address      Address         @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile? @relation(fields: [cleanerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, addressId, readAt])
+  @@index([cleanerProfileId, readAt])
 }
 
 // ===========================================================================
@@ -1611,8 +1711,8 @@ model PricingSurcharge {
   organizationId String
 
   /// `SAMEDI` · `DIMANCHE_FERIE` · `COURT_DELAI`
-  cause  String
-  rateBp Int
+  cause       String
+  rateBp      Int
   /// `PROFESSIONAL` · `PLATFORM`
   beneficiary String
   label       String

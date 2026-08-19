@@ -29,6 +29,19 @@ const serverSchema = z.object({
   AUTH_SECRET: z
     .string()
     .min(32, "AUTH_SECRET doit faire au moins 32 caractères"),
+  /**
+   * Clé de chiffrement des consignes d'accès.
+   *
+   * Distincte d'`AUTH_SECRET` à dessein : une clé qui chiffre des codes de
+   * porte n'a pas le même cycle de vie qu'une clé de session, et faire tourner
+   * l'une ne doit pas rendre les autres illisibles. Sans elle, les consignes ne
+   * peuvent être ni enregistrées ni lues — et c'est un refus net, jamais un
+   * repli qui écrirait en clair.
+   */
+  ACCESS_SECRET_KEY: z
+    .string()
+    .min(32, "ACCESS_SECRET_KEY doit faire au moins 32 caractères")
+    .optional(),
   AUTH_GOOGLE_ID: z.string().min(1).optional(),
   AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
 
