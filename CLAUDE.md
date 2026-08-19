@@ -1331,6 +1331,8 @@ src/
     stockage/          politique de dépôt de fichiers (pure) et interface
     logement/          chiffrement des consignes d'accès (pur) et module gardien
     mission/           cycle de travail et notation — purs ; travail.ts écrit
+    abonnement/        récurrence — pure ; generateur.ts écrit les occurrences
+    paiement/          calendrier — pur ; stripe.ts et travaux.ts exécutent
     administration/    tableau de bord plateforme, ce qui attend un humain
     societes/          page publique d'une société cliente du SaaS
     rgpd/              accès et effacement, avec leurs limites
@@ -1556,18 +1558,35 @@ Restent à écrire : le dépôt des photos, qui attend un fournisseur de stockag
 le mode hors ligne, dont le schéma est prêt mais dont la file d'envoi manque ;
 et l'écran « Aujourd'hui ». `NO_SHOW` reste modélisé et non écrit.
 
-**Modélisé, seedé, jamais écrit par le produit** : `Payment`, `Payout`,
-`Invoice`, `Review`, `Message`, `Subscription`, `Referral` et
-`ReferralCode`, `CalendarConnection` et `ExternalBusyBlock`, `WebhookEvent`. Le
+**Modélisé, seedé, jamais écrit par le produit** : `Payout`, `Invoice`,
+`Review`, `Referral` et `ReferralCode`, `CalendarConnection` et
+`ExternalBusyBlock`. `Payment`, `Subscription`, `Message` et `WebhookEvent` ont
+rejoint le produit les 19 et 20 août. Le
 parrainage est le cas le plus trompeur : `src/lib/referral/` est écrit, pur et
 testé, sans un seul appelant ni écran. Les tables ne mentent pas sur l'intention,
 elles ne disent rien de ce qui est branché.
 
-**Le paiement n'est pas commencé.** Ce n'est pas une clé qui manque : le SDK
-Stripe n'est pas installé, et les deux routes de webhook annoncées par
-`.env.example` (`/api/webhooks/stripe`, `/api/webhooks/stripe-connect`) n'existent
-pas. À écrire en _separate charges and transfers_, le modèle à deux factures
-interdisant le _destination charge_.
+**Le socle du paiement est posé depuis le 20 août 2026.** SDK installé,
+`paiement/calendrier.ts` pur et testé, préautorisation à H-24, prélèvement à
+H+24 et libération des autorisations sur mission annulée, plus le webhook
+`/api/webhooks/stripe` avec vérification de signature et idempotence par
+insertion.
+
+**Une autorisation bancaire expire au bout de sept jours**, et c'est la
+contrainte qui gouverne tout le calendrier : la poser à la réservation la
+rendrait caduque avant la mission. `autorisationTiendra` vérifie la marge à
+chaque préautorisation, et un test échoue si quelqu'un allonge l'un des délais.
+
+**Le prélèvement est conditionné à la clôture, jamais à l'horloge seule** — et
+le délai court depuis la clôture réelle, pas depuis l'heure prévue.
+
+Restent à écrire : l'empreinte à la réservation (SetupIntent dans le tunnel,
+sans laquelle la préautorisation n'a aucune carte à débiter), Connect Express et
+les reversements, les factures, l'attestation fiscale et les relances d'échec —
+dont le calendrier est écrit et testé mais que rien n'appelle. Les reversements
+restent à écrire en _separate charges and transfers_, le modèle à deux factures
+interdisant le _destination charge_. Rien n'a pu être vérifié contre le vrai
+Stripe : les clés vivent chez l'hébergeur, pas en local.
 
 **Le temps de trajet réel non plus.** `TRAVEL_TIME_PROVIDER` accepte
 `openrouteservice` et `osrm`, et aucun des deux n'est implémenté : seul le
@@ -1577,7 +1596,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **636 tests unitaires** (47 fichiers), **10 suites
+État au 20 août 2026 : **675 tests unitaires** (49 fichiers), **10 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.

@@ -118,7 +118,8 @@ export function prochaineEtapePaiement(
   if (annulee) return etat.autorisee ? "LIBERER" : "ATTENDRE";
 
   if (!etat.autorisee) {
-    return maintenant.getTime() >= instantDePreautorisation(etat.debutMission).getTime()
+    return maintenant.getTime() >=
+      instantDePreautorisation(etat.debutMission).getTime()
       ? "PREAUTORISER"
       : "ATTENDRE";
   }

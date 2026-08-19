@@ -48,7 +48,11 @@ export interface RegleRecurrence {
 }
 
 /** Composantes de calendrier d'un instant, en heure française. */
-function jourCivil(instant: Date): { annee: number; mois: number; jour: number } {
+function jourCivil(instant: Date): {
+  annee: number;
+  mois: number;
+  jour: number;
+} {
   const mur = utcToParisWallClock(instant);
   return { annee: mur.year, mois: mur.month, jour: mur.day };
 }
@@ -67,7 +71,9 @@ function decaler(
   jour: { annee: number; mois: number; jour: number },
   jours: number,
 ): { annee: number; mois: number; jour: number } {
-  const point = new Date(Date.UTC(jour.annee, jour.mois - 1, jour.jour + jours));
+  const point = new Date(
+    Date.UTC(jour.annee, jour.mois - 1, jour.jour + jours),
+  );
   return {
     annee: point.getUTCFullYear(),
     mois: point.getUTCMonth() + 1,

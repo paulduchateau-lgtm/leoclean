@@ -61,7 +61,9 @@ export async function traiterLesPaiements(
     return { ...rapport, ignore: true };
   }
 
-  const debutFenetre = new Date(maintenant.getTime() - FENETRE_JOURS * 86_400_000);
+  const debutFenetre = new Date(
+    maintenant.getTime() - FENETRE_JOURS * 86_400_000,
+  );
   const finFenetre = new Date(maintenant.getTime() + 2 * 86_400_000);
 
   const reservations = await prisma.booking.findMany({

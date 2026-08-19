@@ -16,7 +16,9 @@ import {
 const DEBUT = new Date("2026-09-10T08:00:00Z");
 const FIN = new Date("2026-09-10T11:00:00Z");
 
-function etat(overrides: Partial<Parameters<typeof prochaineEtapePaiement>[0]> = {}) {
+function etat(
+  overrides: Partial<Parameters<typeof prochaineEtapePaiement>[0]> = {},
+) {
   return {
     statutReservation: "CONFIRMED",
     autorisee: false,
@@ -71,7 +73,9 @@ describe("fenêtre d'autorisation", () => {
 
   it("refuse un calendrier qui dépasserait la fenêtre", () => {
     const finImpossible = new Date(DEBUT.getTime() + 10 * 86_400_000);
-    expect(autorisationTiendra({ debut: DEBUT, fin: finImpossible })).toBe(false);
+    expect(autorisationTiendra({ debut: DEBUT, fin: finImpossible })).toBe(
+      false,
+    );
   });
 });
 
@@ -175,7 +179,11 @@ describe("prochaineEtapePaiement", () => {
   it("ne fait plus rien une fois capturé", () => {
     expect(
       prochaineEtapePaiement(
-        etat({ autorisee: true, capturee: true, statutReservation: "COMPLETED" }),
+        etat({
+          autorisee: true,
+          capturee: true,
+          statutReservation: "COMPLETED",
+        }),
         new Date("2026-09-30T08:00:00Z"),
       ),
     ).toBe("ATTENDRE");

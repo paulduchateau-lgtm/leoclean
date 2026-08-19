@@ -76,7 +76,9 @@ export async function genererLesRecurrences(
       anchorDate: true,
       pausedUntil: true,
       preferredCleanerId: true,
-      service: { select: { slug: true, sqmPerHour: true, minDurationMinutes: true } },
+      service: {
+        select: { slug: true, sqmPerHour: true, minDurationMinutes: true },
+      },
       address: { select: { id: true } },
     },
   });
