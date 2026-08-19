@@ -137,6 +137,10 @@ model Organization {
   pricingSurcharges      PricingSurcharge[]
   propertyKeyLogs        PropertyKeyLog[]
   accessSecretReads      AccessSecretRead[]
+  missionChecks          MissionCheck[]
+  missionPhotos          MissionPhoto[]
+  missionAnomalies       MissionAnomaly[]
+  missionChecklistItems  MissionChecklistItem[]
 
   @@index([type, status])
 }
@@ -358,6 +362,7 @@ model CleanerProfile {
   preferredForSubscriptions Subscription[]          @relation("PreferredCleaner")
   propertyKeyLogs           PropertyKeyLog[]
   accessSecretReads         AccessSecretRead[]
+  missionChecks             MissionCheck[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, status])
@@ -767,22 +772,40 @@ model Booking {
   cancellationReason String?
   completedAt        DateTime?
 
+  /// Durée réellement passée, du pointage d'arrivée à celui de départ.
+  ///
+  /// **Elle ne refacture rien.** Le montant reste celui qui a été annoncé ; un
+  /// ajustement passe par une anomalie validée. Facturer autre chose que ce qui
+  /// a été affiché serait un changement de contrat, pas une correction.
+  actualMinutes Int?
+
+  /// Rapport jugé complet : deux photos avant et deux après.
+  ///
+  /// Faux ne bloque rien — ni le check-out, ni le paiement. Un intervenant qui
+  /// ne peut pas terminer sa journée à cause d'une photo manquante finit par
+  /// photographier n'importe quoi.
+  reportComplete Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organization  Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clientProfile ClientProfile        @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
-  address       Address              @relation(fields: [addressId], references: [id])
-  service       Service              @relation(fields: [serviceId], references: [id])
-  subscription  Subscription?        @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  items         BookingItem[]
-  assignments   Assignment[]
-  slotProposals SlotProposal[]
-  statusEvents  BookingStatusEvent[]
-  payments      Payment[]
-  invoices      Invoice[]
-  messages      Message[]
-  review        Review?
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile  ClientProfile          @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  address        Address                @relation(fields: [addressId], references: [id])
+  service        Service                @relation(fields: [serviceId], references: [id])
+  subscription   Subscription?          @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  items          BookingItem[]
+  assignments    Assignment[]
+  slotProposals  SlotProposal[]
+  statusEvents   BookingStatusEvent[]
+  payments       Payment[]
+  invoices       Invoice[]
+  messages       Message[]
+  review         Review?
+  checks         MissionCheck[]
+  photos         MissionPhoto[]
+  anomalies      MissionAnomaly[]
+  checklistItems MissionChecklistItem[]
 
   @@index([organizationId, status, scheduledStart])
   @@index([organizationId, clientProfileId])
@@ -1762,4 +1785,125 @@ model Waitlist {
 
   /// L'analyse lit « combien de demandes par commune, et depuis quand ».
   @@index([kind, communeName, createdAt])
+}
+
+/// Pointage d'arrivée ou de départ.
+///
+/// La position est capturée **au tap seulement**, jamais en continu : c'est une
+/// preuve de réalisation, pas une surveillance. Elle n'est jamais bloquante —
+/// un sous-sol, un immeuble mal géocodé ou un refus de localisation ne doivent
+/// pas empêcher quelqu'un de travailler. Rétention treize mois.
+model MissionCheck {
+  id               String @id @default(cuid())
+  organizationId   String
+  bookingId        String
+  cleanerProfileId String
+
+  /// `ARRIVEE` ou `DEPART`.
+  kind String
+
+  at DateTime @default(now())
+
+  lat            Float?
+  lng            Float?
+  /// Écart au logement au moment du pointage, en mètres. Conservé même hors
+  /// tolérance : c'est ce qui permet de relire une contestation.
+  distanceMeters Int?
+  /// `POSITION` · `MANUEL` · `CODE_CLIENT` · `HORS_LIGNE`
+  method         String
+
+  /// Instant relevé par l'appareil quand le pointage a été fait hors ligne.
+  /// C'est lui qui fait foi, et le marquage dit qu'il vient de l'appareil.
+  deviceAt DateTime?
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  /// Un seul pointage de chaque sens par mission.
+  @@unique([bookingId, kind])
+  @@index([organizationId, at])
+}
+
+/// Photo de mission, avant ou après.
+///
+/// Consigne affichée à la prise : cadrer les pièces, jamais les personnes ni
+/// les documents. Rétention treize mois, comme les positions.
+model MissionPhoto {
+  id             String @id @default(cuid())
+  organizationId String
+  bookingId      String
+
+  /// `AVANT` ou `APRES`.
+  phase String
+  /// Pièce concernée, telle que l'intervenant l'a nommée.
+  room  String?
+
+  /// Chemin dans le coffre `missions/`. Jamais une URL : elles se périment en
+  /// soixante secondes et se demandent au moment de l'affichage.
+  storagePath String
+
+  takenAt    DateTime?
+  uploadedAt DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, phase])
+}
+
+/// Anomalie constatée sur place.
+///
+/// Une seule catégorie peut proposer un ajustement de durée — le logement
+/// inhabituellement sale — et **la proposition ne facture rien** : elle attend
+/// une validation. Un supplément appliqué unilatéralement par celui qui en
+/// bénéficie n'est pas un ajustement, c'est une facture non consentie.
+model MissionAnomaly {
+  id             String @id @default(cuid())
+  organizationId String
+  bookingId      String
+
+  type        String
+  description String?
+  storagePath String?
+
+  /// Minutes proposées en plus. Nul tant que rien n'est proposé.
+  proposedExtraMinutes Int?
+  /// `PENDING` · `ACCEPTED` · `REFUSED`. Nul quand aucun ajustement n'est demandé.
+  adjustmentStatus     String?
+  decidedAt            DateTime?
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, adjustmentStatus])
+  @@index([bookingId])
+}
+
+/// Tâche de la checklist d'un passage.
+///
+/// **Ce n'est pas un instrument de contrôle**, c'est un mémo et une preuve.
+/// Rien ne bloque au check-out : une confirmation suffit. Les tâches ajoutées
+/// par le client pour ce passage se distinguent des tâches habituelles.
+model MissionChecklistItem {
+  id             String @id @default(cuid())
+  organizationId String
+  bookingId      String
+
+  room          String?
+  label         String
+  /// Ajoutée par le client pour ce passage, par opposition aux tâches
+  /// habituelles du logement.
+  addedByClient Boolean @default(false)
+
+  doneAt DateTime?
+
+  position Int @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, position])
 }

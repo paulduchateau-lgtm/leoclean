@@ -146,6 +146,21 @@ export default async function MissionsPage() {
                   {formatEuros(mission.remunerationCents)} pour vous
                 </p>
 
+                {/*
+                  * L'écran de travail est le geste du jour même : il porte le
+                  * pointage, la checklist et le code d'accès. Il est en tête de
+                  * carte parce qu'à 8 h du matin, c'est la seule chose qu'on
+                  * cherche.
+                  */}
+                <p className="mt-3">
+                  <Link
+                    href={`/intervenant/mission/${mission.bookingId}`}
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Ouvrir la mission →
+                  </Link>
+                </p>
+
                 <dl className="mt-4 space-y-3 text-sm">
                   <div>
                     <dt className="text-muted-foreground">Adresse</dt>

@@ -94,6 +94,10 @@ export type Evenement =
   | { nom: "mission_acceptee"; delai_reponse_ms: number }
   | { nom: "mission_refusee"; delai_reponse_ms: number; motif: string | null }
   | { nom: "absence_posee"; jours: number }
+  | { nom: "mission_pointee"; sens: string; methode: string }
+  | { nom: "mission_terminee"; ecart_minutes: number; rapport_complet: boolean }
+  | { nom: "anomalie_signalee"; type: string }
+  | { nom: "avis_depose"; etoiles: number }
   | { nom: "semaine_declaree"; plages: number; total_minutes: number };
 
 export type NomEvenement = Evenement["nom"];
@@ -114,6 +118,10 @@ export const NOMS_EVENEMENTS = [
   "mission_refusee",
   "absence_posee",
   "semaine_declaree",
+  "mission_pointee",
+  "mission_terminee",
+  "anomalie_signalee",
+  "avis_depose",
 ] as const satisfies readonly NomEvenement[];
 
 /**
