@@ -68,7 +68,12 @@ export interface FaitsExploitation {
   propositionsPerimees: { id: string; depuis: Date; intervenant: string }[];
   rappelsNonTraites: { id: string; recuLe: Date; nom: string }[];
   dossiersAExaminer: { id: string; depuis: Date; nom: string }[];
-  piecesExpirant: { id: string; expireLe: Date; intervenant: string; piece: string }[];
+  piecesExpirant: {
+    id: string;
+    expireLe: Date;
+    intervenant: string;
+    piece: string;
+  }[];
   paiementsEchoues: { id: string; depuis: Date; tentatives: number }[];
   notesBasses: { id: string; recuLe: Date; etoiles: number }[];
   ajustementsAArbitrer: { id: string; depuis: Date; minutes: number }[];
@@ -210,7 +215,10 @@ export function composerLaFile(
         paiement.tentatives >= 3
           ? "Troisième échec : la prochaine mission sera suspendue avec préavis."
           : "Le client doit mettre à jour son moyen de paiement.",
-      echeance: echeanceDe(paiement.tentatives >= 3 ? "P0" : "P1", paiement.depuis),
+      echeance: echeanceDe(
+        paiement.tentatives >= 3 ? "P0" : "P1",
+        paiement.depuis,
+      ),
     });
   }
 

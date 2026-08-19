@@ -228,7 +228,8 @@ export const SLA_HEURES: Partial<Record<Statut, number>> = {
  * la même pièce. Chacun dit **quoi refaire**.
  */
 export const MOTIFS_REFUS_PIECE = {
-  ILLISIBLE: "Le document est flou. Reprenez la photo à plat, en pleine lumière.",
+  ILLISIBLE:
+    "Le document est flou. Reprenez la photo à plat, en pleine lumière.",
   TRONQUE: "Il manque un bord du document. Cadrez-le en entier.",
   PERIME: "Ce document a expiré. Il en faut un en cours de validité.",
   NOM_DIFFERENT:

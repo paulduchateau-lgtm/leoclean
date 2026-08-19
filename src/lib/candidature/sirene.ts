@@ -137,7 +137,10 @@ export async function verifierSiret(
     reponse = await appel(
       `https://api.insee.fr/api-sirene/3.11/siret/${propre}`,
       {
-        headers: { "X-INSEE-Api-Key-Integration": jeton, Accept: "application/json" },
+        headers: {
+          "X-INSEE-Api-Key-Integration": jeton,
+          Accept: "application/json",
+        },
         signal: AbortSignal.timeout(8000),
       },
     );
@@ -148,7 +151,9 @@ export async function verifierSiret(
   if (reponse.status === 404) return { ok: false, refus: "INTROUVABLE" };
   if (!reponse.ok) return { ok: false, refus: "SERVICE_INDISPONIBLE" };
 
-  const analyse = reponseSchema.safeParse(await reponse.json().catch(() => null));
+  const analyse = reponseSchema.safeParse(
+    await reponse.json().catch(() => null),
+  );
   if (!analyse.success) return { ok: false, refus: "SERVICE_INDISPONIBLE" };
 
   const { etablissement } = analyse.data;

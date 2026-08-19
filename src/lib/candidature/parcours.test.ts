@@ -67,7 +67,9 @@ describe("ceQuiManque", () => {
     const manques = ceQuiManque(etat());
     expect(manques).toContain("Votre profil");
     expect(manques).toContain("Votre numéro SIRET");
-    expect(manques).toContain("Assurance responsabilité civile professionnelle");
+    expect(manques).toContain(
+      "Assurance responsabilité civile professionnelle",
+    );
   });
 
   /*
@@ -132,7 +134,9 @@ describe("progression", () => {
    * besoin d'être rassuré.
    */
   it("ne recule jamais quand une branche longue s'ouvre", () => {
-    const avant = progression(etat({ profilComplet: true, photoDeposee: true }));
+    const avant = progression(
+      etat({ profilComplet: true, photoDeposee: true }),
+    );
     const pendant = progression(
       etat({
         profilComplet: true,

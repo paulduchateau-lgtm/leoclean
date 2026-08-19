@@ -89,7 +89,11 @@ describe("composerLaFile", () => {
     const file = composerLaFile(
       faits({
         missionsOrphelines: [
-          { id: "a", debut: new Date("2026-09-11T09:00:00Z"), commune: "Léognan" },
+          {
+            id: "a",
+            debut: new Date("2026-09-11T09:00:00Z"),
+            commune: "Léognan",
+          },
         ],
         pointagesManquants: [
           {
@@ -162,11 +166,19 @@ describe("composerLaFile", () => {
       faits({
         // P0 posé maintenant : échéance dans 1 h.
         missionsOrphelines: [
-          { id: "p0", debut: new Date("2026-09-11T09:00:00Z"), commune: "Léognan" },
+          {
+            id: "p0",
+            debut: new Date("2026-09-11T09:00:00Z"),
+            commune: "Léognan",
+          },
         ],
         // P1 posé il y a 4 h : échéance dépassée.
         rappelsNonTraites: [
-          { id: "p1", recuLe: new Date("2026-09-09T00:00:00Z"), nom: "Camille" },
+          {
+            id: "p1",
+            recuLe: new Date("2026-09-09T00:00:00Z"),
+            nom: "Camille",
+          },
         ],
       }),
       MAINTENANT,
@@ -257,7 +269,11 @@ describe("compter", () => {
     const file = composerLaFile(
       faits({
         missionsOrphelines: [
-          { id: "a", debut: new Date("2026-09-11T09:00:00Z"), commune: "Léognan" },
+          {
+            id: "a",
+            debut: new Date("2026-09-11T09:00:00Z"),
+            commune: "Léognan",
+          },
         ],
         candidaturesSansNouvelle: [
           { id: "c", depuis: new Date("2026-08-20T09:00:00Z"), nom: "Fatou" },

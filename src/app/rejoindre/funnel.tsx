@@ -19,7 +19,8 @@ import { COMMUNES } from "@/lib/territory";
  * premier ouvre un accompagnement, le second se traite en entretien.
  */
 
-type Question = "commune" | "deplacement" | "heures" | "experience" | "statut" | "identite";
+type Question =
+  "commune" | "deplacement" | "heures" | "experience" | "statut" | "identite";
 
 const ORDRE: Question[] = [
   "commune",
@@ -116,7 +117,9 @@ export function FunnelCandidature({ className }: { className?: string }) {
   }
 
   return (
-    <div className={`rounded-2xl border border-border bg-card p-6 ${className ?? ""}`}>
+    <div
+      className={`rounded-2xl border border-border bg-card p-6 ${className ?? ""}`}
+    >
       <p className="font-mono text-sm text-muted-foreground">
         Question {index + 1} sur {ORDRE.length}
       </p>

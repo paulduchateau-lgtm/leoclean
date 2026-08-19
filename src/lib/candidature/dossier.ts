@@ -228,8 +228,16 @@ export async function enregistrerSiret(
       documents: {
         upsert: {
           where: { applicationId_kind: { applicationId, kind: "AVIS_SIRENE" } },
-          create: { kind: "AVIS_SIRENE", status: "VALIDEE", verifiedAt: maintenant },
-          update: { status: "VALIDEE", verifiedAt: maintenant, rejectReason: null },
+          create: {
+            kind: "AVIS_SIRENE",
+            status: "VALIDEE",
+            verifiedAt: maintenant,
+          },
+          update: {
+            status: "VALIDEE",
+            verifiedAt: maintenant,
+            rejectReason: null,
+          },
         },
       },
     },

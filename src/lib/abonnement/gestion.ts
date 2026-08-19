@@ -52,7 +52,10 @@ export async function lireAbonnements(
       pausedUntil: true,
       preferredCleaner: { select: { displayName: true } },
       bookings: {
-        where: { scheduledStart: { gt: new Date() }, status: { not: "CANCELLED_BY_CLIENT" } },
+        where: {
+          scheduledStart: { gt: new Date() },
+          status: { not: "CANCELLED_BY_CLIENT" },
+        },
         orderBy: { scheduledStart: "asc" },
         take: 3,
         select: { scheduledStart: true },
