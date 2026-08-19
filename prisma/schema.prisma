@@ -1627,3 +1627,39 @@ model PricingSurcharge {
 
   @@index([organizationId, cause, validFrom])
 }
+
+/// Demande venue d'une commune que Léo Clean ne dessert pas.
+///
+/// Le tunnel rend une réservation hors zone structurellement impossible — on
+/// choisit sa commune dans le référentiel — et c'est un bon choix : il n'existe
+/// aucun moyen de réserver un ménage qu'on ne saurait pas honorer. Mais la
+/// conséquence est que **le produit n'a aucun signal d'expansion** : personne ne
+/// sait combien de gens ont voulu réserver depuis Pessac.
+///
+/// Volontairement hors du périmètre multi-tenant : une demande hors zone
+/// précède toute organisation, comme les compteurs de limitation de débit.
+model Waitlist {
+  id String @id @default(cuid())
+
+  /// `CLIENT` ou `CLEANER` : les deux manques ne se comblent pas pareil.
+  kind String
+
+  email String?
+  phone String?
+
+  /// Ce que la personne a écrit. Aucune géolocalisation : une commune suffit à
+  /// décider d'ouvrir un secteur, un point désigne un domicile.
+  communeName String
+  postalCode  String?
+
+  /// Page d'origine, pour savoir ce qui amène ces gens.
+  sourcePath String?
+
+  /// Prévenue de l'ouverture. Nul tant que personne ne l'a été.
+  notifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  /// L'analyse lit « combien de demandes par commune, et depuis quand ».
+  @@index([kind, communeName, createdAt])
+}

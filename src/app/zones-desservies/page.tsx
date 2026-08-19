@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CommuneStart } from "@/components/commune-start";
+import { ListeAttente } from "@/components/liste-attente";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { publishedCommunes } from "@/lib/communes-content";
@@ -175,6 +176,7 @@ export default function ZonesDesserviesPage() {
           client, plutôt que de recomposer un planning chaque semaine. Étendre
           la zone reviendrait à renoncer à la promesse qui fait le service.
         </p>
+        <ListeAttente sourcePath="/zones-desservies" className="mt-14" />
       </main>
 
       <SiteFooter />

@@ -32,6 +32,7 @@ const ECARTES = [
   "src/app/api/auth",
   // Server actions : leur seule présence dans le graphe interdit l'export.
   "src/app/etre-rappele/actions.ts",
+  "src/app/zones-desservies/actions.ts",
   "src/app/reserver/actions.ts",
   // La page d'offre porte sa propre server action, et elle n'a rien à faire
   // sur une vitrine destinée à montrer le parcours client. Ses composants
