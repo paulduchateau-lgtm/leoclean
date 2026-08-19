@@ -25,7 +25,6 @@ Barre d'onglets basse : **Accueil · Interventions · Messages · Compte**. Le b
 Principe : **le prix apparaît avant toute création de compte**. Le compte se crée à l'écran 5, sur un OTP SMS, en une seule étape.
 
 ### Écran 1 — Où ?
-
 - `AddressAutocomplete` (Mapbox, biais géographique sur la Gironde sud).
 - Vérification isochrone immédiate. Trois issues :
   - **Couvert** → passage écran 2, affichage discret « Zone couverte — Léognan et alentours ».
@@ -34,51 +33,44 @@ Principe : **le prix apparaît avant toute création de compte**. Le compte se c
 - Champ complément d'adresse repoussé plus loin (écran 4) : il ne conditionne pas le prix.
 
 ### Écran 2 — Quel logement ?
-
 - Type : appartement / maison. Surface habitable en m² (slider + saisie, valeur par défaut 80). Nombre de chambres, salles de bain, WC.
 - Micro-copie sous le slider : `≈ 2 h 30 estimées` mise à jour en direct, en JetBrains Mono. C'est le premier signal de transparence.
 
 ### Écran 3 — À quelle fréquence ?
-
 - 4 cartes : **Chaque semaine** (badge « le plus choisi »), **Toutes les 2 semaines**, **Une fois par mois**, **Une seule fois**.
 - Chaque carte affiche le prix par passage TTC et, en dessous en plus petit, `soit X €/passage après crédit d'impôt`.
 - Le ponctuel n'est jamais caché ni pénalisé visuellement — c'est la porte d'entrée de la moitié des abonnements.
 
 ### Écran 4 — Quand ?
-
 - `DateSlotPicker` : 3 semaines glissantes, créneaux réels issus des disponibilités déclarées des intervenants couvrant l'adresse. Les créneaux sans capacité ne sont pas affichés (jamais un créneau qui échoue au paiement).
 - Créneaux de 3 h : `08:00-11:00`, `11:00-14:00`, `14:00-17:00`, `17:00-20:00`. Le client choisit une plage, pas une heure précise ; l'heure exacte est confirmée à J-24h. Cette imprécision assumée est ce qui permet la tournée compacte.
 - Options en pills multi-sélection : vitres, four, réfrigérateur, repassage, « avec mes produits / avec les produits de l'intervenant ».
 - Complément d'adresse, étage, code d'accès (masqué, chiffré), présence d'animaux (chat/chien/autre), enfants en bas âge.
 
 ### Écran 5 — Qui ? + compte
-
 - Affichage de 1 à 3 intervenants candidats : prénom, initiale de nom, photo, ancienneté, note (si ≥ 5 avis), 3 tags issus des avis (« ponctuelle », « très soigneuse », « adorable avec le chat »), temps de trajet `12 min`.
 - Option « Peu importe, choisissez pour moi » présentée à égalité — elle améliore le matching et il faut qu'elle soit choisie souvent.
 - Création de compte : prénom, nom, téléphone → OTP 6 chiffres. E-mail demandé après, pas avant.
 
 ### Écran 6 — Récapitulatif et paiement
-
 - Bloc prix détaillé, dépliable : durée, taux, options, majorations, remise première mission, total TTC, `crédit d'impôt estimé −X €`, `reste à charge estimé`.
 - Empreinte bancaire via Stripe SetupIntent — **débit à J+1 après la mission réalisée**, pas à la réservation. Argument de réassurance à afficher : « Vous ne payez qu'après le passage. »
 - Cases : CGV (obligatoire, non pré-cochée), conditions d'annulation résumées en 2 lignes au-dessus du bouton, opt-in marketing séparé et non pré-coché.
 - CTA : `Confirmer ma réservation`.
 
 ### Écran de confirmation
-
 - Récapitulatif visuel, ajout au calendrier (`.ics`), bouton « Compléter les consignes d'accès » (deuxième canal de complétion du profil logement), invitation au parrainage placée ici et pas ailleurs (le pic de satisfaction est à la réservation, pas après le ménage).
 
 ### Instrumentation du funnel
-
 Événements `booking_funnel_step_viewed / completed / abandoned` avec `step`, `duration_ms`, `field_errors[]`. Ce sont ces données qui alimentent l'indice de friction admin (`04 § 7`).
 
 ## 3. Accueil `/mon-espace`
 
 Un écran, une hiérarchie stricte :
 
-1. **Bandeau d'action** (n'apparaît que si nécessaire, un seul à la fois, par priorité) : paiement échoué → _Mettre à jour ma carte_ · avis à laisser → _Noter le passage de Sonia_ · créneau à confirmer → _Confirmer l'heure de mardi_ · document manquant néant côté client.
-2. **Carte « Prochaine intervention »** : date en gros, plage horaire, `Sonia M.` avec photo, statut (`Confirmée` / `Recherche d'intervenant en cours`), actions secondaires : _Modifier_, _Ajouter une consigne_, _Message_. À J-0, cette carte devient le suivi temps réel (§ 5).
-3. **Récurrence** : « Toutes les 2 semaines, le mardi matin » + lien _Gérer mon abonnement_.
+1. **Bandeau d'action** (n'apparaît que si nécessaire, un seul à la fois, par priorité) : paiement échoué → *Mettre à jour ma carte* · avis à laisser → *Noter le passage de Sonia* · créneau à confirmer → *Confirmer l'heure de mardi* · document manquant néant côté client.
+2. **Carte « Prochaine intervention »** : date en gros, plage horaire, `Sonia M.` avec photo, statut (`Confirmée` / `Recherche d'intervenant en cours`), actions secondaires : *Modifier*, *Ajouter une consigne*, *Message*. À J-0, cette carte devient le suivi temps réel (§ 5).
+3. **Récurrence** : « Toutes les 2 semaines, le mardi matin » + lien *Gérer mon abonnement*.
 4. **Crédit d'impôt de l'année** : jauge Signal Green, `342 € cumulés en 2026`, lien vers l'explication et vers l'attestation.
 5. **Parrainage** : une ligne, jamais un bloc criard.
 
@@ -90,7 +82,7 @@ Un écran, une hiérarchie stricte :
 - Intervenant : carte personne, bouton message, bouton appel masqué (proxy Twilio, pas le numéro personnel).
 - **Checklist prévue** par pièce, dépliable, éditable jusqu'à J-24h : le client cocher/décocher des tâches (ex. « ne pas toucher au bureau »), ajouter une consigne ponctuelle (« les draps sont sur le lit »).
 - Prix et statut de paiement.
-- Actions : _Reporter_ (choix de créneau, gratuit > 24 h), _Annuler_ (conditions rappelées avant confirmation avec le montant exact retenu, jamais après), _Signaler un problème_ (< 48 h après la mission).
+- Actions : *Reporter* (choix de créneau, gratuit > 24 h), *Annuler* (conditions rappelées avant confirmation avec le montant exact retenu, jamais après), *Signaler un problème* (< 48 h après la mission).
 - Après réalisation : **rapport de mission** — photos avant/après par pièce, durée réelle, anomalies signalées par l'intervenant (« joint de douche moisi », « produit vitres épuisé »), checklist accomplie. C'est l'écran qui justifie le prix ; il doit être beau et lisible.
 
 ## 5. Jour J — suivi
@@ -151,14 +143,14 @@ Coordonnées · préférences de notification par canal et par type d'événemen
 
 ## 13. États et cas limites
 
-| Situation                                   | Comportement attendu                                                                                                                          |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Aucun intervenant trouvé à J-2              | Notification honnête + 3 créneaux alternatifs proposés en un tap + geste commercial de 10 % préparé côté admin                                |
-| Intervenant annule la veille                | Notification immédiate, recherche automatique, « on vous confirme sous 2 h » puis résolution ou report avec excuse et remise                  |
-| Client absent, accès impossible             | L'intervenant déclenche `NO_SHOW_CLIENT` avec photo de la porte, appel proxy tenté, attente 20 min facturée à 50 % après 1ʳᵉ tolérance        |
-| Hors-ligne                                  | Consultation du prochain rendez-vous et des consignes en cache ; les actions sont mises en file et signalées « sera envoyé dès que possible » |
-| Client mineur / non-titulaire du compte     | Contrôle d'âge à l'inscription (déclaratif), CGV réservées aux majeurs                                                                        |
-| Suppression de compte avec abonnement actif | Résiliation d'abord, avec dernière facture réglée, puis anonymisation à J+30                                                                  |
+| Situation | Comportement attendu |
+|---|---|
+| Aucun intervenant trouvé à J-2 | Notification honnête + 3 créneaux alternatifs proposés en un tap + geste commercial de 10 % préparé côté admin |
+| Intervenant annule la veille | Notification immédiate, recherche automatique, « on vous confirme sous 2 h » puis résolution ou report avec excuse et remise |
+| Client absent, accès impossible | L'intervenant déclenche `NO_SHOW_CLIENT` avec photo de la porte, appel proxy tenté, attente 20 min facturée à 50 % après 1ʳᵉ tolérance |
+| Hors-ligne | Consultation du prochain rendez-vous et des consignes en cache ; les actions sont mises en file et signalées « sera envoyé dès que possible » |
+| Client mineur / non-titulaire du compte | Contrôle d'âge à l'inscription (déclaratif), CGV réservées aux majeurs |
+| Suppression de compte avec abonnement actif | Résiliation d'abord, avec dernière facture réglée, puis anonymisation à J+30 |
 
 ## 14. Critères d'acceptation (extraits testables)
 

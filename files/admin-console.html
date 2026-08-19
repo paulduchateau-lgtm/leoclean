@@ -1,3195 +1,902 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Léo Clean — Console d'exploitation</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --paper-000: #ffffff;
-        --paper-050: #faf8f4;
-        --paper-100: #f2efe7;
-        --paper-200: #e6e1d6;
-        --paper-300: #d3cdbf;
-        --ink-900: #14150f;
-        --ink-700: #3a3b33;
-        --ink-500: #6b6c61;
-        --ink-400: #8e8f84;
-        --signal: #a5d900;
-        --signal-600: #8fbe00;
-        --signal-050: #f2fadb;
-        --ok: #0f7a4a;
-        --ok-050: #e8f5ee;
-        --warn: #b4740a;
-        --warn-050: #fdf3e1;
-        --risk: #c0392b;
-        --risk-050: #fbeae7;
-        --info: #2c5aa0;
-        --info-050: #eaf0fa;
-        --sans: "DM Sans", system-ui, sans-serif;
-        --mono: "JetBrains Mono", ui-monospace, monospace;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      html {
-        -webkit-font-smoothing: antialiased;
-      }
-      body {
-        margin: 0;
-        background: var(--paper-200);
-        font-family: var(--sans);
-        color: var(--ink-900);
-        padding: 36px 24px 72px;
-        font-size: 13px;
-      }
-      .wrap {
-        max-width: 1560px;
-        margin: 0 auto;
-      }
-      .sheet-head {
-        border-bottom: 2px solid var(--ink-900);
-        padding-bottom: 18px;
-        margin-bottom: 22px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 32px;
-        flex-wrap: wrap;
-      }
-      .sheet-head h1 {
-        font-size: 28px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        margin: 0 0 5px;
-      }
-      .sheet-head p {
-        margin: 0;
-        color: var(--ink-500);
-        font-size: 13.5px;
-        max-width: 70ch;
-      }
-      .stamp {
-        font-family: var(--mono);
-        font-size: 10.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--ink-500);
-        text-align: right;
-        line-height: 1.9;
-      }
-      .stamp b {
-        color: var(--ink-900);
-        font-weight: 500;
-      }
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Léo Clean — Console d'exploitation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper-000:#FFFFFF;--paper-050:#FAF8F4;--paper-100:#F2EFE7;--paper-200:#E6E1D6;--paper-300:#D3CDBF;
+  --ink-900:#14150F;--ink-700:#3A3B33;--ink-500:#6B6C61;--ink-400:#8E8F84;
+  --signal:#A5D900;--signal-600:#8FBE00;--signal-050:#F2FADB;
+  --ok:#0F7A4A;--ok-050:#E8F5EE;--warn:#B4740A;--warn-050:#FDF3E1;--risk:#C0392B;--risk-050:#FBEAE7;--info:#2C5AA0;--info-050:#EAF0FA;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--paper-200);font-family:var(--sans);color:var(--ink-900);padding:36px 24px 72px;font-size:13px}
+.wrap{max-width:1560px;margin:0 auto}
+.sheet-head{border-bottom:2px solid var(--ink-900);padding-bottom:18px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.sheet-head h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:0 0 5px}
+.sheet-head p{margin:0;color:var(--ink-500);font-size:13.5px;max-width:70ch}
+.stamp{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-500);text-align:right;line-height:1.9}
+.stamp b{color:var(--ink-900);font-weight:500}
 
-      /* --- châssis --- */
-      .console {
-        background: var(--paper-050);
-        border: 1px solid var(--ink-900);
-        display: grid;
-        grid-template-columns: 186px 1fr;
-        min-height: 940px;
-        overflow: hidden;
-      }
-      .topbar {
-        grid-column: 1/-1;
-        height: 44px;
-        border-bottom: 1px solid var(--ink-900);
-        background: var(--ink-900);
-        color: var(--paper-050);
-        display: flex;
-        align-items: center;
-        gap: 18px;
-        padding: 0 14px;
-        font-family: var(--mono);
-        font-size: 11px;
-        letter-spacing: 0.04em;
-      }
-      .topbar .brand {
-        font-weight: 700;
-        letter-spacing: 0.14em;
-      }
-      .topbar .k {
-        border: 1px solid #3a3b33;
-        padding: 3px 8px;
-        color: #9fa095;
-      }
-      .topbar .sig {
-        margin-left: auto;
-        display: flex;
-        gap: 14px;
-        align-items: center;
-      }
-      .topbar .sig b {
-        font-weight: 500;
-      }
-      .dotr {
-        color: #ff6b5b;
-      }
-      .doto {
-        color: #f0a93b;
-      }
-      nav.side {
-        border-right: 1px solid var(--paper-300);
-        background: var(--paper-100);
-        padding: 12px 0;
-      }
-      nav.side .grp {
-        font-family: var(--mono);
-        font-size: 9px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--ink-400);
-        padding: 14px 14px 6px;
-      }
-      nav.side a {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 6px 14px;
-        font-size: 12.5px;
-        color: var(--ink-700);
-        cursor: pointer;
-        border-left: 2px solid transparent;
-      }
-      nav.side a:hover {
-        background: var(--paper-200);
-      }
-      nav.side a.on {
-        background: var(--paper-050);
-        border-left-color: var(--signal);
-        color: var(--ink-900);
-        font-weight: 600;
-      }
-      nav.side a .c {
-        font-family: var(--mono);
-        font-size: 10px;
-        color: var(--ink-400);
-      }
-      nav.side a.on .c {
-        color: var(--ink-900);
-      }
-      main {
-        padding: 0;
-        overflow: hidden;
-      }
-      .view {
-        display: none;
-        padding: 16px 18px 22px;
-      }
-      .view.on {
-        display: block;
-      }
-      h2.vt {
-        font-size: 19px;
-        font-weight: 600;
-        letter-spacing: -0.02em;
-        margin: 0 0 2px;
-      }
-      .vsub {
-        color: var(--ink-500);
-        font-size: 12.5px;
-        margin: 0 0 16px;
-      }
-      .band {
-        font-family: var(--mono);
-        font-size: 9.5px;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--ink-400);
-        border-bottom: 1px solid var(--paper-300);
-        padding-bottom: 5px;
-        margin: 22px 0 11px;
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-      }
-      .band:first-of-type {
-        margin-top: 0;
-      }
-      .band em {
-        font-style: normal;
-        color: var(--ink-500);
-        letter-spacing: 0.04em;
-      }
-      .mono {
-        font-family: var(--mono);
-        font-variant-numeric: tabular-nums;
-      }
+/* --- châssis --- */
+.console{background:var(--paper-050);border:1px solid var(--ink-900);display:grid;grid-template-columns:186px 1fr;min-height:940px;overflow:hidden}
+.topbar{grid-column:1/-1;height:44px;border-bottom:1px solid var(--ink-900);background:var(--ink-900);color:var(--paper-050);display:flex;align-items:center;gap:18px;padding:0 14px;font-family:var(--mono);font-size:11px;letter-spacing:.04em}
+.topbar .brand{font-weight:700;letter-spacing:.14em}
+.topbar .k{border:1px solid #3A3B33;padding:3px 8px;color:#9FA095}
+.topbar .sig{margin-left:auto;display:flex;gap:14px;align-items:center}
+.topbar .sig b{font-weight:500}
+.dotr{color:#FF6B5B}.doto{color:#F0A93B}
+nav.side{border-right:1px solid var(--paper-300);background:var(--paper-100);padding:12px 0}
+nav.side .grp{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400);padding:14px 14px 6px}
+nav.side a{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;font-size:12.5px;color:var(--ink-700);cursor:pointer;border-left:2px solid transparent}
+nav.side a:hover{background:var(--paper-200)}
+nav.side a.on{background:var(--paper-050);border-left-color:var(--signal);color:var(--ink-900);font-weight:600}
+nav.side a .c{font-family:var(--mono);font-size:10px;color:var(--ink-400)}
+nav.side a.on .c{color:var(--ink-900)}
+main{padding:0;overflow:hidden}
+.view{display:none;padding:16px 18px 22px}
+.view.on{display:block}
+h2.vt{font-size:19px;font-weight:600;letter-spacing:-.02em;margin:0 0 2px}
+.vsub{color:var(--ink-500);font-size:12.5px;margin:0 0 16px}
+.band{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-400);border-bottom:1px solid var(--paper-300);padding-bottom:5px;margin:22px 0 11px;display:flex;justify-content:space-between;align-items:baseline}
+.band:first-of-type{margin-top:0}
+.band em{font-style:normal;color:var(--ink-500);letter-spacing:.04em}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-      /* --- cartes signal --- */
-      .sig-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-      }
-      .sigcard {
-        border: 1px solid var(--paper-300);
-        background: var(--paper-000);
-        padding: 11px 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-      }
-      .sigcard.p0 {
-        border-left: 3px solid var(--risk);
-      }
-      .sigcard.p1 {
-        border-left: 3px solid var(--warn);
-      }
-      .sigcard .hd {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        font-family: var(--mono);
-        font-size: 9.5px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-      }
-      .sigcard .hd .p {
-        color: var(--risk);
-        font-weight: 700;
-      }
-      .sigcard.p1 .hd .p {
-        color: var(--warn);
-      }
-      .sigcard .hd .sla {
-        color: var(--ink-400);
-      }
-      .sigcard .ti {
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 1.3;
-      }
-      .sigcard .rs {
-        font-size: 12px;
-        color: var(--ink-500);
-        line-height: 1.45;
-      }
-      .sigcard .ac {
-        display: flex;
-        gap: 6px;
-        margin-top: 2px;
-      }
-      .b {
-        border: 1px solid var(--ink-900);
-        background: var(--paper-000);
-        padding: 5px 9px;
-        font-size: 11.5px;
-        font-weight: 500;
-        cursor: pointer;
-        font-family: var(--sans);
-      }
-      .b.pri {
-        background: var(--ink-900);
-        color: var(--paper-050);
-      }
-      .b.go {
-        background: var(--signal);
-        border-color: var(--signal-600);
-      }
-      .b.sm {
-        padding: 3px 7px;
-        font-size: 11px;
-      }
-      .b.gh {
-        border-color: var(--paper-300);
-        color: var(--ink-700);
-      }
+/* --- cartes signal --- */
+.sig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sigcard{border:1px solid var(--paper-300);background:var(--paper-000);padding:11px 12px;display:flex;flex-direction:column;gap:7px}
+.sigcard.p0{border-left:3px solid var(--risk)}
+.sigcard.p1{border-left:3px solid var(--warn)}
+.sigcard .hd{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+.sigcard .hd .p{color:var(--risk);font-weight:700}
+.sigcard.p1 .hd .p{color:var(--warn)}
+.sigcard .hd .sla{color:var(--ink-400)}
+.sigcard .ti{font-size:14px;font-weight:600;line-height:1.3}
+.sigcard .rs{font-size:12px;color:var(--ink-500);line-height:1.45}
+.sigcard .ac{display:flex;gap:6px;margin-top:2px}
+.b{border:1px solid var(--ink-900);background:var(--paper-000);padding:5px 9px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:var(--sans)}
+.b.pri{background:var(--ink-900);color:var(--paper-050)}
+.b.go{background:var(--signal);border-color:var(--signal-600)}
+.b.sm{padding:3px 7px;font-size:11px}
+.b.gh{border-color:var(--paper-300);color:var(--ink-700)}
 
-      /* --- barre de vitalité --- */
-      .vital {
-        background: var(--ink-900);
-        color: var(--paper-050);
-        padding: 10px 14px;
-        font-family: var(--mono);
-        font-size: 12px;
-        display: flex;
-        gap: 22px;
-        flex-wrap: wrap;
-        align-items: center;
-        letter-spacing: 0.02em;
-      }
-      .vital b {
-        font-weight: 700;
-      }
-      .vital .g {
-        color: var(--signal);
-      }
-      .vital .r {
-        color: #ff6b5b;
-      }
-      .vital .m {
-        color: #9fa095;
-      }
+/* --- barre de vitalité --- */
+.vital{background:var(--ink-900);color:var(--paper-050);padding:10px 14px;font-family:var(--mono);font-size:12px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;letter-spacing:.02em}
+.vital b{font-weight:700}
+.vital .g{color:var(--signal)}
+.vital .r{color:#FF6B5B}
+.vital .m{color:#9FA095}
 
-      /* --- timeline tournées : élément signature --- */
-      .tl {
-        border: 1px solid var(--paper-300);
-        background: var(--paper-000);
-        padding: 12px 12px 6px;
-      }
-      .tl .hours {
-        display: grid;
-        grid-template-columns: 104px 1fr;
-        font-family: var(--mono);
-        font-size: 9.5px;
-        color: var(--ink-400);
-        margin-bottom: 6px;
-      }
-      .tl .hours .sc {
-        display: flex;
-        justify-content: space-between;
-      }
-      .tl .lane {
-        display: grid;
-        grid-template-columns: 104px 1fr;
-        align-items: center;
-        height: 30px;
-        border-top: 1px solid var(--paper-200);
-      }
-      .tl .who {
-        font-size: 11.5px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .tl .who i {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--ok);
-        font-style: normal;
-      }
-      .tl .who i.off {
-        background: var(--paper-300);
-      }
-      .tl .track {
-        position: relative;
-        height: 100%;
-        background: repeating-linear-gradient(
-          90deg,
-          var(--paper-100),
-          var(--paper-100) 1px,
-          transparent 1px,
-          transparent calc(100% / 14)
-        );
-      }
-      .blk {
-        position: absolute;
-        top: 5px;
-        height: 20px;
-        border: 1px solid var(--ink-900);
-        background: var(--paper-100);
-        font-family: var(--mono);
-        font-size: 9.5px;
-        display: flex;
-        align-items: center;
-        padding: 0 5px;
-        overflow: hidden;
-        white-space: nowrap;
-      }
-      .blk.done {
-        background: var(--ink-900);
-        color: var(--paper-050);
-        border-color: var(--ink-900);
-      }
-      .blk.now {
-        background: var(--signal);
-        border-color: var(--ink-900);
-        font-weight: 700;
-      }
-      .blk.risk {
-        background: var(--risk-050);
-        border-color: var(--risk);
-        color: var(--risk);
-        font-weight: 700;
-      }
-      .blk.hole {
-        background: repeating-linear-gradient(
-          45deg,
-          transparent,
-          transparent 4px,
-          var(--paper-200) 4px,
-          var(--paper-200) 8px
-        );
-        border-style: dashed;
-        border-color: var(--paper-300);
-        color: var(--ink-400);
-      }
-      .nowline {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 1px;
-        background: var(--risk);
-        z-index: 3;
-      }
-      .nowline:after {
-        content: "";
-        position: absolute;
-        top: -3px;
-        left: -2.5px;
-        width: 6px;
-        height: 6px;
-        background: var(--risk);
-        border-radius: 50%;
-      }
+/* --- timeline tournées : élément signature --- */
+.tl{border:1px solid var(--paper-300);background:var(--paper-000);padding:12px 12px 6px}
+.tl .hours{display:grid;grid-template-columns:104px 1fr;font-family:var(--mono);font-size:9.5px;color:var(--ink-400);margin-bottom:6px}
+.tl .hours .sc{display:flex;justify-content:space-between}
+.tl .lane{display:grid;grid-template-columns:104px 1fr;align-items:center;height:30px;border-top:1px solid var(--paper-200)}
+.tl .who{font-size:11.5px;font-weight:500;display:flex;align-items:center;gap:6px}
+.tl .who i{width:6px;height:6px;border-radius:50%;background:var(--ok);font-style:normal}
+.tl .who i.off{background:var(--paper-300)}
+.tl .track{position:relative;height:100%;background:repeating-linear-gradient(90deg,var(--paper-100),var(--paper-100) 1px,transparent 1px,transparent calc(100%/14))}
+.blk{position:absolute;top:5px;height:20px;border:1px solid var(--ink-900);background:var(--paper-100);font-family:var(--mono);font-size:9.5px;display:flex;align-items:center;padding:0 5px;overflow:hidden;white-space:nowrap}
+.blk.done{background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
+.blk.now{background:var(--signal);border-color:var(--ink-900);font-weight:700}
+.blk.risk{background:var(--risk-050);border-color:var(--risk);color:var(--risk);font-weight:700}
+.blk.hole{background:repeating-linear-gradient(45deg,transparent,transparent 4px,var(--paper-200) 4px,var(--paper-200) 8px);border-style:dashed;border-color:var(--paper-300);color:var(--ink-400)}
+.nowline{position:absolute;top:0;bottom:0;width:1px;background:var(--risk);z-index:3}
+.nowline:after{content:"";position:absolute;top:-3px;left:-2.5px;width:6px;height:6px;background:var(--risk);border-radius:50%}
 
-      /* --- tuiles de risque --- */
-      .risk3 {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-      }
-      .tile {
-        border: 1px solid var(--paper-300);
-        background: var(--paper-000);
-      }
-      .tile h5 {
-        margin: 0;
-        padding: 9px 11px;
-        border-bottom: 1px solid var(--paper-200);
-        font-family: var(--mono);
-        font-size: 9.5px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--ink-500);
-        display: flex;
-        justify-content: space-between;
-      }
-      .tile .it {
-        display: grid;
-        grid-template-columns: 36px 1fr auto;
-        gap: 9px;
-        padding: 9px 11px;
-        border-bottom: 1px solid var(--paper-200);
-        align-items: start;
-      }
-      .tile .it:last-child {
-        border-bottom: none;
-      }
-      .sc {
-        font-family: var(--mono);
-        font-size: 15px;
-        font-weight: 700;
-        line-height: 1;
-        text-align: right;
-      }
-      .sc small {
-        display: block;
-        white-space: nowrap;
-        font-size: 7.5px;
-        font-weight: 400;
-        color: var(--ink-400);
-        letter-spacing: 0.06em;
-        margin-top: 2px;
-      }
-      .sc.hi {
-        color: var(--risk);
-      }
-      .sc.md {
-        color: var(--warn);
-      }
-      .sc.lo {
-        color: var(--ink-700);
-      }
-      .it .nm {
-        font-size: 12.5px;
-        font-weight: 600;
-        line-height: 1.25;
-      }
-      .it .wh {
-        font-size: 11px;
-        color: var(--ink-500);
-        line-height: 1.4;
-        margin-top: 2px;
-      }
-      .it .go {
-        font-size: 11px;
-        color: var(--ink-900);
-        border-bottom: 1px solid var(--paper-300);
-        align-self: center;
-        cursor: pointer;
-      }
+/* --- tuiles de risque --- */
+.risk3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{border:1px solid var(--paper-300);background:var(--paper-000)}
+.tile h5{margin:0;padding:9px 11px;border-bottom:1px solid var(--paper-200);font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500);display:flex;justify-content:space-between}
+.tile .it{display:grid;grid-template-columns:36px 1fr auto;gap:9px;padding:9px 11px;border-bottom:1px solid var(--paper-200);align-items:start}
+.tile .it:last-child{border-bottom:none}
+.sc{font-family:var(--mono);font-size:15px;font-weight:700;line-height:1;text-align:right}
+.sc small{display:block;white-space:nowrap;font-size:7.5px;font-weight:400;color:var(--ink-400);letter-spacing:.06em;margin-top:2px}
+.sc.hi{color:var(--risk)}.sc.md{color:var(--warn)}.sc.lo{color:var(--ink-700)}
+.it .nm{font-size:12.5px;font-weight:600;line-height:1.25}
+.it .wh{font-size:11px;color:var(--ink-500);line-height:1.4;margin-top:2px}
+.it .go{font-size:11px;color:var(--ink-900);border-bottom:1px solid var(--paper-300);align-self:center;cursor:pointer}
 
-      /* --- tableaux --- */
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 12.5px;
-      }
-      th {
-        font-family: var(--mono);
-        font-size: 9.5px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--ink-400);
-        text-align: left;
-        font-weight: 500;
-        padding: 7px 9px;
-        border-bottom: 1px solid var(--paper-300);
-        background: var(--paper-100);
-      }
-      td {
-        padding: 9px;
-        border-bottom: 1px solid var(--paper-200);
-        vertical-align: middle;
-      }
-      tr:hover td {
-        background: var(--paper-100);
-      }
-      td.n {
-        font-family: var(--mono);
-        font-variant-numeric: tabular-nums;
-      }
-      .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-family: var(--mono);
-        font-size: 9.5px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        padding: 2px 6px;
-        font-weight: 500;
-      }
-      .chip.p0 {
-        background: var(--risk);
-        color: #fff;
-      }
-      .chip.p1 {
-        background: var(--warn);
-        color: #fff;
-      }
-      .chip.p2 {
-        background: var(--paper-200);
-        color: var(--ink-700);
-      }
-      .chip.ok {
-        background: var(--ok-050);
-        color: var(--ok);
-      }
-      .chip.wa {
-        background: var(--warn-050);
-        color: var(--warn);
-      }
-      .chip.ri {
-        background: var(--risk-050);
-        color: var(--risk);
-      }
-      .chip.in {
-        background: var(--info-050);
-        color: var(--info);
-      }
-      .sla {
-        font-family: var(--mono);
-        font-size: 11px;
-      }
-      .sla.late {
-        color: var(--risk);
-        font-weight: 700;
-      }
-      .sla.soon {
-        color: var(--warn);
-        font-weight: 500;
-      }
-      .av {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: var(--paper-200);
-        display: inline-grid;
-        place-items: center;
-        font-family: var(--mono);
-        font-size: 9px;
-        font-weight: 500;
-        color: var(--ink-700);
-        vertical-align: middle;
-        margin-right: 6px;
-      }
+/* --- tableaux --- */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);text-align:left;font-weight:500;padding:7px 9px;border-bottom:1px solid var(--paper-300);background:var(--paper-100)}
+td{padding:9px;border-bottom:1px solid var(--paper-200);vertical-align:middle}
+tr:hover td{background:var(--paper-100)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;font-weight:500}
+.chip.p0{background:var(--risk);color:#fff}
+.chip.p1{background:var(--warn);color:#fff}
+.chip.p2{background:var(--paper-200);color:var(--ink-700)}
+.chip.ok{background:var(--ok-050);color:var(--ok)}
+.chip.wa{background:var(--warn-050);color:var(--warn)}
+.chip.ri{background:var(--risk-050);color:var(--risk)}
+.chip.in{background:var(--info-050);color:var(--info)}
+.sla{font-family:var(--mono);font-size:11px}
+.sla.late{color:var(--risk);font-weight:700}
+.sla.soon{color:var(--warn);font-weight:500}
+.av{width:24px;height:24px;border-radius:50%;background:var(--paper-200);display:inline-grid;place-items:center;font-family:var(--mono);font-size:9px;font-weight:500;color:var(--ink-700);vertical-align:middle;margin-right:6px}
 
-      /* --- fiches --- */
-      .split {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        gap: 14px;
-      }
-      .split3 {
-        display: grid;
-        grid-template-columns: 250px 1fr 268px;
-        gap: 12px;
-      }
-      .panel {
-        border: 1px solid var(--paper-300);
-        background: var(--paper-000);
-      }
-      .panel h5 {
-        margin: 0;
-        padding: 9px 11px;
-        border-bottom: 1px solid var(--paper-200);
-        font-family: var(--mono);
-        font-size: 9.5px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--ink-500);
-      }
-      .panel .bd {
-        padding: 11px;
-      }
-      .kv {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 6px 0;
-        border-bottom: 1px solid var(--paper-200);
-        font-size: 12px;
-      }
-      .kv:last-child {
-        border-bottom: none;
-      }
-      .kv .k {
-        color: var(--ink-500);
-      }
-      .kv .v {
-        font-weight: 500;
-        text-align: right;
-      }
-      .gauge {
-        height: 6px;
-        background: var(--paper-200);
-        overflow: hidden;
-      }
-      .gauge i {
-        display: block;
-        height: 100%;
-        background: var(--risk);
-      }
-      .gauge.g i {
-        background: var(--signal);
-      }
-      .fact {
-        display: flex;
-        justify-content: space-between;
-        font-size: 11.5px;
-        padding: 4px 0;
-        border-bottom: 1px dotted var(--paper-300);
-      }
-      .fact:last-child {
-        border-bottom: none;
-      }
-      .fact .p {
-        font-family: var(--mono);
-        font-weight: 500;
-      }
-      .fact .p.up {
-        color: var(--risk);
-      }
-      .fact .p.dn {
-        color: var(--ok);
-      }
-      .tline {
-        position: relative;
-        padding-left: 18px;
-      }
-      .tline:before {
-        content: "";
-        position: absolute;
-        left: 4px;
-        top: 5px;
-        bottom: 5px;
-        width: 1px;
-        background: var(--paper-300);
-      }
-      .tline .e {
-        position: relative;
-        padding: 0 0 11px;
-      }
-      .tline .e:before {
-        content: "";
-        position: absolute;
-        left: -18px;
-        top: 4px;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--paper-000);
-        border: 1.5px solid var(--paper-300);
-      }
-      .tline .e.b:before {
-        background: var(--ink-900);
-        border-color: var(--ink-900);
-      }
-      .tline .e.r:before {
-        background: var(--risk);
-        border-color: var(--risk);
-      }
-      .tline .d {
-        font-family: var(--mono);
-        font-size: 9.5px;
-        color: var(--ink-400);
-        letter-spacing: 0.04em;
-      }
-      .tline .x {
-        font-size: 12px;
-        line-height: 1.4;
-        margin-top: 1px;
-      }
+/* --- fiches --- */
+.split{display:grid;grid-template-columns:300px 1fr;gap:14px}
+.split3{display:grid;grid-template-columns:250px 1fr 268px;gap:12px}
+.panel{border:1px solid var(--paper-300);background:var(--paper-000)}
+.panel h5{margin:0;padding:9px 11px;border-bottom:1px solid var(--paper-200);font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500)}
+.panel .bd{padding:11px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--paper-200);font-size:12px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-500)}
+.kv .v{font-weight:500;text-align:right}
+.gauge{height:6px;background:var(--paper-200);overflow:hidden}
+.gauge i{display:block;height:100%;background:var(--risk)}
+.gauge.g i{background:var(--signal)}
+.fact{display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:1px dotted var(--paper-300)}
+.fact:last-child{border-bottom:none}
+.fact .p{font-family:var(--mono);font-weight:500}
+.fact .p.up{color:var(--risk)}
+.fact .p.dn{color:var(--ok)}
+.tline{position:relative;padding-left:18px}
+.tline:before{content:"";position:absolute;left:4px;top:5px;bottom:5px;width:1px;background:var(--paper-300)}
+.tline .e{position:relative;padding:0 0 11px}
+.tline .e:before{content:"";position:absolute;left:-18px;top:4px;width:7px;height:7px;border-radius:50%;background:var(--paper-000);border:1.5px solid var(--paper-300)}
+.tline .e.b:before{background:var(--ink-900);border-color:var(--ink-900)}
+.tline .e.r:before{background:var(--risk);border-color:var(--risk)}
+.tline .d{font-family:var(--mono);font-size:9.5px;color:var(--ink-400);letter-spacing:.04em}
+.tline .x{font-size:12px;line-height:1.4;margin-top:1px}
 
-      /* inbox */
-      .inbox {
-        display: grid;
-        grid-template-columns: 150px 260px 1fr 236px;
-        gap: 0;
-        border: 1px solid var(--paper-300);
-        height: 720px;
-        background: var(--paper-000);
-      }
-      .inbox .q {
-        border-right: 1px solid var(--paper-200);
-        padding: 8px 0;
-        background: var(--paper-100);
-      }
-      .inbox .q a {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 10px;
-        font-size: 12px;
-        color: var(--ink-700);
-        cursor: pointer;
-      }
-      .inbox .q a.on {
-        background: var(--paper-000);
-        font-weight: 600;
-        border-left: 2px solid var(--signal);
-      }
-      .inbox .q .c {
-        font-family: var(--mono);
-        font-size: 10px;
-        color: var(--ink-400);
-      }
-      .inbox .lst {
-        border-right: 1px solid var(--paper-200);
-        overflow: hidden;
-      }
-      .inbox .lst .cv {
-        padding: 9px 10px;
-        border-bottom: 1px solid var(--paper-200);
-        cursor: pointer;
-      }
-      .inbox .lst .cv.on {
-        background: var(--paper-100);
-        border-left: 2px solid var(--ink-900);
-      }
-      .inbox .lst .t1 {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-      }
-      .inbox .lst .nm {
-        font-size: 12.5px;
-        font-weight: 600;
-      }
-      .inbox .lst .ag {
-        font-family: var(--mono);
-        font-size: 9.5px;
-        color: var(--ink-400);
-      }
-      .inbox .lst .pv {
-        font-size: 11.5px;
-        color: var(--ink-500);
-        margin-top: 2px;
-        line-height: 1.35;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-      .inbox .th {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      .inbox .th .hd {
-        padding: 9px 12px;
-        border-bottom: 1px solid var(--paper-200);
-        display: flex;
-        align-items: center;
-        gap: 9px;
-      }
-      .inbox .th .bd {
-        flex: 1;
-        padding: 12px;
-        overflow: hidden;
-      }
-      .inbox .th .cp {
-        padding: 10px 12px;
-        border-top: 1px solid var(--paper-200);
-        background: var(--paper-050);
-      }
-      .bub {
-        max-width: 74%;
-        padding: 8px 11px;
-        font-size: 12.5px;
-        line-height: 1.45;
-        margin-bottom: 8px;
-        border: 1px solid var(--paper-200);
-        background: var(--paper-050);
-      }
-      .bub.me {
-        margin-left: auto;
-        background: var(--ink-900);
-        color: var(--paper-050);
-        border-color: var(--ink-900);
-      }
-      .bub .tm {
-        display: block;
-        font-family: var(--mono);
-        font-size: 9px;
-        opacity: 0.55;
-        margin-top: 3px;
-      }
-      .bub.flag {
-        border-color: var(--warn);
-        background: var(--warn-050);
-      }
-      .inbox .ctx {
-        border-left: 1px solid var(--paper-200);
-        background: var(--paper-050);
-        padding: 11px;
-        overflow: hidden;
-      }
+/* inbox */
+.inbox{display:grid;grid-template-columns:150px 260px 1fr 236px;gap:0;border:1px solid var(--paper-300);height:720px;background:var(--paper-000)}
+.inbox .q{border-right:1px solid var(--paper-200);padding:8px 0;background:var(--paper-100)}
+.inbox .q a{display:flex;justify-content:space-between;padding:5px 10px;font-size:12px;color:var(--ink-700);cursor:pointer}
+.inbox .q a.on{background:var(--paper-000);font-weight:600;border-left:2px solid var(--signal)}
+.inbox .q .c{font-family:var(--mono);font-size:10px;color:var(--ink-400)}
+.inbox .lst{border-right:1px solid var(--paper-200);overflow:hidden}
+.inbox .lst .cv{padding:9px 10px;border-bottom:1px solid var(--paper-200);cursor:pointer}
+.inbox .lst .cv.on{background:var(--paper-100);border-left:2px solid var(--ink-900)}
+.inbox .lst .t1{display:flex;justify-content:space-between;align-items:baseline}
+.inbox .lst .nm{font-size:12.5px;font-weight:600}
+.inbox .lst .ag{font-family:var(--mono);font-size:9.5px;color:var(--ink-400)}
+.inbox .lst .pv{font-size:11.5px;color:var(--ink-500);margin-top:2px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.inbox .th{display:flex;flex-direction:column;overflow:hidden}
+.inbox .th .hd{padding:9px 12px;border-bottom:1px solid var(--paper-200);display:flex;align-items:center;gap:9px}
+.inbox .th .bd{flex:1;padding:12px;overflow:hidden}
+.inbox .th .cp{padding:10px 12px;border-top:1px solid var(--paper-200);background:var(--paper-050)}
+.bub{max-width:74%;padding:8px 11px;font-size:12.5px;line-height:1.45;margin-bottom:8px;border:1px solid var(--paper-200);background:var(--paper-050)}
+.bub.me{margin-left:auto;background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
+.bub .tm{display:block;font-family:var(--mono);font-size:9px;opacity:.55;margin-top:3px}
+.bub.flag{border-color:var(--warn);background:var(--warn-050)}
+.inbox .ctx{border-left:1px solid var(--paper-200);background:var(--paper-050);padding:11px;overflow:hidden}
 
-      /* frictions */
-      .frx {
-        border: 1px solid var(--paper-300);
-        background: var(--paper-000);
-        padding: 11px 12px;
-        display: grid;
-        grid-template-columns: 1fr 108px 92px;
-        gap: 12px;
-        align-items: center;
-        margin-bottom: 8px;
-      }
-      .frx .ti {
-        font-size: 13px;
-        font-weight: 600;
-        line-height: 1.3;
-      }
-      .frx .hy {
-        font-size: 11.5px;
-        color: var(--ink-500);
-        margin-top: 3px;
-        line-height: 1.4;
-      }
-      .frx .mg {
-        text-align: right;
-      }
-      .frx .mg b {
-        font-family: var(--mono);
-        font-size: 17px;
-        font-weight: 700;
-        display: block;
-        line-height: 1;
-      }
-      .frx .mg small {
-        font-family: var(--mono);
-        font-size: 9px;
-        color: var(--ink-400);
-        letter-spacing: 0.06em;
-      }
-      .funnel {
-        border: 1px solid var(--paper-300);
-        background: var(--paper-000);
-        padding: 12px;
-      }
-      .fstep {
-        display: grid;
-        grid-template-columns: 190px 1fr 62px 54px;
-        gap: 10px;
-        align-items: center;
-        padding: 6px 0;
-        border-bottom: 1px solid var(--paper-200);
-        font-size: 12px;
-      }
-      .fstep:last-child {
-        border-bottom: none;
-      }
-      .fbar {
-        height: 15px;
-        background: var(--paper-100);
-        position: relative;
-      }
-      .fbar i {
-        display: block;
-        height: 100%;
-        background: var(--ink-900);
-      }
-      .fbar i.warn {
-        background: var(--warn);
-      }
-      .drop {
-        font-family: var(--mono);
-        font-size: 11px;
-        text-align: right;
-      }
-      .drop.bad {
-        color: var(--risk);
-        font-weight: 700;
-      }
+/* frictions */
+.frx{border:1px solid var(--paper-300);background:var(--paper-000);padding:11px 12px;display:grid;grid-template-columns:1fr 108px 92px;gap:12px;align-items:center;margin-bottom:8px}
+.frx .ti{font-size:13px;font-weight:600;line-height:1.3}
+.frx .hy{font-size:11.5px;color:var(--ink-500);margin-top:3px;line-height:1.4}
+.frx .mg{text-align:right}
+.frx .mg b{font-family:var(--mono);font-size:17px;font-weight:700;display:block;line-height:1}
+.frx .mg small{font-family:var(--mono);font-size:9px;color:var(--ink-400);letter-spacing:.06em}
+.funnel{border:1px solid var(--paper-300);background:var(--paper-000);padding:12px}
+.fstep{display:grid;grid-template-columns:190px 1fr 62px 54px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--paper-200);font-size:12px}
+.fstep:last-child{border-bottom:none}
+.fbar{height:15px;background:var(--paper-100);position:relative}
+.fbar i{display:block;height:100%;background:var(--ink-900)}
+.fbar i.warn{background:var(--warn)}
+.drop{font-family:var(--mono);font-size:11px;text-align:right}
+.drop.bad{color:var(--risk);font-weight:700}
 
-      /* mobile admin */
-      .mobwrap {
-        display: flex;
-        gap: 26px;
-        align-items: flex-start;
-        margin-top: 14px;
-      }
-      .mob {
-        width: 330px;
-        height: 660px;
-        border: 1px solid var(--paper-300);
-        border-radius: 22px;
-        overflow: hidden;
-        background: var(--paper-050);
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 10px 26px rgba(20, 21, 15, 0.09);
-        flex: 0 0 auto;
-      }
-      .mob .sb {
-        height: 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 18px;
-        font-family: var(--mono);
-        font-size: 10px;
-        background: var(--ink-900);
-        color: var(--paper-050);
-      }
-      .mob .bdy {
-        flex: 1;
-        padding: 12px;
-        overflow: hidden;
-      }
-      .mob .tabs {
-        height: 52px;
-        border-top: 1px solid var(--paper-200);
-        background: var(--paper-000);
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        font-size: 10px;
-        color: var(--ink-400);
-      }
-      .mob .tabs div {
-        display: grid;
-        place-items: center;
-        gap: 3px;
-      }
-      .mob .tabs div.on {
-        color: var(--ink-900);
-        font-weight: 600;
-      }
-      .note {
-        font-size: 11px;
-        color: var(--ink-400);
-        line-height: 1.5;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <header class="sheet-head">
-        <div>
-          <h1>Console d'exploitation — maquette interactive</h1>
-          <p>
-            Thème <b>ops</b> : rayon 0, JetBrains Mono sur toute donnée, filets
-            1 px, aucune ombre. Ce n'est pas un outil de reporting mais un poste
-            de pilotage : il répond en dix secondes à « qu'est-ce qui va casser
-            aujourd'hui, et qui est en train de partir ». Les onglets de gauche
-            sont cliquables.
-          </p>
-        </div>
-        <div class="stamp">
-          Léo Clean · <b>/admin</b><br />v1.0 — 18.08.2026<br />1440 × 940 ·
-          desktop
-        </div>
-      </header>
+/* mobile admin */
+.mobwrap{display:flex;gap:26px;align-items:flex-start;margin-top:14px}
+.mob{width:330px;height:660px;border:1px solid var(--paper-300);border-radius:22px;overflow:hidden;background:var(--paper-050);display:flex;flex-direction:column;box-shadow:0 10px 26px rgba(20,21,15,.09);flex:0 0 auto}
+.mob .sb{height:30px;display:flex;justify-content:space-between;align-items:center;padding:0 18px;font-family:var(--mono);font-size:10px;background:var(--ink-900);color:var(--paper-050)}
+.mob .bdy{flex:1;padding:12px;overflow:hidden}
+.mob .tabs{height:52px;border-top:1px solid var(--paper-200);background:var(--paper-000);display:grid;grid-template-columns:repeat(3,1fr);font-size:10px;color:var(--ink-400)}
+.mob .tabs div{display:grid;place-items:center;gap:3px}
+.mob .tabs div.on{color:var(--ink-900);font-weight:600}
+.note{font-size:11px;color:var(--ink-400);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="sheet-head">
+    <div>
+      <h1>Console d'exploitation — maquette interactive</h1>
+      <p>Thème <b>ops</b> : rayon 0, JetBrains Mono sur toute donnée, filets 1 px, aucune ombre. Ce n'est pas un outil de reporting mais un poste de pilotage : il répond en dix secondes à « qu'est-ce qui va casser aujourd'hui, et qui est en train de partir ». Les onglets de gauche sont cliquables.</p>
+    </div>
+    <div class="stamp">Léo Clean · <b>/admin</b><br>v1.0 — 18.08.2026<br>1440 × 940 · desktop</div>
+  </header>
 
-      <div class="console">
-        <div class="topbar">
-          <span class="brand">LÉO CLEAN · OPS</span>
-          <span class="k">⌘K rechercher ou agir</span>
-          <span class="sig">
-            <span class="dotr">● <b>3 critiques</b></span>
-            <span class="doto">▲ <b>7 à traiter</b></span>
-            <span style="color: #9fa095">mar. 26 août · 07:41</span>
-            <span style="border: 1px solid #3a3b33; padding: 2px 7px">PD</span>
-          </span>
-        </div>
-
-        <nav class="side">
-          <div class="grp">Salle</div>
-          <a class="on" data-v="radar">Radar <span class="c">3</span></a>
-          <a data-v="file">File d'actions <span class="c">14</span></a>
-          <div class="grp">Exploitation</div>
-          <a data-v="missions">Missions <span class="c">42</span></a>
-          <a data-v="radar">Planning</a>
-          <a data-v="radar">Zones</a>
-          <div class="grp">Relation</div>
-          <a data-v="client">Clients <span class="c">128</span></a>
-          <a data-v="pros">Intervenants <span class="c">17</span></a>
-          <a data-v="dossier">Recrutement <span class="c">9</span></a>
-          <a data-v="inbox">Inbox <span class="c">6</span></a>
-          <a data-v="file">Qualité <span class="c">2</span></a>
-          <div class="grp">Pilotage</div>
-          <a data-v="frictions">Frictions <span class="c">4</span></a>
-          <a data-v="radar">Finance</a>
-          <a data-v="radar">Parrainage</a>
-          <a data-v="mobile">Vue mobile</a>
-          <a data-v="radar">Réglages</a>
-        </nav>
-
-        <main>
-          <!-- ============ RADAR ============ -->
-          <section class="view on" id="v-radar">
-            <h2 class="vt">Radar</h2>
-            <p class="vsub">Mardi 26 août · 07 h 41 · Paul Duchâteau</p>
-
-            <div class="band">
-              Signaux critiques <em>3 — à traiter avant 9 h</em>
-            </div>
-            <div class="sig-grid">
-              <div class="sigcard p0">
-                <div class="hd">
-                  <span class="p">P0 · Non couverte</span
-                  ><span class="sla">H-34</span>
-                </div>
-                <div class="ti">Mercredi 27, 8 h – 11 h · Gradignan</div>
-                <div class="rs">
-                  Diffusée à 8 intervenants depuis 19 h hier, aucune
-                  acceptation. Cliente Marie L., 3ᵉ passage, abonnée hebdo.
-                </div>
-                <div class="ac">
-                  <button class="b pri sm">Élargir la zone</button
-                  ><button class="b sm">Appeler Karine</button
-                  ><button class="b gh sm">Proposer un report</button>
-                </div>
-              </div>
-              <div class="sigcard p0">
-                <div class="hd">
-                  <span class="p">P0 · Réclamation</span
-                  ><span class="sla">ouverte 14 h</span>
-                </div>
-                <div class="ti">Casse signalée · Hélène R. · Villenave</div>
-                <div class="rs">
-                  Vase cassé pendant le passage du 25/08. Photos fournies.
-                  Amélie L. n'a pas encore donné sa version.
-                </div>
-                <div class="ac">
-                  <button class="b pri sm">Ouvrir le dossier</button
-                  ><button class="b gh sm">Demander sa version</button>
-                </div>
-              </div>
-              <div class="sigcard p1">
-                <div class="hd">
-                  <span class="p">P1 · Paiement</span
-                  ><span class="sla">2ᵉ échec</span>
-                </div>
-                <div class="ti">Marc T. · carte expirée</div>
-                <div class="rs">
-                  63 € du 22/08. Client fidèle, 19 passages, hebdo. Prochaine
-                  mission jeudi — risque de suspension automatique.
-                </div>
-                <div class="ac">
-                  <button class="b pri sm">Appeler</button
-                  ><button class="b gh sm">
-                    Envoyer le lien de mise à jour
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="band">
-              Aujourd'hui <em>couverture 100 % · 0 non couverte</em>
-            </div>
-            <div class="vital">
-              <span><b>14</b> missions</span>
-              <span class="m">│</span>
-              <span class="g">✔ <b>0</b> terminées</span>
-              <span>◉ <b>2</b> en cours</span>
-              <span class="m">⏱ <b>12</b> à venir</span>
-              <span class="m">│</span>
-              <span>couverture <b class="g">100 %</b></span>
-              <span>retards <b class="r">1</b></span>
-              <span>check-in manquant <b>0</b></span>
-              <span class="m">│</span>
-              <span>CA jour <b>892 €</b></span>
-              <span class="m">marge <b>196 €</b></span>
-            </div>
-
-            <div class="tl" style="margin-top: 10px">
-              <div class="hours">
-                <span>Tournées</span>
-                <span class="sc"
-                  ><i>7h</i><i>8h</i><i>9h</i><i>10h</i><i>11h</i><i>12h</i
-                  ><i>13h</i><i>14h</i><i>15h</i><i>16h</i><i>17h</i><i>18h</i
-                  ><i>19h</i><i>20h</i></span
-                >
-              </div>
-              <div class="lane">
-                <div class="who"><i></i>Sonia M.</div>
-                <div class="track">
-                  <div class="nowline" style="left: 5%"></div>
-                  <div class="blk now" style="left: 7.1%; width: 21.4%">
-                    Camille D. · Léognan
-                  </div>
-                  <div class="blk" style="left: 30%; width: 14.3%">Marc T.</div>
-                  <div class="blk hole" style="left: 45%; width: 12.4%">
-                    1 h 45
-                  </div>
-                  <div class="blk" style="left: 57.1%; width: 17.9%">
-                    Hélène R.
-                  </div>
-                </div>
-              </div>
-              <div class="lane">
-                <div class="who"><i></i>Karine B.</div>
-                <div class="track">
-                  <div class="nowline" style="left: 5%"></div>
-                  <div class="blk now" style="left: 7.1%; width: 14.3%">
-                    Julie P.
-                  </div>
-                  <div class="blk" style="left: 22.9%; width: 21.4%">
-                    Yann C. · Canéjan
-                  </div>
-                  <div class="blk" style="left: 50%; width: 14.3%">Rita B.</div>
-                </div>
-              </div>
-              <div class="lane">
-                <div class="who"><i></i>Amélie L.</div>
-                <div class="track">
-                  <div class="nowline" style="left: 5%"></div>
-                  <div class="blk risk" style="left: 7.1%; width: 17.9%">
-                    ⚠ retard 18 min
-                  </div>
-                  <div class="blk" style="left: 28.6%; width: 14.3%">
-                    Paul V.
-                  </div>
-                  <div class="blk hole" style="left: 44%; width: 20%">
-                    2 h 50
-                  </div>
-                  <div class="blk" style="left: 64.3%; width: 14.3%">
-                    Léa M.
-                  </div>
-                </div>
-              </div>
-              <div class="lane">
-                <div class="who"><i class="off"></i>Fatou D.</div>
-                <div class="track">
-                  <div class="nowline" style="left: 5%"></div>
-                  <div class="blk" style="left: 14.3%; width: 21.4%">
-                    Hélène G. · Martillac
-                  </div>
-                  <div class="blk" style="left: 42.9%; width: 17.9%">
-                    Sarah T.
-                  </div>
-                </div>
-              </div>
-              <div class="lane">
-                <div class="who"><i class="off"></i>Rachid B.</div>
-                <div class="track">
-                  <div class="nowline" style="left: 5%"></div>
-                  <div class="blk done" style="left: 0%; width: 14.3%">
-                    terminé
-                  </div>
-                  <div class="blk" style="left: 35.7%; width: 21.4%">
-                    Nadia K. · Villenave
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="band">Risques à 7 jours</div>
-            <div class="risk3">
-              <div class="tile">
-                <h5><span>Missions à risque</span><span>score</span></h5>
-                <div class="it">
-                  <div class="sc hi">82<small>RISQUE</small></div>
-                  <div>
-                    <div class="nm">Mer. 27 · 8 h · Gradignan</div>
-                    <div class="wh">
-                      Non couverte à H-34 · cliente hebdo · 3ᵉ passage
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc md">64<small>RISQUE</small></div>
-                  <div>
-                    <div class="nm">Ven. 29 · 14 h · Martillac</div>
-                    <div class="wh">
-                      Premier passage · nouvel intervenant · boîte à clés
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc md">58<small>RISQUE</small></div>
-                  <div>
-                    <div class="nm">Jeu. 28 · 8 h · Léognan</div>
-                    <div class="wh">
-                      Marc T. · paiement en échec · tournée serrée 8 min
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc lo">41<small>RISQUE</small></div>
-                  <div>
-                    <div class="nm">Sam. 30 · 9 h · Cadaujac</div>
-                    <div class="wh">Samedi · mission 4 h · fin de bail</div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-              </div>
-              <div class="tile">
-                <h5>
-                  <span>Clients qui décrochent</span><span>churn × valeur</span>
-                </h5>
-                <div class="it">
-                  <div class="sc hi">78<small>CHURN</small></div>
-                  <div>
-                    <div class="nm">Julie P. · 1 480 €/an</div>
-                    <div class="wh">
-                      2 annulations en 60 j · note passée de 4,8 à 3,5 · a
-                      changé d'intervenante sans l'avoir demandé
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc hi">71<small>CHURN</small></div>
-                  <div>
-                    <div class="nm">Yann C. · 1 120 €/an</div>
-                    <div class="wh">
-                      Passé de hebdo à mensuel en juillet · message sans réponse
-                      depuis 31 h
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc md">66<small>CHURN</small></div>
-                  <div>
-                    <div class="nm">Marc T. · 3 280 €/an</div>
-                    <div class="wh">
-                      Paiement en échec ×2 · 19 passages · très fidèle jusqu'ici
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc md">62<small>CHURN</small></div>
-                  <div>
-                    <div class="nm">Rita B. · 890 €/an</div>
-                    <div class="wh">
-                      Pause depuis 5 semaines · aucune reprise programmée
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-              </div>
-              <div class="tile">
-                <h5><span>Intervenants fragiles</span><span>impact</span></h5>
-                <div class="it">
-                  <div class="sc hi">12 j<small>DOC</small></div>
-                  <div>
-                    <div class="nm">Sonia M.</div>
-                    <div class="wh">
-                      Vigilance URSSAF expire le 07/09 · 8 missions récurrentes
-                      à réaffecter si non régularisé
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc md">−14<small>FIAB.</small></div>
-                  <div>
-                    <div class="nm">Amélie L.</div>
-                    <div class="wh">
-                      3 retards en 30 j · note 4,6 → 4,1 · réclamation casse en
-                      cours
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc md">6 h<small>CHARGE</small></div>
-                  <div>
-                    <div class="nm">Rachid B.</div>
-                    <div class="wh">
-                      Objectif 25 h/sem, rempli à 6 h · risque de départ vers un
-                      concurrent
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-                <div class="it">
-                  <div class="sc lo">38 %<small>CONC</small></div>
-                  <div>
-                    <div class="nm">Karine B.</div>
-                    <div class="wh">
-                      Porte 38 % des missions · concentration à surveiller
-                    </div>
-                  </div>
-                  <span class="go">→</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="band">
-              Frictions détectées <em>7 derniers jours</em>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  Étape 6 du funnel intervenant : abandon en hausse
-                </div>
-                <div class="hy">
-                  Cause probable : 4 refus d'attestation RC Pro sur 9 dépôts,
-                  motif « activité non couverte ». La consigne d'upload ne dit
-                  pas quelle activité doit figurer sur l'attestation.
-                </div>
-              </div>
-              <div class="mg">
-                <b style="color: var(--risk)">+14 pts</b><small>VS 30 J</small>
-              </div>
-              <div><button class="b sm">Traiter</button></div>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  31 recherches sans créneau disponible sur Cadaujac
-                </div>
-                <div class="hy">
-                  Vendredi matin exclusivement. Aucune intervenante déclarée
-                  disponible sur ce créneau depuis le départ de Nadia. Friction
-                  client et signal de recrutement.
-                </div>
-              </div>
-              <div class="mg"><b>31</b><small>CLIENTS</small></div>
-              <div><button class="b sm">Traiter</button></div>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  9 conversations sur l'attestation fiscale ce mois-ci
-                </div>
-                <div class="hy">
-                  Même question posée sous des formes différentes. Une page
-                  d'aide ou une macro éviterait 9 échanges de support.
-                </div>
-              </div>
-              <div class="mg"><b>9</b><small>ÉCHANGES</small></div>
-              <div><button class="b sm">Traiter</button></div>
-            </div>
-          </section>
-
-          <!-- ============ FILE D'ACTIONS ============ -->
-          <section class="view" id="v-file">
-            <h2 class="vt">File d'actions</h2>
-            <p class="vsub">
-              14 ouvertes · 3 en dépassement de SLA · objectif : file vide ce
-              soir
-            </p>
-            <div
-              style="
-                display: flex;
-                gap: 6px;
-                margin-bottom: 12px;
-                flex-wrap: wrap;
-              "
-            >
-              <button class="b pri sm">Toutes · 14</button
-              ><button class="b gh sm">P0 · 3</button
-              ><button class="b gh sm">P1 · 5</button
-              ><button class="b gh sm">P2 · 6</button>
-              <button class="b gh sm">Missions</button
-              ><button class="b gh sm">Dossiers</button
-              ><button class="b gh sm">Conformité</button
-              ><button class="b gh sm">Chats</button>
-              <span style="margin-left: auto"
-                ><button class="b gh sm">Traiter en lot</button></span
-              >
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 52px">Prio</th>
-                  <th style="width: 104px">Type</th>
-                  <th>Sujet</th>
-                  <th style="width: 300px">Motif</th>
-                  <th style="width: 88px">SLA</th>
-                  <th style="width: 150px"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="chip p0">P0</span></td>
-                  <td>Mission</td>
-                  <td><b>Mer. 27 · 8 h · Gradignan</b></td>
-                  <td>Non couverte à H-34, 8 propositions sans réponse</td>
-                  <td class="sla late">−1 h 12</td>
-                  <td>
-                    <button class="b sm pri">Traiter</button>
-                    <button class="b sm gh">Reporter</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><span class="chip p0">P0</span></td>
-                  <td>Litige</td>
-                  <td><b>Casse · Hélène R.</b></td>
-                  <td>
-                    Réclamation ouverte depuis 14 h, version intervenante
-                    manquante
-                  </td>
-                  <td class="sla late">−2 h</td>
-                  <td><button class="b sm pri">Traiter</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p0">P0</span></td>
-                  <td>Paiement</td>
-                  <td><b>Marc T. · 63 €</b></td>
-                  <td>2ᵉ échec, mission jeudi, client à 3 280 €/an</td>
-                  <td class="sla soon">0 h 48</td>
-                  <td><button class="b sm pri">Traiter</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p1">P1</span></td>
-                  <td>Dossier</td>
-                  <td><b>Fatou D. · Cadaujac</b></td>
-                  <td>Documents déposés il y a 19 h, revue non faite</td>
-                  <td class="sla soon">1 h 30</td>
-                  <td><button class="b sm pri">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p1">P1</span></td>
-                  <td>Qualité</td>
-                  <td><b>Julie P. · note 3/5</b></td>
-                  <td>
-                    Salle de bain jugée insuffisante, 2ᵉ note basse en 60 j
-                  </td>
-                  <td class="sla">3 h 10</td>
-                  <td>
-                    <button class="b sm pri">Appeler</button>
-                    <button class="b sm gh">Geste</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td><span class="chip p1">P1</span></td>
-                  <td>Chat</td>
-                  <td><b>Yann C.</b></td>
-                  <td>Message client sans réponse depuis 31 h</td>
-                  <td class="sla late">−7 h</td>
-                  <td><button class="b sm pri">Répondre</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p1">P1</span></td>
-                  <td>Mission</td>
-                  <td><b>Amélie L. · retard 18 min</b></td>
-                  <td>Check-in tardif, cliente non prévenue</td>
-                  <td class="sla soon">0 h 22</td>
-                  <td><button class="b sm pri">Prévenir</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Conformité</td>
-                  <td><b>Sonia M. · URSSAF</b></td>
-                  <td>
-                    Attestation expire le 07/09, 8 missions récurrentes
-                    concernées
-                  </td>
-                  <td class="sla">12 j</td>
-                  <td><button class="b sm gh">Relancer</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Conformité</td>
-                  <td>
-                    <b>6 documents à vérifier</b
-                    ><span class="note"> · groupé</span>
-                  </td>
-                  <td>Vigilance URSSAF ×4, RC Pro ×2 — vérifiables en lot</td>
-                  <td class="sla">2 j</td>
-                  <td><button class="b sm gh">Ouvrir le lot</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Rétention</td>
-                  <td><b>Julie P. · churn 78</b></td>
-                  <td>
-                    Score franchi hier, playbook « qualité » prêt à envoyer
-                  </td>
-                  <td class="sla">2 j</td>
-                  <td><button class="b sm gh">Voir le playbook</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Rétention</td>
-                  <td><b>Rita B. · pause 5 sem.</b></td>
-                  <td>
-                    Aucune reprise programmée, relance de réactivation à valider
-                  </td>
-                  <td class="sla">3 j</td>
-                  <td><button class="b sm gh">Voir</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Chat</td>
-                  <td><b>Signal de contournement</b></td>
-                  <td>
-                    Un numéro de téléphone échangé dans le fil Léa M. / Rachid
-                    B.
-                  </td>
-                  <td class="sla">3 j</td>
-                  <td><button class="b sm gh">Lire</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Capacité</td>
-                  <td><b>Cadaujac · vendredi matin</b></td>
-                  <td>
-                    Demande &gt; offre depuis 3 semaines, 31 recherches sans
-                    résultat
-                  </td>
-                  <td class="sla">5 j</td>
-                  <td><button class="b sm gh">Voir la zone</button></td>
-                </tr>
-                <tr>
-                  <td><span class="chip p2">P2</span></td>
-                  <td>Dossier</td>
-                  <td><b>Marion S. · attente SIRET</b></td>
-                  <td>
-                    Aucune nouvelle depuis 15 jours, relance téléphonique à
-                    faire
-                  </td>
-                  <td class="sla">1 j</td>
-                  <td><button class="b sm gh">Appeler</button></td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="note" style="margin-top: 12px">
-              Raccourcis · <b class="mono">j/k</b> naviguer ·
-              <b class="mono">e</b> traiter · <b class="mono">s</b> reporter
-              (motif obligatoire) · <b class="mono">⏎</b> ouvrir. Tout élément a
-              un état terminal : rien ne disparaît sans trace dans le journal
-              d'audit.
-            </p>
-          </section>
-
-          <!-- ============ MISSIONS ============ -->
-          <section class="view" id="v-missions">
-            <h2 class="vt">Missions</h2>
-            <p class="vsub">
-              42 sur les 7 prochains jours · 1 non couverte · 3 à risque
-            </p>
-            <div style="display: flex; gap: 6px; margin-bottom: 12px">
-              <button class="b pri sm">Liste</button
-              ><button class="b gh sm">Calendrier</button
-              ><button class="b gh sm">Carte</button
-              ><button class="b gh sm">Tournées</button>
-              <span style="margin-left: auto"
-                ><button class="b gh sm">Zone : toutes</button>
-                <button class="b gh sm">État : tous</button></span
-              >
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 120px">Quand</th>
-                  <th style="width: 60px">Risque</th>
-                  <th>Client</th>
-                  <th>Intervenant</th>
-                  <th style="width: 110px">Zone</th>
-                  <th style="width: 74px">Durée</th>
-                  <th style="width: 78px">Prix</th>
-                  <th style="width: 120px">État</th>
-                  <th style="width: 96px"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="n">Mer 27 · 08:00</td>
-                  <td class="n" style="color: var(--risk); font-weight: 700">
-                    82
-                  </td>
-                  <td><span class="av">ML</span>Marie L.</td>
-                  <td style="color: var(--risk); font-weight: 600">— aucun</td>
-                  <td>Gradignan</td>
-                  <td class="n">3 h</td>
-                  <td class="n">78 €</td>
-                  <td><span class="chip ri">Non couverte</span></td>
-                  <td><button class="b sm pri">Affecter</button></td>
-                </tr>
-                <tr>
-                  <td class="n">Mar 26 · 08:00</td>
-                  <td class="n">18</td>
-                  <td><span class="av">CD</span>Camille D.</td>
-                  <td><span class="av">SM</span>Sonia M.</td>
-                  <td>Léognan</td>
-                  <td class="n">2 h 30</td>
-                  <td class="n">75 €</td>
-                  <td><span class="chip ok">En cours</span></td>
-                  <td><button class="b sm gh">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td class="n">Mar 26 · 08:00</td>
-                  <td class="n" style="color: var(--warn); font-weight: 700">
-                    54
-                  </td>
-                  <td><span class="av">HR</span>Hélène R.</td>
-                  <td><span class="av">AL</span>Amélie L.</td>
-                  <td>Villenave</td>
-                  <td class="n">2 h</td>
-                  <td class="n">62 €</td>
-                  <td><span class="chip wa">Retard 18 min</span></td>
-                  <td><button class="b sm gh">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td class="n">Mar 26 · 11:15</td>
-                  <td class="n">22</td>
-                  <td><span class="av">MT</span>Marc T.</td>
-                  <td><span class="av">SM</span>Sonia M.</td>
-                  <td>Cadaujac</td>
-                  <td class="n">2 h</td>
-                  <td class="n">63 €</td>
-                  <td><span class="chip in">Confirmée</span></td>
-                  <td><button class="b sm gh">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td class="n">Jeu 28 · 08:00</td>
-                  <td class="n" style="color: var(--warn); font-weight: 700">
-                    58
-                  </td>
-                  <td><span class="av">MT</span>Marc T.</td>
-                  <td><span class="av">KB</span>Karine B.</td>
-                  <td>Cadaujac</td>
-                  <td class="n">2 h</td>
-                  <td class="n">63 €</td>
-                  <td><span class="chip wa">Paiement KO</span></td>
-                  <td><button class="b sm gh">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td class="n">Ven 29 · 14:00</td>
-                  <td class="n" style="color: var(--warn); font-weight: 700">
-                    64
-                  </td>
-                  <td><span class="av">SG</span>Sophie G.</td>
-                  <td><span class="av">FD</span>Fatou D.</td>
-                  <td>Martillac</td>
-                  <td class="n">2 h 30</td>
-                  <td class="n">71 €</td>
-                  <td><span class="chip in">Confirmée</span></td>
-                  <td><button class="b sm gh">Ouvrir</button></td>
-                </tr>
-                <tr>
-                  <td class="n">Sam 30 · 09:00</td>
-                  <td class="n">41</td>
-                  <td><span class="av">PV</span>Paul V.</td>
-                  <td><span class="av">KB</span>Karine B.</td>
-                  <td>Canéjan</td>
-                  <td class="n">4 h</td>
-                  <td class="n">142 €</td>
-                  <td><span class="chip in">Confirmée</span></td>
-                  <td><button class="b sm gh">Ouvrir</button></td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="band">
-              Réaffectation assistée <em>Mer. 27 · 8 h · Gradignan</em>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 180px">Candidat</th>
-                  <th style="width: 64px">Score</th>
-                  <th style="width: 96px">Trajet</th>
-                  <th>Impact sur sa tournée</th>
-                  <th style="width: 120px">Dispo déclarée</th>
-                  <th style="width: 110px"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="av">KB</span>Karine B.</td>
-                  <td class="n" style="font-weight: 700">91</td>
-                  <td class="n">9 min</td>
-                  <td>Comble un trou de 2 h entre deux missions</td>
-                  <td><span class="chip ok">Oui</span></td>
-                  <td><button class="b sm pri">Proposer</button></td>
-                </tr>
-                <tr>
-                  <td><span class="av">RB</span>Rachid B.</td>
-                  <td class="n" style="font-weight: 700">84</td>
-                  <td class="n">14 min</td>
-                  <td>Journée vide, objectif hebdo rempli à 24 %</td>
-                  <td><span class="chip ok">Oui</span></td>
-                  <td><button class="b sm pri">Proposer</button></td>
-                </tr>
-                <tr>
-                  <td><span class="av">FD</span>Fatou D.</td>
-                  <td class="n">62</td>
-                  <td class="n">17 min</td>
-                  <td>Crée 40 min d'attente avant sa mission de 11 h</td>
-                  <td><span class="chip ok">Oui</span></td>
-                  <td><button class="b sm gh">Proposer</button></td>
-                </tr>
-                <tr>
-                  <td><span class="av">AL</span>Amélie L.</td>
-                  <td class="n" style="color: var(--ink-400)">38</td>
-                  <td class="n">22 min</td>
-                  <td style="color: var(--risk)">
-                    Hors rayon déclaré (20 min) · réclamation en cours
-                  </td>
-                  <td><span class="chip p2">Non</span></td>
-                  <td>
-                    <button class="b sm gh" style="opacity: 0.5">
-                      Proposer
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="note" style="margin-top: 10px">
-              Envoyer à Karine et Rachid simultanément : premier arrivé, premier
-              servi. Un refus n'entraîne aucune pénalité contractuelle.
-            </p>
-          </section>
-
-          <!-- ============ CLIENT 360 ============ -->
-          <section class="view" id="v-client">
-            <h2 class="vt">Julie P.</h2>
-            <p class="vsub">
-              Cliente depuis février 2026 · 14 passages · 1 480 €/an · segment «
-              en refroidissement »
-            </p>
-            <div class="split">
-              <div>
-                <div class="panel">
-                  <h5>Score de départ</h5>
-                  <div class="bd">
-                    <div
-                      style="
-                        display: flex;
-                        align-items: baseline;
-                        gap: 8px;
-                        margin-bottom: 8px;
-                      "
-                    >
-                      <span
-                        class="mono"
-                        style="
-                          font-size: 34px;
-                          font-weight: 700;
-                          color: var(--risk);
-                          line-height: 1;
-                        "
-                        >78</span
-                      >
-                      <span class="note">risque élevé<br />franchi hier</span>
-                    </div>
-                    <div class="gauge"><i style="width: 78%"></i></div>
-                    <div style="margin-top: 12px">
-                      <div class="fact">
-                        <span>Note 3/5 au dernier passage</span
-                        ><span class="p up">+20</span>
-                      </div>
-                      <div class="fact">
-                        <span>2 annulations en 60 jours</span
-                        ><span class="p up">+15</span>
-                      </div>
-                      <div class="fact">
-                        <span>Changement d'intervenante subi</span
-                        ><span class="p up">+12</span>
-                      </div>
-                      <div class="fact">
-                        <span>Mission reportée par nos soins</span
-                        ><span class="p up">+12</span>
-                      </div>
-                      <div class="fact">
-                        <span>Fréquence en baisse (hebdo → 15 j)</span
-                        ><span class="p up">+15</span>
-                      </div>
-                      <div class="fact">
-                        <span>14 passages réalisés</span
-                        ><span class="p dn">−15</span>
-                      </div>
-                      <div class="fact">
-                        <span>Continuité d'intervenante 71 %</span
-                        ><span class="p dn">−1</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="panel" style="margin-top: 12px">
-                  <h5>Identité</h5>
-                  <div class="bd">
-                    <div class="kv">
-                      <span class="k">Adresse</span
-                      ><span class="v">Rue Peydavant<br />33170 Gradignan</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Logement</span
-                      ><span class="v">Appart. 78 m² · 3 p.</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Abonnement</span
-                      ><span class="v">Tous les 15 j · jeu. matin</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Intervenante</span
-                      ><span class="v"
-                        >Amélie L. <span class="chip wa">changée</span></span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Valeur annuelle</span
-                      ><span class="v mono">1 480 €</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Acquisition</span
-                      ><span class="v">Parrainage · Marc T.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div class="panel">
-                  <h5>Actions de rétention recommandées</h5>
-                  <div class="bd">
-                    <div
-                      style="
-                        border: 1px solid var(--ink-900);
-                        padding: 11px;
-                        margin-bottom: 9px;
-                      "
-                    >
-                      <div
-                        style="
-                          display: flex;
-                          justify-content: space-between;
-                          align-items: center;
-                          margin-bottom: 6px;
-                        "
-                      >
-                        <b style="font-size: 13.5px"
-                          >Playbook « qualité » — recommandé</b
-                        >
-                        <span class="chip ok">Déclenché par la note ≤ 3</span>
-                      </div>
-                      <p
-                        style="
-                          margin: 0 0 9px;
-                          font-size: 12.5px;
-                          line-height: 1.5;
-                          color: var(--ink-700);
-                        "
-                      >
-                        Appel sous 24 h, retour à Sonia M. sur son créneau
-                        habituel (elle a une place le jeudi 8 h), et prochain
-                        passage offert. Coût estimé : 71 € contre 1 480 € de
-                        valeur annuelle en jeu.
-                      </p>
-                      <div style="display: flex; gap: 6px">
-                        <button class="b pri sm">Lancer le playbook</button
-                        ><button class="b gh sm">Modifier avant envoi</button>
-                      </div>
-                    </div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap">
-                      <button class="b gh sm">Changer d'intervenante</button>
-                      <button class="b gh sm">Geste commercial</button>
-                      <button class="b gh sm">Proposer une pause</button>
-                      <button class="b gh sm">Appel de courtoisie</button>
-                      <button class="b gh sm">Modifier la fréquence</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="panel" style="margin-top: 12px">
-                  <h5>Historique unifié</h5>
-                  <div class="bd">
-                    <div class="tline">
-                      <div class="e r">
-                        <div class="d">25 août · avis</div>
-                        <div class="x">
-                          <b>Note 3/5</b> — « salle de bain pas terminée, la
-                          personne semblait pressée ». Intervenante : Amélie L.
-                        </div>
-                      </div>
-                      <div class="e b">
-                        <div class="d">25 août · mission</div>
-                        <div class="x">
-                          Passage réalisé · 1 h 48 au lieu de 2 h 15 prévues ·
-                          rapport photo incomplet (2 photos)
-                        </div>
-                      </div>
-                      <div class="e r">
-                        <div class="d">11 août · exploitation</div>
-                        <div class="x">
-                          <b>Changement d'intervenante</b> — Sonia M.
-                          indisponible, remplacée par Amélie L. sans que la
-                          cliente l'ait demandé
-                        </div>
-                      </div>
-                      <div class="e">
-                        <div class="d">28 juillet · abonnement</div>
-                        <div class="x">
-                          Passage de
-                          <b>hebdomadaire à toutes les 2 semaines</b> — motif
-                          déclaré : « je m'organise autrement l'été »
-                        </div>
-                      </div>
-                      <div class="e r">
-                        <div class="d">17 juillet · annulation</div>
-                        <div class="x">
-                          Annulation client à J-1 · 2ᵉ en 60 jours · aucun frais
-                          appliqué
-                        </div>
-                      </div>
-                      <div class="e b">
-                        <div class="d">3 juillet · mission</div>
-                        <div class="x">
-                          Passage réalisé · note 5/5 · « Sonia est parfaite »
-                        </div>
-                      </div>
-                      <div class="e b">
-                        <div class="d">14 février · acquisition</div>
-                        <div class="x">
-                          Inscription via le code de parrainage de Marc T. ·
-                          crédit de 20 € consommé
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- ============ INTERVENANTS ============ -->
-          <section class="view" id="v-pros">
-            <h2 class="vt">Intervenants</h2>
-            <p class="vsub">
-              17 actifs · 2 en pause · 1 conformité à échéance · charge moyenne
-              71 %
-            </p>
-            <table>
-              <thead>
-                <tr>
-                  <th>Intervenant</th>
-                  <th style="width: 104px">Commune</th>
-                  <th style="width: 88px">Charge</th>
-                  <th style="width: 74px">Fiabilité</th>
-                  <th style="width: 76px">Note</th>
-                  <th style="width: 110px">Conformité</th>
-                  <th style="width: 80px">CA 30 j</th>
-                  <th style="width: 130px">Signal</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="av">KB</span><b>Karine B.</b></td>
-                  <td>Léognan</td>
-                  <td class="n">34 / 35 h</td>
-                  <td class="n" style="font-weight: 700">96</td>
-                  <td class="n">★ 4,9</td>
-                  <td><span class="chip ok">À jour</span></td>
-                  <td class="n">2 410 €</td>
-                  <td><span class="note">Concentration 38 %</span></td>
-                </tr>
-                <tr>
-                  <td><span class="av">SM</span><b>Sonia M.</b></td>
-                  <td>Cadaujac</td>
-                  <td class="n">28 / 30 h</td>
-                  <td class="n" style="font-weight: 700">94</td>
-                  <td class="n">★ 4,9</td>
-                  <td><span class="chip wa">URSSAF 12 j</span></td>
-                  <td class="n">1 840 €</td>
-                  <td><span class="note">8 missions à risque</span></td>
-                </tr>
-                <tr>
-                  <td><span class="av">AL</span><b>Amélie L.</b></td>
-                  <td>Villenave</td>
-                  <td class="n">22 / 25 h</td>
-                  <td class="n" style="color: var(--warn); font-weight: 700">
-                    71
-                  </td>
-                  <td class="n" style="color: var(--warn)">★ 4,1</td>
-                  <td><span class="chip ok">À jour</span></td>
-                  <td class="n">1 520 €</td>
-                  <td><span class="chip ri">Litige ouvert</span></td>
-                </tr>
-                <tr>
-                  <td><span class="av">FD</span><b>Fatou D.</b></td>
-                  <td>Cadaujac</td>
-                  <td class="n">14 / 30 h</td>
-                  <td class="n">88</td>
-                  <td class="n">★ 5,0</td>
-                  <td><span class="chip ok">À jour</span></td>
-                  <td class="n">610 €</td>
-                  <td><span class="note">Nouvelle · 6 missions</span></td>
-                </tr>
-                <tr>
-                  <td><span class="av">RB</span><b>Rachid B.</b></td>
-                  <td>Canéjan</td>
-                  <td class="n" style="color: var(--warn)">6 / 25 h</td>
-                  <td class="n">85</td>
-                  <td class="n">★ 4,7</td>
-                  <td><span class="chip ok">À jour</span></td>
-                  <td class="n">420 €</td>
-                  <td><span class="chip wa">Sous-charge</span></td>
-                </tr>
-                <tr>
-                  <td><span class="av">NL</span><b>Nadia L.</b></td>
-                  <td>Martillac</td>
-                  <td class="n">—</td>
-                  <td class="n" style="color: var(--ink-400)">—</td>
-                  <td class="n">★ 4,6</td>
-                  <td><span class="chip ri">RC Pro expirée</span></td>
-                  <td class="n">0 €</td>
-                  <td><span class="chip p2">En pause</span></td>
-                </tr>
-              </tbody>
-            </table>
-            <p class="note" style="margin-top: 12px">
-              Le score de fiabilité sert au classement des propositions et au
-              suivi interne. Il n'est jamais présenté à l'intervenant comme une
-              note de performance et ne fonde aucune mesure présentée comme une
-              sanction. L'intervenant a en revanche accès à ses indicateurs
-              bruts.
-            </p>
-
-            <div class="band">Santé du parc</div>
-            <div class="risk3">
-              <div class="tile">
-                <h5>Attrition</h5>
-                <div class="bd" style="padding: 11px">
-                  <div class="kv">
-                    <span class="k">Départs 30 j</span
-                    ><span class="v mono">1</span>
-                  </div>
-                  <div class="kv">
-                    <span class="k">Taux mensuel</span
-                    ><span class="v mono">5,6 %</span>
-                  </div>
-                  <div class="kv">
-                    <span class="k">Ancienneté médiane</span
-                    ><span class="v mono">7 mois</span>
-                  </div>
-                </div>
-              </div>
-              <div class="tile">
-                <h5>Capacité</h5>
-                <div class="bd" style="padding: 11px">
-                  <div class="kv">
-                    <span class="k">Heures déclarées</span
-                    ><span class="v mono">245 h/sem</span>
-                  </div>
-                  <div class="kv">
-                    <span class="k">Heures vendues</span
-                    ><span class="v mono">174 h/sem</span>
-                  </div>
-                  <div class="kv">
-                    <span class="k">Marge de manœuvre</span
-                    ><span class="v mono" style="color: var(--ok)">71 h</span>
-                  </div>
-                </div>
-              </div>
-              <div class="tile">
-                <h5>Trous de couverture</h5>
-                <div class="bd" style="padding: 11px">
-                  <div class="kv">
-                    <span class="k">Cadaujac · ven. matin</span
-                    ><span class="v mono" style="color: var(--risk)">−6 h</span>
-                  </div>
-                  <div class="kv">
-                    <span class="k">Gradignan · mer. matin</span
-                    ><span class="v mono" style="color: var(--warn)">−3 h</span>
-                  </div>
-                  <div class="kv">
-                    <span class="k">Samedi · toutes zones</span
-                    ><span class="v mono" style="color: var(--warn)">−8 h</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- ============ DOSSIER DE RECRUTEMENT ============ -->
-          <section class="view" id="v-dossier">
-            <h2 class="vt">Recrutement — revue de dossier</h2>
-            <p class="vsub">
-              9 dossiers en cours · 1 en dépassement de SLA · délai médian
-              branche « création » : 24 jours
-            </p>
-
-            <div
-              style="
-                display: flex;
-                gap: 8px;
-                margin-bottom: 14px;
-                flex-wrap: wrap;
-              "
-            >
-              <div class="panel" style="flex: 1; min-width: 118px">
-                <h5 style="padding: 6px 9px">Profil</h5>
-                <div style="padding: 8px 9px">
-                  <b class="mono" style="font-size: 17px">3</b>
-                  <span class="note">dossiers</span>
-                </div>
-              </div>
-              <div class="panel" style="flex: 1; min-width: 118px">
-                <h5 style="padding: 6px 9px">Attente SIRET</h5>
-                <div style="padding: 8px 9px">
-                  <b class="mono" style="font-size: 17px">2</b>
-                  <span class="note">dont 1 à J+15</span>
-                </div>
-              </div>
-              <div class="panel" style="flex: 1; min-width: 118px">
-                <h5 style="padding: 6px 9px">Attente SAP</h5>
-                <div style="padding: 8px 9px">
-                  <b class="mono" style="font-size: 17px">1</b>
-                  <span class="note">déclaré J-2</span>
-                </div>
-              </div>
-              <div
-                class="panel"
-                style="flex: 1; min-width: 118px; border-color: var(--warn)"
-              >
-                <h5 style="padding: 6px 9px; color: var(--warn)">
-                  Docs à revoir
-                </h5>
-                <div style="padding: 8px 9px">
-                  <b class="mono" style="font-size: 17px; color: var(--warn)"
-                    >2</b
-                  >
-                  <span class="note">SLA 24 h</span>
-                </div>
-              </div>
-              <div class="panel" style="flex: 1; min-width: 118px">
-                <h5 style="padding: 6px 9px">Entretien</h5>
-                <div style="padding: 8px 9px">
-                  <b class="mono" style="font-size: 17px">1</b>
-                  <span class="note">jeudi 10 h</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="split3">
-              <!-- colonne 1 : synthèse -->
-              <div>
-                <div class="panel">
-                  <h5>Dossier · Fatou D.</h5>
-                  <div class="bd">
-                    <div
-                      style="
-                        display: flex;
-                        align-items: baseline;
-                        gap: 8px;
-                        margin-bottom: 10px;
-                      "
-                    >
-                      <span
-                        class="mono"
-                        style="
-                          font-size: 30px;
-                          font-weight: 700;
-                          line-height: 1;
-                        "
-                        >78</span
-                      >
-                      <span class="note"
-                        >score de dossier<br />2ᵉ de la file</span
-                      >
-                    </div>
-                    <div class="gauge g"><i style="width: 78%"></i></div>
-                    <div style="margin-top: 11px">
-                      <div class="fact">
-                        <span>Zone en tension (Cadaujac)</span
-                        ><span class="p">+20</span>
-                      </div>
-                      <div class="fact">
-                        <span>Dispos sur créneaux manquants</span
-                        ><span class="p">+20</span>
-                      </div>
-                      <div class="fact">
-                        <span>Expérience vérifiable 4 ans</span
-                        ><span class="p">+15</span>
-                      </div>
-                      <div class="fact">
-                        <span>Véhicule · rayon 20 min</span
-                        ><span class="p">+10</span>
-                      </div>
-                      <div class="fact">
-                        <span>Réactive (&lt; 48 h par étape)</span
-                        ><span class="p">+10</span>
-                      </div>
-                      <div class="fact">
-                        <span>Statut créé pendant le parcours</span
-                        ><span class="p">+3</span>
-                      </div>
-                    </div>
-                    <div
-                      style="
-                        margin-top: 12px;
-                        border-top: 1px solid var(--paper-200);
-                        padding-top: 10px;
-                      "
-                    >
-                      <div class="kv">
-                        <span class="k">Commune</span
-                        ><span class="v">Cadaujac</span>
-                      </div>
-                      <div class="kv">
-                        <span class="k">Trajet médian</span
-                        ><span class="v mono">8 min</span>
-                      </div>
-                      <div class="kv">
-                        <span class="k">Branche</span
-                        ><span class="v">Création AE</span>
-                      </div>
-                      <div class="kv">
-                        <span class="k">SIRET reçu</span
-                        ><span class="v mono">18/08 · J+6</span>
-                      </div>
-                      <div class="kv">
-                        <span class="k">Entretien</span
-                        ><span class="v" style="color: var(--ok)"
-                          >Favorable · 4,3/5</span
-                        >
-                      </div>
-                      <div class="kv">
-                        <span class="k">Dispos</span
-                        ><span class="v">L·M·J·V matin</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- colonne 2 : visionneuse -->
-              <div class="panel">
-                <h5>
-                  <span>Pièces · 5 sur 6</span
-                  ><span class="mono">◀ 2 / 6 ▶</span>
-                </h5>
-                <div class="bd">
-                  <div
-                    style="
-                      display: flex;
-                      gap: 6px;
-                      margin-bottom: 10px;
-                      flex-wrap: wrap;
-                    "
-                  >
-                    <button class="b sm gh">Identité</button
-                    ><button class="b sm pri">SIRENE</button
-                    ><button class="b sm gh">URSSAF</button
-                    ><button class="b sm gh">RC Pro</button
-                    ><button class="b sm gh">IBAN</button
-                    ><button class="b sm gh">SAP</button>
-                  </div>
-                  <div
-                    style="
-                      height: 262px;
-                      border: 1px solid var(--paper-300);
-                      background: repeating-linear-gradient(
-                        135deg,
-                        var(--paper-050),
-                        var(--paper-050) 9px,
-                        var(--paper-100) 9px,
-                        var(--paper-100) 18px
-                      );
-                      position: relative;
-                      display: grid;
-                      place-items: center;
-                    "
-                  >
-                    <div
-                      style="
-                        background: var(--paper-000);
-                        border: 1px solid var(--paper-300);
-                        padding: 16px 22px;
-                        font-family: var(--mono);
-                        font-size: 11px;
-                        line-height: 1.9;
-                        text-align: left;
-                      "
-                    >
-                      <div
-                        style="
-                          font-size: 9px;
-                          letter-spacing: 0.1em;
-                          color: var(--ink-400);
-                          margin-bottom: 8px;
-                        "
-                      >
-                        AVIS DE SITUATION SIRENE
-                      </div>
-                      SIRET &nbsp;&nbsp;&nbsp;812 456 789 00023<br />
-                      NOM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DIALLO Fatou<br />
-                      APE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;81.21Z<br />
-                      LIBELLÉ &nbsp;Nettoyage courant des bâtiments<br />
-                      CRÉATION 18/08/2026<br />
-                      ÉTAT &nbsp;&nbsp;&nbsp;&nbsp;Actif
-                    </div>
-                    <span
-                      style="position: absolute; right: 8px; bottom: 8px"
-                      class="note"
-                      >signed URL · 60 s · consultation journalisée</span
-                    >
-                  </div>
-
-                  <div
-                    style="
-                      margin-top: 11px;
-                      border: 1px solid var(--paper-200);
-                      padding: 10px;
-                    "
-                  >
-                    <div
-                      class="note"
-                      style="
-                        margin-bottom: 7px;
-                        letter-spacing: 0.08em;
-                        text-transform: uppercase;
-                        font-family: var(--mono);
-                        font-size: 9px;
-                      "
-                    >
-                      Contrôles automatiques
-                    </div>
-                    <div class="kv">
-                      <span class="k">Établissement actif (API Sirene)</span
-                      ><span class="v" style="color: var(--ok)">✓ vérifié</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Code APE éligible</span
-                      ><span class="v" style="color: var(--ok)">✓ 81.21Z</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Nom lu = nom déclaré</span
-                      ><span class="v" style="color: var(--ok)"
-                        >✓ DIALLO Fatou</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Titulaire IBAN = candidate</span
-                      ><span class="v" style="color: var(--ok)">✓ vérifié</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Doublon (tél. / IBAN / appareil)</span
-                      ><span class="v" style="color: var(--ok)">✓ aucun</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">SIREN ↔ n° SAP</span
-                      ><span class="v" style="color: var(--warn)"
-                        >⚠ SAP non encore déposé</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Création &lt; 3 mois</span
-                      ><span class="v" style="color: var(--info)"
-                        >i créé pendant le parcours</span
-                      >
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- colonne 3 : checklist + décision -->
-              <div>
-                <div class="panel">
-                  <h5>Checklist de revue</h5>
-                  <div class="bd">
-                    <div class="kv">
-                      <span class="k">Pièce d'identité</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Justificatif de domicile</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">SIRET actif</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Vigilance URSSAF</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">RC Professionnelle</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">IBAN</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Déclaration SAP</span
-                      ><span class="v" style="color: var(--warn)"
-                        >en attente</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Entretien</span
-                      ><span class="v" style="color: var(--ok)"
-                        >✓ favorable</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Charte &amp; mandat signés</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  class="panel"
-                  style="margin-top: 12px; border-color: var(--warn)"
-                >
-                  <h5 style="color: var(--warn)">Points d'attention</h5>
-                  <div class="bd">
-                    <p style="margin: 0; font-size: 12px; line-height: 1.5">
-                      La déclaration SAP a été déposée le 24/08, récépissé non
-                      encore reçu. Activation possible sans SAP uniquement si le
-                      réglage
-                      <b class="mono" style="font-size: 11px"
-                        >ALLOW_ACTIVATION_WITHOUT_SAP</b
-                      >
-                      est activé — il ne l'est pas.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="panel" style="margin-top: 12px">
-                  <h5>Décision</h5>
-                  <div class="bd">
-                    <button
-                      class="b go"
-                      style="width: 100%; margin-bottom: 7px"
-                    >
-                      Valider le dossier
-                    </button>
-                    <button class="b" style="width: 100%; margin-bottom: 7px">
-                      Demander une correction
-                    </button>
-                    <button class="b gh" style="width: 100%">Refuser</button>
-                    <p class="note" style="margin-top: 10px">
-                      Aucune décision automatisée. Auteur, horodatage et motif
-                      écrits au journal d'audit. Date de naissance, nationalité
-                      et photo masquées pendant la revue documentaire.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- ============ INBOX ============ -->
-          <section class="view" id="v-inbox">
-            <h2 class="vt">Inbox</h2>
-            <p class="vsub">
-              6 conversations ouvertes · 1 hors SLA · premier délai de réponse
-              médian : 1 h 12
-            </p>
-            <div class="inbox">
-              <div class="q">
-                <a class="on">Non assignées <span class="c">3</span></a>
-                <a>Mes conversations <span class="c">2</span></a>
-                <a style="color: var(--risk)"
-                  >SLA dépassé <span class="c">1</span></a
-                >
-                <a>Clients <span class="c">4</span></a>
-                <a>Intervenants <span class="c">2</span></a>
-                <a>Candidats <span class="c">3</span></a>
-                <a>Contournement <span class="c">1</span></a>
-                <a>Escalades <span class="c">0</span></a>
-                <a style="color: var(--ink-400)">Résolues</a>
-                <div
-                  style="
-                    border-top: 1px solid var(--paper-300);
-                    margin-top: 10px;
-                    padding-top: 8px;
-                  "
-                >
-                  <a style="color: var(--ink-400)"
-                    >SMS entrants <span class="c">2</span></a
-                  >
-                  <a style="color: var(--ink-400)"
-                    >contact@ <span class="c">1</span></a
-                  >
-                </div>
-              </div>
-
-              <div class="lst">
-                <div class="cv" style="border-left: 2px solid var(--risk)">
-                  <div class="t1">
-                    <span class="nm">Yann C.</span
-                    ><span class="ag" style="color: var(--risk)">31 h</span>
-                  </div>
-                  <div class="pv">
-                    Bonjour, je n'ai toujours pas de réponse concernant le
-                    changement d'horaire de jeudi…
-                  </div>
-                  <div style="margin-top: 5px">
-                    <span class="chip ri">SLA dépassé</span>
-                  </div>
-                </div>
-                <div class="cv on">
-                  <div class="t1">
-                    <span class="nm">Julie P.</span><span class="ag">2 h</span>
-                  </div>
-                  <div class="pv">
-                    Je ne suis pas satisfaite du dernier passage, la salle de
-                    bain n'a pas été faite correctement.
-                  </div>
-                  <div style="margin-top: 5px">
-                    <span class="chip wa">Note 3/5</span>
-                    <span class="chip ri">Churn 78</span>
-                  </div>
-                </div>
-                <div class="cv">
-                  <div class="t1">
-                    <span class="nm"
-                      >Fatou D. <span class="note">· candidate</span></span
-                    ><span class="ag">4 h</span>
-                  </div>
-                  <div class="pv">
-                    Je suis bloquée à l'étape du guichet unique, il me demande
-                    un numéro que je n'ai pas.
-                  </div>
-                  <div style="margin-top: 5px">
-                    <span class="chip in">Je suis bloquée</span>
-                  </div>
-                </div>
-                <div class="cv">
-                  <div class="t1">
-                    <span class="nm"
-                      >Amélie L. <span class="note">· intervenante</span></span
-                    ><span class="ag">6 h</span>
-                  </div>
-                  <div class="pv">
-                    Je voulais vous expliquer ce qui s'est passé chez Hélène R.
-                    avec le vase…
-                  </div>
-                  <div style="margin-top: 5px">
-                    <span class="chip ri">Litige</span>
-                  </div>
-                </div>
-                <div class="cv">
-                  <div class="t1">
-                    <span class="nm">Léa M. / Rachid B.</span
-                    ><span class="ag">1 j</span>
-                  </div>
-                  <div class="pv">
-                    …vous pouvez me joindre directement au 06 …
-                  </div>
-                  <div style="margin-top: 5px">
-                    <span class="chip wa">Contournement</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="th">
-                <div class="hd">
-                  <span class="av">JP</span>
-                  <div style="flex: 1">
-                    <b style="font-size: 13px">Julie P.</b>
-                    <div class="note">Cliente · Gradignan · 14 passages</div>
-                  </div>
-                  <button class="b sm gh">M'assigner</button>
-                  <button class="b sm gh">Reporter</button>
-                  <button class="b sm pri">Résoudre</button>
-                </div>
-                <div class="bd">
-                  <div class="bub">
-                    Bonjour, je ne suis pas satisfaite du dernier passage. La
-                    salle de bain n'a pas été faite correctement et la personne
-                    semblait pressée. Ce n'est pas ce à quoi Sonia m'avait
-                    habituée.<span class="tm">Aujourd'hui 05:48</span>
-                  </div>
-                  <div style="text-align: center; margin: 10px 0">
-                    <span
-                      class="note"
-                      style="font-family: var(--mono); letter-spacing: 0.06em"
-                      >— note interne —</span
-                    >
-                  </div>
-                  <div
-                    class="bub"
-                    style="
-                      background: var(--warn-050);
-                      border-color: #f0ddb4;
-                      max-width: 100%;
-                    "
-                  >
-                    <b style="font-size: 11.5px"
-                      >Note interne · non visible de la cliente</b
-                    ><br />
-                    Amélie a remplacé Sonia le 11/08 sans que Julie l'ait
-                    demandé. Durée réelle 1 h 48 contre 2 h 15 prévues, rapport
-                    photo incomplet. Sonia a une place libre le jeudi 8 h à
-                    partir du 4 septembre.
-                  </div>
-                  <div class="bub me">
-                    Bonjour Julie, merci de nous l'avoir dit — vous avez raison,
-                    ce passage n'a pas été au niveau. Je vous rappelle ce matin.
-                    Sonia se libère le jeudi 8 h à partir du 4 septembre : je
-                    vous la remets sur votre créneau habituel, et le prochain
-                    passage vous est offert.<span class="tm"
-                      >Brouillon · macro « qualité — retour intervenante »</span
-                    >
-                  </div>
-                </div>
-                <div class="cp">
-                  <div
-                    style="
-                      display: flex;
-                      gap: 6px;
-                      margin-bottom: 8px;
-                      flex-wrap: wrap;
-                    "
-                  >
-                    <button class="b sm gh">/ macro</button
-                    ><button class="b sm gh">Offrir un passage</button
-                    ><button class="b sm gh">Changer d'intervenante</button
-                    ><button class="b sm gh">Note interne</button>
-                  </div>
-                  <div style="display: flex; gap: 8px">
-                    <div
-                      style="
-                        flex: 1;
-                        border: 1px solid var(--paper-300);
-                        padding: 8px 10px;
-                        color: var(--ink-400);
-                        font-size: 12px;
-                        background: var(--paper-000);
-                      "
-                    >
-                      Répondre à Julie…
-                    </div>
-                    <button class="b pri">Envoyer</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="ctx">
-                <div
-                  class="note"
-                  style="
-                    font-family: var(--mono);
-                    font-size: 9px;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                    margin-bottom: 9px;
-                  "
-                >
-                  Contexte
-                </div>
-                <div class="kv">
-                  <span class="k">Churn</span
-                  ><span class="v" style="color: var(--risk)">78 · élevé</span>
-                </div>
-                <div class="kv">
-                  <span class="k">Valeur annuelle</span
-                  ><span class="v mono">1 480 €</span>
-                </div>
-                <div class="kv">
-                  <span class="k">Passages</span><span class="v mono">14</span>
-                </div>
-                <div class="kv">
-                  <span class="k">Abonnement</span
-                  ><span class="v">Tous les 15 j</span>
-                </div>
-                <div class="kv">
-                  <span class="k">Intervenante</span
-                  ><span class="v">Amélie L.</span>
-                </div>
-                <div class="kv">
-                  <span class="k">Gestes accordés</span
-                  ><span class="v mono">0</span>
-                </div>
-                <div class="kv">
-                  <span class="k">SLA 1ʳᵉ réponse</span
-                  ><span class="v mono" style="color: var(--warn)">2 h 04</span>
-                </div>
-
-                <div
-                  class="note"
-                  style="
-                    font-family: var(--mono);
-                    font-size: 9px;
-                    letter-spacing: 0.1em;
-                    text-transform: uppercase;
-                    margin: 16px 0 8px;
-                  "
-                >
-                  3 derniers passages
-                </div>
-                <div class="tline">
-                  <div class="e r">
-                    <div class="d">25 août · Amélie L.</div>
-                    <div class="x">★ 3 · 1 h 48</div>
-                  </div>
-                  <div class="e b">
-                    <div class="d">11 août · Amélie L.</div>
-                    <div class="x">★ 4 · 2 h 10</div>
-                  </div>
-                  <div class="e b">
-                    <div class="d">3 juillet · Sonia M.</div>
-                    <div class="x">★ 5 · 2 h 20</div>
-                  </div>
-                </div>
-
-                <div
-                  style="
-                    margin-top: 14px;
-                    border-top: 1px solid var(--paper-300);
-                    padding-top: 10px;
-                  "
-                >
-                  <button
-                    class="b sm gh"
-                    style="width: 100%; margin-bottom: 6px"
-                  >
-                    Ouvrir la fiche 360
-                  </button>
-                  <button class="b sm gh" style="width: 100%">
-                    Lancer le playbook qualité
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- ============ FRICTIONS ============ -->
-          <section class="view" id="v-frictions">
-            <h2 class="vt">Frictions</h2>
-            <p class="vsub">
-              Ce que le produit coûte en clients et en intervenants sans que
-              personne ne se plaigne
-            </p>
-
-            <div class="band">
-              Funnel intervenant <em>30 derniers jours · 214 entrées</em>
-            </div>
-            <div class="funnel">
-              <div class="fstep">
-                <span>Page d'entrée</span
-                ><span class="fbar"><i style="width: 100%"></i></span
-                ><span class="drop mono">214</span><span class="drop">—</span>
-              </div>
-              <div class="fstep">
-                <span>Éligibilité démarrée</span
-                ><span class="fbar"><i style="width: 29%"></i></span
-                ><span class="drop mono">62</span
-                ><span class="drop">−71 %</span>
-              </div>
-              <div class="fstep">
-                <span>Compte créé</span
-                ><span class="fbar"><i style="width: 17%"></i></span
-                ><span class="drop mono">37</span
-                ><span class="drop">−40 %</span>
-              </div>
-              <div class="fstep">
-                <span>Profil complet</span
-                ><span class="fbar"><i style="width: 13%"></i></span
-                ><span class="drop mono">28</span
-                ><span class="drop">−24 %</span>
-              </div>
-              <div class="fstep">
-                <span>Aiguillage statut</span
-                ><span class="fbar"><i style="width: 12%"></i></span
-                ><span class="drop mono">26</span><span class="drop">−7 %</span>
-              </div>
-              <div class="fstep">
-                <span>↳ branche SIRET existant</span
-                ><span class="fbar"><i style="width: 7%"></i></span
-                ><span class="drop mono">15</span><span class="drop">—</span>
-              </div>
-              <div class="fstep">
-                <span>↳ branche création AE</span
-                ><span class="fbar"><i class="warn" style="width: 5%"></i></span
-                ><span class="drop mono">11</span><span class="drop">—</span>
-              </div>
-              <div class="fstep">
-                <span>SIRET obtenu (branche B)</span
-                ><span class="fbar"
-                  ><i class="warn" style="width: 1.8%"></i></span
-                ><span class="drop mono">4</span
-                ><span class="drop bad">−64 %</span>
-              </div>
-              <div class="fstep">
-                <span>Documents déposés</span
-                ><span class="fbar"><i style="width: 7%"></i></span
-                ><span class="drop mono">15</span
-                ><span class="drop bad">−21 %</span>
-              </div>
-              <div class="fstep">
-                <span>Entretien passé</span
-                ><span class="fbar"><i style="width: 5.6%"></i></span
-                ><span class="drop mono">12</span
-                ><span class="drop">−20 %</span>
-              </div>
-              <div class="fstep">
-                <span><b>Activé</b></span
-                ><span class="fbar"><i style="width: 4.2%"></i></span
-                ><span class="drop mono"><b>9</b></span
-                ><span class="drop">−25 %</span>
-              </div>
-            </div>
-            <p class="note" style="margin-top: 8px">
-              Conversion globale <b class="mono">4,2 %</b> (cible 4-7 %) ·
-              branche création AE
-              <b class="mono" style="color: var(--warn)">36 %</b> jusqu'au SIRET
-              (cible 35 %) — la métrique la plus importante du funnel,
-              actuellement tenue.
-            </p>
-
-            <div class="band">
-              Frictions détectées <em>ampleur · tendance · action</em>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  Refus d'attestation RC Pro : 4 sur 9 dépôts
-                </div>
-                <div class="hy">
-                  Motif « activité non couverte ». La consigne d'upload ne
-                  précise pas que l'attestation doit mentionner le nettoyage à
-                  domicile. Le candidat repart chez son assureur, perd 5 à 10
-                  jours, et 2 sur 4 ne reviennent pas.
-                </div>
-              </div>
-              <div class="mg">
-                <b style="color: var(--risk)">+14 pts</b><small>ABANDON</small>
-              </div>
-              <div><button class="b sm pri">Créer une action</button></div>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  Choix du créneau client : 3 min 10 en médiane
-                </div>
-                <div class="hy">
-                  Contre 1 min 05 historiquement. Corrélé à la raréfaction des
-                  créneaux du vendredi matin : l'utilisateur parcourt plus
-                  d'écrans avant de trouver une disponibilité.
-                </div>
-              </div>
-              <div class="mg">
-                <b style="color: var(--warn)">×2,9</b><small>DURÉE</small>
-              </div>
-              <div><button class="b sm pri">Créer une action</button></div>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  Upload de document : 18 % d'échec sur Android
-                </div>
-                <div class="hy">
-                  Concentré sur les photos &gt; 8 Mo prises en pleine
-                  résolution. La compression côté client échoue silencieusement,
-                  l'utilisateur croit avoir déposé sa pièce.
-                </div>
-              </div>
-              <div class="mg">
-                <b style="color: var(--risk)">18 %</b><small>ÉCHECS</small>
-              </div>
-              <div><button class="b sm pri">Créer une action</button></div>
-            </div>
-            <div class="frx">
-              <div>
-                <div class="ti">
-                  31 recherches client sans créneau disponible
-                </div>
-                <div class="hy">
-                  Cadaujac, vendredi matin. Friction produit et signal de
-                  capacité : il manque une intervenante sur ce créneau depuis 3
-                  semaines.
-                </div>
-              </div>
-              <div class="mg"><b>31</b><small>CLIENTS</small></div>
-              <div><button class="b sm pri">Créer une action</button></div>
-            </div>
-
-            <div class="band">
-              Santé du produit <em>vs cible · tendance 8 semaines</em>
-            </div>
-            <div class="risk3" style="grid-template-columns: repeat(4, 1fr)">
-              <div class="tile">
-                <h5>Conversion client</h5>
-                <div style="padding: 11px">
-                  <b class="mono" style="font-size: 22px">7,1 %</b>
-                  <span class="note">cible 8 %</span>
-                  <div class="gauge" style="margin-top: 8px">
-                    <i class="" style="width: 89%; background: var(--warn)"></i>
-                  </div>
-                </div>
-              </div>
-              <div class="tile">
-                <h5>Conversion intervenant</h5>
-                <div style="padding: 11px">
-                  <b class="mono" style="font-size: 22px">4,2 %</b>
-                  <span class="note">cible 4-7 %</span>
-                  <div class="gauge g" style="margin-top: 8px">
-                    <i style="width: 100%"></i>
-                  </div>
-                </div>
-              </div>
-              <div class="tile">
-                <h5>Fiabilité opérationnelle</h5>
-                <div style="padding: 11px">
-                  <b class="mono" style="font-size: 22px">96 %</b>
-                  <span class="note">couverture + ponctualité</span>
-                  <div class="gauge g" style="margin-top: 8px">
-                    <i style="width: 96%"></i>
-                  </div>
-                </div>
-              </div>
-              <div class="tile">
-                <h5>Qualité perçue</h5>
-                <div style="padding: 11px">
-                  <b class="mono" style="font-size: 22px">4,7</b>
-                  <span class="note">NPS +52 · litiges 1,4 %</span>
-                  <div class="gauge g" style="margin-top: 8px">
-                    <i style="width: 94%"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- ============ VUE MOBILE ADMIN ============ -->
-          <section class="view" id="v-mobile">
-            <h2 class="vt">Console mobile</h2>
-            <p class="vsub">
-              Trois écrans seulement — Radar, File d'actions, Inbox. Le reste
-              renvoie vers l'ordinateur : mieux vaut trois écrans excellents que
-              quinze tableaux illisibles sur 390 px.
-            </p>
-            <div class="mobwrap">
-              <div class="mob">
-                <div class="sb">
-                  <span>7:41</span><span>LÉO CLEAN · OPS</span><span>▮</span>
-                </div>
-                <div class="bdy">
-                  <div
-                    class="vital"
-                    style="
-                      font-size: 10.5px;
-                      gap: 10px;
-                      padding: 8px 10px;
-                      flex-direction: column;
-                      align-items: flex-start;
-                    "
-                  >
-                    <span
-                      ><b>14</b> missions ·
-                      <b class="g">100 %</b> couvertes</span
-                    >
-                    <span class="m">2 en cours · 1 retard · CA 892 €</span>
-                  </div>
-                  <div class="band" style="margin: 12px 0 8px">
-                    Critiques · 3
-                  </div>
-                  <div class="sigcard p0" style="margin-bottom: 7px">
-                    <div class="hd">
-                      <span class="p">P0 · NON COUVERTE</span
-                      ><span class="sla">H-34</span>
-                    </div>
-                    <div class="ti" style="font-size: 12.5px">
-                      Mer. 27 · 8 h · Gradignan
-                    </div>
-                    <div class="ac">
-                      <button class="b sm pri">Élargir</button
-                      ><button class="b sm gh">Appeler</button>
-                    </div>
-                  </div>
-                  <div class="sigcard p0" style="margin-bottom: 7px">
-                    <div class="hd">
-                      <span class="p">P0 · RÉCLAMATION</span
-                      ><span class="sla">14 h</span>
-                    </div>
-                    <div class="ti" style="font-size: 12.5px">
-                      Casse · Hélène R.
-                    </div>
-                    <div class="ac">
-                      <button class="b sm pri">Ouvrir</button>
-                    </div>
-                  </div>
-                  <div class="sigcard p1">
-                    <div class="hd">
-                      <span class="p">P1 · PAIEMENT</span
-                      ><span class="sla">2ᵉ échec</span>
-                    </div>
-                    <div class="ti" style="font-size: 12.5px">
-                      Marc T. · 63 €
-                    </div>
-                    <div class="ac">
-                      <button class="b sm pri">Appeler</button>
-                    </div>
-                  </div>
-                  <div class="band" style="margin: 14px 0 8px">Risques</div>
-                  <div class="tile">
-                    <div class="it" style="padding: 7px 9px">
-                      <div class="sc hi" style="font-size: 13px">78</div>
-                      <div>
-                        <div class="nm" style="font-size: 11.5px">
-                          Julie P. · churn
-                        </div>
-                        <div class="wh" style="font-size: 10.5px">
-                          note 3/5 · intervenante changée
-                        </div>
-                      </div>
-                      <span class="go">→</span>
-                    </div>
-                    <div class="it" style="padding: 7px 9px">
-                      <div class="sc md" style="font-size: 13px">12j</div>
-                      <div>
-                        <div class="nm" style="font-size: 11.5px">
-                          Sonia M. · URSSAF
-                        </div>
-                        <div class="wh" style="font-size: 10.5px">
-                          8 missions à réaffecter
-                        </div>
-                      </div>
-                      <span class="go">→</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="tabs">
-                  <div class="on"><span>◉</span>Radar</div>
-                  <div><span>☰</span>Actions · 14</div>
-                  <div><span>✉</span>Inbox · 6</div>
-                </div>
-              </div>
-
-              <div style="max-width: 420px">
-                <div class="band" style="margin-top: 0">
-                  Ce que la version mobile garde
-                </div>
-                <div class="panel">
-                  <div class="bd">
-                    <div class="kv">
-                      <span class="k">Signaux critiques + action primaire</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Barre de vitalité du jour</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Top 4 des risques avec motif</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">File d'actions et résolution</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Inbox et réponse par macro</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                    <div class="kv">
-                      <span class="k">Clic-to-call sur chaque signal</span
-                      ><span class="v" style="color: var(--ok)">✓</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="band">Ce qu'elle renvoie à l'ordinateur</div>
-                <div class="panel">
-                  <div class="bd">
-                    <div class="kv">
-                      <span class="k">Timeline des tournées</span
-                      ><span class="v" style="color: var(--ink-400)"
-                        >→ desktop</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Revue de dossier documentaire</span
-                      ><span class="v" style="color: var(--ink-400)"
-                        >→ desktop</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Finance et exports</span
-                      ><span class="v" style="color: var(--ink-400)"
-                        >→ desktop</span
-                      >
-                    </div>
-                    <div class="kv">
-                      <span class="k">Réglages et tarification</span
-                      ><span class="v" style="color: var(--ink-400)"
-                        >→ desktop</span
-                      >
-                    </div>
-                  </div>
-                </div>
-                <p class="note" style="margin-top: 12px">
-                  Alerting mobile : push pour tous les P0 et P1, SMS réservé aux
-                  P0 (no-show, réclamation sécurité, mission non couverte à
-                  H-24, 3ᵉ échec de paiement). Pas plus d'un SMS par 30 minutes
-                  hors sécurité.
-                </p>
-              </div>
-            </div>
-          </section>
-        </main>
-      </div>
-
-      <p class="note" style="margin-top: 16px; max-width: 90ch">
-        Les onglets de gauche changent de vue. Les vues Planning, Zones,
-        Finance, Parrainage et Réglages ne sont pas maquettées ici : elles sont
-        spécifiées dans <b>04-console-admin.md</b> et suivent les mêmes
-        primitives (tableau dense, panneau latéral contextuel, action inline).
-      </p>
+  <div class="console">
+    <div class="topbar">
+      <span class="brand">LÉO CLEAN · OPS</span>
+      <span class="k">⌘K  rechercher ou agir</span>
+      <span class="sig">
+        <span class="dotr">● <b>3 critiques</b></span>
+        <span class="doto">▲ <b>7 à traiter</b></span>
+        <span style="color:#9FA095">mar. 26 août · 07:41</span>
+        <span style="border:1px solid #3A3B33;padding:2px 7px">PD</span>
+      </span>
     </div>
 
-    <script>
-      document.querySelectorAll("nav.side a").forEach(function (a) {
-        a.addEventListener("click", function () {
-          var v = a.dataset.v;
-          if (!v) return;
-          document.querySelectorAll("nav.side a").forEach(function (x) {
-            x.classList.remove("on");
-          });
-          a.classList.add("on");
-          document.querySelectorAll(".view").forEach(function (s) {
-            s.classList.remove("on");
-          });
-          var t = document.getElementById("v-" + v);
-          if (t) t.classList.add("on");
-          window.scrollTo({
-            top: document.querySelector(".console").offsetTop - 20,
-            behavior: "smooth",
-          });
-        });
-      });
-    </script>
-  </body>
+    <nav class="side">
+      <div class="grp">Salle</div>
+      <a class="on" data-v="radar">Radar <span class="c">3</span></a>
+      <a data-v="file">File d'actions <span class="c">14</span></a>
+      <div class="grp">Exploitation</div>
+      <a data-v="missions">Missions <span class="c">42</span></a>
+      <a data-v="radar">Planning</a>
+      <a data-v="radar">Zones</a>
+      <div class="grp">Relation</div>
+      <a data-v="client">Clients <span class="c">128</span></a>
+      <a data-v="pros">Intervenants <span class="c">17</span></a>
+      <a data-v="dossier">Recrutement <span class="c">9</span></a>
+      <a data-v="inbox">Inbox <span class="c">6</span></a>
+      <a data-v="file">Qualité <span class="c">2</span></a>
+      <div class="grp">Pilotage</div>
+      <a data-v="frictions">Frictions <span class="c">4</span></a>
+      <a data-v="radar">Finance</a>
+      <a data-v="radar">Parrainage</a>
+      <a data-v="mobile">Vue mobile</a>
+      <a data-v="radar">Réglages</a>
+    </nav>
+
+    <main>
+
+    <!-- ============ RADAR ============ -->
+    <section class="view on" id="v-radar">
+      <h2 class="vt">Radar</h2>
+      <p class="vsub">Mardi 26 août · 07 h 41 · Paul Duchâteau</p>
+
+      <div class="band">Signaux critiques <em>3 — à traiter avant 9 h</em></div>
+      <div class="sig-grid">
+        <div class="sigcard p0">
+          <div class="hd"><span class="p">P0 · Non couverte</span><span class="sla">H-34</span></div>
+          <div class="ti">Mercredi 27, 8 h – 11 h · Gradignan</div>
+          <div class="rs">Diffusée à 8 intervenants depuis 19 h hier, aucune acceptation. Cliente Marie L., 3ᵉ passage, abonnée hebdo.</div>
+          <div class="ac"><button class="b pri sm">Élargir la zone</button><button class="b sm">Appeler Karine</button><button class="b gh sm">Proposer un report</button></div>
+        </div>
+        <div class="sigcard p0">
+          <div class="hd"><span class="p">P0 · Réclamation</span><span class="sla">ouverte 14 h</span></div>
+          <div class="ti">Casse signalée · Hélène R. · Villenave</div>
+          <div class="rs">Vase cassé pendant le passage du 25/08. Photos fournies. Amélie L. n'a pas encore donné sa version.</div>
+          <div class="ac"><button class="b pri sm">Ouvrir le dossier</button><button class="b gh sm">Demander sa version</button></div>
+        </div>
+        <div class="sigcard p1">
+          <div class="hd"><span class="p">P1 · Paiement</span><span class="sla">2ᵉ échec</span></div>
+          <div class="ti">Marc T. · carte expirée</div>
+          <div class="rs">63 € du 22/08. Client fidèle, 19 passages, hebdo. Prochaine mission jeudi — risque de suspension automatique.</div>
+          <div class="ac"><button class="b pri sm">Appeler</button><button class="b gh sm">Envoyer le lien de mise à jour</button></div>
+        </div>
+      </div>
+
+      <div class="band">Aujourd'hui <em>couverture 100 % · 0 non couverte</em></div>
+      <div class="vital">
+        <span><b>14</b> missions</span>
+        <span class="m">│</span>
+        <span class="g">✔ <b>0</b> terminées</span>
+        <span>◉ <b>2</b> en cours</span>
+        <span class="m">⏱ <b>12</b> à venir</span>
+        <span class="m">│</span>
+        <span>couverture <b class="g">100 %</b></span>
+        <span>retards <b class="r">1</b></span>
+        <span>check-in manquant <b>0</b></span>
+        <span class="m">│</span>
+        <span>CA jour <b>892 €</b></span>
+        <span class="m">marge <b>196 €</b></span>
+      </div>
+
+      <div class="tl" style="margin-top:10px">
+        <div class="hours">
+          <span>Tournées</span>
+          <span class="sc"><i>7h</i><i>8h</i><i>9h</i><i>10h</i><i>11h</i><i>12h</i><i>13h</i><i>14h</i><i>15h</i><i>16h</i><i>17h</i><i>18h</i><i>19h</i><i>20h</i></span>
+        </div>
+        <div class="lane">
+          <div class="who"><i></i>Sonia M.</div>
+          <div class="track">
+            <div class="nowline" style="left:5%"></div>
+            <div class="blk now" style="left:7.1%;width:21.4%">Camille D. · Léognan</div>
+            <div class="blk" style="left:30%;width:14.3%">Marc T.</div>
+            <div class="blk hole" style="left:45%;width:12.4%">1 h 45</div>
+            <div class="blk" style="left:57.1%;width:17.9%">Hélène R.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="who"><i></i>Karine B.</div>
+          <div class="track">
+            <div class="nowline" style="left:5%"></div>
+            <div class="blk now" style="left:7.1%;width:14.3%">Julie P.</div>
+            <div class="blk" style="left:22.9%;width:21.4%">Yann C. · Canéjan</div>
+            <div class="blk" style="left:50%;width:14.3%">Rita B.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="who"><i></i>Amélie L.</div>
+          <div class="track">
+            <div class="nowline" style="left:5%"></div>
+            <div class="blk risk" style="left:7.1%;width:17.9%">⚠ retard 18 min</div>
+            <div class="blk" style="left:28.6%;width:14.3%">Paul V.</div>
+            <div class="blk hole" style="left:44%;width:20%">2 h 50</div>
+            <div class="blk" style="left:64.3%;width:14.3%">Léa M.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="who"><i class="off"></i>Fatou D.</div>
+          <div class="track">
+            <div class="nowline" style="left:5%"></div>
+            <div class="blk" style="left:14.3%;width:21.4%">Hélène G. · Martillac</div>
+            <div class="blk" style="left:42.9%;width:17.9%">Sarah T.</div>
+          </div>
+        </div>
+        <div class="lane">
+          <div class="who"><i class="off"></i>Rachid B.</div>
+          <div class="track">
+            <div class="nowline" style="left:5%"></div>
+            <div class="blk done" style="left:0%;width:14.3%">terminé</div>
+            <div class="blk" style="left:35.7%;width:21.4%">Nadia K. · Villenave</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="band">Risques à 7 jours</div>
+      <div class="risk3">
+        <div class="tile">
+          <h5><span>Missions à risque</span><span>score</span></h5>
+          <div class="it"><div class="sc hi">82<small>RISQUE</small></div><div><div class="nm">Mer. 27 · 8 h · Gradignan</div><div class="wh">Non couverte à H-34 · cliente hebdo · 3ᵉ passage</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc md">64<small>RISQUE</small></div><div><div class="nm">Ven. 29 · 14 h · Martillac</div><div class="wh">Premier passage · nouvel intervenant · boîte à clés</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc md">58<small>RISQUE</small></div><div><div class="nm">Jeu. 28 · 8 h · Léognan</div><div class="wh">Marc T. · paiement en échec · tournée serrée 8 min</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc lo">41<small>RISQUE</small></div><div><div class="nm">Sam. 30 · 9 h · Cadaujac</div><div class="wh">Samedi · mission 4 h · fin de bail</div></div><span class="go">→</span></div>
+        </div>
+        <div class="tile">
+          <h5><span>Clients qui décrochent</span><span>churn × valeur</span></h5>
+          <div class="it"><div class="sc hi">78<small>CHURN</small></div><div><div class="nm">Julie P. · 1 480 €/an</div><div class="wh">2 annulations en 60 j · note passée de 4,8 à 3,5 · a changé d'intervenante sans l'avoir demandé</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc hi">71<small>CHURN</small></div><div><div class="nm">Yann C. · 1 120 €/an</div><div class="wh">Passé de hebdo à mensuel en juillet · message sans réponse depuis 31 h</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc md">66<small>CHURN</small></div><div><div class="nm">Marc T. · 3 280 €/an</div><div class="wh">Paiement en échec ×2 · 19 passages · très fidèle jusqu'ici</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc md">62<small>CHURN</small></div><div><div class="nm">Rita B. · 890 €/an</div><div class="wh">Pause depuis 5 semaines · aucune reprise programmée</div></div><span class="go">→</span></div>
+        </div>
+        <div class="tile">
+          <h5><span>Intervenants fragiles</span><span>impact</span></h5>
+          <div class="it"><div class="sc hi">12 j<small>DOC</small></div><div><div class="nm">Sonia M.</div><div class="wh">Vigilance URSSAF expire le 07/09 · 8 missions récurrentes à réaffecter si non régularisé</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc md">−14<small>FIAB.</small></div><div><div class="nm">Amélie L.</div><div class="wh">3 retards en 30 j · note 4,6 → 4,1 · réclamation casse en cours</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc md">6 h<small>CHARGE</small></div><div><div class="nm">Rachid B.</div><div class="wh">Objectif 25 h/sem, rempli à 6 h · risque de départ vers un concurrent</div></div><span class="go">→</span></div>
+          <div class="it"><div class="sc lo">38 %<small>CONC</small></div><div><div class="nm">Karine B.</div><div class="wh">Porte 38 % des missions · concentration à surveiller</div></div><span class="go">→</span></div>
+        </div>
+      </div>
+
+      <div class="band">Frictions détectées <em>7 derniers jours</em></div>
+      <div class="frx">
+        <div><div class="ti">Étape 6 du funnel intervenant : abandon en hausse</div><div class="hy">Cause probable : 4 refus d'attestation RC Pro sur 9 dépôts, motif « activité non couverte ». La consigne d'upload ne dit pas quelle activité doit figurer sur l'attestation.</div></div>
+        <div class="mg"><b style="color:var(--risk)">+14 pts</b><small>VS 30 J</small></div>
+        <div><button class="b sm">Traiter</button></div>
+      </div>
+      <div class="frx">
+        <div><div class="ti">31 recherches sans créneau disponible sur Cadaujac</div><div class="hy">Vendredi matin exclusivement. Aucune intervenante déclarée disponible sur ce créneau depuis le départ de Nadia. Friction client et signal de recrutement.</div></div>
+        <div class="mg"><b>31</b><small>CLIENTS</small></div>
+        <div><button class="b sm">Traiter</button></div>
+      </div>
+      <div class="frx">
+        <div><div class="ti">9 conversations sur l'attestation fiscale ce mois-ci</div><div class="hy">Même question posée sous des formes différentes. Une page d'aide ou une macro éviterait 9 échanges de support.</div></div>
+        <div class="mg"><b>9</b><small>ÉCHANGES</small></div>
+        <div><button class="b sm">Traiter</button></div>
+      </div>
+    </section>
+
+    <!-- ============ FILE D'ACTIONS ============ -->
+    <section class="view" id="v-file">
+      <h2 class="vt">File d'actions</h2>
+      <p class="vsub">14 ouvertes · 3 en dépassement de SLA · objectif : file vide ce soir</p>
+      <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="b pri sm">Toutes · 14</button><button class="b gh sm">P0 · 3</button><button class="b gh sm">P1 · 5</button><button class="b gh sm">P2 · 6</button>
+        <button class="b gh sm">Missions</button><button class="b gh sm">Dossiers</button><button class="b gh sm">Conformité</button><button class="b gh sm">Chats</button>
+        <span style="margin-left:auto"><button class="b gh sm">Traiter en lot</button></span>
+      </div>
+      <table>
+        <thead><tr><th style="width:52px">Prio</th><th style="width:104px">Type</th><th>Sujet</th><th style="width:300px">Motif</th><th style="width:88px">SLA</th><th style="width:150px"></th></tr></thead>
+        <tbody>
+          <tr><td><span class="chip p0">P0</span></td><td>Mission</td><td><b>Mer. 27 · 8 h · Gradignan</b></td><td>Non couverte à H-34, 8 propositions sans réponse</td><td class="sla late">−1 h 12</td><td><button class="b sm pri">Traiter</button> <button class="b sm gh">Reporter</button></td></tr>
+          <tr><td><span class="chip p0">P0</span></td><td>Litige</td><td><b>Casse · Hélène R.</b></td><td>Réclamation ouverte depuis 14 h, version intervenante manquante</td><td class="sla late">−2 h</td><td><button class="b sm pri">Traiter</button></td></tr>
+          <tr><td><span class="chip p0">P0</span></td><td>Paiement</td><td><b>Marc T. · 63 €</b></td><td>2ᵉ échec, mission jeudi, client à 3 280 €/an</td><td class="sla soon">0 h 48</td><td><button class="b sm pri">Traiter</button></td></tr>
+          <tr><td><span class="chip p1">P1</span></td><td>Dossier</td><td><b>Fatou D. · Cadaujac</b></td><td>Documents déposés il y a 19 h, revue non faite</td><td class="sla soon">1 h 30</td><td><button class="b sm pri">Ouvrir</button></td></tr>
+          <tr><td><span class="chip p1">P1</span></td><td>Qualité</td><td><b>Julie P. · note 3/5</b></td><td>Salle de bain jugée insuffisante, 2ᵉ note basse en 60 j</td><td class="sla">3 h 10</td><td><button class="b sm pri">Appeler</button> <button class="b sm gh">Geste</button></td></tr>
+          <tr><td><span class="chip p1">P1</span></td><td>Chat</td><td><b>Yann C.</b></td><td>Message client sans réponse depuis 31 h</td><td class="sla late">−7 h</td><td><button class="b sm pri">Répondre</button></td></tr>
+          <tr><td><span class="chip p1">P1</span></td><td>Mission</td><td><b>Amélie L. · retard 18 min</b></td><td>Check-in tardif, cliente non prévenue</td><td class="sla soon">0 h 22</td><td><button class="b sm pri">Prévenir</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Conformité</td><td><b>Sonia M. · URSSAF</b></td><td>Attestation expire le 07/09, 8 missions récurrentes concernées</td><td class="sla">12 j</td><td><button class="b sm gh">Relancer</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Conformité</td><td><b>6 documents à vérifier</b><span class="note"> · groupé</span></td><td>Vigilance URSSAF ×4, RC Pro ×2 — vérifiables en lot</td><td class="sla">2 j</td><td><button class="b sm gh">Ouvrir le lot</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Rétention</td><td><b>Julie P. · churn 78</b></td><td>Score franchi hier, playbook « qualité » prêt à envoyer</td><td class="sla">2 j</td><td><button class="b sm gh">Voir le playbook</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Rétention</td><td><b>Rita B. · pause 5 sem.</b></td><td>Aucune reprise programmée, relance de réactivation à valider</td><td class="sla">3 j</td><td><button class="b sm gh">Voir</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Chat</td><td><b>Signal de contournement</b></td><td>Un numéro de téléphone échangé dans le fil Léa M. / Rachid B.</td><td class="sla">3 j</td><td><button class="b sm gh">Lire</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Capacité</td><td><b>Cadaujac · vendredi matin</b></td><td>Demande &gt; offre depuis 3 semaines, 31 recherches sans résultat</td><td class="sla">5 j</td><td><button class="b sm gh">Voir la zone</button></td></tr>
+          <tr><td><span class="chip p2">P2</span></td><td>Dossier</td><td><b>Marion S. · attente SIRET</b></td><td>Aucune nouvelle depuis 15 jours, relance téléphonique à faire</td><td class="sla">1 j</td><td><button class="b sm gh">Appeler</button></td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:12px">Raccourcis · <b class="mono">j/k</b> naviguer · <b class="mono">e</b> traiter · <b class="mono">s</b> reporter (motif obligatoire) · <b class="mono">⏎</b> ouvrir. Tout élément a un état terminal : rien ne disparaît sans trace dans le journal d'audit.</p>
+    </section>
+
+    <!-- ============ MISSIONS ============ -->
+    <section class="view" id="v-missions">
+      <h2 class="vt">Missions</h2>
+      <p class="vsub">42 sur les 7 prochains jours · 1 non couverte · 3 à risque</p>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="b pri sm">Liste</button><button class="b gh sm">Calendrier</button><button class="b gh sm">Carte</button><button class="b gh sm">Tournées</button>
+        <span style="margin-left:auto"><button class="b gh sm">Zone : toutes</button> <button class="b gh sm">État : tous</button></span>
+      </div>
+      <table>
+        <thead><tr><th style="width:120px">Quand</th><th style="width:60px">Risque</th><th>Client</th><th>Intervenant</th><th style="width:110px">Zone</th><th style="width:74px">Durée</th><th style="width:78px">Prix</th><th style="width:120px">État</th><th style="width:96px"></th></tr></thead>
+        <tbody>
+          <tr><td class="n">Mer 27 · 08:00</td><td class="n" style="color:var(--risk);font-weight:700">82</td><td><span class="av">ML</span>Marie L.</td><td style="color:var(--risk);font-weight:600">— aucun</td><td>Gradignan</td><td class="n">3 h</td><td class="n">78 €</td><td><span class="chip ri">Non couverte</span></td><td><button class="b sm pri">Affecter</button></td></tr>
+          <tr><td class="n">Mar 26 · 08:00</td><td class="n">18</td><td><span class="av">CD</span>Camille D.</td><td><span class="av">SM</span>Sonia M.</td><td>Léognan</td><td class="n">2 h 30</td><td class="n">75 €</td><td><span class="chip ok">En cours</span></td><td><button class="b sm gh">Ouvrir</button></td></tr>
+          <tr><td class="n">Mar 26 · 08:00</td><td class="n" style="color:var(--warn);font-weight:700">54</td><td><span class="av">HR</span>Hélène R.</td><td><span class="av">AL</span>Amélie L.</td><td>Villenave</td><td class="n">2 h</td><td class="n">62 €</td><td><span class="chip wa">Retard 18 min</span></td><td><button class="b sm gh">Ouvrir</button></td></tr>
+          <tr><td class="n">Mar 26 · 11:15</td><td class="n">22</td><td><span class="av">MT</span>Marc T.</td><td><span class="av">SM</span>Sonia M.</td><td>Cadaujac</td><td class="n">2 h</td><td class="n">63 €</td><td><span class="chip in">Confirmée</span></td><td><button class="b sm gh">Ouvrir</button></td></tr>
+          <tr><td class="n">Jeu 28 · 08:00</td><td class="n" style="color:var(--warn);font-weight:700">58</td><td><span class="av">MT</span>Marc T.</td><td><span class="av">KB</span>Karine B.</td><td>Cadaujac</td><td class="n">2 h</td><td class="n">63 €</td><td><span class="chip wa">Paiement KO</span></td><td><button class="b sm gh">Ouvrir</button></td></tr>
+          <tr><td class="n">Ven 29 · 14:00</td><td class="n" style="color:var(--warn);font-weight:700">64</td><td><span class="av">SG</span>Sophie G.</td><td><span class="av">FD</span>Fatou D.</td><td>Martillac</td><td class="n">2 h 30</td><td class="n">71 €</td><td><span class="chip in">Confirmée</span></td><td><button class="b sm gh">Ouvrir</button></td></tr>
+          <tr><td class="n">Sam 30 · 09:00</td><td class="n">41</td><td><span class="av">PV</span>Paul V.</td><td><span class="av">KB</span>Karine B.</td><td>Canéjan</td><td class="n">4 h</td><td class="n">142 €</td><td><span class="chip in">Confirmée</span></td><td><button class="b sm gh">Ouvrir</button></td></tr>
+        </tbody>
+      </table>
+
+      <div class="band">Réaffectation assistée <em>Mer. 27 · 8 h · Gradignan</em></div>
+      <table>
+        <thead><tr><th style="width:180px">Candidat</th><th style="width:64px">Score</th><th style="width:96px">Trajet</th><th>Impact sur sa tournée</th><th style="width:120px">Dispo déclarée</th><th style="width:110px"></th></tr></thead>
+        <tbody>
+          <tr><td><span class="av">KB</span>Karine B.</td><td class="n" style="font-weight:700">91</td><td class="n">9 min</td><td>Comble un trou de 2 h entre deux missions</td><td><span class="chip ok">Oui</span></td><td><button class="b sm pri">Proposer</button></td></tr>
+          <tr><td><span class="av">RB</span>Rachid B.</td><td class="n" style="font-weight:700">84</td><td class="n">14 min</td><td>Journée vide, objectif hebdo rempli à 24 %</td><td><span class="chip ok">Oui</span></td><td><button class="b sm pri">Proposer</button></td></tr>
+          <tr><td><span class="av">FD</span>Fatou D.</td><td class="n">62</td><td class="n">17 min</td><td>Crée 40 min d'attente avant sa mission de 11 h</td><td><span class="chip ok">Oui</span></td><td><button class="b sm gh">Proposer</button></td></tr>
+          <tr><td><span class="av">AL</span>Amélie L.</td><td class="n" style="color:var(--ink-400)">38</td><td class="n">22 min</td><td style="color:var(--risk)">Hors rayon déclaré (20 min) · réclamation en cours</td><td><span class="chip p2">Non</span></td><td><button class="b sm gh" style="opacity:.5">Proposer</button></td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:10px">Envoyer à Karine et Rachid simultanément : premier arrivé, premier servi. Un refus n'entraîne aucune pénalité contractuelle.</p>
+    </section>
+
+    <!-- ============ CLIENT 360 ============ -->
+    <section class="view" id="v-client">
+      <h2 class="vt">Julie P.</h2>
+      <p class="vsub">Cliente depuis février 2026 · 14 passages · 1 480 €/an · segment « en refroidissement »</p>
+      <div class="split">
+        <div>
+          <div class="panel">
+            <h5>Score de départ</h5>
+            <div class="bd">
+              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                <span class="mono" style="font-size:34px;font-weight:700;color:var(--risk);line-height:1">78</span>
+                <span class="note">risque élevé<br>franchi hier</span>
+              </div>
+              <div class="gauge"><i style="width:78%"></i></div>
+              <div style="margin-top:12px">
+                <div class="fact"><span>Note 3/5 au dernier passage</span><span class="p up">+20</span></div>
+                <div class="fact"><span>2 annulations en 60 jours</span><span class="p up">+15</span></div>
+                <div class="fact"><span>Changement d'intervenante subi</span><span class="p up">+12</span></div>
+                <div class="fact"><span>Mission reportée par nos soins</span><span class="p up">+12</span></div>
+                <div class="fact"><span>Fréquence en baisse (hebdo → 15 j)</span><span class="p up">+15</span></div>
+                <div class="fact"><span>14 passages réalisés</span><span class="p dn">−15</span></div>
+                <div class="fact"><span>Continuité d'intervenante 71 %</span><span class="p dn">−1</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px">
+            <h5>Identité</h5>
+            <div class="bd">
+              <div class="kv"><span class="k">Adresse</span><span class="v">Rue Peydavant<br>33170 Gradignan</span></div>
+              <div class="kv"><span class="k">Logement</span><span class="v">Appart. 78 m² · 3 p.</span></div>
+              <div class="kv"><span class="k">Abonnement</span><span class="v">Tous les 15 j · jeu. matin</span></div>
+              <div class="kv"><span class="k">Intervenante</span><span class="v">Amélie L. <span class="chip wa">changée</span></span></div>
+              <div class="kv"><span class="k">Valeur annuelle</span><span class="v mono">1 480 €</span></div>
+              <div class="kv"><span class="k">Acquisition</span><span class="v">Parrainage · Marc T.</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel">
+            <h5>Actions de rétention recommandées</h5>
+            <div class="bd">
+              <div style="border:1px solid var(--ink-900);padding:11px;margin-bottom:9px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <b style="font-size:13.5px">Playbook « qualité » — recommandé</b>
+                  <span class="chip ok">Déclenché par la note ≤ 3</span>
+                </div>
+                <p style="margin:0 0 9px;font-size:12.5px;line-height:1.5;color:var(--ink-700)">Appel sous 24 h, retour à Sonia M. sur son créneau habituel (elle a une place le jeudi 8 h), et prochain passage offert. Coût estimé : 71 € contre 1 480 € de valeur annuelle en jeu.</p>
+                <div style="display:flex;gap:6px"><button class="b pri sm">Lancer le playbook</button><button class="b gh sm">Modifier avant envoi</button></div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="b gh sm">Changer d'intervenante</button>
+                <button class="b gh sm">Geste commercial</button>
+                <button class="b gh sm">Proposer une pause</button>
+                <button class="b gh sm">Appel de courtoisie</button>
+                <button class="b gh sm">Modifier la fréquence</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:12px">
+            <h5>Historique unifié</h5>
+            <div class="bd">
+              <div class="tline">
+                <div class="e r"><div class="d">25 août · avis</div><div class="x"><b>Note 3/5</b> — « salle de bain pas terminée, la personne semblait pressée ». Intervenante : Amélie L.</div></div>
+                <div class="e b"><div class="d">25 août · mission</div><div class="x">Passage réalisé · 1 h 48 au lieu de 2 h 15 prévues · rapport photo incomplet (2 photos)</div></div>
+                <div class="e r"><div class="d">11 août · exploitation</div><div class="x"><b>Changement d'intervenante</b> — Sonia M. indisponible, remplacée par Amélie L. sans que la cliente l'ait demandé</div></div>
+                <div class="e"><div class="d">28 juillet · abonnement</div><div class="x">Passage de <b>hebdomadaire à toutes les 2 semaines</b> — motif déclaré : « je m'organise autrement l'été »</div></div>
+                <div class="e r"><div class="d">17 juillet · annulation</div><div class="x">Annulation client à J-1 · 2ᵉ en 60 jours · aucun frais appliqué</div></div>
+                <div class="e b"><div class="d">3 juillet · mission</div><div class="x">Passage réalisé · note 5/5 · « Sonia est parfaite »</div></div>
+                <div class="e b"><div class="d">14 février · acquisition</div><div class="x">Inscription via le code de parrainage de Marc T. · crédit de 20 € consommé</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INTERVENANTS ============ -->
+    <section class="view" id="v-pros">
+      <h2 class="vt">Intervenants</h2>
+      <p class="vsub">17 actifs · 2 en pause · 1 conformité à échéance · charge moyenne 71 %</p>
+      <table>
+        <thead><tr><th>Intervenant</th><th style="width:104px">Commune</th><th style="width:88px">Charge</th><th style="width:74px">Fiabilité</th><th style="width:76px">Note</th><th style="width:110px">Conformité</th><th style="width:80px">CA 30 j</th><th style="width:130px">Signal</th></tr></thead>
+        <tbody>
+          <tr><td><span class="av">KB</span><b>Karine B.</b></td><td>Léognan</td><td class="n">34 / 35 h</td><td class="n" style="font-weight:700">96</td><td class="n">★ 4,9</td><td><span class="chip ok">À jour</span></td><td class="n">2 410 €</td><td><span class="note">Concentration 38 %</span></td></tr>
+          <tr><td><span class="av">SM</span><b>Sonia M.</b></td><td>Cadaujac</td><td class="n">28 / 30 h</td><td class="n" style="font-weight:700">94</td><td class="n">★ 4,9</td><td><span class="chip wa">URSSAF 12 j</span></td><td class="n">1 840 €</td><td><span class="note">8 missions à risque</span></td></tr>
+          <tr><td><span class="av">AL</span><b>Amélie L.</b></td><td>Villenave</td><td class="n">22 / 25 h</td><td class="n" style="color:var(--warn);font-weight:700">71</td><td class="n" style="color:var(--warn)">★ 4,1</td><td><span class="chip ok">À jour</span></td><td class="n">1 520 €</td><td><span class="chip ri">Litige ouvert</span></td></tr>
+          <tr><td><span class="av">FD</span><b>Fatou D.</b></td><td>Cadaujac</td><td class="n">14 / 30 h</td><td class="n">88</td><td class="n">★ 5,0</td><td><span class="chip ok">À jour</span></td><td class="n">610 €</td><td><span class="note">Nouvelle · 6 missions</span></td></tr>
+          <tr><td><span class="av">RB</span><b>Rachid B.</b></td><td>Canéjan</td><td class="n" style="color:var(--warn)">6 / 25 h</td><td class="n">85</td><td class="n">★ 4,7</td><td><span class="chip ok">À jour</span></td><td class="n">420 €</td><td><span class="chip wa">Sous-charge</span></td></tr>
+          <tr><td><span class="av">NL</span><b>Nadia L.</b></td><td>Martillac</td><td class="n">—</td><td class="n" style="color:var(--ink-400)">—</td><td class="n">★ 4,6</td><td><span class="chip ri">RC Pro expirée</span></td><td class="n">0 €</td><td><span class="chip p2">En pause</span></td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:12px">Le score de fiabilité sert au classement des propositions et au suivi interne. Il n'est jamais présenté à l'intervenant comme une note de performance et ne fonde aucune mesure présentée comme une sanction. L'intervenant a en revanche accès à ses indicateurs bruts.</p>
+
+      <div class="band">Santé du parc</div>
+      <div class="risk3">
+        <div class="tile"><h5>Attrition</h5><div class="bd" style="padding:11px"><div class="kv"><span class="k">Départs 30 j</span><span class="v mono">1</span></div><div class="kv"><span class="k">Taux mensuel</span><span class="v mono">5,6 %</span></div><div class="kv"><span class="k">Ancienneté médiane</span><span class="v mono">7 mois</span></div></div></div>
+        <div class="tile"><h5>Capacité</h5><div class="bd" style="padding:11px"><div class="kv"><span class="k">Heures déclarées</span><span class="v mono">245 h/sem</span></div><div class="kv"><span class="k">Heures vendues</span><span class="v mono">174 h/sem</span></div><div class="kv"><span class="k">Marge de manœuvre</span><span class="v mono" style="color:var(--ok)">71 h</span></div></div></div>
+        <div class="tile"><h5>Trous de couverture</h5><div class="bd" style="padding:11px"><div class="kv"><span class="k">Cadaujac · ven. matin</span><span class="v mono" style="color:var(--risk)">−6 h</span></div><div class="kv"><span class="k">Gradignan · mer. matin</span><span class="v mono" style="color:var(--warn)">−3 h</span></div><div class="kv"><span class="k">Samedi · toutes zones</span><span class="v mono" style="color:var(--warn)">−8 h</span></div></div></div>
+      </div>
+    </section>
+
+    <!-- ============ DOSSIER DE RECRUTEMENT ============ -->
+    <section class="view" id="v-dossier">
+      <h2 class="vt">Recrutement — revue de dossier</h2>
+      <p class="vsub">9 dossiers en cours · 1 en dépassement de SLA · délai médian branche « création » : 24 jours</p>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="panel" style="flex:1;min-width:118px"><h5 style="padding:6px 9px">Profil</h5><div style="padding:8px 9px"><b class="mono" style="font-size:17px">3</b> <span class="note">dossiers</span></div></div>
+        <div class="panel" style="flex:1;min-width:118px"><h5 style="padding:6px 9px">Attente SIRET</h5><div style="padding:8px 9px"><b class="mono" style="font-size:17px">2</b> <span class="note">dont 1 à J+15</span></div></div>
+        <div class="panel" style="flex:1;min-width:118px"><h5 style="padding:6px 9px">Attente SAP</h5><div style="padding:8px 9px"><b class="mono" style="font-size:17px">1</b> <span class="note">déclaré J-2</span></div></div>
+        <div class="panel" style="flex:1;min-width:118px;border-color:var(--warn)"><h5 style="padding:6px 9px;color:var(--warn)">Docs à revoir</h5><div style="padding:8px 9px"><b class="mono" style="font-size:17px;color:var(--warn)">2</b> <span class="note">SLA 24 h</span></div></div>
+        <div class="panel" style="flex:1;min-width:118px"><h5 style="padding:6px 9px">Entretien</h5><div style="padding:8px 9px"><b class="mono" style="font-size:17px">1</b> <span class="note">jeudi 10 h</span></div></div>
+      </div>
+
+      <div class="split3">
+        <!-- colonne 1 : synthèse -->
+        <div>
+          <div class="panel">
+            <h5>Dossier · Fatou D.</h5>
+            <div class="bd">
+              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+                <span class="mono" style="font-size:30px;font-weight:700;line-height:1">78</span>
+                <span class="note">score de dossier<br>2ᵉ de la file</span>
+              </div>
+              <div class="gauge g"><i style="width:78%"></i></div>
+              <div style="margin-top:11px">
+                <div class="fact"><span>Zone en tension (Cadaujac)</span><span class="p">+20</span></div>
+                <div class="fact"><span>Dispos sur créneaux manquants</span><span class="p">+20</span></div>
+                <div class="fact"><span>Expérience vérifiable 4 ans</span><span class="p">+15</span></div>
+                <div class="fact"><span>Véhicule · rayon 20 min</span><span class="p">+10</span></div>
+                <div class="fact"><span>Réactive (&lt; 48 h par étape)</span><span class="p">+10</span></div>
+                <div class="fact"><span>Statut créé pendant le parcours</span><span class="p">+3</span></div>
+              </div>
+              <div style="margin-top:12px;border-top:1px solid var(--paper-200);padding-top:10px">
+                <div class="kv"><span class="k">Commune</span><span class="v">Cadaujac</span></div>
+                <div class="kv"><span class="k">Trajet médian</span><span class="v mono">8 min</span></div>
+                <div class="kv"><span class="k">Branche</span><span class="v">Création AE</span></div>
+                <div class="kv"><span class="k">SIRET reçu</span><span class="v mono">18/08 · J+6</span></div>
+                <div class="kv"><span class="k">Entretien</span><span class="v" style="color:var(--ok)">Favorable · 4,3/5</span></div>
+                <div class="kv"><span class="k">Dispos</span><span class="v">L·M·J·V matin</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- colonne 2 : visionneuse -->
+        <div class="panel">
+          <h5><span>Pièces · 5 sur 6</span><span class="mono">◀ 2 / 6 ▶</span></h5>
+          <div class="bd">
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+              <button class="b sm gh">Identité</button><button class="b sm pri">SIRENE</button><button class="b sm gh">URSSAF</button><button class="b sm gh">RC Pro</button><button class="b sm gh">IBAN</button><button class="b sm gh">SAP</button>
+            </div>
+            <div style="height:262px;border:1px solid var(--paper-300);background:repeating-linear-gradient(135deg,var(--paper-050),var(--paper-050) 9px,var(--paper-100) 9px,var(--paper-100) 18px);position:relative;display:grid;place-items:center">
+              <div style="background:var(--paper-000);border:1px solid var(--paper-300);padding:16px 22px;font-family:var(--mono);font-size:11px;line-height:1.9;text-align:left">
+                <div style="font-size:9px;letter-spacing:.1em;color:var(--ink-400);margin-bottom:8px">AVIS DE SITUATION SIRENE</div>
+                SIRET &nbsp;&nbsp;&nbsp;812 456 789 00023<br>
+                NOM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;DIALLO Fatou<br>
+                APE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;81.21Z<br>
+                LIBELLÉ &nbsp;Nettoyage courant des bâtiments<br>
+                CRÉATION 18/08/2026<br>
+                ÉTAT &nbsp;&nbsp;&nbsp;&nbsp;Actif
+              </div>
+              <span style="position:absolute;right:8px;bottom:8px" class="note">signed URL · 60 s · consultation journalisée</span>
+            </div>
+
+            <div style="margin-top:11px;border:1px solid var(--paper-200);padding:10px">
+              <div class="note" style="margin-bottom:7px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);font-size:9px">Contrôles automatiques</div>
+              <div class="kv"><span class="k">Établissement actif (API Sirene)</span><span class="v" style="color:var(--ok)">✓ vérifié</span></div>
+              <div class="kv"><span class="k">Code APE éligible</span><span class="v" style="color:var(--ok)">✓ 81.21Z</span></div>
+              <div class="kv"><span class="k">Nom lu = nom déclaré</span><span class="v" style="color:var(--ok)">✓ DIALLO Fatou</span></div>
+              <div class="kv"><span class="k">Titulaire IBAN = candidate</span><span class="v" style="color:var(--ok)">✓ vérifié</span></div>
+              <div class="kv"><span class="k">Doublon (tél. / IBAN / appareil)</span><span class="v" style="color:var(--ok)">✓ aucun</span></div>
+              <div class="kv"><span class="k">SIREN ↔ n° SAP</span><span class="v" style="color:var(--warn)">⚠ SAP non encore déposé</span></div>
+              <div class="kv"><span class="k">Création &lt; 3 mois</span><span class="v" style="color:var(--info)">i créé pendant le parcours</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- colonne 3 : checklist + décision -->
+        <div>
+          <div class="panel">
+            <h5>Checklist de revue</h5>
+            <div class="bd">
+              <div class="kv"><span class="k">Pièce d'identité</span><span class="v" style="color:var(--ok)">✓</span></div>
+              <div class="kv"><span class="k">Justificatif de domicile</span><span class="v" style="color:var(--ok)">✓</span></div>
+              <div class="kv"><span class="k">SIRET actif</span><span class="v" style="color:var(--ok)">✓</span></div>
+              <div class="kv"><span class="k">Vigilance URSSAF</span><span class="v" style="color:var(--ok)">✓</span></div>
+              <div class="kv"><span class="k">RC Professionnelle</span><span class="v" style="color:var(--ok)">✓</span></div>
+              <div class="kv"><span class="k">IBAN</span><span class="v" style="color:var(--ok)">✓</span></div>
+              <div class="kv"><span class="k">Déclaration SAP</span><span class="v" style="color:var(--warn)">en attente</span></div>
+              <div class="kv"><span class="k">Entretien</span><span class="v" style="color:var(--ok)">✓ favorable</span></div>
+              <div class="kv"><span class="k">Charte &amp; mandat signés</span><span class="v" style="color:var(--ok)">✓</span></div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:12px;border-color:var(--warn)">
+            <h5 style="color:var(--warn)">Points d'attention</h5>
+            <div class="bd">
+              <p style="margin:0;font-size:12px;line-height:1.5">La déclaration SAP a été déposée le 24/08, récépissé non encore reçu. Activation possible sans SAP uniquement si le réglage <b class="mono" style="font-size:11px">ALLOW_ACTIVATION_WITHOUT_SAP</b> est activé — il ne l'est pas.</p>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:12px">
+            <h5>Décision</h5>
+            <div class="bd">
+              <button class="b go" style="width:100%;margin-bottom:7px">Valider le dossier</button>
+              <button class="b" style="width:100%;margin-bottom:7px">Demander une correction</button>
+              <button class="b gh" style="width:100%">Refuser</button>
+              <p class="note" style="margin-top:10px">Aucune décision automatisée. Auteur, horodatage et motif écrits au journal d'audit. Date de naissance, nationalité et photo masquées pendant la revue documentaire.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INBOX ============ -->
+    <section class="view" id="v-inbox">
+      <h2 class="vt">Inbox</h2>
+      <p class="vsub">6 conversations ouvertes · 1 hors SLA · premier délai de réponse médian : 1 h 12</p>
+      <div class="inbox">
+        <div class="q">
+          <a class="on">Non assignées <span class="c">3</span></a>
+          <a>Mes conversations <span class="c">2</span></a>
+          <a style="color:var(--risk)">SLA dépassé <span class="c">1</span></a>
+          <a>Clients <span class="c">4</span></a>
+          <a>Intervenants <span class="c">2</span></a>
+          <a>Candidats <span class="c">3</span></a>
+          <a>Contournement <span class="c">1</span></a>
+          <a>Escalades <span class="c">0</span></a>
+          <a style="color:var(--ink-400)">Résolues</a>
+          <div style="border-top:1px solid var(--paper-300);margin-top:10px;padding-top:8px">
+            <a style="color:var(--ink-400)">SMS entrants <span class="c">2</span></a>
+            <a style="color:var(--ink-400)">contact@ <span class="c">1</span></a>
+          </div>
+        </div>
+
+        <div class="lst">
+          <div class="cv" style="border-left:2px solid var(--risk)">
+            <div class="t1"><span class="nm">Yann C.</span><span class="ag" style="color:var(--risk)">31 h</span></div>
+            <div class="pv">Bonjour, je n'ai toujours pas de réponse concernant le changement d'horaire de jeudi…</div>
+            <div style="margin-top:5px"><span class="chip ri">SLA dépassé</span></div>
+          </div>
+          <div class="cv on">
+            <div class="t1"><span class="nm">Julie P.</span><span class="ag">2 h</span></div>
+            <div class="pv">Je ne suis pas satisfaite du dernier passage, la salle de bain n'a pas été faite correctement.</div>
+            <div style="margin-top:5px"><span class="chip wa">Note 3/5</span> <span class="chip ri">Churn 78</span></div>
+          </div>
+          <div class="cv">
+            <div class="t1"><span class="nm">Fatou D. <span class="note">· candidate</span></span><span class="ag">4 h</span></div>
+            <div class="pv">Je suis bloquée à l'étape du guichet unique, il me demande un numéro que je n'ai pas.</div>
+            <div style="margin-top:5px"><span class="chip in">Je suis bloquée</span></div>
+          </div>
+          <div class="cv">
+            <div class="t1"><span class="nm">Amélie L. <span class="note">· intervenante</span></span><span class="ag">6 h</span></div>
+            <div class="pv">Je voulais vous expliquer ce qui s'est passé chez Hélène R. avec le vase…</div>
+            <div style="margin-top:5px"><span class="chip ri">Litige</span></div>
+          </div>
+          <div class="cv">
+            <div class="t1"><span class="nm">Léa M. / Rachid B.</span><span class="ag">1 j</span></div>
+            <div class="pv">…vous pouvez me joindre directement au 06 …</div>
+            <div style="margin-top:5px"><span class="chip wa">Contournement</span></div>
+          </div>
+        </div>
+
+        <div class="th">
+          <div class="hd">
+            <span class="av">JP</span>
+            <div style="flex:1"><b style="font-size:13px">Julie P.</b><div class="note">Cliente · Gradignan · 14 passages</div></div>
+            <button class="b sm gh">M'assigner</button>
+            <button class="b sm gh">Reporter</button>
+            <button class="b sm pri">Résoudre</button>
+          </div>
+          <div class="bd">
+            <div class="bub">Bonjour, je ne suis pas satisfaite du dernier passage. La salle de bain n'a pas été faite correctement et la personne semblait pressée. Ce n'est pas ce à quoi Sonia m'avait habituée.<span class="tm">Aujourd'hui 05:48</span></div>
+            <div style="text-align:center;margin:10px 0"><span class="note" style="font-family:var(--mono);letter-spacing:.06em">— note interne —</span></div>
+            <div class="bub" style="background:var(--warn-050);border-color:#F0DDB4;max-width:100%">
+              <b style="font-size:11.5px">Note interne · non visible de la cliente</b><br>
+              Amélie a remplacé Sonia le 11/08 sans que Julie l'ait demandé. Durée réelle 1 h 48 contre 2 h 15 prévues, rapport photo incomplet. Sonia a une place libre le jeudi 8 h à partir du 4 septembre.
+            </div>
+            <div class="bub me">Bonjour Julie, merci de nous l'avoir dit — vous avez raison, ce passage n'a pas été au niveau. Je vous rappelle ce matin. Sonia se libère le jeudi 8 h à partir du 4 septembre : je vous la remets sur votre créneau habituel, et le prochain passage vous est offert.<span class="tm">Brouillon · macro « qualité — retour intervenante »</span></div>
+          </div>
+          <div class="cp">
+            <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+              <button class="b sm gh">/ macro</button><button class="b sm gh">Offrir un passage</button><button class="b sm gh">Changer d'intervenante</button><button class="b sm gh">Note interne</button>
+            </div>
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;border:1px solid var(--paper-300);padding:8px 10px;color:var(--ink-400);font-size:12px;background:var(--paper-000)">Répondre à Julie…</div>
+              <button class="b pri">Envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ctx">
+          <div class="note" style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px">Contexte</div>
+          <div class="kv"><span class="k">Churn</span><span class="v" style="color:var(--risk)">78 · élevé</span></div>
+          <div class="kv"><span class="k">Valeur annuelle</span><span class="v mono">1 480 €</span></div>
+          <div class="kv"><span class="k">Passages</span><span class="v mono">14</span></div>
+          <div class="kv"><span class="k">Abonnement</span><span class="v">Tous les 15 j</span></div>
+          <div class="kv"><span class="k">Intervenante</span><span class="v">Amélie L.</span></div>
+          <div class="kv"><span class="k">Gestes accordés</span><span class="v mono">0</span></div>
+          <div class="kv"><span class="k">SLA 1ʳᵉ réponse</span><span class="v mono" style="color:var(--warn)">2 h 04</span></div>
+
+          <div class="note" style="font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin:16px 0 8px">3 derniers passages</div>
+          <div class="tline">
+            <div class="e r"><div class="d">25 août · Amélie L.</div><div class="x">★ 3 · 1 h 48</div></div>
+            <div class="e b"><div class="d">11 août · Amélie L.</div><div class="x">★ 4 · 2 h 10</div></div>
+            <div class="e b"><div class="d">3 juillet · Sonia M.</div><div class="x">★ 5 · 2 h 20</div></div>
+          </div>
+
+          <div style="margin-top:14px;border-top:1px solid var(--paper-300);padding-top:10px">
+            <button class="b sm gh" style="width:100%;margin-bottom:6px">Ouvrir la fiche 360</button>
+            <button class="b sm gh" style="width:100%">Lancer le playbook qualité</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FRICTIONS ============ -->
+    <section class="view" id="v-frictions">
+      <h2 class="vt">Frictions</h2>
+      <p class="vsub">Ce que le produit coûte en clients et en intervenants sans que personne ne se plaigne</p>
+
+      <div class="band">Funnel intervenant <em>30 derniers jours · 214 entrées</em></div>
+      <div class="funnel">
+        <div class="fstep"><span>Page d'entrée</span><span class="fbar"><i style="width:100%"></i></span><span class="drop mono">214</span><span class="drop">—</span></div>
+        <div class="fstep"><span>Éligibilité démarrée</span><span class="fbar"><i style="width:29%"></i></span><span class="drop mono">62</span><span class="drop">−71 %</span></div>
+        <div class="fstep"><span>Compte créé</span><span class="fbar"><i style="width:17%"></i></span><span class="drop mono">37</span><span class="drop">−40 %</span></div>
+        <div class="fstep"><span>Profil complet</span><span class="fbar"><i style="width:13%"></i></span><span class="drop mono">28</span><span class="drop">−24 %</span></div>
+        <div class="fstep"><span>Aiguillage statut</span><span class="fbar"><i style="width:12%"></i></span><span class="drop mono">26</span><span class="drop">−7 %</span></div>
+        <div class="fstep"><span>↳ branche SIRET existant</span><span class="fbar"><i style="width:7%"></i></span><span class="drop mono">15</span><span class="drop">—</span></div>
+        <div class="fstep"><span>↳ branche création AE</span><span class="fbar"><i class="warn" style="width:5%"></i></span><span class="drop mono">11</span><span class="drop">—</span></div>
+        <div class="fstep"><span>SIRET obtenu (branche B)</span><span class="fbar"><i class="warn" style="width:1.8%"></i></span><span class="drop mono">4</span><span class="drop bad">−64 %</span></div>
+        <div class="fstep"><span>Documents déposés</span><span class="fbar"><i style="width:7%"></i></span><span class="drop mono">15</span><span class="drop bad">−21 %</span></div>
+        <div class="fstep"><span>Entretien passé</span><span class="fbar"><i style="width:5.6%"></i></span><span class="drop mono">12</span><span class="drop">−20 %</span></div>
+        <div class="fstep"><span><b>Activé</b></span><span class="fbar"><i style="width:4.2%"></i></span><span class="drop mono"><b>9</b></span><span class="drop">−25 %</span></div>
+      </div>
+      <p class="note" style="margin-top:8px">Conversion globale <b class="mono">4,2 %</b> (cible 4-7 %) · branche création AE <b class="mono" style="color:var(--warn)">36 %</b> jusqu'au SIRET (cible 35 %) — la métrique la plus importante du funnel, actuellement tenue.</p>
+
+      <div class="band">Frictions détectées <em>ampleur · tendance · action</em></div>
+      <div class="frx">
+        <div><div class="ti">Refus d'attestation RC Pro : 4 sur 9 dépôts</div><div class="hy">Motif « activité non couverte ». La consigne d'upload ne précise pas que l'attestation doit mentionner le nettoyage à domicile. Le candidat repart chez son assureur, perd 5 à 10 jours, et 2 sur 4 ne reviennent pas.</div></div>
+        <div class="mg"><b style="color:var(--risk)">+14 pts</b><small>ABANDON</small></div>
+        <div><button class="b sm pri">Créer une action</button></div>
+      </div>
+      <div class="frx">
+        <div><div class="ti">Choix du créneau client : 3 min 10 en médiane</div><div class="hy">Contre 1 min 05 historiquement. Corrélé à la raréfaction des créneaux du vendredi matin : l'utilisateur parcourt plus d'écrans avant de trouver une disponibilité.</div></div>
+        <div class="mg"><b style="color:var(--warn)">×2,9</b><small>DURÉE</small></div>
+        <div><button class="b sm pri">Créer une action</button></div>
+      </div>
+      <div class="frx">
+        <div><div class="ti">Upload de document : 18 % d'échec sur Android</div><div class="hy">Concentré sur les photos &gt; 8 Mo prises en pleine résolution. La compression côté client échoue silencieusement, l'utilisateur croit avoir déposé sa pièce.</div></div>
+        <div class="mg"><b style="color:var(--risk)">18 %</b><small>ÉCHECS</small></div>
+        <div><button class="b sm pri">Créer une action</button></div>
+      </div>
+      <div class="frx">
+        <div><div class="ti">31 recherches client sans créneau disponible</div><div class="hy">Cadaujac, vendredi matin. Friction produit et signal de capacité : il manque une intervenante sur ce créneau depuis 3 semaines.</div></div>
+        <div class="mg"><b>31</b><small>CLIENTS</small></div>
+        <div><button class="b sm pri">Créer une action</button></div>
+      </div>
+
+      <div class="band">Santé du produit <em>vs cible · tendance 8 semaines</em></div>
+      <div class="risk3" style="grid-template-columns:repeat(4,1fr)">
+        <div class="tile"><h5>Conversion client</h5><div style="padding:11px"><b class="mono" style="font-size:22px">7,1 %</b> <span class="note">cible 8 %</span><div class="gauge" style="margin-top:8px"><i class="" style="width:89%;background:var(--warn)"></i></div></div></div>
+        <div class="tile"><h5>Conversion intervenant</h5><div style="padding:11px"><b class="mono" style="font-size:22px">4,2 %</b> <span class="note">cible 4-7 %</span><div class="gauge g" style="margin-top:8px"><i style="width:100%"></i></div></div></div>
+        <div class="tile"><h5>Fiabilité opérationnelle</h5><div style="padding:11px"><b class="mono" style="font-size:22px">96 %</b> <span class="note">couverture + ponctualité</span><div class="gauge g" style="margin-top:8px"><i style="width:96%"></i></div></div></div>
+        <div class="tile"><h5>Qualité perçue</h5><div style="padding:11px"><b class="mono" style="font-size:22px">4,7</b> <span class="note">NPS +52 · litiges 1,4 %</span><div class="gauge g" style="margin-top:8px"><i style="width:94%"></i></div></div></div>
+      </div>
+    </section>
+
+    <!-- ============ VUE MOBILE ADMIN ============ -->
+    <section class="view" id="v-mobile">
+      <h2 class="vt">Console mobile</h2>
+      <p class="vsub">Trois écrans seulement — Radar, File d'actions, Inbox. Le reste renvoie vers l'ordinateur : mieux vaut trois écrans excellents que quinze tableaux illisibles sur 390 px.</p>
+      <div class="mobwrap">
+        <div class="mob">
+          <div class="sb"><span>7:41</span><span>LÉO CLEAN · OPS</span><span>▮</span></div>
+          <div class="bdy">
+            <div class="vital" style="font-size:10.5px;gap:10px;padding:8px 10px;flex-direction:column;align-items:flex-start">
+              <span><b>14</b> missions · <b class="g">100 %</b> couvertes</span>
+              <span class="m">2 en cours · 1 retard · CA 892 €</span>
+            </div>
+            <div class="band" style="margin:12px 0 8px">Critiques · 3</div>
+            <div class="sigcard p0" style="margin-bottom:7px">
+              <div class="hd"><span class="p">P0 · NON COUVERTE</span><span class="sla">H-34</span></div>
+              <div class="ti" style="font-size:12.5px">Mer. 27 · 8 h · Gradignan</div>
+              <div class="ac"><button class="b sm pri">Élargir</button><button class="b sm gh">Appeler</button></div>
+            </div>
+            <div class="sigcard p0" style="margin-bottom:7px">
+              <div class="hd"><span class="p">P0 · RÉCLAMATION</span><span class="sla">14 h</span></div>
+              <div class="ti" style="font-size:12.5px">Casse · Hélène R.</div>
+              <div class="ac"><button class="b sm pri">Ouvrir</button></div>
+            </div>
+            <div class="sigcard p1">
+              <div class="hd"><span class="p">P1 · PAIEMENT</span><span class="sla">2ᵉ échec</span></div>
+              <div class="ti" style="font-size:12.5px">Marc T. · 63 €</div>
+              <div class="ac"><button class="b sm pri">Appeler</button></div>
+            </div>
+            <div class="band" style="margin:14px 0 8px">Risques</div>
+            <div class="tile">
+              <div class="it" style="padding:7px 9px"><div class="sc hi" style="font-size:13px">78</div><div><div class="nm" style="font-size:11.5px">Julie P. · churn</div><div class="wh" style="font-size:10.5px">note 3/5 · intervenante changée</div></div><span class="go">→</span></div>
+              <div class="it" style="padding:7px 9px"><div class="sc md" style="font-size:13px">12j</div><div><div class="nm" style="font-size:11.5px">Sonia M. · URSSAF</div><div class="wh" style="font-size:10.5px">8 missions à réaffecter</div></div><span class="go">→</span></div>
+            </div>
+          </div>
+          <div class="tabs"><div class="on"><span>◉</span>Radar</div><div><span>☰</span>Actions · 14</div><div><span>✉</span>Inbox · 6</div></div>
+        </div>
+
+        <div style="max-width:420px">
+          <div class="band" style="margin-top:0">Ce que la version mobile garde</div>
+          <div class="panel"><div class="bd">
+            <div class="kv"><span class="k">Signaux critiques + action primaire</span><span class="v" style="color:var(--ok)">✓</span></div>
+            <div class="kv"><span class="k">Barre de vitalité du jour</span><span class="v" style="color:var(--ok)">✓</span></div>
+            <div class="kv"><span class="k">Top 4 des risques avec motif</span><span class="v" style="color:var(--ok)">✓</span></div>
+            <div class="kv"><span class="k">File d'actions et résolution</span><span class="v" style="color:var(--ok)">✓</span></div>
+            <div class="kv"><span class="k">Inbox et réponse par macro</span><span class="v" style="color:var(--ok)">✓</span></div>
+            <div class="kv"><span class="k">Clic-to-call sur chaque signal</span><span class="v" style="color:var(--ok)">✓</span></div>
+          </div></div>
+          <div class="band">Ce qu'elle renvoie à l'ordinateur</div>
+          <div class="panel"><div class="bd">
+            <div class="kv"><span class="k">Timeline des tournées</span><span class="v" style="color:var(--ink-400)">→ desktop</span></div>
+            <div class="kv"><span class="k">Revue de dossier documentaire</span><span class="v" style="color:var(--ink-400)">→ desktop</span></div>
+            <div class="kv"><span class="k">Finance et exports</span><span class="v" style="color:var(--ink-400)">→ desktop</span></div>
+            <div class="kv"><span class="k">Réglages et tarification</span><span class="v" style="color:var(--ink-400)">→ desktop</span></div>
+          </div></div>
+          <p class="note" style="margin-top:12px">Alerting mobile : push pour tous les P0 et P1, SMS réservé aux P0 (no-show, réclamation sécurité, mission non couverte à H-24, 3ᵉ échec de paiement). Pas plus d'un SMS par 30 minutes hors sécurité.</p>
+        </div>
+      </div>
+    </section>
+
+    </main>
+  </div>
+
+  <p class="note" style="margin-top:16px;max-width:90ch">Les onglets de gauche changent de vue. Les vues Planning, Zones, Finance, Parrainage et Réglages ne sont pas maquettées ici : elles sont spécifiées dans <b>04-console-admin.md</b> et suivent les mêmes primitives (tableau dense, panneau latéral contextuel, action inline).</p>
+</div>
+
+<script>
+document.querySelectorAll('nav.side a').forEach(function(a){
+  a.addEventListener('click',function(){
+    var v=a.dataset.v; if(!v) return;
+    document.querySelectorAll('nav.side a').forEach(function(x){x.classList.remove('on')});
+    a.classList.add('on');
+    document.querySelectorAll('.view').forEach(function(s){s.classList.remove('on')});
+    var t=document.getElementById('v-'+v); if(t) t.classList.add('on');
+    window.scrollTo({top:document.querySelector('.console').offsetTop-20,behavior:'smooth'});
+  });
+});
+</script>
+</body>
 </html>

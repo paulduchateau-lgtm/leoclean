@@ -18,7 +18,7 @@ Barre d'onglets basse : **Aujourd'hui · Missions · Revenus · Profil**. Badge 
 
 ## 2. Aujourd'hui `/pro`
 
-L'écran le plus utilisé du produit. Objectif : répondre à trois questions en un coup d'œil — _où je vais maintenant_, _combien je gagne aujourd'hui_, _qu'est-ce qui a changé_.
+L'écran le plus utilisé du produit. Objectif : répondre à trois questions en un coup d'œil — *où je vais maintenant*, *combien je gagne aujourd'hui*, *qu'est-ce qui a changé*.
 
 **Structure verticale :**
 
@@ -26,21 +26,19 @@ L'écran le plus utilisé du produit. Objectif : répondre à trois questions en
 2. **Carte « Maintenant »** — la mission courante ou la prochaine :
    - Heure, prénom du client, adresse complète, `12 min de trajet`, durée prévue.
    - CTA géant collant : `Je suis arrivée` (check-in) ou `Terminer la mission` (check-out) selon l'état.
-   - Boutons secondaires : _Itinéraire_ (deep link Waze/Google/Plans selon préférence enregistrée), _Appeler_ (proxy), _Consignes_.
-3. **Suite de la tournée** — liste compacte : heure, client, ville, durée, trajet inter-mission. Trou de plus de 45 min matérialisé par un liseré et un lien _Voir les missions disponibles dans ce créneau_ — c'est le mécanisme principal de remplissage.
+   - Boutons secondaires : *Itinéraire* (deep link Waze/Google/Plans selon préférence enregistrée), *Appeler* (proxy), *Consignes*.
+3. **Suite de la tournée** — liste compacte : heure, client, ville, durée, trajet inter-mission. Trou de plus de 45 min matérialisé par un liseré et un lien *Voir les missions disponibles dans ce créneau* — c'est le mécanisme principal de remplissage.
 4. **Bilan du jour** : `3 missions · 7 h 30 · 217 € HT` en monospace.
-5. **Ordre de tournée** : la séquence proposée par l'optimiseur est affichée avec la mention explicite « Ordre suggéré · vous restez libre de votre organisation » et un bouton _Réorganiser_. Aucune alerte, aucun score dégradé en cas de réorganisation (voir garde-fou `00 § 2.2`).
+5. **Ordre de tournée** : la séquence proposée par l'optimiseur est affichée avec la mention explicite « Ordre suggéré · vous restez libre de votre organisation » et un bouton *Réorganiser*. Aucune alerte, aucun score dégradé en cas de réorganisation (voir garde-fou `00 § 2.2`).
 
-État vide : « Rien aujourd'hui. 4 missions cherchent quelqu'un dans ta zone cette semaine → _Voir_ ». Toujours une sortie active, jamais un écran mort.
+État vide : « Rien aujourd'hui. 4 missions cherchent quelqu'un dans ta zone cette semaine → *Voir* ». Toujours une sortie active, jamais un écran mort.
 
 ## 3. Propositions et acceptation
 
 ### 3.1 Réception
-
 Push + SMS (paramétrable) : `Nouvelle mission · mar. 26/08 8h-11h · Léognan · 12 min · 66 € HT · expire dans 30 min`. Le montant net et le temps de trajet doivent figurer dans la notification elle-même : c'est ce qui détermine l'acceptation.
 
 ### 3.2 Écran de proposition
-
 - Date, plage, durée estimée, **rémunération HT explicite**, trajet depuis la mission précédente ou depuis le point d'ancrage.
 - Récurrence : `Toutes les 2 semaines, le mardi matin` avec la mention « engagement souhaité : 3 mois » — informatif, non contraignant.
 - Aperçu du logement : type, surface, pièces, animaux, produits fournis ou non, escalier/ascenseur. **Adresse au niveau rue seulement** avant acceptation (numéro exact révélé après) ; prénom du client seul.
@@ -49,7 +47,6 @@ Push + SMS (paramétrable) : `Nouvelle mission · mar. 26/08 8h-11h · Léognan 
 - Compte à rebours visible. À expiration, la proposition passe en historique avec la mention « proposée à quelqu'un d'autre » — jamais de formulation culpabilisante.
 
 ### 3.3 Transparence algorithmique
-
 Page `/pro/profil/comment-ca-marche` : explication en français simple de l'ordre de proposition (proximité, continuité chez le même client, disponibilités déclarées, régularité de réponse) et de ce qui n'entre **pas** en jeu. Obligation morale, et utile en cas de contentieux.
 
 ## 4. Fiche mission `/pro/missions/:id` — écran de travail
@@ -57,19 +54,16 @@ Page `/pro/profil/comment-ca-marche` : explication en français simple de l'ordr
 Onglets internes : **Infos · Checklist · Rapport**.
 
 ### Infos
-
-- Accès : interphone, code (révélé J-24h → J+2h, affiché en gros monospace, bouton _Copier_), boîte à clés, étage, stationnement.
+- Accès : interphone, code (révélé J-24h → J+2h, affiché en gros monospace, bouton *Copier*), boîte à clés, étage, stationnement.
 - Consignes du client, zones interdites, animaux, allergies/produits à éviter, matériel disponible.
 - Historique : `4ᵉ passage chez Camille · dernière fois : 2 h 40 · note laissée : ★★★★★`.
 - Notes privées de l'intervenant sur ce logement (invisibles du client) — très demandé, très fidélisant.
 
 ### Checklist
-
 - Par pièce, cases à cocher, persistée localement puis synchronisée. Tâches standard + tâches ajoutées par le client pour ce passage, visuellement distinguées.
 - La checklist n'est pas un instrument de contrôle : elle sert de mémo et de preuve. Non bloquante au check-out (une confirmation « 3 tâches non cochées, continuer ? » suffit).
 
 ### Rapport
-
 - Photos **avant/après** par pièce (`PhotoUploader`, compression client, upload en file résistant à la coupure réseau). Minimum recommandé : 2 avant, 2 après. Consigne affichée : « Cadre les pièces, pas les personnes ni les documents. »
 - Durée réelle : calculée du check-in au check-out, ajustable avec motif si l'intervenant a oublié de pointer.
 - **Anomalies** : catégories (dégât préexistant, équipement en panne, produit épuisé, accès impossible, logement inhabituellement sale, présence non prévue). Photo + commentaire. Une anomalie « logement inhabituellement sale » déclenche une proposition d'ajustement de durée soumise à validation admin, jamais facturée unilatéralement.
@@ -77,7 +71,6 @@ Onglets internes : **Infos · Checklist · Rapport**.
 - `Terminer` → passage en `COMPLETED`, notification client, déclenchement de la facturation.
 
 ### Check-in / check-out
-
 - Géoloc capturée au tap, tolérance 150 m. Hors périmètre : `Je ne suis pas encore sur place ?` avec possibilité de forcer (motif journalisé) — pas de blocage : l'intervenant peut être dans un sous-sol, un immeuble mal géocodé, ou avoir refusé la localisation.
 - Fallback sans GPS : code à 4 chiffres fourni par le client dans son espace, ou check-in manuel simple selon la configuration.
 - Rappel push à H+10 min si aucun check-in ; alerte admin à H+20 (voir `04 § 3`).
@@ -110,60 +103,56 @@ Onglets internes : **Infos · Checklist · Rapport**.
 ## 8. Profil, conformité, formation
 
 ### Profil public
-
 Photo, prénom + initiale, présentation en 300 caractères, ancienneté, nombre de missions, note, tags d'avis, compétences. Prévisualisation « vu par le client ».
 
 ### Documents et conformité
-
 `DocumentSlot` par pièce, avec statut (`manquant` / `en vérification` / `valide jusqu'au JJ/MM/AAAA` / `refusé + motif`) :
 
-| Document                                       | Obligatoire             | Expiration suivie                 |
-| ---------------------------------------------- | ----------------------- | --------------------------------- |
-| Pièce d'identité                               | oui                     | oui                               |
-| Justificatif SIRET / avis de situation SIRENE  | oui                     | non (revérification API annuelle) |
-| Attestation de vigilance URSSAF                | oui                     | **oui, 6 mois**                   |
-| Récépissé de déclaration SAP (n° NOVA)         | oui (modèle mandataire) | non                               |
-| Attestation RC Pro                             | oui                     | **oui, 12 mois**                  |
-| IBAN + RIB                                     | oui                     | non                               |
-| Attestation d'assurance véhicule (si véhicule) | si applicable           | oui                               |
+| Document | Obligatoire | Expiration suivie |
+|---|---|---|
+| Pièce d'identité | oui | oui |
+| Justificatif SIRET / avis de situation SIRENE | oui | non (revérification API annuelle) |
+| Attestation de vigilance URSSAF | oui | **oui, 6 mois** |
+| Récépissé de déclaration SAP (n° NOVA) | oui (modèle mandataire) | non |
+| Attestation RC Pro | oui | **oui, 12 mois** |
+| IBAN + RIB | oui | non |
+| Attestation d'assurance véhicule (si véhicule) | si applicable | oui |
 
 Relances automatiques J-45 / J-15 / J-3 / J-0. À expiration d'un document obligatoire : **mise en pause du compte** — plus de nouvelles propositions, missions déjà acceptées maintenues si l'assurance le permet (sinon réaffectation), message explicatif non punitif, chemin de régularisation en un écran.
 
 ### Formation « Léo Academy »
-
-Modules courts (3-5 min, vidéo + fiche PDF) : protocole d'entrée dans un logement, ordre de nettoyage efficace, produits et surfaces fragiles, sécurité et gestes, relation client et discrétion, que faire en cas de dégât, gestion des clés. Suivi de complétion. Deux modules obligatoires avant activation (protocole + dégât/sécurité), le reste facultatif avec badges affichés au client. Attention : imposer une formation détaillée sur les _méthodes_ de travail est un indice de subordination ; cadrer les modules comme des standards de sécurité et de qualité contractuels, pas comme des directives d'exécution.
+Modules courts (3-5 min, vidéo + fiche PDF) : protocole d'entrée dans un logement, ordre de nettoyage efficace, produits et surfaces fragiles, sécurité et gestes, relation client et discrétion, que faire en cas de dégât, gestion des clés. Suivi de complétion. Deux modules obligatoires avant activation (protocole + dégât/sécurité), le reste facultatif avec badges affichés au client. Attention : imposer une formation détaillée sur les *méthodes* de travail est un indice de subordination ; cadrer les modules comme des standards de sécurité et de qualité contractuels, pas comme des directives d'exécution.
 
 ### Parrainage intervenant
-
 Code personnel, prime versée après N missions réalisées par le filleul (ex. 80 € après 10 missions). C'est le canal de recrutement le moins cher ; il mérite une place en dur dans la navigation.
 
 ## 9. Mode hors-ligne
 
 Priorité absolue : un intervenant sans réseau dans un immeuble doit pouvoir travailler.
 
-| Donnée                                        | Stratégie                                                                                                                                           |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Tournée du jour + fiches missions (J-1 à J+1) | Pré-chargées à l'ouverture, stockées en IndexedDB, chiffrées pour les codes d'accès                                                                 |
-| Check-in / check-out                          | Enregistrés localement avec horodatage device + position, synchronisés à la reconnexion (le timestamp local fait foi, avec marquage `offline_sync`) |
-| Photos                                        | File d'upload persistante, reprise automatique, indicateur `3 photos en attente d'envoi`                                                            |
-| Checklist                                     | Local-first, fusion par dernier écrit                                                                                                               |
-| Chat                                          | Envoi différé avec état `en attente` explicite                                                                                                      |
+| Donnée | Stratégie |
+|---|---|
+| Tournée du jour + fiches missions (J-1 à J+1) | Pré-chargées à l'ouverture, stockées en IndexedDB, chiffrées pour les codes d'accès |
+| Check-in / check-out | Enregistrés localement avec horodatage device + position, synchronisés à la reconnexion (le timestamp local fait foi, avec marquage `offline_sync`) |
+| Photos | File d'upload persistante, reprise automatique, indicateur `3 photos en attente d'envoi` |
+| Checklist | Local-first, fusion par dernier écrit |
+| Chat | Envoi différé avec état `en attente` explicite |
 
 Bandeau global `Hors connexion — tes actions sont enregistrées` en haut, non bloquant.
 
 ## 10. Notifications intervenant
 
-| Événement                | Canal         | Fenêtre                                                                                       |
-| ------------------------ | ------------- | --------------------------------------------------------------------------------------------- |
-| Nouvelle proposition     | Push + SMS    | Immédiat, respecte les heures déclarées (par défaut 7 h-21 h)                                 |
-| Rappel de mission        | Push          | J-1 18 h et H-1                                                                               |
-| Check-in manquant        | Push          | H+10 min                                                                                      |
-| Annulation client        | Push + SMS    | Immédiat                                                                                      |
-| Modification de consigne | Push          | Immédiat                                                                                      |
-| Message client           | Push          | Immédiat                                                                                      |
-| Virement effectué        | Push + e-mail | À l'exécution                                                                                 |
-| Document expirant        | Push + e-mail | J-45/15/3/0                                                                                   |
-| Avis reçu                | Push          | Immédiat si ≥ 4, groupé quotidien si < 4 (éviter la notification humiliante en plein service) |
+| Événement | Canal | Fenêtre |
+|---|---|---|
+| Nouvelle proposition | Push + SMS | Immédiat, respecte les heures déclarées (par défaut 7 h-21 h) |
+| Rappel de mission | Push | J-1 18 h et H-1 |
+| Check-in manquant | Push | H+10 min |
+| Annulation client | Push + SMS | Immédiat |
+| Modification de consigne | Push | Immédiat |
+| Message client | Push | Immédiat |
+| Virement effectué | Push + e-mail | À l'exécution |
+| Document expirant | Push + e-mail | J-45/15/3/0 |
+| Avis reçu | Push | Immédiat si ≥ 4, groupé quotidien si < 4 (éviter la notification humiliante en plein service) |
 
 ## 11. Critères d'acceptation (extraits)
 
