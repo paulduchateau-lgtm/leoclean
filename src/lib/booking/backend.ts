@@ -3,7 +3,7 @@ import type { ActionResult } from "@/lib/action-result";
 /**
  * Ce dont le tunnel de réservation a besoin, et rien de plus.
  *
- * Le formulaire ne connaît pas la base : il connaît quatre opérations. C'est
+ * Le formulaire ne connaît pas la base : il connaît cinq opérations. C'est
  * ce qui permet de faire tourner exactement la même interface au-dessus de
  * deux implémentations — les server actions en production, un calcul dans le
  * navigateur pour la vitrine statique — sans dupliquer un seul écran.
@@ -187,4 +187,26 @@ export interface BookingBackend {
   confirmBooking(
     input: ConfirmBookingInput,
   ): Promise<ActionResult<ConfirmationView>>;
+
+  /**
+   * Enregistre un événement de parcours.
+   *
+   * Cinquième opération, et la seule qui n'apprend rien au client : son
+   * résultat n'est jamais lu. Elle passe par le backend comme les autres parce
+   * que la vitrine statique n'a pas de server action — sans quoi le tunnel
+   * importerait un fichier que le build de démonstration écarte, et c'est le
+   * typage qui casserait, pas l'export.
+   *
+   * Le retour est volontairement large : en production c'est une server
+   * action, donc une promesse, et **seule une server action traverse la
+   * frontière serveur/client** — une fonction ordinaire enveloppant l'appel
+   * échouerait au rendu. Sur la vitrine, c'est une fonction synchrone qui ne
+   * fait rien. L'appelant ignore l'un et l'autre.
+   */
+  tracerEtape(input: {
+    nom: "tunnel_etape_vue" | "tunnel_etape_completee";
+    etape: string;
+    duree_ms?: number;
+    parcours?: string;
+  }): void | Promise<unknown>;
 }

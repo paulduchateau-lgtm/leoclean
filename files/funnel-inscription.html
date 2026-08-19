@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Léo Clean — Funnel d'inscription intervenant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper-000:#FFFFFF;--paper-050:#FAF8F4;--paper-100:#F2EFE7;--paper-200:#E6E1D6;--paper-300:#D3CDBF;
+  --ink-900:#14150F;--ink-700:#3A3B33;--ink-500:#6B6C61;--ink-400:#8E8F84;
+  --signal:#A5D900;--signal-600:#8FBE00;--signal-050:#F2FADB;
+  --ok:#0F7A4A;--ok-050:#E8F5EE;--warn:#B4740A;--warn-050:#FDF3E1;--risk:#C0392B;--risk-050:#FBEAE7;--info:#2C5AA0;--info-050:#EAF0FA;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --r:12px;--rb:10px;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--paper-100);font-family:var(--sans);color:var(--ink-900);padding:48px 24px 96px}
+.sheet{max-width:1580px;margin:0 auto}
+.sheet-head{border-bottom:2px solid var(--ink-900);padding-bottom:20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.sheet-head h1{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+.sheet-head p{margin:0;color:var(--ink-500);font-size:14px;max-width:62ch}
+.stamp{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-500);text-align:right;line-height:1.9}
+.stamp b{color:var(--ink-900);font-weight:500}
+
+/* plan du funnel */
+.flow{margin:26px 0 46px;padding:22px;background:var(--paper-000);border:1px solid var(--paper-200);border-radius:var(--r)}
+.flow h4{margin:0 0 16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);font-weight:500}
+.flow-row{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap}
+.node{border:1px solid var(--paper-300);border-radius:8px;padding:8px 12px;font-size:12.5px;line-height:1.35;min-width:96px}
+.node b{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--ink-400);font-weight:500;margin-bottom:2px}
+.node.br{background:var(--warn-050);border-color:#F0DDB4}
+.node.end{background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
+.node.end b{color:var(--signal)}
+.arr{display:grid;place-items:center;color:var(--ink-400);font-size:14px;padding:0 2px}
+
+.gallery{display:flex;flex-wrap:wrap;gap:52px 34px}
+figure.screen{margin:0;width:390px}
+figcaption{display:flex;align-items:baseline;gap:9px;margin-bottom:11px;font-family:var(--mono);font-size:11px;color:var(--ink-400)}
+figcaption b{color:var(--ink-900);font-weight:500;text-transform:uppercase;letter-spacing:.07em;font-size:10.5px}
+figcaption span{margin-left:auto}
+.phone{width:390px;height:844px;background:var(--paper-050);border:1px solid var(--paper-300);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 34px rgba(20,21,15,.09)}
+.sb{flex:0 0 36px;display:flex;justify-content:space-between;align-items:center;padding:0 22px 0 24px;font-family:var(--mono);font-size:11px;font-weight:500}
+.sb .dots{letter-spacing:1px;color:var(--ink-500)}
+.app{flex:1;overflow:hidden;position:relative}
+.scroll{height:100%;overflow:hidden;padding:0 20px 16px}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 0 14px}
+.back{width:34px;height:34px;border:1px solid var(--paper-300);border-radius:var(--rb);display:grid;place-items:center;font-size:15px;color:var(--ink-700);background:var(--paper-000);flex:0 0 auto}
+.step{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-400)}
+.prog{height:3px;background:var(--paper-200);border-radius:2px;margin:2px 0 22px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--signal)}
+h3.q{font-size:25px;font-weight:600;letter-spacing:-.025em;line-height:1.18;margin:0 0 8px}
+p.sub{color:var(--ink-500);font-size:14px;line-height:1.55;margin:0 0 20px}
+.card{background:var(--paper-000);border:1px solid var(--paper-200);border-radius:var(--r);padding:16px}
+.card+.card{margin-top:10px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:var(--rb);background:var(--ink-900);color:var(--paper-050);font-size:16px;font-weight:600;border:none;width:100%;font-family:var(--sans);letter-spacing:-.01em}
+.btn.go{background:var(--signal);color:var(--ink-900)}
+.btn.ghost{background:transparent;color:var(--ink-900);border:1.5px solid var(--paper-300)}
+.btn.sm{height:42px;font-size:14px}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 20px 18px;background:linear-gradient(to top,var(--paper-050) 72%,rgba(250,248,244,0))}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);margin:22px 0 9px}
+.note{font-size:11.5px;color:var(--ink-400);line-height:1.55}
+.opt{background:var(--paper-000);border:1.5px solid var(--paper-200);border-radius:var(--r);padding:15px 16px;display:flex;gap:13px;align-items:center;margin-bottom:9px}
+.opt.on{border-color:var(--ink-900);border-width:2px}
+.opt .ic{width:38px;height:38px;border-radius:9px;background:var(--paper-100);display:grid;place-items:center;font-size:18px;flex:0 0 auto}
+.opt .tx{flex:1}
+.opt .tx b{display:block;font-size:15.5px;font-weight:600;line-height:1.25}
+.opt .tx small{display:block;font-size:12.5px;color:var(--ink-500);margin-top:2px;line-height:1.4}
+.status{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px}
+.status.ok{background:var(--ok-050);color:var(--ok)}
+.status.warn{background:var(--warn-050);color:var(--warn)}
+.status.info{background:var(--info-050);color:var(--info)}
+.status.live{background:var(--signal-050);color:#4A6100}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--paper-200);font-size:14px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-500)}
+.kv .v{font-weight:500}
+.chk{display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid var(--paper-200)}
+.chk:last-child{border-bottom:none}
+.chk i{width:23px;height:23px;border:1.6px solid var(--paper-300);border-radius:6px;flex:0 0 auto;display:grid;place-items:center;font-size:13px;color:transparent;font-style:normal;margin-top:1px}
+.chk.on i{background:var(--ink-900);border-color:var(--ink-900);color:var(--signal)}
+.chk .t{flex:1;font-size:14.5px;line-height:1.35}
+.chk .t small{display:block;font-size:12px;color:var(--ink-500);margin-top:3px;line-height:1.45}
+.help{position:absolute;left:20px;right:20px;bottom:82px;background:var(--ink-900);color:var(--paper-050);border-radius:var(--rb);padding:12px 14px;display:flex;align-items:center;gap:11px}
+.help .t{flex:1;font-size:13px;line-height:1.35}
+.help .t b{color:var(--signal)}
+.help .go{background:var(--signal);color:var(--ink-900);border-radius:7px;padding:7px 12px;font-size:12.5px;font-weight:600;flex:0 0 auto}
+.rail{position:relative;padding-left:26px}
+.rail:before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:2px;background:var(--paper-200)}
+.rail .ev{position:relative;padding-bottom:18px}
+.rail .ev:last-child{padding-bottom:0}
+.rail .ev:before{content:"";position:absolute;left:-24px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--paper-000);border:2px solid var(--paper-300)}
+.rail .ev.done:before{background:var(--ink-900);border-color:var(--ink-900)}
+.rail .ev.now:before{background:var(--signal);border-color:var(--ink-900);box-shadow:0 0 0 4px var(--signal-050)}
+.rail .t{font-family:var(--mono);font-size:10.5px;color:var(--ink-400);letter-spacing:.04em;text-transform:uppercase}
+.rail .d{font-size:14.5px;font-weight:500;margin-top:2px;line-height:1.35}
+.rail .d small{display:block;font-weight:400;font-size:12.5px;color:var(--ink-500);margin-top:2px}
+.guide{border-left:3px solid var(--signal);padding:2px 0 2px 14px;margin-bottom:16px}
+.guide b{display:block;font-size:14.5px;font-weight:600;margin-bottom:4px}
+.guide p{margin:0;font-size:13px;line-height:1.5;color:var(--ink-700)}
+.guide .field{margin-top:8px;background:var(--paper-100);border:1px dashed var(--paper-300);border-radius:7px;padding:8px 11px;font-family:var(--mono);font-size:11.5px;line-height:1.5}
+.guide .field s{display:block;color:var(--ink-400);text-decoration:none;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:500;border:1px solid var(--paper-300);background:var(--paper-000);color:var(--ink-700)}
+.pill.on{background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
+.hr{height:1px;background:var(--paper-200);margin:16px 0}
+.doc{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--paper-200)}
+.doc:last-child{border-bottom:none}
+.doc .n{flex:1}
+.doc .n b{display:block;font-size:14px;font-weight:500}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet-head">
+    <div>
+      <h1>Funnel d'inscription intervenant — planche de maquettes</h1>
+      <p>Mécanique Airbnb (une question par écran, sauvegarde permanente, reprise possible), fond LegalStart (le candidat sans SIRET n'est pas rejeté, il est accompagné). Le bouton <b>Je suis bloquée</b> est présent sur chaque écran des branches d'accompagnement — c'est le point de sauvetage le plus rentable du parcours.</p>
+    </div>
+    <div class="stamp">Léo Clean · <b>/rejoindre</b><br>v1.0 — 18.08.2026<br>10 étapes · 2 aiguillages</div>
+  </header>
+
+  <div class="flow">
+    <h4>Plan du parcours — les deux aiguillages</h4>
+    <div class="flow-row">
+      <div class="node"><b>0-1</b>Éligibilité<br>zone &amp; dispos</div>
+      <div class="arr">→</div>
+      <div class="node"><b>2-3</b>Compte<br>&amp; profil</div>
+      <div class="arr">→</div>
+      <div class="node"><b>4A</b>SIRET existant<br><span class="mono" style="font-size:10px;color:var(--ink-400)">1 min</span></div>
+      <div class="arr">/</div>
+      <div class="node br"><b>4B</b>Création auto-entreprise<br><span class="mono" style="font-size:10px">1 à 3 semaines · accompagnée</span></div>
+      <div class="arr">→</div>
+      <div class="node"><b>5A</b>SAP déclaré</div>
+      <div class="arr">/</div>
+      <div class="node br"><b>5B</b>Déclaration SAP<br><span class="mono" style="font-size:10px">guidée · NOVA</span></div>
+      <div class="arr">→</div>
+      <div class="node"><b>6-7</b>Documents<br>&amp; entretien</div>
+      <div class="arr">→</div>
+      <div class="node"><b>8-9</b>Mise en situation<br>&amp; charte</div>
+      <div class="arr">→</div>
+      <div class="node end"><b>10</b>Activation</div>
+    </div>
+    <p class="note" style="margin:14px 0 0">Pendant l'attente d'un SIRET, le funnel continue sur tout ce qui n'en dépend pas : profil, documents d'identité, formation, entretien. Objectif : que le dossier soit complet à la minute où le SIRET arrive.</p>
+  </div>
+
+  <div class="gallery">
+
+  <!-- 1 — LANDING -->
+  <figure class="screen">
+    <figcaption><b>Page d'entrée</b> /travailler-avec-nous <span>étape 0</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:02</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div style="padding:16px 0 8px"><span class="mono" style="font-size:12px;font-weight:700;letter-spacing:-.02em">LÉO CLEAN</span></div>
+          <h3 class="q" style="font-size:31px;margin-top:14px">Du ménage à<br>20 minutes de<br>chez vous.</h3>
+          <p class="sub" style="font-size:15px">Entre <b class="mono" style="color:var(--ink-900)">1 400</b> et <b class="mono" style="color:var(--ink-900)">2 200 €</b> net par mois pour 30 h par semaine, sans passer sa vie sur la route.</p>
+
+          <div class="card" style="border:2px solid var(--ink-900)">
+            <div class="eyebrow" style="margin:0 0 12px">Estimez vos revenus</div>
+            <div class="kv"><span class="k">Votre commune</span><span class="v">Cadaujac</span></div>
+            <div class="kv"><span class="k">Heures par semaine</span><span class="v mono">30 h</span></div>
+            <div class="hr" style="margin:12px 0"></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font-size:14px;font-weight:500">Revenu net estimé</span>
+              <span class="mono" style="font-size:24px;font-weight:700">1 780 €</span>
+            </div>
+            <p class="note" style="margin-top:6px">Estimation basée sur la demande réelle autour de Cadaujac ce mois-ci.</p>
+          </div>
+
+          <div class="eyebrow">Pourquoi Léo Clean</div>
+          <div class="card" style="display:flex;gap:12px;align-items:center">
+            <span style="font-size:20px">📍</span>
+            <div><b style="font-size:14.5px;display:block">Jamais plus de 20 min de trajet</b><span class="note">C'est notre règle, pas une promesse commerciale.</span></div>
+          </div>
+          <div class="card" style="display:flex;gap:12px;align-items:center">
+            <span style="font-size:20px">💶</span>
+            <div><b style="font-size:14.5px;display:block">Virement tous les vendredis</b><span class="note">Pour les missions terminées avant mercredi.</span></div>
+          </div>
+          <div class="card" style="display:flex;gap:12px;align-items:center">
+            <span style="font-size:20px">📄</span>
+            <div><b style="font-size:14.5px;display:block">On s'occupe de l'administratif avec vous</b><span class="note">Statut, déclaration SAP, assurance : on vous guide.</span></div>
+          </div>
+        </div>
+        <div class="dock" style="display:grid;gap:8px">
+          <button class="btn go">Je veux me lancer, aidez-moi</button>
+          <button class="btn ghost">Je suis déjà auto-entrepreneur</button>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 2 — ELIGIBILITE ZONE -->
+  <figure class="screen">
+    <figcaption><b>Éligibilité — commune</b> /rejoindre <span>étape 1 · sans compte</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:04</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Question 1 sur 6</div></div>
+          <div class="prog"><i style="width:16%"></i></div>
+          <h3 class="q">Vous habitez où ?</h3>
+          <p class="sub">C'est ce qui détermine les missions qu'on peut vous proposer.</p>
+
+          <div class="card" style="border:2px solid var(--ink-900);display:flex;align-items:center;gap:12px">
+            <span style="font-size:17px">📍</span>
+            <div style="flex:1;font-size:16px;font-weight:500">Cadaujac</div>
+            <span class="status ok">Couvert</span>
+          </div>
+
+          <div class="card" style="margin-top:14px;background:var(--signal-050);border-color:#DCEDA8;text-align:center;padding:22px 16px">
+            <svg width="164" height="150" viewBox="0 0 164 150" style="margin-bottom:10px">
+              <circle cx="82" cy="75" r="62" fill="none" stroke="#DCEDA8" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <circle cx="82" cy="75" r="38" fill="rgba(165,217,0,.16)" stroke="#8FBE00" stroke-width="2"/>
+              <circle cx="82" cy="75" r="4.5" fill="#14150F"/>
+              <text x="82" y="93" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5" fill="#5B7300" letter-spacing="1">20 MIN</text>
+              <text x="82" y="70" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#14150F">Cadaujac</text>
+              <text x="82" y="16" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#6B6C61">Léognan</text>
+              <text x="160" y="78" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#6B6C61">Villenave</text>
+              <text x="4" y="120" text-anchor="start" font-family="JetBrains Mono" font-size="8" fill="#6B6C61">Martillac</text>
+              <text x="4" y="42" text-anchor="start" font-family="JetBrains Mono" font-size="8" fill="#6B6C61">Canéjan</text>
+              <text x="82" y="146" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#6B6C61">Gradignan</text>
+            </svg>
+            <div style="font-size:15px;font-weight:600">6 communes à moins de 20 minutes</div>
+            <p class="note" style="color:#5B7300;margin-top:4px">Toutes vos missions se trouveront dans ce cercle.</p>
+          </div>
+
+          <div class="eyebrow">Comment vous déplacez-vous ?</div>
+          <div class="pills">
+            <span class="pill on">🚗 Voiture</span><span class="pill">🛵 Deux-roues</span><span class="pill">🚌 Transports</span><span class="pill">🚶 À pied</span>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Continuer</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 3 — RESULTAT ELIGIBILITE -->
+  <figure class="screen">
+    <figcaption><b>Éligibilité — résultat</b> /rejoindre <span>fin étape 1</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:07</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Résultat</div></div>
+          <div class="prog"><i style="width:16%"></i></div>
+
+          <div style="text-align:center;padding:20px 0 26px">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--signal);display:grid;place-items:center;margin:0 auto 18px;font-size:28px">✓</div>
+            <h3 class="q" style="font-size:26px">Votre profil<br>correspond</h3>
+          </div>
+
+          <div class="card" style="border:2px solid var(--ink-900);text-align:center;padding:22px">
+            <div class="mono" style="font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1">6</div>
+            <div style="font-size:15px;font-weight:500;margin-top:4px">missions par semaine</div>
+            <p class="note" style="margin-top:6px">cherchent quelqu'un autour de Cadaujac, sur vos créneaux du matin.</p>
+          </div>
+
+          <div class="eyebrow">Ce qu'il reste à faire</div>
+          <div class="rail">
+            <div class="ev now"><div class="t">Maintenant · 5 min</div><div class="d">Créer votre compte et votre profil</div></div>
+            <div class="ev"><div class="t">Ensuite</div><div class="d">Votre statut d'indépendante<small>Vous n'en avez pas encore ? On s'en occupe ensemble.</small></div></div>
+            <div class="ev"><div class="t">Puis</div><div class="d">Vos documents et un entretien de 20 min</div></div>
+            <div class="ev"><div class="t">Enfin</div><div class="d">Vos premières missions</div></div>
+          </div>
+
+          <div class="card" style="margin-top:18px;background:var(--paper-100);border-style:dashed">
+            <p style="margin:0;font-size:13px;line-height:1.55;color:var(--ink-700)">Vous pouvez vous arrêter à tout moment et reprendre plus tard : tout est enregistré au fur et à mesure.</p>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Créer mon compte</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 4 — AIGUILLAGE STATUT -->
+  <figure class="screen">
+    <figcaption><b>Aiguillage — statut</b> /rejoindre/statut <span>étape 4</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:19</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Étape 4 sur 10</div></div>
+          <div class="prog"><i style="width:40%"></i></div>
+          <h3 class="q">Votre statut d'indépendante</h3>
+          <p class="sub">Pour travailler avec nous, il faut être à son compte. Si ce n'est pas encore le cas, c'est gratuit et on vous accompagne.</p>
+
+          <div class="opt">
+            <span class="ic">✓</span>
+            <div class="tx"><b>J'ai déjà un SIRET actif</b><small>Auto-entreprise, EI ou société</small></div>
+            <span style="color:var(--ink-400)">›</span>
+          </div>
+          <div class="opt on">
+            <span class="ic" style="background:var(--signal)">🚀</span>
+            <div class="tx"><b>Je veux créer mon auto-entreprise</b><small>Gratuit · 15 min de démarches · on vous guide écran par écran</small></div>
+            <span style="color:var(--ink-400)">›</span>
+          </div>
+          <div class="opt">
+            <span class="ic">⏳</span>
+            <div class="tx"><b>Ma création est en cours</b><small>J'attends mon numéro SIRET</small></div>
+            <span style="color:var(--ink-400)">›</span>
+          </div>
+
+          <div class="card" style="margin-top:22px;background:var(--info-050);border-color:#C9D9F0">
+            <div style="display:flex;gap:11px;align-items:flex-start">
+              <span style="font-size:16px">💡</span>
+              <div>
+                <b style="font-size:14px;display:block;margin-bottom:4px">Pourquoi être indépendante ?</b>
+                <p style="margin:0;font-size:13px;line-height:1.55;color:var(--ink-700)">Vous choisissez vos horaires, vos secteurs et vos missions. Vous pouvez aussi garder vos propres clients en dehors de Léo Clean : on ne demande aucune exclusivité.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Continuer</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 5 — BRANCHE B / COMPRENDRE -->
+  <figure class="screen">
+    <figcaption><b>Branche 4B — comprendre</b> /rejoindre/statut/creer <span>B1</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:22</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Créer mon auto-entreprise · 1/4</div></div>
+          <div class="prog"><i style="width:25%;background:var(--warn)"></i></div>
+          <h3 class="q">C'est plus simple<br>que ça en a l'air</h3>
+          <p class="sub">Voilà exactement ce que ça implique, sans jargon.</p>
+
+          <div class="card">
+            <div class="kv"><span class="k">Ce que ça coûte à créer</span><span class="v mono" style="color:var(--ok)">0 €</span></div>
+            <div class="kv"><span class="k">Temps de démarche</span><span class="v mono">≈ 15 min</span></div>
+            <div class="kv"><span class="k">Délai d'obtention</span><span class="v mono">8 à 20 jours</span></div>
+            <div class="kv"><span class="k">Cotisations</span><span class="v mono">≈ 21 % du chiffre d'affaires</span></div>
+            <div class="kv"><span class="k">Déclaration</span><span class="v">Tous les 3 mois, en ligne</span></div>
+          </div>
+
+          <div class="card" style="margin-top:14px;background:var(--paper-100);border-style:dashed">
+            <b style="font-size:14px;display:block;margin-bottom:6px">Un exemple concret</b>
+            <div class="kv" style="border-color:var(--paper-300)"><span class="k">Vous facturez</span><span class="v mono">1 800 €</span></div>
+            <div class="kv" style="border-color:var(--paper-300)"><span class="k">Cotisations</span><span class="v mono">−378 €</span></div>
+            <div class="kv"><span class="k" style="font-weight:600;color:var(--ink-900)">Il vous reste</span><span class="v mono" style="font-size:16px;font-weight:700">1 422 €</span></div>
+          </div>
+
+          <div class="card" style="margin-top:14px;display:flex;gap:12px;align-items:center">
+            <div style="width:52px;height:52px;border-radius:9px;background:var(--ink-900);color:var(--signal);display:grid;place-items:center;font-size:19px;flex:0 0 auto">▶</div>
+            <div><b style="font-size:14.5px;display:block">Tout comprendre en 90 secondes</b><span class="note">Vidéo · Marion, intervenante depuis 2 ans</span></div>
+          </div>
+
+          <p class="note" style="margin-top:16px">Nous ne faisons pas les démarches à votre place et ne demandons jamais vos identifiants. On vous montre exactement quoi cliquer.</p>
+        </div>
+        <div class="dock"><button class="btn">J'ai compris, on y va</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 6 — BRANCHE B / PREPARER -->
+  <figure class="screen">
+    <figcaption><b>Branche 4B — préparer</b> /rejoindre/statut/creer <span>B2</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:26</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Créer mon auto-entreprise · 2/4</div></div>
+          <div class="prog"><i style="width:50%;background:var(--warn)"></i></div>
+          <h3 class="q">Rassemblez ceci</h3>
+          <p class="sub">Cinq minutes de préparation évitent de devoir tout recommencer.</p>
+
+          <div class="card" style="padding:4px 16px">
+            <div class="chk on"><i>✓</i><div class="t">Votre pièce d'identité<small>Scannée ou photographiée, recto-verso</small></div></div>
+            <div class="chk on"><i>✓</i><div class="t">Un justificatif de domicile<small>De moins de 3 mois</small></div></div>
+            <div class="chk on"><i>✓</i><div class="t">Votre numéro de sécurité sociale<small>Sur votre carte Vitale</small></div></div>
+            <div class="chk"><i>✓</i><div class="t">Votre IBAN personnel<small>Pour les cotisations</small></div></div>
+          </div>
+
+          <div class="eyebrow">Deux choix à faire pendant la démarche</div>
+          <div class="card">
+            <b style="font-size:14.5px;display:block;margin-bottom:4px">Activité à déclarer</b>
+            <div style="background:var(--signal-050);border:1px solid #DCEDA8;border-radius:8px;padding:9px 12px;font-family:var(--mono);font-size:12px;line-height:1.5">Nettoyage courant des bâtiments</div>
+            <p class="note" style="margin-top:7px">C'est l'intitulé exact à recopier. Il conditionne votre déclaration SAP juste après.</p>
+          </div>
+          <div class="card">
+            <b style="font-size:14.5px;display:block;margin-bottom:4px">Versement libératoire de l'impôt</b>
+            <p style="margin:0;font-size:13px;line-height:1.55;color:var(--ink-700)">Vous payez un petit pourcentage d'impôt chaque trimestre plutôt qu'une régularisation annuelle. Intéressant si vos revenus du foyer sont modestes.</p>
+            <div class="pills" style="margin-top:10px"><span class="pill on">Je le prends</span><span class="pill">Je verrai plus tard</span></div>
+          </div>
+        </div>
+        <div class="help">
+          <span style="font-size:16px">💬</span>
+          <div class="t">Une question ? <b>On vous rappelle sous 24 h.</b></div>
+          <span class="go">Je suis bloquée</span>
+        </div>
+        <div class="dock"><button class="btn">Passer à la démarche</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 7 — BRANCHE B / DEMARCHE GUIDEE -->
+  <figure class="screen">
+    <figcaption><b>Branche 4B — démarche guidée</b> /rejoindre/statut/creer <span>B3</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">10:34</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Créer mon auto-entreprise · 3/4</div></div>
+          <div class="prog"><i style="width:75%;background:var(--warn)"></i></div>
+          <h3 class="q" style="font-size:22px">Le guichet unique,<br>écran par écran</h3>
+
+          <button class="btn" style="margin-bottom:18px">Ouvrir le guichet unique ↗</button>
+          <p class="note" style="margin:-10px 0 20px">Site officiel de l'INPI. Gardez cet onglet ouvert à côté.</p>
+
+          <div class="guide">
+            <b>1. Créer votre compte</b>
+            <p>Cliquez sur « Créer un compte » en haut à droite. Utilisez la même adresse e-mail que chez nous, ce sera plus simple à suivre.</p>
+          </div>
+          <div class="guide">
+            <b>2. Choisir la formalité</b>
+            <p>Sélectionnez « Création d'entreprise », puis « Entrepreneur individuel ».</p>
+          </div>
+          <div class="guide">
+            <b>3. Décrire l'activité</b>
+            <p>Au champ « Activité exercée », recopiez exactement :</p>
+            <div class="field"><s>À recopier</s>Nettoyage courant des bâtiments</div>
+          </div>
+          <div class="guide">
+            <b>4. Lieu d'exercice</b>
+            <p>Cochez « Au domicile des clients » et indiquez votre adresse personnelle comme siège.</p>
+          </div>
+          <div class="guide">
+            <b>5. Régime</b>
+            <p>Cochez « Micro-entreprise ». Le versement libératoire se coche à l'écran suivant si vous l'avez choisi.</p>
+          </div>
+        </div>
+        <div class="help">
+          <span style="font-size:16px">💬</span>
+          <div class="t">Un écran ne ressemble pas à ça ? <b>Envoyez-nous une capture.</b></div>
+          <span class="go">Je suis bloquée</span>
+        </div>
+        <div class="dock"><button class="btn go">J'ai envoyé ma demande</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 8 — ATTENTE ACCOMPAGNEE -->
+  <figure class="screen">
+    <figcaption><b>Attente accompagnée</b> statut <span class="mono">WAITING_SIRET</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:15</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div style="padding:12px 0 16px"><h3 class="q" style="font-size:22px;margin:0">Votre dossier</h3></div>
+
+          <div class="card" style="border:2px solid var(--warn);background:var(--warn-050)">
+            <span class="status warn" style="margin-bottom:10px">En attente</span>
+            <div style="font-size:17px;font-weight:600;line-height:1.3">Votre SIRET est en cours d'attribution</div>
+            <p style="margin:6px 0 0;font-size:13.5px;line-height:1.55;color:var(--ink-700)">Demande envoyée le 12 août. Le délai habituel est de 8 à 20 jours. On vous relance si rien n'arrive.</p>
+            <div class="hr" style="border-color:#E4CFA0;margin:14px 0"></div>
+            <button class="btn go sm">J'ai reçu mon SIRET</button>
+          </div>
+
+          <div class="eyebrow">Pendant ce temps, on avance</div>
+          <div class="card" style="padding:4px 16px">
+            <div class="chk on"><i>✓</i><div class="t">Profil et photo<small>Terminé le 12 août</small></div></div>
+            <div class="chk on"><i>✓</i><div class="t">Pièce d'identité et domicile<small>Vérifiés</small></div></div>
+            <div class="chk on"><i>✓</i><div class="t">Entretien visio<small>Fait le 14 août · avis favorable</small></div></div>
+            <div class="chk"><i>✓</i><div class="t">Assurance RC Professionnelle<small>Il vous reste ce document à fournir</small></div></div>
+            <div class="chk"><i>✓</i><div class="t">Formation Léo Academy<small>2 modules · 8 minutes</small></div></div>
+          </div>
+
+          <div class="card" style="margin-top:14px;background:var(--ink-900);color:var(--paper-050);border:none">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="font-size:17px">⚡</span>
+              <div>
+                <b style="font-size:14.5px;display:block;margin-bottom:4px;color:var(--signal)">Objectif : activée le jour même</b>
+                <p style="margin:0;font-size:13px;line-height:1.55;color:#C9CABF">Si tout le reste est terminé, vos premières missions vous seront proposées dans les heures qui suivent la réception de votre SIRET.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="eyebrow">Suivi</div>
+          <div class="rail">
+            <div class="ev done"><div class="t">12 août</div><div class="d">Demande envoyée au guichet unique</div></div>
+            <div class="ev done"><div class="t">14 août</div><div class="d">Entretien avec Paul · favorable</div></div>
+            <div class="ev now"><div class="t">Aujourd'hui · J+6</div><div class="d">Attente du SIRET</div></div>
+            <div class="ev"><div class="t">À venir</div><div class="d">Déclaration SAP<small>On enchaîne dès le SIRET reçu</small></div></div>
+          </div>
+        </div>
+        <div class="help" style="bottom:22px">
+          <span style="font-size:16px">💬</span>
+          <div class="t">Toujours rien après 14 jours ? <b>On appelle avec vous.</b></div>
+          <span class="go">Aidez-moi</span>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 9 — SAP -->
+  <figure class="screen">
+    <figcaption><b>Branche 5B — déclaration SAP</b> /rejoindre/sap <span>étape 5</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">11:40</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Étape 5 sur 10</div></div>
+          <div class="prog"><i style="width:50%"></i></div>
+          <h3 class="q">La déclaration qui<br>change tout</h3>
+
+          <div class="card" style="border:2px solid var(--ink-900)">
+            <p style="margin:0 0 14px;font-size:14px;line-height:1.6">La déclaration « services à la personne » permet à vos clients de récupérer <b>50 %</b> de ce qu'ils vous paient.</p>
+            <div class="kv"><span class="k">Vous facturez</span><span class="v mono">30 €</span></div>
+            <div class="kv"><span class="k">Ça leur coûte</span><span class="v mono" style="color:var(--ok);font-size:16px;font-weight:700">15 €</span></div>
+            <p class="note" style="margin-top:12px">C'est gratuit, ça se fait en ligne, et c'est ce qui vous permettra de remplir votre planning.</p>
+          </div>
+
+          <div class="eyebrow">Où en êtes-vous ?</div>
+          <div class="opt">
+            <span class="ic">✓</span>
+            <div class="tx"><b>Je suis déjà déclarée</b><small>J'ai mon numéro et mon récépissé</small></div>
+            <span style="color:var(--ink-400)">›</span>
+          </div>
+          <div class="opt on">
+            <span class="ic" style="background:var(--signal)">📝</span>
+            <div class="tx"><b>Pas encore, on la fait ensemble</b><small>4 étapes guidées · récépissé souvent immédiat</small></div>
+            <span style="color:var(--ink-400)">›</span>
+          </div>
+
+          <div class="eyebrow">Ce qu'on vérifie avant</div>
+          <div class="card" style="padding:4px 16px">
+            <div class="chk on"><i>✓</i><div class="t">Votre SIRET est actif<small>812 456 789 00023 · vérifié</small></div></div>
+            <div class="chk on"><i>✓</i><div class="t">Votre activité est éligible<small>Entretien de la maison et travaux ménagers</small></div></div>
+            <div class="chk on"><i>✓</i><div class="t">Vous n'exercez pas d'activité incompatible<small>La déclaration SAP impose une activité exclusive</small></div></div>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Déclarer mon activité SAP</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 10 — DOCUMENTS -->
+  <figure class="screen">
+    <figcaption><b>Documents</b> /rejoindre/documents <span>étape 6</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">12:05</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div class="step">Étape 6 sur 10</div></div>
+          <div class="prog"><i style="width:60%"></i></div>
+          <h3 class="q">Vos pièces</h3>
+          <p class="sub">5 sur 6 déposées. Il ne manque que votre assurance.</p>
+
+          <div class="card" style="padding:4px 16px">
+            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Pièce d'identité</b><div class="note">Vérifiée · DIALLO Fatou</div></div></div>
+            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Justificatif de domicile</b><div class="note">Vérifié · Cadaujac</div></div></div>
+            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Avis de situation SIRENE</b><div class="note">Récupéré automatiquement</div></div></div>
+            <div class="doc"><span class="status info">En cours</span><div class="n"><b>Attestation de vigilance URSSAF</b><div class="note">Vérification sous 24 h</div></div></div>
+            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Coordonnées bancaires</b><div class="note">FR76 •••• 4412 · nom vérifié</div></div></div>
+          </div>
+
+          <div class="card" style="margin-top:14px;border:2px solid var(--ink-900)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <b style="font-size:15px">Assurance RC Professionnelle</b>
+              <span class="status warn">Manquante</span>
+            </div>
+            <p style="margin:0 0 14px;font-size:13px;line-height:1.55;color:var(--ink-700)">Elle vous couvre si vous cassez quelque chose chez un client. Comptez 8 à 15 € par mois. Vous êtes libre de choisir votre assureur.</p>
+            <button class="btn sm">Déposer mon attestation</button>
+            <button class="btn ghost sm" style="margin-top:8px">Je n'en ai pas encore</button>
+          </div>
+
+          <div class="card" style="margin-top:14px;background:var(--paper-100);border-style:dashed">
+            <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--ink-700)">Vos documents sont stockés de façon sécurisée et ne sont consultés que par la personne qui étudie votre dossier. Chaque consultation est enregistrée.</p>
+          </div>
+        </div>
+        <div class="help">
+          <span style="font-size:16px">💬</span>
+          <div class="t">Vous ne trouvez pas un document ? <b>On vous montre où.</b></div>
+          <span class="go">Je suis bloquée</span>
+        </div>
+        <div class="dock"><button class="btn">Continuer</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 11 — ACTIVATION -->
+  <figure class="screen">
+    <figcaption><b>Activation</b> /rejoindre/bienvenue <span>étape 10</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">16:48</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div style="text-align:center;padding:38px 0 24px">
+            <div style="width:78px;height:78px;border-radius:50%;background:var(--signal);display:grid;place-items:center;margin:0 auto 20px;font-size:34px">🎉</div>
+            <h3 class="q" style="font-size:28px">Bienvenue Fatou</h3>
+            <p class="sub" style="margin-bottom:0">Votre compte est actif. Vous êtes prête à travailler.</p>
+          </div>
+
+          <div class="card" style="border:2px solid var(--ink-900)">
+            <div class="eyebrow" style="margin:0 0 10px">Déjà pour vous</div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+              <span class="mono" style="font-size:30px;font-weight:700;letter-spacing:-.03em">3 missions</span>
+              <span class="note">cette semaine</span>
+            </div>
+            <div class="kv"><span class="k">Mercredi 8 h – 11 h · Léognan</span><span class="v mono">66 €</span></div>
+            <div class="kv"><span class="k">Jeudi 14 h – 17 h · Villenave</span><span class="v mono">71 €</span></div>
+            <div class="kv"><span class="k">Vendredi 8 h – 11 h · Cadaujac</span><span class="v mono">63 €</span></div>
+          </div>
+
+          <div class="card" style="margin-top:12px;display:flex;gap:12px;align-items:center">
+            <div class="ic" style="width:42px;height:42px;border-radius:50%;background:var(--paper-200);display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:500">PD</div>
+            <div><b style="font-size:14.5px;display:block">Paul vous a écrit</b><span class="note">« Bienvenue Fatou, ravi de vous compter parmi nous… »</span></div>
+          </div>
+
+          <div class="eyebrow">Votre parcours</div>
+          <div class="rail">
+            <div class="ev done"><div class="t">12 août</div><div class="d">Candidature déposée</div></div>
+            <div class="ev done"><div class="t">18 août</div><div class="d">SIRET reçu</div></div>
+            <div class="ev done"><div class="t">18 août</div><div class="d">Déclaration SAP validée</div></div>
+            <div class="ev now"><div class="t">Aujourd'hui · J+6</div><div class="d">Compte activé</div></div>
+          </div>
+        </div>
+        <div class="dock"><button class="btn go">Voir mes missions</button></div>
+      </div>
+    </div>
+  </figure>
+
+  </div>
+</div>
+</body>
+</html>

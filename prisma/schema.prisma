@@ -105,34 +105,35 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships          Membership[]
-  clientProfiles       ClientProfile[]
-  cleanerProfiles      CleanerProfile[]
-  addresses            Address[]
-  services             Service[]
-  serviceOptions       ServiceOption[]
-  pricingRules         PricingRule[]
-  bookings             Booking[]
-  bookingItems         BookingItem[]
-  bookingStatusEvents  BookingStatusEvent[]
-  subscriptions        Subscription[]
-  availabilityRules    AvailabilityRule[]
+  memberships            Membership[]
+  clientProfiles         ClientProfile[]
+  cleanerProfiles        CleanerProfile[]
+  addresses              Address[]
+  services               Service[]
+  serviceOptions         ServiceOption[]
+  pricingRules           PricingRule[]
+  bookings               Booking[]
+  bookingItems           BookingItem[]
+  bookingStatusEvents    BookingStatusEvent[]
+  subscriptions          Subscription[]
+  availabilityRules      AvailabilityRule[]
   availabilityExceptions AvailabilityException[]
-  calendarConnections  CalendarConnection[]
-  externalBusyBlocks   ExternalBusyBlock[]
-  assignments          Assignment[]
-  slotProposals        SlotProposal[]
-  payments             Payment[]
-  payouts              Payout[]
-  invoices             Invoice[]
-  reviews              Review[]
-  messages             Message[]
-  cleanerDocuments     CleanerDocument[]
-  leads                Lead[]
-  auditLogs            AuditLog[]
-  referralCodes        ReferralCode[]
-  referrals            Referral[]
-  referralRewards      ReferralReward[]
+  calendarConnections    CalendarConnection[]
+  externalBusyBlocks     ExternalBusyBlock[]
+  assignments            Assignment[]
+  slotProposals          SlotProposal[]
+  payments               Payment[]
+  payouts                Payout[]
+  invoices               Invoice[]
+  reviews                Review[]
+  messages               Message[]
+  cleanerDocuments       CleanerDocument[]
+  leads                  Lead[]
+  auditLogs              AuditLog[]
+  referralCodes          ReferralCode[]
+  referrals              Referral[]
+  referralRewards        ReferralReward[]
+  analyticsEvents        AnalyticsEvent[]
 
   @@index([type, status])
 }
@@ -167,14 +168,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts         Account[]
-  sessions         Session[]
-  memberships      Membership[]
-  clientProfiles   ClientProfile[]
-  cleanerProfiles  CleanerProfile[]
-  auditLogs        AuditLog[]
-  sentMessages     Message[]        @relation("MessageSender")
-  receivedMessages Message[]        @relation("MessageRecipient")
+  accounts          Account[]
+  sessions          Session[]
+  memberships       Membership[]
+  clientProfiles    ClientProfile[]
+  cleanerProfiles   CleanerProfile[]
+  auditLogs         AuditLog[]
+  sentMessages      Message[]         @relation("MessageSender")
+  receivedMessages  Message[]         @relation("MessageRecipient")
   verifiedDocuments CleanerDocument[] @relation("DocumentVerifier")
   referralCodes     ReferralCode[]
   referredBy        Referral?
@@ -304,7 +305,7 @@ model CleanerProfile {
   status         CleanerStatus  @default(PENDING_VERIFICATION)
   employmentType EmploymentType @default(INDEPENDENT)
 
-  siret              String?
+  siret                String?
   /// Numéro de déclaration Services à la personne de l'intervenant.
   ///
   /// La facturation en deux lignes suppose **deux** organismes déclarés : celui
@@ -316,10 +317,10 @@ model CleanerProfile {
   /// SIRET déclaré : deux identités différentes sont soit une faute de frappe,
   /// soit le numéro de quelqu'un d'autre.
   sapDeclarationNumber String?
-  insuranceExpiresAt DateTime?
-  stripeAccountId    String?
+  insuranceExpiresAt   DateTime?
+  stripeAccountId      String?
   /// Onboarding Stripe Connect achevé : sans cela, aucun reversement possible.
-  payoutsEnabled     Boolean   @default(false)
+  payoutsEnabled       Boolean   @default(false)
 
   /// Point de départ et d'arrivée de la tournée quotidienne.
   homeAddressId String? @unique
@@ -338,20 +339,20 @@ model CleanerProfile {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  homeAddress            Address?                @relation("CleanerHome", fields: [homeAddressId], references: [id], onDelete: SetNull)
-  documents              CleanerDocument[]
-  availabilityRules      AvailabilityRule[]
-  availabilityExceptions AvailabilityException[]
-  calendarConnections    CalendarConnection[]
-  externalBusyBlocks     ExternalBusyBlock[]
-  assignments            Assignment[]
-  slotProposals          SlotProposal[]
-  payouts                Payout[]
-  reviews                Review[]
-  issuedInvoices         Invoice[]
-  preferredForSubscriptions Subscription[]       @relation("PreferredCleaner")
+  organization              Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeAddress               Address?                @relation("CleanerHome", fields: [homeAddressId], references: [id], onDelete: SetNull)
+  documents                 CleanerDocument[]
+  availabilityRules         AvailabilityRule[]
+  availabilityExceptions    AvailabilityException[]
+  calendarConnections       CalendarConnection[]
+  externalBusyBlocks        ExternalBusyBlock[]
+  assignments               Assignment[]
+  slotProposals             SlotProposal[]
+  payouts                   Payout[]
+  reviews                   Review[]
+  issuedInvoices            Invoice[]
+  preferredForSubscriptions Subscription[]          @relation("PreferredCleaner")
 
   @@unique([organizationId, userId])
   @@index([organizationId, status])
@@ -381,10 +382,10 @@ model CleanerDocument {
   type             DocumentType
   status           DocumentStatus @default(PENDING)
 
-  fileUrl        String
-  expiresAt      DateTime?
-  verifiedAt     DateTime?
-  verifiedById   String?
+  fileUrl         String
+  expiresAt       DateTime?
+  verifiedAt      DateTime?
+  verifiedById    String?
   rejectionReason String?
 
   createdAt DateTime @default(now())
@@ -413,8 +414,8 @@ model CleanerDocument {
 /// initiale) : elle est dérivée de `lat`/`lng`, ne peut pas diverger, et porte
 /// l'index GIST utilisé par les requêtes de proximité.
 model Address {
-  id             String  @id @default(cuid())
-  organizationId String
+  id              String  @id @default(cuid())
+  organizationId  String
   clientProfileId String?
 
   label      String?
@@ -499,10 +500,10 @@ model ServiceOption {
   name           String
   description    String?
 
-  extraMinutes   Int     @default(30)
-  extraPriceCents Int    @default(0)
-  isActive       Boolean @default(true)
-  sortOrder      Int     @default(0)
+  extraMinutes    Int     @default(30)
+  extraPriceCents Int     @default(0)
+  isActive        Boolean @default(true)
+  sortOrder       Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -544,7 +545,7 @@ model PricingRule {
   professionalHourlyRateCents Int
 
   /// Taux du crédit d'impôt services à la personne, en points de base.
-  taxCreditRateBp Int       @default(5000)
+  taxCreditRateBp Int @default(5000)
 
   validFrom  DateTime  @default(now())
   validUntil DateTime?
@@ -585,7 +586,7 @@ enum BookingSource {
 }
 
 model Booking {
-  id              String        @id @default(cuid())
+  id              String  @id @default(cuid())
   organizationId  String
   clientProfileId String
   addressId       String
@@ -601,8 +602,8 @@ model Booking {
   scheduledEnd    DateTime
   durationMinutes Int
 
-  surfaceSqm Int?
-  frequency  Frequency      @default(ONE_OFF)
+  surfaceSqm     Int?
+  frequency      Frequency      @default(ONE_OFF)
   engagementMode EngagementMode @default(PRESTATAIRE)
 
   /// Montants figés à la création. Un changement de tarif ou de commission ne
@@ -661,9 +662,9 @@ model Booking {
   clientNotes   String?
   internalNotes String?
 
-  cancelledAt     DateTime?
+  cancelledAt        DateTime?
   cancellationReason String?
-  completedAt     DateTime?
+  completedAt        DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -725,14 +726,14 @@ model BookingItem {
 /// Journal des transitions de statut. Alimente les indicateurs (taux
 /// d'annulation, délai d'attribution) et sert de preuve en cas de litige.
 model BookingStatusEvent {
-  id             String        @id @default(cuid())
+  id             String         @id @default(cuid())
   organizationId String
   bookingId      String
   fromStatus     BookingStatus?
   toStatus       BookingStatus
   reason         String?
   actorUserId    String?
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime       @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
@@ -763,15 +764,15 @@ model Subscription {
   addressId       String
   serviceId       String
 
-  frequency Frequency
+  frequency       Frequency
   /// 1 = lundi … 7 = dimanche (ISO 8601).
-  weekday   Int
+  weekday         Int
   /// Heure de début en minutes depuis minuit, fuseau Europe/Paris.
-  startMinute Int
+  startMinute     Int
   durationMinutes Int
   /// Pour les mensuels : 1 à 4, ou -1 pour la dernière semaine du mois.
-  weekOfMonth Int?
-  anchorDate  DateTime
+  weekOfMonth     Int?
+  anchorDate      DateTime
 
   preferredCleanerId String?
   status             SubscriptionStatus @default(ACTIVE)
@@ -893,9 +894,9 @@ model CalendarConnection {
   syncCursor String?
 
   /// Abonnement aux notifications push. Expire et doit être renouvelé.
-  pushChannelId        String?
-  pushResourceId       String?
-  pushExpiresAt        DateTime?
+  pushChannelId  String?
+  pushResourceId String?
+  pushExpiresAt  DateTime?
 
   /// Écriture des missions LéoClean dans l'agenda de l'intervenant.
   writeEnabled Boolean @default(true)
@@ -928,11 +929,11 @@ model ExternalBusyBlock {
   cleanerProfileId     String
   calendarConnectionId String
 
-  startAt DateTime
-  endAt   DateTime
-  isAllDay Boolean @default(false)
+  startAt  DateTime
+  endAt    DateTime
+  isAllDay Boolean  @default(false)
 
-  externalEventId String
+  externalEventId  String
   /// Événement maître d'une série récurrente, pour traiter les exceptions.
   recurringEventId String?
   sourceUpdatedAt  DateTime?
@@ -985,12 +986,12 @@ model Assignment {
   /// parce qu'il explique pourquoi telle personne a été sollicitée, et qu'une
   /// diffusion qu'on ne peut pas relire est une décision qu'on ne peut pas
   /// défendre.
-  lot              Int              @default(1)
+  lot Int @default(1)
 
   /// Créneau de la mission, recopié depuis la réservation pour que la
   /// contrainte d'exclusion puisse s'appliquer sans jointure.
-  startAt DateTime
-  endAt   DateTime
+  startAt      DateTime
+  endAt        DateTime
   /// Créneau élargi des temps de trajet amont et aval.
   blockStartAt DateTime
   blockEndAt   DateTime
@@ -1001,12 +1002,12 @@ model Assignment {
   /// Décomposition du score d'attribution : coût d'insertion trajet, note,
   /// taux d'acceptation, équité de charge, priorité au cleaner attitré.
   /// Conservée pour pouvoir expliquer une décision.
-  score         Float?
+  score          Float?
   scoreBreakdown Json?
 
-  proposedAt  DateTime  @default(now())
-  respondBy   DateTime?
-  respondedAt DateTime?
+  proposedAt    DateTime  @default(now())
+  respondBy     DateTime?
+  respondedAt   DateTime?
   declineReason String?
 
   /// Renseigné quand cette affectation remplace un intervenant absent.
@@ -1181,11 +1182,11 @@ model Invoice {
   /// exigence comptable.
   number String
 
-  issuedAt   DateTime @default(now())
-  totalCents Int
+  issuedAt               DateTime @default(now())
+  totalCents             Int
   /// Part de la facture ouvrant droit au crédit d'impôt services à la personne.
-  taxCreditEligibleCents Int @default(0)
-  pdfUrl     String?
+  taxCreditEligibleCents Int      @default(0)
+  pdfUrl                 String?
 
   createdAt DateTime @default(now())
 
@@ -1242,10 +1243,10 @@ model Review {
 }
 
 model Message {
-  id             String  @id @default(cuid())
-  organizationId String
-  bookingId      String?
-  senderUserId   String
+  id              String  @id @default(cuid())
+  organizationId  String
+  bookingId       String?
+  senderUserId    String
   recipientUserId String
 
   body   String
@@ -1296,7 +1297,6 @@ model Lead {
 
   @@index([organizationId, status, createdAt])
 }
-
 
 // ===========================================================================
 // Parrainage et cooptation
@@ -1355,9 +1355,9 @@ model Referral {
   /// déclenchement. Le gain suit l'activité, jamais le recrutement.
   completedBookings Int @default(0)
 
-  qualifiedAt DateTime?
-  expiresAt   DateTime
-  cancelledAt DateTime?
+  qualifiedAt        DateTime?
+  expiresAt          DateTime
+  cancelledAt        DateTime?
   cancellationReason String?
 
   createdAt DateTime @default(now())
@@ -1405,14 +1405,14 @@ model ReferralReward {
 
   /// Mois de rattachement, pour les commissions récurrentes. Nul pour une
   /// récompense unique.
-  periodStart DateTime?
-  periodEnd   DateTime?
+  periodStart          DateTime?
+  periodEnd            DateTime?
   /// Chiffre d'affaires du filleul ayant servi de base au calcul.
-  basisAmountCents Int?
+  basisAmountCents     Int?
   /// Le plafond mensuel a rogné le montant dû.
-  cappedByMonthlyLimit Boolean @default(false)
+  cappedByMonthlyLimit Boolean   @default(false)
 
-  paidAt DateTime?
+  paidAt   DateTime?
   /// Reversement Stripe portant cette récompense, pour les versements en
   /// espèces.
   payoutId String?
@@ -1470,7 +1470,7 @@ model TravelTimeCache {
 /// unique : un événement déjà traité est ignoré au lieu d'être appliqué deux
 /// fois.
 model WebhookEvent {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   provider   String
   externalId String
   eventType  String
@@ -1533,4 +1533,46 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@index([entityType, entityId])
+}
+
+/// Événement de parcours, enregistré pour comprendre ce qui coûte des clients
+/// et des intervenants sans que personne ne se plaigne.
+///
+/// La mesure vit en base plutôt que chez un tiers, et ce n'est pas une économie :
+/// le module Frictions lira la même base que le reste du produit, et une mesure
+/// qui ne dépose aucun cookie et ne suit personne d'un site à l'autre n'a pas à
+/// demander un consentement qu'on obtiendrait mal.
+///
+/// **Aucune donnée personnelle n'entre ici.** Ni nom, ni email, ni téléphone, ni
+/// adresse, ni position, ni adresse IP : `CHAMPS_INTERDITS` l'impose à
+/// l'écriture, et un test l'impose à la définition. Un événement dit ce qui
+/// s'est passé, jamais à qui — sans quoi une table de mesure échapperait à la
+/// purge des comptes et deviendrait le dernier endroit où une identité survit.
+model AnalyticsEvent {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// Nom de la taxonomie : objet puis verbe au passé.
+  name String
+
+  /// Identifiant de parcours engendré par le navigateur, opaque et sans lien
+  /// avec une identité. Il ne sert qu'à relier les écrans d'une même session ;
+  /// sans lui, un taux d'abandon par étape n'est pas calculable.
+  journeyId String?
+
+  /// Renseigné quand la personne était connectée. Nul le reste du temps, ce qui
+  /// est le cas de tout le tunnel jusqu'à l'avant-dernier écran.
+  userId String?
+
+  properties Json @default("{}")
+
+  occurredAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// L'analyse lit « tel événement sur telle période » : le nom en tête.
+  @@index([organizationId, name, occurredAt])
+  @@index([journeyId])
+  /// La purge de rétention balaie par date, toutes organisations confondues.
+  @@index([occurredAt])
 }

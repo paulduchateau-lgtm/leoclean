@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import {
   confirmBooking,
+  tracerEtape,
   getQuote,
   getSlots,
   searchAddress,
@@ -117,7 +118,18 @@ export default async function ReserverPage({
               même écran de tourner au-dessus d'un serveur ou, sur la vitrine
               statique, d'un calcul dans le navigateur. */}
           <BookingFunnel
-            backend={{ searchAddress, getQuote, getSlots, confirmBooking }}
+            backend={{
+              searchAddress,
+              getQuote,
+              getSlots,
+              confirmBooking,
+              /*
+               * L'action est passée telle quelle : envelopper l'appel dans une
+               * fonction ordinaire ferait échouer le rendu, une fonction
+               * non marquée « use server » ne traversant pas la frontière.
+               */
+              tracerEtape,
+            }}
             communes={COMMUNES_BY_POPULATION.map((commune) => ({
               slug: commune.slug,
               name: commune.name,

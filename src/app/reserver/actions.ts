@@ -3,6 +3,11 @@
 import { z } from "zod";
 
 import { publicAction } from "@/lib/action-result";
+import {
+  ETAPES_TUNNEL,
+  NOMS_EVENEMENTS,
+} from "@/lib/analytics/evenements";
+import { tracer } from "@/lib/analytics/journal";
 import type { CleanerCardView } from "@/lib/booking/backend";
 import { bookingCalendar } from "@/lib/booking/ics";
 import { createBooking, listAvailableSlots } from "@/lib/booking/create";
@@ -165,6 +170,20 @@ export const getSlots = publicAction(slotsSchema, async (input) => {
     now,
     limit: 60,
   });
+
+  /*
+   * Une recherche sans résultat est à la fois une friction et un signal de
+   * capacité : c'est le seul endroit du produit où l'on apprend qu'une commune
+   * manque de monde à telle heure, et personne ne vient s'en plaindre.
+   */
+  void tracer(
+    {
+      nom: "creneaux_cherches",
+      commune_insee: input.inseeCode,
+      resultats: slots.length,
+    },
+    { organizationId },
+  );
 
   // Seules les heures sortent d'ici. L'intervenant est déjà choisi par le
   // score, mais le client réserve un rendez-vous, pas une personne.
@@ -370,6 +389,18 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
       }
     }
 
+    void tracer(
+      {
+        nom: "reservation_confirmee",
+        commune_insee: input.inseeCode,
+        frequence: input.frequency,
+        montant_cents: created.grossAmountCents,
+        /* Un repli retenu dit que le préféré est parti pendant la saisie. */
+        repli_utilise: usedStart !== input.startAt,
+      },
+      { organizationId },
+    );
+
     return {
       bookingId: created.bookingId,
       /** Le créneau préféré a été pris : c'est un repli qui a été retenu. */
@@ -405,3 +436,48 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
     throw error;
   }
 });
+
+/**
+ * Enregistrement d'un événement de parcours depuis le navigateur.
+ *
+ * Le seul émetteur qui a besoin d'un aller-retour : un changement d'écran du
+ * tunnel se produit côté client et ne passe par aucune server action. Tout le
+ * reste — demande de rappel, acceptation de mission, absence posée — s'écrit
+ * directement côté serveur, là où l'événement se produit déjà.
+ *
+ * `publicAction` et non `authedAction` : la moitié du tunnel se déroule avant
+ * toute authentification, et exiger une session ici reviendrait à ne mesurer
+ * que la fin du parcours, c'est-à-dire précisément ce qu'on n'a pas besoin de
+ * mesurer.
+ *
+ * L'organisation est résolue côté serveur, comme partout : une valeur envoyée
+ * par le navigateur ne décide jamais dans quelle organisation une donnée
+ * atterrit — pas même une mesure.
+ */
+export const tracerEtape = publicAction(
+  z.object({
+    nom: z.enum(NOMS_EVENEMENTS),
+    etape: z.enum(ETAPES_TUNNEL).optional(),
+    duree_ms: z.number().int().min(0).max(6 * 60 * 60 * 1000).optional(),
+    parcours: z.string().max(40).optional(),
+  }),
+  async (input) => {
+    const organizationId = await marketplaceOrganizationId();
+    const user = await getCurrentUser();
+
+    await tracer(
+      {
+        nom: input.nom,
+        etape: input.etape,
+        duree_ms: input.duree_ms,
+      } as Parameters<typeof tracer>[0],
+      {
+        organizationId,
+        journeyId: input.parcours ?? null,
+        userId: user?.id ?? null,
+      },
+    );
+
+    return { enregistre: true };
+  },
+);

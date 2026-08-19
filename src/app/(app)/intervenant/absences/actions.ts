@@ -9,10 +9,12 @@ import {
   type Absence,
   MESSAGES_ABSENCE,
   absencesVivantes,
+  joursCouverts,
   verifierAbsence,
 } from "@/lib/availability/absences";
 import { BusinessError } from "@/lib/booking/errors";
 import { marketplaceOrganizationId } from "@/lib/organizations";
+import { tracer } from "@/lib/analytics/journal";
 import { parisDayMinuteToUtc } from "@/lib/time";
 
 /**
@@ -147,6 +149,12 @@ export const poserAbsence = authedAction(poserSchema, async (entree, user) => {
     },
     select: { id: true },
   });
+
+  /* Combien de jours de capacité sortent du planning, et à quelle saison. */
+  void tracer(
+    { nom: "absence_posee", jours: joursCouverts({ debut, fin }) },
+    { organizationId, userId: user.id },
+  );
 
   revalidatePath("/intervenant/absences");
   revalidatePath("/intervenant");

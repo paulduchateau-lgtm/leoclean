@@ -7,6 +7,7 @@ import { forOrganization } from "@/lib/db";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 import { exigerQuota } from "@/lib/securite/limitation";
 import { isCoveredInsee } from "@/lib/territory";
+import { tracer } from "@/lib/analytics/journal";
 
 /**
  * Demande de rappel.
@@ -110,6 +111,17 @@ export const submitLead = publicAction(leadSchema, async (input) => {
       sourcePath: input.sourcePath ?? null,
     },
   });
+
+  /*
+   * Le formulaire de rappel est l'un des cinq canaux de conversion, et le seul
+   * dont on ne saura jamais rien sans le mesurer : il n'aboutit à aucune
+   * réservation en base. `sourcePath` dit quelle page l'a produit — c'est ce
+   * qui répond à « quelles pages communes convertissent ».
+   */
+  void tracer(
+    { nom: "rappel_demande", page_origine: input.sourcePath ?? "inconnue" },
+    { organizationId },
+  );
 
   return { received: true as const };
 });

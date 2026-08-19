@@ -59,6 +59,7 @@ import {
   STANDARD_SQM_PER_HOUR,
 } from "@/lib/pricing/public-grid";
 import { SITE } from "@/lib/site";
+import { useTracageTunnel } from "@/components/tunnel-tracage";
 
 /**
  * Tunnel de réservation.
@@ -507,6 +508,9 @@ export function BookingFunnel({
         : "rythme";
 
   const [step, setStep] = useState<Step>(openingStep);
+
+  /* Mesure du parcours : voir `tunnel-tracage.ts`. Sans cookie, sans identité. */
+  useTracageTunnel(backend, step);
   /** Renseigné quand une modification part du récapitulatif : on y revient. */
   const [returnToRecap, setReturnToRecap] = useState(false);
 

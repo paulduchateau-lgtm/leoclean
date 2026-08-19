@@ -200,4 +200,14 @@ export const demoBookingBackend: BookingBackend = {
 
     return Promise.resolve({ ok: true, data: confirmation });
   },
+
+  /**
+   * La vitrine ne mesure rien, et c'est volontaire.
+   *
+   * Elle sert à montrer et à faire relire ; ses parcours ne sont pas des
+   * parcours de clients, et les compter fausserait le seul jeu de données sur
+   * lequel les frictions se lisent. L'opération existe pour que le tunnel soit
+   * strictement le même des deux côtés — pas pour être branchée.
+   */
+  tracerEtape() {},
 };
