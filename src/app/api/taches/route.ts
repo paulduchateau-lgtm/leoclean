@@ -1,5 +1,6 @@
 import { genererLesRecurrences } from "@/lib/abonnement/generateur";
 import { traiterLesPaiements } from "@/lib/paiement/travaux";
+import { purgerSelonLaRetention } from "@/lib/rgpd/retention";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
 import { serverEnv } from "@/lib/env";
 
@@ -68,7 +69,25 @@ export async function GET(request: Request): Promise<Response> {
     paiements = { erreur: true };
   }
 
-  console.info("Ordonnanceur", { ...rapport, recurrences, paiements });
+  /*
+   * La purge de rétention vient en dernier : elle n'a aucune urgence, et une
+   * erreur ne doit rien empêcher. Personne ne se plaint qu'on garde ses données
+   * trop longtemps — c'est précisément pour cela qu'il faut une horloge.
+   */
+  let retention;
+  try {
+    retention = await purgerSelonLaRetention();
+  } catch (erreur) {
+    console.error("Purge de rétention interrompue", erreur);
+    retention = { erreur: true };
+  }
 
-  return Response.json({ ...rapport, recurrences, paiements });
+  console.info("Ordonnanceur", {
+    ...rapport,
+    recurrences,
+    paiements,
+    retention,
+  });
+
+  return Response.json({ ...rapport, recurrences, paiements, retention });
 }
