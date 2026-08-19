@@ -1,17 +1,31 @@
 "use client";
 
-import { AlertTriangleIcon, CheckIcon, Loader2Icon, XIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  ClockIcon,
+  Loader2Icon,
+  XIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Frise } from "@/app/(app)/intervenant/frise";
 import {
   accepterMission,
+  proposerUnAutreCreneau,
   refuserMission,
 } from "@/app/(app)/intervenant/actions";
 import { Button } from "@/components/ui/button";
 import type { MissionProposee } from "@/lib/assignments/types";
 import { formatEuros } from "@/lib/pricing";
+
+/** Heure seule : la date est déjà portée par la carte. */
+const HEURE = new Intl.DateTimeFormat("fr-FR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Paris",
+});
 
 /**
  * Une mission proposée, avec les deux seules réponses possibles.
@@ -90,6 +104,46 @@ export function MissionProposeeCarte({
   const [erreur, setErreur] = useState<string | null>(null);
   const [refusOuvert, setRefusOuvert] = useState(false);
   const [motif, setMotif] = useState("");
+  const [autreOuvert, setAutreOuvert] = useState(false);
+  const [autreHeure, setAutreHeure] = useState("");
+  const [autreMot, setAutreMot] = useState("");
+  const [voieRetenue, setVoieRetenue] = useState<string | null>(null);
+
+  /*
+   * Les heures proposables : le même jour que la demande, au pas de trente
+   * minutes, et au plus une heure d'écart de part et d'autre. Le serveur
+   * refuserait le reste de toute façon ; les offrir ici serait montrer un
+   * bouton qui échoue.
+   *
+   * L'horloge est lue **une fois**, à la première construction : la lire à
+   * chaque rendu ferait disparaître une heure sous le doigt de quelqu'un au
+   * franchissement du délai minimal, ce qui est autant un défaut d'interface
+   * qu'une impureté.
+   */
+  const [maintenant] = useState(() => Date.now());
+  const debutDemande = new Date(mission.debut);
+  const heuresPossibles = [-60, -30, 30, 60]
+    .map((decalage) => new Date(debutDemande.getTime() + decalage * 60_000))
+    .filter((heure) => heure.getTime() > maintenant + 12 * 3_600_000)
+    .filter((heure) => heure.getDate() === debutDemande.getDate());
+
+  function proposerAutreHeure() {
+    if (!autreHeure) return;
+    setErreur(null);
+    startTransition(async () => {
+      const resultat = await proposerUnAutreCreneau({
+        bookingId: mission.bookingId,
+        proposedStart: autreHeure,
+        message: autreMot.trim() || undefined,
+      });
+      if (!resultat.ok) {
+        setErreur(resultat.error);
+        return;
+      }
+      setVoieRetenue(resultat.data.voie);
+      setAutreOuvert(false);
+    });
+  }
 
   function repondre(action: "accepter" | "refuser") {
     setErreur(null);
@@ -224,6 +278,16 @@ export function MissionProposeeCarte({
             )}
             J&apos;accepte cette mission
           </Button>
+          {heuresPossibles.length > 0 ? (
+            <Button
+              variant="outline"
+              disabled={pending}
+              onClick={() => setAutreOuvert(true)}
+            >
+              <ClockIcon aria-hidden />
+              Je peux, mais à une autre heure
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             disabled={pending}
@@ -234,6 +298,72 @@ export function MissionProposeeCarte({
           </Button>
         </div>
       )}
+
+      {autreOuvert ? (
+        <div className="mt-5 space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
+          <p className="text-sm font-medium">Quelle heure vous irait ?</p>
+          <p className="text-sm text-muted-foreground">
+            Le client reçoit votre proposition tout de suite et n&apos;a qu&apos;à
+            l&apos;accepter. Si quelqu&apos;un prend la mission à l&apos;heure
+            demandée entre-temps, elle repart — ce n&apos;est pas un refus de
+            votre part.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {heuresPossibles.map((heure) => {
+              const valeur = heure.toISOString();
+              const choisie = valeur === autreHeure;
+              return (
+                <button
+                  key={valeur}
+                  type="button"
+                  onClick={() => setAutreHeure(valeur)}
+                  aria-pressed={choisie}
+                  className={`min-h-11 rounded-full border px-4 text-base ${
+                    choisie
+                      ? "border-brand bg-brand text-ink-950"
+                      : "border-input bg-background"
+                  }`}
+                >
+                  {HEURE.format(heure)}
+                </button>
+              );
+            })}
+          </div>
+          <input
+            value={autreMot}
+            onChange={(event) => setAutreMot(event.target.value)}
+            placeholder="Un mot pour le client (facultatif)"
+            maxLength={200}
+            className="min-h-11 w-full rounded-xl border border-input bg-background px-3 text-base"
+          />
+          <div className="flex flex-wrap gap-3">
+            <Button
+              disabled={pending || !autreHeure}
+              onClick={proposerAutreHeure}
+            >
+              {pending ? (
+                <Loader2Icon className="animate-spin" aria-hidden />
+              ) : null}
+              Proposer cette heure
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={pending}
+              onClick={() => setAutreOuvert(false)}
+            >
+              Revenir
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {voieRetenue ? (
+        <p className="mt-4 rounded-xl border border-success/40 bg-success/10 p-3 text-sm">
+          {voieRetenue === "PRE_ACCEPTATION"
+            ? "C'est envoyé. Le client a votre proposition sous les yeux ; vous serez prévenue de sa réponse."
+            : "C'est noté. On cherche d'abord l'heure demandée par le client ; votre proposition lui sera montrée si personne ne la prend."}
+        </p>
+      ) : null}
     </article>
   );
 }

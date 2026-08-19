@@ -1071,6 +1071,19 @@ model SlotProposal {
   respondBy   DateTime?
   respondedAt DateTime?
 
+  /// Instant à partir duquel le client la voit.
+  ///
+  /// Une **pré-acceptation** — moins d'une heure d'écart, proposée par quelqu'un
+  /// qui tient encore l'offre — part tout de suite : il s'est engagé, faire
+  /// attendre le client n'apporterait rien. Une contre-proposition ordinaire
+  /// attend l'échéance du lot : le client a demandé une heure, on la cherche
+  /// avant de lui en proposer une autre.
+  ///
+  /// La colonne porte cette différence plutôt qu'un statut, parce que le statut
+  /// décrit le cycle de la réponse et non celui de la visibilité — mêler les
+  /// deux rendrait « en attente mais pas encore montrée » inexprimable.
+  visibleAt DateTime @default(now())
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1086,6 +1099,8 @@ model SlotProposal {
   @@index([organizationId, status])
   @@index([bookingId, status])
   @@index([cleanerProfileId, status])
+  /// La lecture client cherche « visible, en attente, à venir ».
+  @@index([bookingId, status, visibleAt])
 }
 
 // ===========================================================================

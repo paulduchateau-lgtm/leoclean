@@ -151,6 +151,21 @@ export const accepterMission = authedAction(
           data: { status: "SUPERSEDED" },
         });
 
+        /*
+         * Les pré-acceptations tombent avec elles.
+         *
+         * L'heure demandée par le client l'emporte toujours sur une heure
+         * proposée : c'est celle qu'il a choisie. `WITHDRAWN` dit exactement ce
+         * qui s'est passé — la proposition est retirée parce qu'elle n'a plus
+         * d'objet, personne ne l'a refusée. La laisser ouverte permettrait au
+         * client de déplacer un rendez-vous déjà confirmé à une autre heure,
+         * auprès de quelqu'un qui ne l'attend plus.
+         */
+        await tx.slotProposal.updateMany({
+          where: { bookingId: affectation.bookingId, status: "PENDING" },
+          data: { status: "WITHDRAWN", respondedAt: new Date() },
+        });
+
         await tx.booking.update({
           where: { id: affectation.bookingId },
           data: {
@@ -188,7 +203,17 @@ export const accepterMission = authedAction(
 );
 
 /**
- * Proposer un autre créneau sur une mission que personne n'a prise.
+ * Proposer un autre créneau.
+ *
+ * Ouvert dans deux situations : sur une mission que personne n'a prise, comme
+ * depuis les débuts, et désormais **tant que l'intervenant tient l'offre**.
+ * C'était le manque : quelqu'un à qui l'heure demandée ne convenait que d'une
+ * demi-heure n'avait qu'une sortie, refuser.
+ *
+ * Sous une heure d'écart, la proposition part au client immédiatement — une
+ * pré-acceptation. Au-delà, elle attend l'échéance du lot. `slot-proposal.ts`
+ * décide de la voie ; l'action ne fait que rapporter laquelle, pour que l'écran
+ * dise la vérité sur ce qui va se passer.
  *
  * L'intervenant ne réserve rien : il propose, et le client tranche. La
  * réservation ne bouge qu'à la validation, et c'est à ce moment-là seulement
@@ -214,7 +239,7 @@ export const proposerUnAutreCreneau = authedAction(
     );
 
     revalidatePath("/intervenant");
-    return { proposalId: result.proposalId };
+    return { proposalId: result.proposalId, voie: result.voie };
   },
 );
 
