@@ -102,7 +102,9 @@ export default async function ReserverPage({
 
       <SiteHeader variant="tunnel" />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+      {/* En desktop, la page s'élargit pour loger le récapitulatif collant à
+          droite du tunnel — la colonne de saisie garde sa largeur de lecture. */}
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8 lg:max-w-5xl">
         {/* Le titre de la page reste un h1 pour la structure du document, mais
             il est discret : la question de l'écran, portée par le tunnel, est
             ce que la personne doit lire en premier. */}

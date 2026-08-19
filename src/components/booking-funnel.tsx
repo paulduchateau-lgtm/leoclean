@@ -8,6 +8,7 @@ import {
   Loader2Icon,
   MapPinIcon,
   PencilIcon,
+  ReceiptTextIcon,
   RotateCcwIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -70,10 +71,11 @@ import { SITE } from "@/lib/site";
  *
  * Trois principes gouvernent le reste :
  *
- * - **Le prix est visible en permanence**, dans une barre basse qui ne quitte
- *   jamais l'écran. C'est la première source d'inquiétude ; la laisser sans
- *   réponse à l'étape du créneau revenait à demander de choisir un jour sans
- *   savoir ce qu'il coûte.
+ * - **Le prix est visible en permanence** — barre basse sur mobile,
+ *   récapitulatif collant à droite sur desktop, jamais les deux à la fois.
+ *   C'est la première source d'inquiétude ; la laisser sans réponse à l'étape
+ *   du créneau revenait à demander de choisir un jour sans savoir ce qu'il
+ *   coûte.
  * - **Choisir, c'est avancer.** Sur les écrans à une seule question, appuyer
  *   sur une réponse passe à la suite : un bouton de confirmation qui suit un
  *   choix unique n'ajoute qu'un geste et une hésitation. Les écrans qui
@@ -1050,152 +1052,352 @@ export function BookingFunnel({
 
   /* --- Rendu ------------------------------------------------------------ */
 
+  /*
+   * Le récapitulatif collant n'accompagne pas le dernier écran : celui-ci
+   * porte déjà son propre récapitulatif, ligne à ligne — deux résumés côte à
+   * côte se contrediraient au premier oubli de synchronisation.
+   */
+  const showAside = !(step === "adresse" && address && quote && chosenSlot);
+
   return (
-    /* Le conteneur occupe au moins la hauteur de l'écran : sans cela, la barre
+    /* En desktop, deux colonnes : le tunnel garde sa largeur de lecture et le
+       récapitulatif collant occupe la droite — c'est lui qui porte le prix,
+       la barre basse restant l'affaire du mobile. */
+    <div
+      className={
+        showAside
+          ? "lg:grid lg:grid-cols-[1.5fr_0.9fr] lg:items-start lg:gap-10"
+          : undefined
+      }
+    >
+      {/* Le conteneur occupe au moins la hauteur de l'écran : sans cela, la barre
        de prix — collante au bas de son parent — se posait au milieu de la page
-       sur les étapes courtes au lieu de rester sous le pouce. */
-    <div className="flex min-h-[calc(100svh-8rem)] flex-col">
-      <FunnelHeader
-        index={index}
-        title={STEP_TITLES[step]}
-        onBack={index > 0 || returnToRecap ? goBack : undefined}
-      />
+       sur les étapes courtes au lieu de rester sous le pouce. */}
+      <div className="flex min-h-[calc(100svh-8rem)] flex-col">
+        <FunnelHeader
+          index={index}
+          title={STEP_TITLES[step]}
+          onBack={index > 0 || returnToRecap ? goBack : undefined}
+        />
 
-      <div className="mt-6 flex-1 space-y-5 pb-4">
-        {/* La reprise se propose tant qu'on n'a rien décidé de neuf : au-delà
+        <div className="mt-6 flex-1 space-y-5 pb-4">
+          {/* La reprise se propose tant qu'on n'a rien décidé de neuf : au-delà
             du deuxième écran, elle défaire ait un parcours en cours. */}
-        {resumable && index <= 1 ? (
-          <ResumePrompt
-            saved={resumable}
-            communeName={
-              communes.find((entry) => entry.slug === resumable.communeSlug)
-                ?.name ?? null
-            }
-            onResume={() => {
-              const saved = communes.find(
-                (entry) => entry.slug === resumable.communeSlug,
-              );
-              if (saved) setCommune(saved);
-              setSurfaceSqm(resumable.surfaceSqm);
-              setHousingLabel(resumable.housingLabel);
-              setFrequency(offeredFrequency(resumable.frequency));
-              setChosenSlot(resumable.chosenSlot);
-              // Les replis ne sont pas enregistrés : ils décrivent un état du
-              // planning qui a une semaine, et le proposer à nouveau ferait
-              // réserver sur des heures qui n'existent plus.
-              setAlternateSlots([]);
-              if (resumable.surfaceSqm !== null) {
-                void loadQuotes(resumable.surfaceSqm);
+          {resumable && index <= 1 ? (
+            <ResumePrompt
+              saved={resumable}
+              communeName={
+                communes.find((entry) => entry.slug === resumable.communeSlug)
+                  ?.name ?? null
               }
-              setResumeHandled(true);
-              goTo(saved ? resumable.step : "commune");
-            }}
-            onDiscard={() => {
-              clearSavedState();
-              setResumeHandled(true);
-            }}
-          />
-        ) : null}
+              onResume={() => {
+                const saved = communes.find(
+                  (entry) => entry.slug === resumable.communeSlug,
+                );
+                if (saved) setCommune(saved);
+                setSurfaceSqm(resumable.surfaceSqm);
+                setHousingLabel(resumable.housingLabel);
+                setFrequency(offeredFrequency(resumable.frequency));
+                setChosenSlot(resumable.chosenSlot);
+                // Les replis ne sont pas enregistrés : ils décrivent un état du
+                // planning qui a une semaine, et le proposer à nouveau ferait
+                // réserver sur des heures qui n'existent plus.
+                setAlternateSlots([]);
+                if (resumable.surfaceSqm !== null) {
+                  void loadQuotes(resumable.surfaceSqm);
+                }
+                setResumeHandled(true);
+                goTo(saved ? resumable.step : "commune");
+              }}
+              onDiscard={() => {
+                clearSavedState();
+                setResumeHandled(true);
+              }}
+            />
+          ) : null}
 
-        {error ? <ErrorNotice error={error} /> : null}
+          {error ? <ErrorNotice error={error} /> : null}
 
-        {step === "commune" ? (
-          <CommuneStep
-            communes={communes}
-            selected={commune}
-            onChoose={chooseCommune}
-          />
-        ) : null}
+          {step === "commune" ? (
+            <CommuneStep
+              communes={communes}
+              selected={commune}
+              onChoose={chooseCommune}
+            />
+          ) : null}
 
-        {step === "logement" ? (
-          <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
-        ) : null}
+          {step === "logement" ? (
+            <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
+          ) : null}
 
-        {step === "rythme" ? (
-          <FrequencyStep
-            quotes={quotes}
-            pending={quotesPending}
-            selected={frequency}
-            onChoose={chooseFrequency}
-          />
-        ) : null}
+          {step === "rythme" ? (
+            <FrequencyStep
+              quotes={quotes}
+              pending={quotesPending}
+              selected={frequency}
+              onChoose={chooseFrequency}
+            />
+          ) : null}
 
-        {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
+          {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
             réessai : un squelette perpétuel par-dessus ne dirait rien.
             Sans devis non plus il n'y a rien à attendre — la recherche de
             créneaux a besoin d'une durée, donc d'un devis, et le squelette
             promettait un contenu qui ne pouvait pas arriver. */}
-        {step === "creneau" &&
-        slotsStatus !== "error" &&
-        (quote !== null || quotesPending) ? (
-          <SlotStep
-            slots={slots}
-            fetchedAt={slotsFetchedAt}
-            pending={slotsStatus !== "ready"}
-            chosen={chosenSlot}
-            alternates={alternateSlots}
-            onChoose={chooseSlot}
-            onToggleAlternate={toggleAlternateSlot}
-            onContinue={() => advance("creneau")}
-          />
-        ) : null}
+          {step === "creneau" &&
+          slotsStatus !== "error" &&
+          (quote !== null || quotesPending) ? (
+            <SlotStep
+              slots={slots}
+              fetchedAt={slotsFetchedAt}
+              pending={slotsStatus !== "ready"}
+              chosen={chosenSlot}
+              alternates={alternateSlots}
+              onChoose={chooseSlot}
+              onToggleAlternate={toggleAlternateSlot}
+              onContinue={() => advance("creneau")}
+            />
+          ) : null}
 
-        {step === "coordonnees" ? (
-          <ContactStep
-            contact={contact}
-            onContactChange={setContact}
-            onContinue={() => advance("coordonnees")}
-            known={knownClient !== null}
-          />
-        ) : null}
+          {step === "coordonnees" ? (
+            <ContactStep
+              contact={contact}
+              onContactChange={setContact}
+              onContinue={() => advance("coordonnees")}
+              known={knownClient !== null}
+            />
+          ) : null}
 
-        {/* Dernier écran. Tant que l'adresse exacte n'est pas donnée, il ne
+          {/* Dernier écran. Tant que l'adresse exacte n'est pas donnée, il ne
             montre qu'elle ; une fois donnée, il devient le récapitulatif —
             c'est le premier moment où l'on a tout ce qu'il faut pour le
             montrer. */}
-        {step === "adresse" && !address ? (
-          <AddressStep
-            backend={backend}
-            communes={communes}
-            defaultQuery={defaultQuery}
-            originCommune={commune}
-            savedAddresses={knownClient?.addresses ?? []}
-            selected={address}
-            onSelect={chooseAddress}
-            onSelectSaved={chooseKnownAddress}
-          />
-        ) : null}
+          {step === "adresse" && !address ? (
+            <AddressStep
+              backend={backend}
+              communes={communes}
+              defaultQuery={defaultQuery}
+              originCommune={commune}
+              savedAddresses={knownClient?.addresses ?? []}
+              selected={address}
+              onSelect={chooseAddress}
+              onSelectSaved={chooseKnownAddress}
+            />
+          ) : null}
 
-        {step === "adresse" && address && (!quote || !chosenSlot) ? (
-          <div className="space-y-3" aria-hidden>
-            <div className="h-48 animate-pulse rounded-xl bg-secondary" />
-            <div className="h-32 animate-pulse rounded-xl bg-secondary" />
-          </div>
-        ) : null}
+          {step === "adresse" && address && (!quote || !chosenSlot) ? (
+            <div className="space-y-3" aria-hidden>
+              <div className="h-48 animate-pulse rounded-xl bg-secondary" />
+              <div className="h-32 animate-pulse rounded-xl bg-secondary" />
+            </div>
+          ) : null}
 
-        {step === "adresse" && address && quote && chosenSlot ? (
-          <RecapStep
-            address={address}
-            quote={quote}
-            frequency={frequency}
-            startAt={chosenSlot}
-            contact={contact}
-            onContactChange={setContact}
-            onEdit={editFromRecap}
-            onChangeAddress={() => setAddress(null)}
-            onSubmit={submit}
-            submitting={submitting}
-          />
-        ) : null}
+          {step === "adresse" && address && quote && chosenSlot ? (
+            <RecapStep
+              address={address}
+              quote={quote}
+              frequency={frequency}
+              startAt={chosenSlot}
+              contact={contact}
+              onContactChange={setContact}
+              onEdit={editFromRecap}
+              onChangeAddress={() => setAddress(null)}
+              onSubmit={submit}
+              submitting={submitting}
+            />
+          ) : null}
 
-        {/* Sur chaque écran, une sortie vers quelqu'un. Certaines demandes se
+          {/* Sur chaque écran, une sortie vers quelqu'un. Certaines demandes se
             règlent en deux minutes au téléphone et jamais dans un
             formulaire — une grande maison, un accès compliqué. */}
-        <TalkToSomeone communeName={commune?.name} />
+          <TalkToSomeone communeName={commune?.name} />
+        </div>
+
+        <PriceBar
+          quote={quote}
+          pending={quotesPending}
+          frequency={frequency}
+          className={showAside ? "lg:hidden" : undefined}
+        />
       </div>
 
-      <PriceBar quote={quote} pending={quotesPending} frequency={frequency} />
+      {showAside ? (
+        <RecapAside
+          step={step}
+          commune={commune}
+          address={address}
+          surfaceSqm={surfaceSqm}
+          quote={quote}
+          frequency={frequency}
+          chosenSlot={chosenSlot}
+          alternateCount={alternateSlots.length}
+          onEdit={goTo}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Récapitulatif collant, à droite du tunnel en desktop.
+ *
+ * Chaque ligne renvoie à son écran : corriger un choix ne demande pas de
+ * remonter le parcours à l'aveugle. Une ligne n'apparaît que lorsque son
+ * information existe — un tiret serait une promesse de formulaire, pas un
+ * résumé — et « Modifier » ne se propose pas sur l'écran où l'on est déjà.
+ *
+ * Le prix y vit en permanence, comme dans la barre basse du mobile : même
+ * règle, un vrai prix d'entrée tant que la durée n'est pas connue, jamais un
+ * montant inventé.
+ */
+function RecapAside({
+  step,
+  commune,
+  address,
+  surfaceSqm,
+  quote,
+  frequency,
+  chosenSlot,
+  alternateCount,
+  onEdit,
+}: {
+  step: Step;
+  commune: CommuneOption | null;
+  address: AddressChoice | null;
+  surfaceSqm: number | null;
+  quote: QuoteView | null;
+  frequency: Frequency;
+  chosenSlot: string | null;
+  alternateCount: number;
+  onEdit: (step: Step) => void;
+}) {
+  const rhythm = FREQUENCIES.find((entry) => entry.value === frequency);
+
+  const durationMinutes =
+    quote?.durationMinutes ??
+    (surfaceSqm !== null
+      ? estimateDuration({ surfaceSqm, service: DURATION_SERVICE })
+          .durationMinutes
+      : null);
+
+  const lines: {
+    label: string;
+    value: string;
+    target: Step;
+  }[] = [
+    ...(address
+      ? [{ label: "Adresse", value: address.label, target: "adresse" as Step }]
+      : commune
+        ? [
+            {
+              label: "Commune",
+              value: `${commune.name} (${commune.postalCode})`,
+              target: "commune" as Step,
+            },
+          ]
+        : []),
+    ...(durationMinutes !== null
+      ? [
+          {
+            label: "Durée",
+            value: `${formatDuration(durationMinutes)} · idéal pour ${suggestedSurfaceFor(
+              durationMinutes,
+              DURATION_SERVICE,
+            )} m²`,
+            target: "logement" as Step,
+          },
+        ]
+      : []),
+    // Le rythme n'a de sens qu'une fois la durée posée : avant, il n'est
+    // qu'une présélection que la personne n'a pas encore vue.
+    ...(durationMinutes !== null && rhythm
+      ? [{ label: "Rythme", value: rhythm.label, target: "rythme" as Step }]
+      : []),
+    ...(chosenSlot !== null
+      ? [
+          {
+            label: "Créneau",
+            value: `${dayFormatter.format(new Date(chosenSlot))} à ${hourLabel(
+              new Date(chosenSlot),
+            )}${alternateCount > 0 ? ` · ${alternateCount} repli${alternateCount > 1 ? "s" : ""}` : ""}`,
+            target: "creneau" as Step,
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <aside
+      aria-label="Votre demande"
+      className="sticky top-6 hidden overflow-hidden rounded-[var(--r-l)] border border-border bg-card shadow-md lg:block"
+    >
+      <div className="flex items-center gap-2.5 border-b border-border-subtle px-5 py-4">
+        <ReceiptTextIcon className="size-5 text-brand" aria-hidden />
+        <p className="font-extrabold">Votre demande</p>
+      </div>
+
+      {lines.length > 0 ? (
+        <dl className="space-y-3 px-5 py-4 text-sm">
+          {lines.map((line) => (
+            <div
+              key={line.label}
+              className="flex items-start justify-between gap-3"
+            >
+              <dt className="shrink-0 text-muted-foreground">{line.label}</dt>
+              <dd className="text-right font-semibold">
+                {line.value}
+                {step !== line.target ? (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(line.target)}
+                    className="ml-auto block text-xs font-semibold text-brand underline underline-offset-2"
+                  >
+                    Modifier
+                    <span className="sr-only">
+                      {" "}
+                      — {line.label.toLowerCase()}
+                    </span>
+                  </button>
+                ) : null}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="px-5 py-4 text-sm text-muted-foreground">
+          Vos choix s&apos;affichent ici au fil du parcours.
+        </p>
+      )}
+
+      <div className="bg-cream-50 px-5 py-4">
+        {quote ? (
+          <>
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="font-extrabold">Par intervention</p>
+              <p className="text-2xl font-black tabular-nums">
+                {formatEuros(quote.grossAmountCents)}
+              </p>
+            </div>
+            <p className="mt-0.5 text-right text-sm text-muted-foreground tabular-nums">
+              {formatDuration(quote.durationMinutes)} ·{" "}
+              {formatHourlyRate(quote.hourlyRateCents)}
+            </p>
+          </>
+        ) : (
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="font-extrabold">
+              À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              minimum {MINIMUM_BILLABLE_MINUTES / 60} h
+            </p>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-pretty text-muted-foreground">
+          {REASSURANCE}
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -1284,15 +1486,20 @@ function PriceBar({
   quote,
   pending,
   frequency,
+  className,
 }: {
   quote: QuoteView | null;
   pending: boolean;
   frequency: Frequency;
+  /** `lg:hidden` quand le récapitulatif collant porte déjà le prix. */
+  className?: string;
 }) {
   const rhythm = FREQUENCIES.find((entry) => entry.value === frequency);
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-6 mt-2 border-t border-border bg-background/95 px-6 py-3 backdrop-blur">
+    <div
+      className={`sticky bottom-0 z-20 -mx-6 mt-2 border-t border-border bg-background/95 px-6 py-3 backdrop-blur ${className ?? ""}`}
+    >
       {quote ? (
         <div>
           <div className="flex items-baseline justify-between gap-3">

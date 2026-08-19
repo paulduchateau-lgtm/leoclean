@@ -11,7 +11,8 @@
 
 html[data-theme="menthe"],
 html[data-theme="pop"],
-html[data-theme="tropical"] {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] {
   /* --- Menthe (remplace leaf) — src/styles/tokens/colors.css --- */
   --leaf-50: #edfdf6;
   --leaf-100: #d2faeb;
@@ -83,7 +84,8 @@ html[data-theme="tropical"] {
 html[data-theme="menthe"]
   .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(.btn-accent),
 html[data-theme="pop"],
-html[data-theme="tropical"]
+html[data-theme="tropical"],
+html[data-theme="tropical2"]
   .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(.btn-accent) {
   box-shadow: 0 10px 24px -8px rgba(22, 177, 137, 0.45);
 }
@@ -92,7 +94,8 @@ html[data-theme="menthe"]
     .btn-accent
   ):active,
 html[data-theme="pop"],
-html[data-theme="tropical"]
+html[data-theme="tropical"],
+html[data-theme="tropical2"]
   .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(
     .btn-accent
   ):active {
@@ -102,52 +105,61 @@ html[data-theme="tropical"]
 /* Le logotype en menthe 600 ne tiendrait pas le contraste : 700. */
 html[data-theme="menthe"] .wordmark,
 html[data-theme="pop"],
-html[data-theme="tropical"] .wordmark {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .wordmark {
   color: var(--leaf-700);
 }
 
 /* Tout état sélectionné suit la même règle que le bouton : menthe, texte encre. */
 html[data-theme="menthe"] .badge-brand,
 html[data-theme="pop"],
-html[data-theme="tropical"] .badge-brand {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .badge-brand {
   background: var(--leaf-400);
   color: var(--ink-900);
 }
 html[data-theme="menthe"] .tag[aria-pressed="true"],
 html[data-theme="pop"],
-html[data-theme="tropical"] .tag[aria-pressed="true"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .tag[aria-pressed="true"],
 html[data-theme="menthe"] .tag.is-selected,
 html[data-theme="pop"],
-html[data-theme="tropical"] .tag.is-selected {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .tag.is-selected {
   background: var(--leaf-300);
   color: var(--ink-900);
   border-color: var(--leaf-600);
 }
 html[data-theme="menthe"] .checkbox input:checked + .box,
 html[data-theme="pop"],
-html[data-theme="tropical"] .checkbox input:checked + .box {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .checkbox input:checked + .box {
   background: var(--leaf-400);
   border-color: var(--leaf-500);
   color: var(--ink-900);
 }
 html[data-theme="menthe"] .steps .step.is-done .dot,
 html[data-theme="pop"],
-html[data-theme="tropical"] .steps .step.is-done .dot {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .steps .step.is-done .dot {
   background: var(--leaf-400);
   color: var(--ink-900);
 }
 html[data-theme="menthe"] .option.is-selected .option-check,
 html[data-theme="pop"],
-html[data-theme="tropical"] .option.is-selected .option-check {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .option.is-selected .option-check {
   background: var(--leaf-400);
   color: var(--ink-900);
 }
 html[data-theme="menthe"] .slot.is-on,
 html[data-theme="pop"],
-html[data-theme="tropical"] .slot.is-on,
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .slot.is-on,
 html[data-theme="menthe"] .hour.is-on,
 html[data-theme="pop"],
-html[data-theme="tropical"] .hour.is-on {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .hour.is-on {
   background: var(--leaf-400);
   border-color: var(--leaf-500);
   color: var(--ink-900);
@@ -156,14 +168,16 @@ html[data-theme="tropical"] .hour.is-on {
 /* Le calendrier : le jour actif reste encre, l'heure choisie est menthe. */
 html[data-theme="menthe"] .sw-pref,
 html[data-theme="pop"],
-html[data-theme="tropical"] .sw-pref {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .sw-pref {
   background: var(--leaf-400);
 }
 
 /* La colonne Léo Clean du comparatif : en-tête menthe pleine, texte encre. */
 html[data-theme="menthe"] .compare thead th.mine,
 html[data-theme="pop"],
-html[data-theme="tropical"] .compare thead th.mine {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .compare thead th.mine {
   background: var(--leaf-400);
   color: var(--ink-900);
 }
@@ -171,19 +185,22 @@ html[data-theme="tropical"] .compare thead th.mine {
 /* Le héros passe du dégradé crème au dégradé menthe → page. */
 html[data-theme="menthe"] .hero,
 html[data-theme="pop"],
-html[data-theme="tropical"] .hero {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .hero {
   background: linear-gradient(180deg, var(--leaf-100), var(--surface-page));
 }
 
 /* Les surfaces translucides suivent le nouveau fond de page. */
 html[data-theme="menthe"] .site-header,
 html[data-theme="pop"],
-html[data-theme="tropical"] .site-header {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .site-header {
   background: rgba(250, 252, 251, 0.88);
 }
 html[data-theme="menthe"] .sticky-bar,
 html[data-theme="pop"],
-html[data-theme="tropical"] .sticky-bar {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .sticky-bar {
   background: rgba(250, 252, 251, 0.94);
 }
 
@@ -191,16 +208,19 @@ html[data-theme="tropical"] .sticky-bar {
    porte pas du blanc, et le système la veut en surface plutôt qu'en texte. */
 html[data-theme="menthe"] .cta-panel,
 html[data-theme="pop"],
-html[data-theme="tropical"] .cta-panel {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel {
   background: var(--clay-300);
 }
 html[data-theme="menthe"] .cta-panel h2,
 html[data-theme="pop"],
-html[data-theme="tropical"] .cta-panel h2 {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel h2 {
   color: var(--ink-900);
 }
 html[data-theme="menthe"] .cta-panel p,
 html[data-theme="pop"],
-html[data-theme="tropical"] .cta-panel p {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel p {
   color: var(--ink-800);
 }

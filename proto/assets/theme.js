@@ -8,8 +8,8 @@
 (function () {
   /* La clé est versionnée : en changer remet tout le monde sur la variante
      du moment, sans quoi un choix fait avant son existence la masquerait. */
-  var CLE = "proto-theme-v4";
-  var ORDRE = ["tropical", "menthe", "pop", "foret"];
+  var CLE = "proto-theme-v5";
+  var ORDRE = ["tropical2", "tropical", "menthe", "pop", "foret"];
   var NOMS = {
     tropical: "tropical punch",
     pop: "pop (violet)",

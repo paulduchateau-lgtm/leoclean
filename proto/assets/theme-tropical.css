@@ -16,7 +16,8 @@
    Chargée en dernier : à spécificité égale, ces règles gagnent.
    ========================================================================== */
 
-html[data-theme="tropical"] {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] {
   /* --- Sarcelle (remplace leaf) — dérivée de #069494 --- */
   --leaf-50: #e6f7f7;
   --leaf-100: #c3eded;
@@ -85,38 +86,46 @@ html[data-theme="tropical"] {
 
 /* L'ombre du bouton principal vire à la mangue — la base commune la pose en
    menthe, et une lueur verte sous un bouton orange dirait deux marques. */
-html[data-theme="tropical"]
+html[data-theme="tropical"],
+html[data-theme="tropical2"]
   .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(.btn-accent) {
   box-shadow: 0 10px 24px -8px rgba(244, 102, 31, 0.4);
 }
 
 /* Le héros est un lever de soleil : papaye vers blanc chaud. */
-html[data-theme="tropical"] .hero {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .hero {
   background: linear-gradient(180deg, var(--clay-100), var(--surface-page));
 }
 
 /* Les surfaces translucides suivent le fond chaud. */
-html[data-theme="tropical"] .site-header {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .site-header {
   background: rgba(255, 252, 249, 0.88);
 }
-html[data-theme="tropical"] .sticky-bar {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .sticky-bar {
   background: rgba(255, 252, 249, 0.94);
 }
 
 /* Le panneau de sortie porte LE rose de la palette, texte encre. */
-html[data-theme="tropical"] .cta-panel {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel {
   background: var(--clay-200);
 }
 
 /* La quatrième teinte de soutien devient mangue : les quatre tuiles de
    chiffres et les quatre prestations portent les quatre couleurs. */
-html[data-theme="tropical"] .stat.tone-cream {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .stat.tone-cream {
   background: var(--mango-50);
 }
-html[data-theme="tropical"] .stat.tone-cream .i {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .stat.tone-cream .i {
   color: var(--mango-600);
 }
-html[data-theme="tropical"] .service.tone-cream .service-bubble {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .service.tone-cream .service-bubble {
   background: var(--mango-100);
   color: var(--mango-700);
 }
@@ -124,7 +133,8 @@ html[data-theme="tropical"] .service.tone-cream .service-bubble {
 /* Dans le héros, le bloc photo quitte la papaye du dégradé pour la sarcelle,
    sinon il se fond dans son propre fond. !important : la teinte est posée en
    style en ligne dans la page. */
-html[data-theme="tropical"] .hero .photo {
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .hero .photo {
   background: var(--leaf-100) !important;
   color: var(--leaf-700) !important;
 }

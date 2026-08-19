@@ -18,11 +18,17 @@ aucun réseau, aucune écriture : les polices, les icônes et les styles sont da
 | `assets/proto.js`           | Territoire, grille tarifaire, calcul du prix, calendrier, navigation.                                                                                |
 | `assets/icons.js`           | Sprite Lucide extrait de `lucide-react` (licence ISC), engendré — ne pas éditer à la main.                                                           |
 
-## Les quatre variantes
+## Les cinq variantes
 
-Le prototype s'ouvre en **tropical punch** ; un bouton dans le bandeau du haut
-fait le tour des quatre, et le choix est retenu d'une page à l'autre.
+Le prototype s'ouvre en **tropical rose** ; un bouton dans le bandeau du haut
+fait le tour des cinq, et le choix est retenu d'une page à l'autre.
 
+- **tropical rose** — la palette tropicale avec rose et sarcelle échangés :
+  le **rose** prend la marque et la profondeur (bande framboise `#64102c`,
+  liens, logotype, créneau retenu), la **sarcelle** passe en surfaces douces
+  (héros, panneau de sortie). Mangue et ananas ne bougent pas. Une exception
+  assumée : l'encart « nous intervenons chez vous » reste sarcelle — un
+  message de succès écrit en rouge se lit comme un refus.
 - **tropical punch** — FF8243 · FFC0CB · FCE883 · 069494. La logique s'inverse :
   la couleur sombre n'est plus verte mais **sarcelle** (bandes, liens, logotype,
   états sélectionnés), et c'est la **mangue** qui porte l'action, texte encre.
@@ -103,8 +109,15 @@ aujourd'hui dans `src/lib/pricing/public-grid.ts` — et non les 29/33 encore
 6 h, 25 m² à l'heure, 30 min par option, annulation gratuite jusqu'à 24 h avant.
 Barème d'annulation et assurance : `src/lib/pricing/cancellation.ts` et les CGU.
 
-## Ce qui reste à fournir
+## Photographies
 
-Aucune photographie n'existe : les emplacements sont des blocs teintés portant la
-mention « photo », comme le prévoit le design system. Ne pas les remplacer par de
-l'image de banque ou générée sans arbitrage.
+Deux images fournies par le porteur du projet vivent dans `assets/img/`
+(fichiers WebP) : `interieur-menthe.webp` au héros, `intervenante-salon.webp`
+sur la bande sombre. Elles restent des **images générées**, choisies par le
+porteur du projet — le design system prévoyait des blocs teintés à défaut.
+Chaque emplacement garde son repli : si le fichier disparaît, `onerror` retire
+l'image et le placeholder teinté d'origine reprend sa place.
+
+Réserve sur `intervenante-salon.webp` : le logotype du t-shirt est mal
+engendré — on y lit « ſeoclean ». Invisible à cette taille, à reprendre avant
+tout usage plus grand.
