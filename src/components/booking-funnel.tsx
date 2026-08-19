@@ -219,6 +219,16 @@ const STEP_TITLES: Record<Step, string> = {
   adresse: "À quelle adresse exactement ?",
 };
 
+/** Libellé court de chaque étape, pour la barre d'avancement nommée. */
+const STEP_LABELS: Record<Step, string> = {
+  commune: "Commune",
+  logement: "Durée",
+  rythme: "Rythme",
+  creneau: "Créneau",
+  coordonnees: "Coordonnées",
+  adresse: "Récapitulatif",
+};
+
 const dayFormatter = new Intl.DateTimeFormat("fr-FR", {
   weekday: "long",
   day: "numeric",
@@ -1060,180 +1070,192 @@ export function BookingFunnel({
   const showAside = !(step === "adresse" && address && quote && chosenSlot);
 
   return (
-    /* En desktop, deux colonnes : le tunnel garde sa largeur de lecture et le
-       récapitulatif collant occupe la droite — c'est lui qui porte le prix,
-       la barre basse restant l'affaire du mobile. */
-    <div
-      className={
-        showAside
-          ? "lg:grid lg:grid-cols-[1.5fr_0.9fr] lg:items-start lg:gap-10"
-          : undefined
-      }
-    >
-      {/* Le conteneur occupe au moins la hauteur de l'écran : sans cela, la barre
-       de prix — collante au bas de son parent — se posait au milieu de la page
-       sur les étapes courtes au lieu de rester sous le pouce. */}
-      <div className="flex min-h-[calc(100svh-8rem)] flex-col">
-        <FunnelHeader
-          index={index}
-          title={STEP_TITLES[step]}
-          onBack={index > 0 || returnToRecap ? goBack : undefined}
-        />
+    <div>
+      {/* La bande de progression court sur toute la largeur, au-dessus des
+          deux colonnes — comme sur le prototype. */}
+      <FunnelHeader
+        index={index}
+        title={STEP_TITLES[step]}
+        onBack={index > 0 || returnToRecap ? goBack : undefined}
+      />
 
-        <div className="mt-6 flex-1 space-y-5 pb-4">
-          {/* La reprise se propose tant qu'on n'a rien décidé de neuf : au-delà
+      {/* En desktop, deux colonnes : le tunnel garde sa largeur de lecture et
+          le récapitulatif collant occupe la droite — c'est lui qui porte le
+          prix, la barre basse restant l'affaire du mobile. */}
+      <div
+        className={
+          showAside
+            ? "lg:grid lg:grid-cols-[1.5fr_0.9fr] lg:items-start lg:gap-10"
+            : undefined
+        }
+      >
+        {/* Le conteneur occupe au moins la hauteur de l'écran : sans cela, la
+            barre de prix — collante au bas de son parent — se posait au milieu
+            de la page sur les étapes courtes au lieu de rester sous le
+            pouce.
+            `min-w-0` — sans lui, une colonne de grille prend la largeur de son
+            contenu, et la bande de jours défilante pousse le récapitulatif
+            hors de l'écran : le piège que le prototype documente. */}
+        <div className="flex min-h-[calc(100svh-11rem)] min-w-0 flex-col">
+          <h2 className="mt-6 text-2xl font-black tracking-tight text-balance">
+            {STEP_TITLES[step]}
+          </h2>
+
+          <div className="mt-5 flex-1 space-y-5 pb-4">
+            {/* La reprise se propose tant qu'on n'a rien décidé de neuf : au-delà
             du deuxième écran, elle défaire ait un parcours en cours. */}
-          {resumable && index <= 1 ? (
-            <ResumePrompt
-              saved={resumable}
-              communeName={
-                communes.find((entry) => entry.slug === resumable.communeSlug)
-                  ?.name ?? null
-              }
-              onResume={() => {
-                const saved = communes.find(
-                  (entry) => entry.slug === resumable.communeSlug,
-                );
-                if (saved) setCommune(saved);
-                setSurfaceSqm(resumable.surfaceSqm);
-                setHousingLabel(resumable.housingLabel);
-                setFrequency(offeredFrequency(resumable.frequency));
-                setChosenSlot(resumable.chosenSlot);
-                // Les replis ne sont pas enregistrés : ils décrivent un état du
-                // planning qui a une semaine, et le proposer à nouveau ferait
-                // réserver sur des heures qui n'existent plus.
-                setAlternateSlots([]);
-                if (resumable.surfaceSqm !== null) {
-                  void loadQuotes(resumable.surfaceSqm);
+            {resumable && index <= 1 ? (
+              <ResumePrompt
+                saved={resumable}
+                communeName={
+                  communes.find((entry) => entry.slug === resumable.communeSlug)
+                    ?.name ?? null
                 }
-                setResumeHandled(true);
-                goTo(saved ? resumable.step : "commune");
-              }}
-              onDiscard={() => {
-                clearSavedState();
-                setResumeHandled(true);
-              }}
-            />
-          ) : null}
+                onResume={() => {
+                  const saved = communes.find(
+                    (entry) => entry.slug === resumable.communeSlug,
+                  );
+                  if (saved) setCommune(saved);
+                  setSurfaceSqm(resumable.surfaceSqm);
+                  setHousingLabel(resumable.housingLabel);
+                  setFrequency(offeredFrequency(resumable.frequency));
+                  setChosenSlot(resumable.chosenSlot);
+                  // Les replis ne sont pas enregistrés : ils décrivent un état du
+                  // planning qui a une semaine, et le proposer à nouveau ferait
+                  // réserver sur des heures qui n'existent plus.
+                  setAlternateSlots([]);
+                  if (resumable.surfaceSqm !== null) {
+                    void loadQuotes(resumable.surfaceSqm);
+                  }
+                  setResumeHandled(true);
+                  goTo(saved ? resumable.step : "commune");
+                }}
+                onDiscard={() => {
+                  clearSavedState();
+                  setResumeHandled(true);
+                }}
+              />
+            ) : null}
 
-          {error ? <ErrorNotice error={error} /> : null}
+            {error ? <ErrorNotice error={error} /> : null}
 
-          {step === "commune" ? (
-            <CommuneStep
-              communes={communes}
-              selected={commune}
-              onChoose={chooseCommune}
-            />
-          ) : null}
+            {step === "commune" ? (
+              <CommuneStep
+                communes={communes}
+                selected={commune}
+                onChoose={chooseCommune}
+              />
+            ) : null}
 
-          {step === "logement" ? (
-            <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
-          ) : null}
+            {step === "logement" ? (
+              <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
+            ) : null}
 
-          {step === "rythme" ? (
-            <FrequencyStep
-              quotes={quotes}
-              pending={quotesPending}
-              selected={frequency}
-              onChoose={chooseFrequency}
-            />
-          ) : null}
+            {step === "rythme" ? (
+              <FrequencyStep
+                quotes={quotes}
+                pending={quotesPending}
+                selected={frequency}
+                onChoose={chooseFrequency}
+              />
+            ) : null}
 
-          {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
+            {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
             réessai : un squelette perpétuel par-dessus ne dirait rien.
             Sans devis non plus il n'y a rien à attendre — la recherche de
             créneaux a besoin d'une durée, donc d'un devis, et le squelette
             promettait un contenu qui ne pouvait pas arriver. */}
-          {step === "creneau" &&
-          slotsStatus !== "error" &&
-          (quote !== null || quotesPending) ? (
-            <SlotStep
-              slots={slots}
-              fetchedAt={slotsFetchedAt}
-              pending={slotsStatus !== "ready"}
-              chosen={chosenSlot}
-              alternates={alternateSlots}
-              onChoose={chooseSlot}
-              onToggleAlternate={toggleAlternateSlot}
-              onContinue={() => advance("creneau")}
-            />
-          ) : null}
+            {step === "creneau" &&
+            slotsStatus !== "error" &&
+            (quote !== null || quotesPending) ? (
+              <SlotStep
+                slots={slots}
+                fetchedAt={slotsFetchedAt}
+                pending={slotsStatus !== "ready"}
+                chosen={chosenSlot}
+                alternates={alternateSlots}
+                onChoose={chooseSlot}
+                onToggleAlternate={toggleAlternateSlot}
+                onContinue={() => advance("creneau")}
+              />
+            ) : null}
 
-          {step === "coordonnees" ? (
-            <ContactStep
-              contact={contact}
-              onContactChange={setContact}
-              onContinue={() => advance("coordonnees")}
-              known={knownClient !== null}
-            />
-          ) : null}
+            {step === "coordonnees" ? (
+              <ContactStep
+                contact={contact}
+                onContactChange={setContact}
+                onContinue={() => advance("coordonnees")}
+                known={knownClient !== null}
+              />
+            ) : null}
 
-          {/* Dernier écran. Tant que l'adresse exacte n'est pas donnée, il ne
+            {/* Dernier écran. Tant que l'adresse exacte n'est pas donnée, il ne
             montre qu'elle ; une fois donnée, il devient le récapitulatif —
             c'est le premier moment où l'on a tout ce qu'il faut pour le
             montrer. */}
-          {step === "adresse" && !address ? (
-            <AddressStep
-              backend={backend}
-              communes={communes}
-              defaultQuery={defaultQuery}
-              originCommune={commune}
-              savedAddresses={knownClient?.addresses ?? []}
-              selected={address}
-              onSelect={chooseAddress}
-              onSelectSaved={chooseKnownAddress}
-            />
-          ) : null}
+            {step === "adresse" && !address ? (
+              <AddressStep
+                backend={backend}
+                communes={communes}
+                defaultQuery={defaultQuery}
+                originCommune={commune}
+                savedAddresses={knownClient?.addresses ?? []}
+                selected={address}
+                onSelect={chooseAddress}
+                onSelectSaved={chooseKnownAddress}
+              />
+            ) : null}
 
-          {step === "adresse" && address && (!quote || !chosenSlot) ? (
-            <div className="space-y-3" aria-hidden>
-              <div className="h-48 animate-pulse rounded-xl bg-secondary" />
-              <div className="h-32 animate-pulse rounded-xl bg-secondary" />
-            </div>
-          ) : null}
+            {step === "adresse" && address && (!quote || !chosenSlot) ? (
+              <div className="space-y-3" aria-hidden>
+                <div className="h-48 animate-pulse rounded-xl bg-secondary" />
+                <div className="h-32 animate-pulse rounded-xl bg-secondary" />
+              </div>
+            ) : null}
 
-          {step === "adresse" && address && quote && chosenSlot ? (
-            <RecapStep
-              address={address}
-              quote={quote}
-              frequency={frequency}
-              startAt={chosenSlot}
-              contact={contact}
-              onContactChange={setContact}
-              onEdit={editFromRecap}
-              onChangeAddress={() => setAddress(null)}
-              onSubmit={submit}
-              submitting={submitting}
-            />
-          ) : null}
+            {step === "adresse" && address && quote && chosenSlot ? (
+              <RecapStep
+                address={address}
+                quote={quote}
+                frequency={frequency}
+                startAt={chosenSlot}
+                contact={contact}
+                onContactChange={setContact}
+                onEdit={editFromRecap}
+                onChangeAddress={() => setAddress(null)}
+                onSubmit={submit}
+                submitting={submitting}
+              />
+            ) : null}
 
-          {/* Sur chaque écran, une sortie vers quelqu'un. Certaines demandes se
+            {/* Sur chaque écran, une sortie vers quelqu'un. Certaines demandes se
             règlent en deux minutes au téléphone et jamais dans un
             formulaire — une grande maison, un accès compliqué. */}
-          <TalkToSomeone communeName={commune?.name} />
+            <TalkToSomeone communeName={commune?.name} />
+          </div>
+
+          <PriceBar
+            quote={quote}
+            pending={quotesPending}
+            frequency={frequency}
+            className={showAside ? "lg:hidden" : undefined}
+          />
         </div>
 
-        <PriceBar
-          quote={quote}
-          pending={quotesPending}
-          frequency={frequency}
-          className={showAside ? "lg:hidden" : undefined}
-        />
+        {showAside ? (
+          <RecapAside
+            step={step}
+            commune={commune}
+            address={address}
+            surfaceSqm={surfaceSqm}
+            quote={quote}
+            frequency={frequency}
+            chosenSlot={chosenSlot}
+            alternateCount={alternateSlots.length}
+            onEdit={goTo}
+          />
+        ) : null}
       </div>
-
-      {showAside ? (
-        <RecapAside
-          step={step}
-          commune={commune}
-          address={address}
-          surfaceSqm={surfaceSqm}
-          quote={quote}
-          frequency={frequency}
-          chosenSlot={chosenSlot}
-          alternateCount={alternateSlots.length}
-          onEdit={goTo}
-        />
-      ) : null}
     </div>
   );
 }
@@ -1319,7 +1341,15 @@ function RecapAside({
             label: "Créneau",
             value: `${dayFormatter.format(new Date(chosenSlot))} à ${hourLabel(
               new Date(chosenSlot),
-            )}${alternateCount > 0 ? ` · ${alternateCount} repli${alternateCount > 1 ? "s" : ""}` : ""}`,
+            )}`,
+            target: "creneau" as Step,
+          },
+          {
+            label: "Replis",
+            value:
+              alternateCount > 0
+                ? `${alternateCount} créneau${alternateCount > 1 ? "x" : ""}`
+                : "aucun",
             target: "creneau" as Step,
           },
         ]
@@ -1329,7 +1359,7 @@ function RecapAside({
   return (
     <aside
       aria-label="Votre demande"
-      className="sticky top-6 hidden overflow-hidden rounded-[var(--r-l)] border border-border bg-card shadow-md lg:block"
+      className="sticky top-6 mt-6 hidden overflow-hidden rounded-[var(--r-l)] border border-border bg-card shadow-md lg:block"
     >
       <div className="flex items-center gap-2.5 border-b border-border-subtle px-5 py-4">
         <ReceiptTextIcon className="size-5 text-brand" aria-hidden />
@@ -1372,7 +1402,22 @@ function RecapAside({
       <div className="bg-cream-50 px-5 py-4">
         {quote ? (
           <>
-            <div className="flex items-baseline justify-between gap-3">
+            {/* Le prix se décompose, comme sur le prototype : la prestation,
+                l'absence de frais ajoutés, puis le total — c'est la ligne
+                « aucun » qui porte l'argument. */}
+            <dl className="space-y-1.5 text-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <dt>Ménage {formatDuration(quote.durationMinutes)}</dt>
+                <dd className="font-semibold tabular-nums">
+                  {formatEuros(quote.grossAmountCents)}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3 text-muted-foreground">
+                <dt>Frais de service</dt>
+                <dd>aucun</dd>
+              </div>
+            </dl>
+            <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-cream-200 pt-3">
               <p className="font-extrabold">Par intervention</p>
               <p className="text-2xl font-black tabular-nums">
                 {formatEuros(quote.grossAmountCents)}
@@ -1393,7 +1438,10 @@ function RecapAside({
             </p>
           </div>
         )}
-        <p className="mt-2 text-xs text-pretty text-muted-foreground">
+        {/* La note reprend la réassurance de la barre basse — le
+            fonctionnement d'aujourd'hui, sans promettre une mécanique de
+            carte qui n'existe pas encore. */}
+        <p className="mt-3 rounded-[var(--r-s)] bg-pineapple-50 px-3 py-2 text-xs text-pretty text-ink-700">
           {REASSURANCE}
         </p>
       </div>
@@ -1410,6 +1458,16 @@ function RecapAside({
  *
  * Un seul modèle de navigation à la fois — dans le tunnel, il n'y a ni menu ni
  * liens de contenu, qui ne serviraient qu'à en sortir.
+ *
+ * La progression est nommée, comme sur le prototype : une pastille par étape,
+ * cochée quand l'étape est derrière soi. Les pastilles ne sont pas cliquables
+ * — corriger un choix passe par le récapitulatif, qui dit ce qu'on va
+ * modifier, quand une pastille ne dirait que où l'on va. Sur un écran étroit,
+ * la bande défile horizontalement plutôt que d'empiler six libellés.
+ *
+ * La sarcelle 600 des pastilles cochées porte du blanc : c'est la sarcelle
+ * foncée, celle des liens — la règle « jamais de blanc » ne vaut que pour la
+ * pleine, à 400.
  */
 function FunnelHeader({
   index,
@@ -1438,27 +1496,67 @@ function FunnelHeader({
         </p>
       </div>
 
-      <div
-        className="mt-3 flex gap-1.5"
-        role="progressbar"
-        aria-valuenow={index + 1}
-        aria-valuemin={1}
-        aria-valuemax={STEPS.length}
-        aria-label={`Étape ${index + 1} sur ${STEPS.length}`}
+      <nav
+        aria-label="Progression de la réservation"
+        className="-mx-6 mt-4 overflow-x-auto px-6"
       >
-        {STEPS.map((entry, position) => (
-          <span
-            key={entry}
-            className={`h-1.5 flex-1 rounded-full ${
-              position <= index ? "bg-primary" : "bg-secondary"
-            }`}
-          />
-        ))}
-      </div>
-
-      <h2 className="mt-5 text-2xl font-black tracking-tight text-balance">
-        {title}
-      </h2>
+        <ol className="flex min-w-[640px] items-center gap-2">
+          {STEPS.map((entry, position) => {
+            const done = position < index;
+            const current = position === index;
+            return (
+              <li
+                key={entry}
+                aria-current={current ? "step" : undefined}
+                className={`flex items-center gap-2 ${
+                  position < STEPS.length - 1 ? "flex-1" : ""
+                }`}
+              >
+                <span
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${
+                    done
+                      ? "bg-teal-600 text-white"
+                      : current
+                        ? "bg-teal-100 text-teal-700"
+                        : "bg-ink-100 text-muted-foreground"
+                  }`}
+                  aria-hidden={done ? undefined : true}
+                >
+                  {done ? (
+                    <>
+                      <CheckIcon
+                        className="size-3.5"
+                        strokeWidth={3}
+                        aria-hidden
+                      />
+                      <span className="sr-only">Étape faite : </span>
+                    </>
+                  ) : (
+                    position + 1
+                  )}
+                </span>
+                <span
+                  className={`text-xs whitespace-nowrap ${
+                    current
+                      ? "font-bold text-foreground"
+                      : "font-medium text-muted-foreground"
+                  }`}
+                >
+                  {STEP_LABELS[entry]}
+                </span>
+                {position < STEPS.length - 1 ? (
+                  <span
+                    className={`h-0.5 min-w-3 flex-1 rounded-full ${
+                      done ? "bg-teal-300" : "bg-ink-200"
+                    }`}
+                    aria-hidden
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
       {/*
         Le changement d'écran est annoncé aux lecteurs d'écran.
@@ -2466,130 +2564,135 @@ function SlotStep({
         iraient aussi.
       </p>
 
-      {/* Les journées complètes restent visibles, barrées : ce que le planning
+      {/* Le calendrier vit dans sa carte, comme sur le prototype : la bande
+          de jours, la grille d'heures et la légende forment un seul objet. */}
+      <div className="space-y-4 rounded-[var(--r-l)] border border-border bg-card p-5">
+        {/* Les journées complètes restent visibles, barrées : ce que le planning
           ne peut pas offrir se lit, au lieu de disparaître. */}
-      {/* Le bandeau s'accroche : un défilement horizontal libre laisse une
+        {/* Le bandeau s'accroche : un défilement horizontal libre laisse une
           date coupée en deux au bord de l'écran, et on ne sait plus quel jour
           on lit. */}
-      <div className="-mx-6 snap-x snap-mandatory overflow-x-auto px-6">
-        <ul className="flex gap-2 pb-1">
-          {days.map((day) => {
-            const open = day.slots.length > 0;
-            const isActive = active?.key === day.key;
-            return (
-              <li key={day.key} className="snap-start">
-                <button
-                  type="button"
-                  disabled={!open}
-                  onClick={() => setActiveKey(day.key)}
-                  aria-pressed={isActive}
-                  className={`flex min-h-18 w-18 flex-col items-center justify-center rounded-lg border-2 px-2 py-2 text-center transition-[background-color,border-color] duration-200 ease-brand ${
-                    isActive
-                      ? "border-ink-900 bg-ink-900 text-white"
-                      : open
-                        ? "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
-                        : "border-border-subtle bg-muted text-ink-300 line-through"
-                  }`}
-                >
-                  <span className="text-xs capitalize">
-                    {chipFormatter.format(day.date).split(" ")[0]}
-                  </span>
-                  <span className="text-lg font-extrabold tabular-nums">
-                    {day.date.getDate()}
-                  </span>
-                  <span className="text-[0.65rem] uppercase">
-                    {monthFormatter.format(day.date).replace(".", "")}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+        <div className="-mx-5 snap-x snap-mandatory overflow-x-auto px-5">
+          <ul className="flex gap-2 pb-1">
+            {days.map((day) => {
+              const open = day.slots.length > 0;
+              const isActive = active?.key === day.key;
+              return (
+                <li key={day.key} className="snap-start">
+                  <button
+                    type="button"
+                    disabled={!open}
+                    onClick={() => setActiveKey(day.key)}
+                    aria-pressed={isActive}
+                    className={`flex min-h-18 w-18 flex-col items-center justify-center rounded-lg border-2 px-2 py-2 text-center transition-[background-color,border-color] duration-200 ease-brand ${
+                      isActive
+                        ? "border-ink-900 bg-ink-900 text-white"
+                        : open
+                          ? "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
+                          : "border-border-subtle bg-muted text-ink-300 line-through"
+                    }`}
+                  >
+                    <span className="text-xs capitalize">
+                      {chipFormatter.format(day.date).split(" ")[0]}
+                    </span>
+                    <span className="text-lg font-extrabold tabular-nums">
+                      {day.date.getDate()}
+                    </span>
+                    <span className="text-[0.65rem] uppercase">
+                      {monthFormatter.format(day.date).replace(".", "")}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
-      {active ? (
-        <div>
-          <h3 className="font-extrabold first-letter:uppercase">
-            {dayFormatter.format(active.date)}
-          </h3>
-          {active.slots.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Complet ce jour-là. Choisissez une autre date ci-dessus.
-            </p>
-          ) : (
-            <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {active.slots.map((slot) => {
-                const preferred = chosen === slot.start;
-                const alternate = alternates.includes(slot.start);
-                const full = alternates.length >= MAX_ALTERNATE_SLOTS;
+        {active ? (
+          <div>
+            <h3 className="font-extrabold first-letter:uppercase">
+              {dayFormatter.format(active.date)}
+            </h3>
+            {active.slots.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Complet ce jour-là. Choisissez une autre date ci-dessus.
+              </p>
+            ) : (
+              <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {active.slots.map((slot) => {
+                  const preferred = chosen === slot.start;
+                  const alternate = alternates.includes(slot.start);
+                  const full = alternates.length >= MAX_ALTERNATE_SLOTS;
 
-                return (
-                  <li key={slot.start}>
-                    <button
-                      type="button"
-                      /* Le premier choix désigne le créneau préféré. Les
+                  return (
+                    <li key={slot.start}>
+                      <button
+                        type="button"
+                        /* Le premier choix désigne le créneau préféré. Les
                          suivants ajoutent des replis — sauf sur le préféré
                          lui-même, qu'un second appui libérerait sans qu'on
                          sache lequel prend sa place. */
-                      disabled={
-                        !preferred &&
-                        chosen !== null &&
-                        alternate === false &&
-                        full
-                      }
-                      onClick={() => {
-                        // Une impulsion de dix millisecondes : le geste se
-                        // confirme dans la main. Absente sur iOS, sans
-                        // conséquence — c'est un ajout, pas un signal dont
-                        // dépend la compréhension.
-                        navigator.vibrate?.(10);
-                        if (chosen === null || preferred) onChoose(slot.start);
-                        else onToggleAlternate(slot.start);
-                      }}
-                      aria-pressed={preferred || alternate}
-                      className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100 ${
-                        preferred
-                          ? "border-ink-900 bg-ink-900 text-white"
-                          : alternate
-                            ? "border-teal-400 bg-teal-50 text-teal-800"
-                            : "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
-                      }`}
-                    >
-                      {timeFormatter.format(new Date(slot.start))}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      ) : null}
+                        disabled={
+                          !preferred &&
+                          chosen !== null &&
+                          alternate === false &&
+                          full
+                        }
+                        onClick={() => {
+                          // Une impulsion de dix millisecondes : le geste se
+                          // confirme dans la main. Absente sur iOS, sans
+                          // conséquence — c'est un ajout, pas un signal dont
+                          // dépend la compréhension.
+                          navigator.vibrate?.(10);
+                          if (chosen === null || preferred)
+                            onChoose(slot.start);
+                          else onToggleAlternate(slot.start);
+                        }}
+                        aria-pressed={preferred || alternate}
+                        className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100 ${
+                          preferred
+                            ? "border-ink-900 bg-ink-900 text-white"
+                            : alternate
+                              ? "border-teal-400 bg-teal-50 text-teal-800"
+                              : "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
+                        }`}
+                      >
+                        {timeFormatter.format(new Date(slot.start))}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ) : null}
 
-      {/* La légende dit ce que les couleurs disent : personne ne devine
+        {/* La légende dit ce que les couleurs disent : personne ne devine
           qu'encre veut dire « préféré » et sarcelle « repli ». */}
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-        <li className="flex items-center gap-1.5">
-          <span
-            className="inline-block size-3.5 rounded-xs bg-ink-900"
-            aria-hidden
-          />
-          Votre préféré
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span
-            className="inline-block size-3.5 rounded-xs border-2 border-teal-400 bg-teal-50"
-            aria-hidden
-          />
-          Repli accepté
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span
-            className="inline-block size-3.5 rounded-xs border border-border bg-muted"
-            aria-hidden
-          />
-          Déjà pris
-        </li>
-      </ul>
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block size-3.5 rounded-xs bg-ink-900"
+              aria-hidden
+            />
+            Votre préféré
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block size-3.5 rounded-xs border-2 border-teal-400 bg-teal-50"
+              aria-hidden
+            />
+            Repli accepté
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block size-3.5 rounded-xs border border-border bg-muted"
+              aria-hidden
+            />
+            Déjà pris
+          </li>
+        </ul>
+      </div>
 
       {chosen !== null ? (
         <div className="rounded-xl border border-border bg-card p-4">
