@@ -1,4 +1,5 @@
 import { genererLesRecurrences } from "@/lib/abonnement/generateur";
+import { traiterLesPaiements } from "@/lib/paiement/travaux";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
 import { serverEnv } from "@/lib/env";
 
@@ -54,7 +55,20 @@ export async function GET(request: Request): Promise<Response> {
 
   // Le compte rendu part dans les journaux de l'hébergeur : c'est la seule
   // trace de ce qui s'est passé pendant que personne ne regardait.
-  console.info("Ordonnanceur", { ...rapport, recurrences });
+  /*
+   * Les paiements viennent en dernier et séparément : un échec de Stripe ne
+   * doit ni empêcher la diffusion des missions ni la génération des
+   * récurrences, qui sont ce qui fait tourner le service.
+   */
+  let paiements;
+  try {
+    paiements = await traiterLesPaiements();
+  } catch (erreur) {
+    console.error("Traitement des paiements interrompu", erreur);
+    paiements = { erreur: true };
+  }
 
-  return Response.json({ ...rapport, recurrences });
+  console.info("Ordonnanceur", { ...rapport, recurrences, paiements });
+
+  return Response.json({ ...rapport, recurrences, paiements });
 }

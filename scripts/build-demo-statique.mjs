@@ -49,6 +49,10 @@ const ECARTES = [
   // exclusion à envisager » : `force-dynamic` est incompatible avec
   // `output: export`, et rien ne le signale avant la construction.
   "src/app/api/taches",
+  // Le webhook Stripe lit un corps brut et vérifie une signature : il n'a
+  // aucun sens dans un site de fichiers, et `force-dynamic` est de toute façon
+  // incompatible avec `output: export`.
+  "src/app/api/webhooks",
   // Le middleware suppose un serveur devant les fichiers.
   "src/proxy.ts",
   // Un plan du site contredirait le `Disallow: /` de la vitrine.
