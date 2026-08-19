@@ -121,6 +121,13 @@ export async function createBooking(
     frequency: input.frequency,
     durationOverrideMinutes: input.durationOverrideMinutes,
     at: now,
+    /*
+     * Le créneau est connu ici, donc les majorations s'appliquent. C'est le
+     * seul devis qui engage : celui du tunnel sert à montrer, celui-ci à
+     * facturer, et il est recalculé côté serveur sans rien reprendre du
+     * navigateur.
+     */
+    startAt: input.scheduledStart,
   });
 
   const scheduledEnd = new Date(

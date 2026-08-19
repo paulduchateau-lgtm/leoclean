@@ -11,8 +11,10 @@ import {
 import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { estimateDuration } from "@/lib/pricing";
 import {
+  COURT_DELAI_HEURES,
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
+  PUBLIC_SURCHARGES,
   TARIF_PONCTUEL,
   TARIF_PONCTUEL_HEURE,
   TARIF_REGULIER,
@@ -236,6 +238,33 @@ export default function TarifsPage() {
             </tbody>
           </table>
         </div>
+
+        <h2 className="mt-14 text-2xl font-black tracking-tight">
+          Week-end, jours fériés et dernière minute
+        </h2>
+        <p className="mt-2 max-w-prose text-muted-foreground">
+          Trois situations coûtent plus cher, et vous les voyez avant de
+          réserver — jamais au récapitulatif.
+        </p>
+        <ul className="mt-4 space-y-2 text-muted-foreground">
+          {PUBLIC_SURCHARGES.map((majoration) => (
+            <li key={majoration.cause} className="flex flex-wrap gap-x-3">
+              <span className="font-mono font-semibold text-foreground">
+                {majoration.display}
+              </span>
+              <span>
+                {majoration.cause === "COURT_DELAI"
+                  ? `Réservation à moins de ${COURT_DELAI_HEURES} heures`
+                  : majoration.label}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 max-w-prose text-sm text-muted-foreground">
+          Les deux premières reviennent intégralement à votre intervenant :
+          c&apos;est lui qui travaille le week-end. La troisième couvre le coût
+          de placer une mission dans une tournée déjà arrêtée.
+        </p>
 
         <h2 className="mt-14 text-2xl font-black tracking-tight">Annulation</h2>
         <p className="mt-2 max-w-prose text-muted-foreground">

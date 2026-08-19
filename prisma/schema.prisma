@@ -134,6 +134,7 @@ model Organization {
   referrals              Referral[]
   referralRewards        ReferralReward[]
   analyticsEvents        AnalyticsEvent[]
+  pricingSurcharges      PricingSurcharge[]
 
   @@index([type, status])
 }
@@ -694,6 +695,10 @@ model Booking {
 enum BookingItemKind {
   SERVICE
   OPTION
+  /// Majoration de jour ou de délai. Détaillée en ligne plutôt que fondue dans
+  /// le total : un client qui lit « dimanche +25 % » comprend, un client qui
+  /// voit un montant plus élevé sans explication conteste.
+  SURCHARGE
 }
 
 /// Ligne de réservation : instantané du catalogue au moment de la commande.
@@ -1590,4 +1595,35 @@ model AnalyticsEvent {
   @@index([journeyId])
   /// La purge de rétention balaie par date, toutes organisations confondues.
   @@index([occurredAt])
+}
+
+/// Majoration de prix, avec son bénéficiaire.
+///
+/// Le jour — samedi, dimanche, férié — revient à l'intervenant : c'est lui qui
+/// travaille le week-end. Le délai — moins de 48 heures — revient à la
+/// plateforme : c'est elle qui place la mission au forceps. Ce partage prolonge
+/// la règle du dépôt, où la marge est un écart et non un taux.
+///
+/// Historisée comme `PricingRule` : une réservation passée continue de pointer
+/// sur la règle qui l'a chiffrée.
+model PricingSurcharge {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// `SAMEDI` · `DIMANCHE_FERIE` · `COURT_DELAI`
+  cause  String
+  rateBp Int
+  /// `PROFESSIONAL` · `PLATFORM`
+  beneficiary String
+  label       String
+
+  validFrom  DateTime  @default(now())
+  validUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, cause, validFrom])
 }
