@@ -105,8 +105,7 @@ export function dansLaFenetre(
   mission: { debut: Date; fin: Date },
   maintenant: Date,
 ): boolean {
-  const ouverture =
-    mission.debut.getTime() - FENETRE_AVANT_HEURES * 3_600_000;
+  const ouverture = mission.debut.getTime() - FENETRE_AVANT_HEURES * 3_600_000;
   const fermeture = mission.fin.getTime() + FENETRE_APRES_HEURES * 3_600_000;
   const instant = maintenant.getTime();
   return instant >= ouverture && instant <= fermeture;

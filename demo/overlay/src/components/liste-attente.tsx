@@ -12,7 +12,12 @@ import { ContactChannels } from "@/components/contact-channels";
  * qu'un formulaire absent — la demande est perdue et la personne croit avoir
  * été entendue. On montre donc les canaux qui fonctionnent vraiment.
  */
-export function ListeAttente({ className }: { className?: string; sourcePath?: string }) {
+export function ListeAttente({
+  className,
+}: {
+  className?: string;
+  sourcePath?: string;
+}) {
   return (
     <div
       className={`rounded-2xl border border-border bg-secondary/50 p-6 text-center ${className ?? ""}`}

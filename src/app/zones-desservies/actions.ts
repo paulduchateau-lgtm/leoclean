@@ -70,7 +70,8 @@ const inscriptionSchema = z
     renderedAt: z.coerce.number().optional(),
   })
   .refine((valeur) => valeur.email !== null || valeur.phone !== null, {
-    message: "Laissez au moins un email ou un téléphone pour qu'on vous prévienne.",
+    message:
+      "Laissez au moins un email ou un téléphone pour qu'on vous prévienne.",
     path: ["email"],
   });
 

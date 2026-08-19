@@ -42,8 +42,8 @@ export function ListeAttente({
         <p className="font-semibold">C&apos;est noté.</p>
         <p className="mt-1 text-muted-foreground">
           On vous écrit le jour où quelqu&apos;un travaille à moins de vingt
-          minutes de chez vous. Pas avant, et sans rien vous envoyer d&apos;autre
-          entre-temps.
+          minutes de chez vous. Pas avant, et sans rien vous envoyer
+          d&apos;autre entre-temps.
         </p>
       </div>
     );
@@ -82,8 +82,8 @@ export function ListeAttente({
       </h2>
       <p className="mt-2 max-w-prose text-muted-foreground">
         Dites-nous où vous êtes. On ouvre une commune quand quelqu&apos;un y
-        travaille à moins de vingt minutes — c&apos;est ce qui rend tenable
-        « toujours la même personne », et c&apos;est pour ça qu&apos;on
+        travaille à moins de vingt minutes — c&apos;est ce qui rend tenable «
+        toujours la même personne », et c&apos;est pour ça qu&apos;on
         n&apos;annonce pas de date.
       </p>
 
@@ -127,7 +127,8 @@ export function ListeAttente({
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">
-            Code postal <span className="text-muted-foreground">(facultatif)</span>
+            Code postal{" "}
+            <span className="text-muted-foreground">(facultatif)</span>
           </span>
           <input
             name="postalCode"
@@ -148,9 +149,7 @@ export function ListeAttente({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium">
-            ou téléphone
-          </span>
+          <span className="font-medium">ou téléphone</span>
           <input
             name="phone"
             type="tel"

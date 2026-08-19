@@ -38,25 +38,19 @@ export const LIBELLES_TAGS: Record<TagAvis, string> = {
 export const SEUIL_TICKET_QUALITE = 3;
 
 export type CategorieInsatisfaction =
-  | "PROPRETE"
-  | "RETARD"
-  | "COMPORTEMENT"
-  | "CASSE"
-  | "AUTRE";
+  "PROPRETE" | "RETARD" | "COMPORTEMENT" | "CASSE" | "AUTRE";
 
-export const LIBELLES_INSATISFACTION: Record<CategorieInsatisfaction, string> = {
-  PROPRETE: "Le ménage n'était pas à la hauteur",
-  RETARD: "Retard ou horaire non respecté",
-  COMPORTEMENT: "Comportement",
-  CASSE: "Quelque chose a été abîmé",
-  AUTRE: "Autre chose",
-};
+export const LIBELLES_INSATISFACTION: Record<CategorieInsatisfaction, string> =
+  {
+    PROPRETE: "Le ménage n'était pas à la hauteur",
+    RETARD: "Retard ou horaire non respecté",
+    COMPORTEMENT: "Comportement",
+    CASSE: "Quelque chose a été abîmé",
+    AUTRE: "Autre chose",
+  };
 
 export type RefusAvis =
-  | "MISSION_NON_TERMINEE"
-  | "DEJA_NOTEE"
-  | "NOTE_INVALIDE"
-  | "TROP_TARD";
+  "MISSION_NON_TERMINEE" | "DEJA_NOTEE" | "NOTE_INVALIDE" | "TROP_TARD";
 
 export const MESSAGES_AVIS: Record<RefusAvis, string> = {
   MISSION_NON_TERMINEE: "Cette intervention n'est pas encore terminée.",
@@ -84,7 +78,11 @@ export function verifierAvis(input: {
 }): RefusAvis | null {
   if (!input.terminee || !input.termineeLe) return "MISSION_NON_TERMINEE";
   if (input.dejaNotee) return "DEJA_NOTEE";
-  if (!Number.isInteger(input.etoiles) || input.etoiles < 1 || input.etoiles > 5) {
+  if (
+    !Number.isInteger(input.etoiles) ||
+    input.etoiles < 1 ||
+    input.etoiles > 5
+  ) {
     return "NOTE_INVALIDE";
   }
 
@@ -116,6 +114,9 @@ export function ouvreUnTicketQualite(etoiles: number): boolean {
  * avant de s'afficher, et que l'afficher pendant qu'on le traite mettrait
  * l'intervenant en cause avant toute vérification.
  */
-export function estPubliable(etoiles: number, commentaire: string | null): boolean {
+export function estPubliable(
+  etoiles: number,
+  commentaire: string | null,
+): boolean {
   return etoiles > SEUIL_TICKET_QUALITE && Boolean(commentaire?.trim());
 }

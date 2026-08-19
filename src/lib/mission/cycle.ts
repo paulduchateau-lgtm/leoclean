@@ -152,7 +152,10 @@ export function methodePointage(input: {
  * se lisent les écarts d'estimation.
  */
 export function dureeReelleMinutes(arrivee: Date, depart: Date): number {
-  return Math.max(0, Math.floor((depart.getTime() - arrivee.getTime()) / 60_000));
+  return Math.max(
+    0,
+    Math.floor((depart.getTime() - arrivee.getTime()) / 60_000),
+  );
 }
 
 /**
@@ -163,7 +166,10 @@ export function dureeReelleMinutes(arrivee: Date, depart: Date): number {
  * passe par une anomalie validée. Facturer autre chose que ce qui a été affiché
  * serait un changement de contrat.
  */
-export function ecartDuree(prevueMinutes: number, reelleMinutes: number): number {
+export function ecartDuree(
+  prevueMinutes: number,
+  reelleMinutes: number,
+): number {
   return reelleMinutes - prevueMinutes;
 }
 

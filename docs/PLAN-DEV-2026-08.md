@@ -9,6 +9,24 @@ que chaque lot sache ce qu'il attend des autres.
 
 ---
 
+## État d'avancement au 20 août 2026
+
+| Jalon                         | État | Livré                                                                                                               |
+| ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------- |
+| **A** — Fondations            | ✅   | stockage (politique + interface), taxonomie d'événements, densité de la console, absences                           |
+| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire, majorations, captation hors zone                                                      |
+| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux                                                      |
+| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation (pur). **Manquent** photos, hors ligne, écran « Aujourd'hui » |
+| **E** à **J**                 | ○    | non commencés                                                                                                       |
+
+636 tests unitaires (47 fichiers), vitrine statique vérifiée à chaque jalon.
+
+**Deux dépendances externes bloquent la suite** : un fournisseur de stockage
+(photos, pièces justificatives, PDF) et un compte Stripe. Aucune des deux ne
+s'invente en local.
+
+---
+
 ## 0. Arbitrages rendus — ce qui est désormais fermé
 
 | Sujet                  | Décision                                                                                                                                                          | Conséquence sur le plan                                                                                                                             |

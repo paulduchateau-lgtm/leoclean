@@ -314,9 +314,9 @@ describe("visibleAPartirDe", () => {
   });
 
   it("fait attendre une contre-proposition jusqu'à l'échéance du lot", () => {
-    expect(visibleAPartirDe("CONTRE_PROPOSITION", MAINTENANT, ECHEANCE)).toEqual(
-      ECHEANCE,
-    );
+    expect(
+      visibleAPartirDe("CONTRE_PROPOSITION", MAINTENANT, ECHEANCE),
+    ).toEqual(ECHEANCE);
   });
 
   /*

@@ -44,7 +44,9 @@ function plusDeJours(
   date: { annee: number; mois: number; jour: number },
   jours: number,
 ): { annee: number; mois: number; jour: number } {
-  const point = new Date(Date.UTC(date.annee, date.mois - 1, date.jour + jours));
+  const point = new Date(
+    Date.UTC(date.annee, date.mois - 1, date.jour + jours),
+  );
   return {
     annee: point.getUTCFullYear(),
     mois: point.getUTCMonth() + 1,

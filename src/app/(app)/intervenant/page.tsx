@@ -147,11 +147,11 @@ export default async function MissionsPage() {
                 </p>
 
                 {/*
-                  * L'écran de travail est le geste du jour même : il porte le
-                  * pointage, la checklist et le code d'accès. Il est en tête de
-                  * carte parce qu'à 8 h du matin, c'est la seule chose qu'on
-                  * cherche.
-                  */}
+                 * L'écran de travail est le geste du jour même : il porte le
+                 * pointage, la checklist et le code d'accès. Il est en tête de
+                 * carte parce qu'à 8 h du matin, c'est la seule chose qu'on
+                 * cherche.
+                 */}
                 <p className="mt-3">
                   <Link
                     href={`/intervenant/mission/${mission.bookingId}`}

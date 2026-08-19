@@ -3,7 +3,12 @@ import "server-only";
 import { serverEnv } from "@/lib/env";
 import { prisma } from "@/lib/db";
 
-import { chiffrer, dansLaFenetre, dechiffrer, deriverClef } from "./chiffrement";
+import {
+  chiffrer,
+  dansLaFenetre,
+  dechiffrer,
+  deriverClef,
+} from "./chiffrement";
 
 /**
  * Le seul chemin par lequel une consigne d'accès entre et sort.
@@ -70,10 +75,7 @@ export async function enregistrerSecret(
 }
 
 export type RefusSecret =
-  | "PAS_DE_CONSIGNE"
-  | "AUCUNE_MISSION"
-  | "HORS_FENETRE"
-  | "NON_CONFIGURE";
+  "PAS_DE_CONSIGNE" | "AUCUNE_MISSION" | "HORS_FENETRE" | "NON_CONFIGURE";
 
 export interface LectureSecret {
   accorde: boolean;
@@ -174,7 +176,8 @@ export async function etatDuSecret(
 
 /** Messages destinés à la personne, pas au journal. */
 export const MESSAGES_REFUS_SECRET: Record<RefusSecret, string> = {
-  PAS_DE_CONSIGNE: "Aucune consigne d'accès n'a été enregistrée pour ce logement.",
+  PAS_DE_CONSIGNE:
+    "Aucune consigne d'accès n'a été enregistrée pour ce logement.",
   AUCUNE_MISSION: "Cette mission ne vous est pas attribuée.",
   HORS_FENETRE:
     "La consigne d'accès s'affiche à partir de la veille de l'intervention.",

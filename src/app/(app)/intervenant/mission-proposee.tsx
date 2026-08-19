@@ -303,10 +303,10 @@ export function MissionProposeeCarte({
         <div className="mt-5 space-y-3 rounded-xl border border-border bg-secondary/30 p-4">
           <p className="text-sm font-medium">Quelle heure vous irait ?</p>
           <p className="text-sm text-muted-foreground">
-            Le client reçoit votre proposition tout de suite et n&apos;a qu&apos;à
-            l&apos;accepter. Si quelqu&apos;un prend la mission à l&apos;heure
-            demandée entre-temps, elle repart — ce n&apos;est pas un refus de
-            votre part.
+            Le client reçoit votre proposition tout de suite et n&apos;a
+            qu&apos;à l&apos;accepter. Si quelqu&apos;un prend la mission à
+            l&apos;heure demandée entre-temps, elle repart — ce n&apos;est pas
+            un refus de votre part.
           </p>
           <div className="flex flex-wrap gap-2">
             {heuresPossibles.map((heure) => {

@@ -54,7 +54,9 @@ describe("majorationsApplicables", () => {
   it("cumule le jour et le délai, chacun pour son bénéficiaire", () => {
     // Réservé le vendredi soir pour le dimanche : moins de 48 h.
     const reserve = new Date("2026-08-28T20:00:00Z");
-    const causes = majorationsApplicables(DIMANCHE, reserve).map((m) => m.cause);
+    const causes = majorationsApplicables(DIMANCHE, reserve).map(
+      (m) => m.cause,
+    );
     expect(causes).toEqual(["DIMANCHE_FERIE", "COURT_DELAI"]);
   });
 
@@ -184,9 +186,9 @@ describe("chiffrerMajorations", () => {
         expect(resultat.professionalCents + resultat.platformCents).toBe(
           resultat.totalCents,
         );
-        expect(
-          resultat.lignes.reduce((s, l) => s + l.amountCents, 0),
-        ).toBe(resultat.totalCents);
+        expect(resultat.lignes.reduce((s, l) => s + l.amountCents, 0)).toBe(
+          resultat.totalCents,
+        );
       }
     }
   });

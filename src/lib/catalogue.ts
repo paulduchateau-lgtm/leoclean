@@ -278,7 +278,6 @@ export function lowestHourlyRate(
   return rates.length > 0 ? Math.min(...rates) : undefined;
 }
 
-
 /**
  * Les majorations en vigueur pour cette organisation.
  *

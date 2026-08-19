@@ -1329,6 +1329,8 @@ src/
     availability/      semaine type et absences déclarées — pur
     analytics/         taxonomie des événements (pure) et journal (server-only)
     stockage/          politique de dépôt de fichiers (pure) et interface
+    logement/          chiffrement des consignes d'accès (pur) et module gardien
+    mission/           cycle de travail et notation — purs ; travail.ts écrit
     administration/    tableau de bord plateforme, ce qui attend un humain
     societes/          page publique d'une société cliente du SaaS
     rgpd/              accès et effacement, avec leurs limites
@@ -1531,11 +1533,28 @@ Les variables Inngest restent déclarées et inutilisées. Le travail planifié 
 Vercel suffit à des échéances qui se comptent en heures ; Inngest apportera la
 durabilité et les reprises le jour où de l'argent transitera.
 
-**La vie d'une réservation s'arrête à `CONFIRMED`.** `IN_PROGRESS`, `COMPLETED`
-et `NO_SHOW` sont modélisés et jamais écrits. Sans clôture de mission : pas de
-facture émise, pas d'avis à demander, pas de reversement à déclencher, pas de
-passage suivant à caler. C'est le maillon qui manque pour que le service tourne
-au quotidien, et il ne dépend d'aucun tiers.
+**La mission se clôt depuis le 20 août 2026.** `CONFIRMED → IN_PROGRESS →
+COMPLETED` s'écrit enfin, avec la durée réelle, l'état du rapport et la clôture
+de l'affectation dans une seule transaction — une mission dont le pointage
+serait écrit sans que le statut suive laisserait le client sans rapport et
+l'intervenant sans reversement.
+
+**Le fil conducteur est que rien ne bloque.** La position est capturée au tap,
+jamais en continu, et hors tolérance le pointage est _assumé_ plutôt que refusé
+— sous-sol, immeuble mal géocodé, refus de localisation. La checklist est un
+mémo, pas un contrôle. Un rapport incomplet ne bloque ni la fin ni le paiement.
+Un produit qui empêche de travailler pour protéger une mesure obtient des
+mesures fausses.
+
+**La durée réelle ne refacture rien.** Elle est enregistrée, l'écart est
+visible, et le montant reste celui qui a été annoncé. Un ajustement passe par
+une anomalie validée, et une seule catégorie peut même le proposer : un
+supplément appliqué par celui qui en bénéficie n'est pas un ajustement, c'est
+une facture non consentie.
+
+Restent à écrire : le dépôt des photos, qui attend un fournisseur de stockage ;
+le mode hors ligne, dont le schéma est prêt mais dont la file d'envoi manque ;
+et l'écran « Aujourd'hui ». `NO_SHOW` reste modélisé et non écrit.
 
 **Modélisé, seedé, jamais écrit par le produit** : `Payment`, `Payout`,
 `Invoice`, `Review`, `Message`, `Subscription`, `Referral` et
@@ -1558,7 +1577,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 19 août 2026 : **536 tests unitaires** (41 fichiers), **10 suites
+État au 20 août 2026 : **636 tests unitaires** (47 fichiers), **10 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
@@ -1649,6 +1668,24 @@ ils disent l'effort consenti à ce moment-là.
       `BookingBackend` pour que la vitrine statique continue de construire.
       **Variante dense** de tropical punch pour la console : espacements, rayons
       et ombres seulement, aucune couleur touchée. **Absences** de l'intervenant.
+
+- [x] **Jalon B — Le prix et la demande** (20 août 2026). Contre-proposition
+      d'horaire ouverte dès l'écran de proposition, avec pré-acceptation sous une
+      heure d'écart : l'heure demandée l'emporte toujours, rien n'est bloqué en
+      base, le prix ne bouge jamais. Majorations samedi +10 %, dimanche et férié
+      +25 %, dernière minute +10 % — le jour à l'intervenant, l'urgence à la
+      plateforme, fériés calculés et non listés. Captation de la demande hors
+      zone, seul signal d'expansion du produit.
+- [x] **Jalon C — Le logement.** `Address` porte désormais pièces, consignes,
+      animaux, matériel et zones interdites. Le code de porte est chiffré en
+      AES-256-GCM et ne se lit que par un module gardien, pour un intervenant
+      affecté, entre J-24 h et J+2 h, avec journal des lectures accordées **et**
+      refusées. Deux tests gardent la frontière plutôt qu'un comportement.
+- [ ] **Jalon D — La mission se termine, partielle.** **Fait** : pointage
+      d'arrivée et de départ, checklist, anomalies, passage en `COMPLETED` avec
+      durée réelle, écran de travail, notation (module pur). **Manque** : le
+      dépôt des photos (attend un fournisseur de stockage), le mode hors ligne,
+      l'écran « Aujourd'hui », et les écrans de notation côté client.
 
 - [ ] Refonte UX, phase 5 — espace client (modification, annulation, notation,
       adresses, moyens de paiement, parrainage). La liste des réservations et les

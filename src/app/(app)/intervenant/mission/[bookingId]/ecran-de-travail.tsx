@@ -124,8 +124,7 @@ export function EcranDeTravail({
       new Promise<{ lat: number; lng: number } | null>((resolve) => {
         if (!("geolocation" in navigator)) return resolve(null);
         navigator.geolocation.getCurrentPosition(
-          (p) =>
-            resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+          (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
           () => resolve(null),
           { timeout: 5000, maximumAge: 60_000 },
         );
@@ -253,7 +252,9 @@ export function EcranDeTravail({
         ) : null}
       </section>
 
-      {mission.zonesInterdites || mission.allergies || mission.consignesClient ? (
+      {mission.zonesInterdites ||
+      mission.allergies ||
+      mission.consignesClient ? (
         <section className="mt-4 rounded-xl border border-warning/40 bg-warning/10 p-5">
           <h2 className="font-heading text-lg font-semibold">À savoir</h2>
           <ul className="mt-2 space-y-1 text-sm">
@@ -309,7 +310,11 @@ export function EcranDeTravail({
                     }}
                     className="size-6 rounded-md border-input"
                   />
-                  <span className={cochees[tache.id] ? "line-through opacity-60" : ""}>
+                  <span
+                    className={
+                      cochees[tache.id] ? "line-through opacity-60" : ""
+                    }
+                  >
                     {tache.piece ? (
                       <span className="text-muted-foreground">
                         {tache.piece} ·{" "}
@@ -461,7 +466,9 @@ export function EcranDeTravail({
             {arrivee ? (
               <p className="mt-2 text-center text-sm text-muted-foreground">
                 Arrivée pointée à {HEURE.format(arrivee)}
-                {restantes > 0 ? ` · ${restantes} tâche${restantes > 1 ? "s" : ""} non cochée${restantes > 1 ? "s" : ""}` : ""}
+                {restantes > 0
+                  ? ` · ${restantes} tâche${restantes > 1 ? "s" : ""} non cochée${restantes > 1 ? "s" : ""}`
+                  : ""}
               </p>
             ) : null}
           </div>

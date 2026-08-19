@@ -113,7 +113,6 @@ export const LOWEST_HOURLY_RATE_CENTS = Math.min(
   ...PUBLIC_RATES.map((rate) => rate.hourlyRateCents),
 );
 
-
 /**
  * Les majorations, telles que le site les annonce.
  *

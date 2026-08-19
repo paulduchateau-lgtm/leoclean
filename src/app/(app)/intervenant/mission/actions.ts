@@ -28,7 +28,10 @@ class ProfilIntrouvableError extends BusinessError {}
 
 async function intervenant(userId: string) {
   const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "assignment:read:own");
+  const { db } = await requireOrganization(
+    organizationId,
+    "assignment:read:own",
+  );
   const profil = await db.cleanerProfile.findFirst({
     where: { userId },
     select: { id: true },

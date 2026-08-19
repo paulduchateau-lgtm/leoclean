@@ -79,9 +79,7 @@ export type VoieProposition = "PRE_ACCEPTATION" | "CONTRE_PROPOSITION";
  * Les deux ouvrent le droit de proposer ; rien d'autre ne l'ouvre.
  */
 export type SituationProposant =
-  | "PROPOSITION_VIVANTE"
-  | "RESERVATION_ORPHELINE"
-  | "AUCUNE";
+  "PROPOSITION_VIVANTE" | "RESERVATION_ORPHELINE" | "AUCUNE";
 
 export type ProposalRefusal =
   /** Ni proposition vivante, ni réservation orpheline : rien à proposer. */

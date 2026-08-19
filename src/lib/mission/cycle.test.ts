@@ -53,9 +53,9 @@ describe("verifierPointage", () => {
   });
 
   it("refuse un second pointage d'arrivée", () => {
-    expect(
-      verifierPointage("ARRIVEE", etat({ arriveeA: DEBUT }), DEBUT),
-    ).toBe("DEJA_ARRIVE");
+    expect(verifierPointage("ARRIVEE", etat({ arriveeA: DEBUT }), DEBUT)).toBe(
+      "DEJA_ARRIVE",
+    );
   });
 
   it("refuse un départ sans arrivée", () => {
@@ -75,9 +75,9 @@ describe("verifierPointage", () => {
   });
 
   it("refuse quiconque n'a pas la mission", () => {
-    expect(
-      verifierPointage("ARRIVEE", etat({ affectee: false }), DEBUT),
-    ).toBe("MISSION_NON_ACCEPTEE");
+    expect(verifierPointage("ARRIVEE", etat({ affectee: false }), DEBUT)).toBe(
+      "MISSION_NON_ACCEPTEE",
+    );
   });
 });
 
@@ -219,7 +219,9 @@ describe("anomalies", () => {
    */
   it("n'autorise l'ajustement de durée que sur un logement très sale", () => {
     for (const type of TYPES_ANOMALIE) {
-      expect(peutProposerUnAjustement(type)).toBe(type === "LOGEMENT_TRES_SALE");
+      expect(peutProposerUnAjustement(type)).toBe(
+        type === "LOGEMENT_TRES_SALE",
+      );
     }
   });
 });

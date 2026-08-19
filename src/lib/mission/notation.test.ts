@@ -29,8 +29,12 @@ describe("verifierAvis", () => {
   });
 
   it("refuse une mission non terminée", () => {
-    expect(verifierAvis(base({ terminee: false }))).toBe("MISSION_NON_TERMINEE");
-    expect(verifierAvis(base({ termineeLe: null }))).toBe("MISSION_NON_TERMINEE");
+    expect(verifierAvis(base({ terminee: false }))).toBe(
+      "MISSION_NON_TERMINEE",
+    );
+    expect(verifierAvis(base({ termineeLe: null }))).toBe(
+      "MISSION_NON_TERMINEE",
+    );
   });
 
   it("refuse un second avis", () => {

@@ -40,7 +40,10 @@ export default async function MissionPage({
   }
 
   const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "assignment:read:own");
+  const { db } = await requireOrganization(
+    organizationId,
+    "assignment:read:own",
+  );
 
   const profil = await db.cleanerProfile.findFirst({
     where: { userId: user.id },
@@ -132,8 +135,7 @@ export default async function MissionPage({
           dureeReelleMinutes: booking.actualMinutes,
           rapportComplet: booking.reportComplete,
           remunerationCents: booking.professionalAmountCents,
-          clientPrenom:
-            booking.clientProfile.user.name?.split(" ")[0] ?? null,
+          clientPrenom: booking.clientProfile.user.name?.split(" ")[0] ?? null,
           adresse: [
             booking.address.street,
             booking.address.complement,
