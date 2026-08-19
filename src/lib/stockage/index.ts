@@ -49,7 +49,10 @@ export interface Stockage {
 }
 
 export class FichierRefuseError extends Error {
-  constructor(readonly refus: string, message: string) {
+  constructor(
+    readonly refus: string,
+    message: string,
+  ) {
     super(message);
     this.name = "FichierRefuseError";
   }

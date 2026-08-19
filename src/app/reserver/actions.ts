@@ -3,10 +3,7 @@
 import { z } from "zod";
 
 import { publicAction } from "@/lib/action-result";
-import {
-  ETAPES_TUNNEL,
-  NOMS_EVENEMENTS,
-} from "@/lib/analytics/evenements";
+import { ETAPES_TUNNEL, NOMS_EVENEMENTS } from "@/lib/analytics/evenements";
 import { tracer } from "@/lib/analytics/journal";
 import type { CleanerCardView } from "@/lib/booking/backend";
 import { bookingCalendar } from "@/lib/booking/ics";
@@ -458,7 +455,12 @@ export const tracerEtape = publicAction(
   z.object({
     nom: z.enum(NOMS_EVENEMENTS),
     etape: z.enum(ETAPES_TUNNEL).optional(),
-    duree_ms: z.number().int().min(0).max(6 * 60 * 60 * 1000).optional(),
+    duree_ms: z
+      .number()
+      .int()
+      .min(0)
+      .max(6 * 60 * 60 * 1000)
+      .optional(),
     parcours: z.string().max(40).optional(),
   }),
   async (input) => {

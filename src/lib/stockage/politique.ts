@@ -13,7 +13,8 @@
 
 export type Coffre = "missions" | "kyc";
 
-export type TypeFichier = "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+export type TypeFichier =
+  "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
 
 export interface Signature {
   type: TypeFichier;
@@ -29,28 +30,43 @@ export interface Signature {
  */
 export const SIGNATURES: readonly Signature[] = [
   { type: "image/jpeg", entete: [0xff, 0xd8, 0xff] },
-  { type: "image/png", entete: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] },
+  {
+    type: "image/png",
+    entete: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  },
   {
     type: "image/webp",
     // « RIFF » puis quatre octets de taille, puis « WEBP ».
     entete: [
-      0x52, 0x49, 0x46, 0x46, null, null, null, null, 0x57, 0x45, 0x42, 0x50,
+      0x52,
+      0x49,
+      0x46,
+      0x46,
+      null,
+      null,
+      null,
+      null,
+      0x57,
+      0x45,
+      0x42,
+      0x50,
     ],
   },
   { type: "application/pdf", entete: [0x25, 0x50, 0x44, 0x46, 0x2d] },
 ];
 
 /** Ce que chaque coffre accepte. */
-export const TYPES_ACCEPTES: Readonly<Record<Coffre, readonly TypeFichier[]>> = {
-  /*
-   * Une photo de mission est une image, jamais un document : accepter un PDF
-   * ici ouvrirait la porte à un fichier qu'aucun écran ne sait afficher et que
-   * personne ne relira.
-   */
-  missions: ["image/jpeg", "image/png", "image/webp"],
-  /* Une pièce justificative arrive aussi bien photographiée que téléchargée. */
-  kyc: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
-};
+export const TYPES_ACCEPTES: Readonly<Record<Coffre, readonly TypeFichier[]>> =
+  {
+    /*
+     * Une photo de mission est une image, jamais un document : accepter un PDF
+     * ici ouvrirait la porte à un fichier qu'aucun écran ne sait afficher et que
+     * personne ne relira.
+     */
+    missions: ["image/jpeg", "image/png", "image/webp"],
+    /* Une pièce justificative arrive aussi bien photographiée que téléchargée. */
+    kyc: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+  };
 
 /**
  * Taille maximale, par coffre.
@@ -65,10 +81,7 @@ export const TAILLE_MAXIMALE: Readonly<Record<Coffre, number>> = {
 };
 
 export type RefusFichier =
-  | "type-inconnu"
-  | "type-refuse"
-  | "trop-gros"
-  | "vide";
+  "type-inconnu" | "type-refuse" | "trop-gros" | "vide";
 
 export const MESSAGES_REFUS: Record<RefusFichier, string> = {
   "type-inconnu":

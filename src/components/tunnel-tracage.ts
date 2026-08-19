@@ -107,10 +107,7 @@ function emettre(
  * secondes et un écran abandonné après deux minutes ne décrivent pas la même
  * difficulté, et c'est le second qui coûte des clients.
  */
-export function useTracageTunnel(
-  backend: BookingBackend,
-  etape: string,
-): void {
+export function useTracageTunnel(backend: BookingBackend, etape: string): void {
   const precedente = useRef<{ etape: string; depuis: number } | null>(null);
 
   /*

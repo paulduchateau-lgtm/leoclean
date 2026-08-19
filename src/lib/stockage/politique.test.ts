@@ -44,12 +44,16 @@ function png(blocs: { nom: string; charge: number[] }[]): Uint8Array {
 
 describe("typeReel", () => {
   it("reconnaît un JPEG", () => {
-    expect(typeReel(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe("image/jpeg");
+    expect(typeReel(new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe(
+      "image/jpeg",
+    );
   });
 
   it("reconnaît un PNG", () => {
     expect(
-      typeReel(new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
+      typeReel(
+        new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      ),
     ).toBe("image/png");
   });
 
@@ -67,7 +71,9 @@ describe("typeReel", () => {
   });
 
   it("ne reconnaît rien dans du texte", () => {
-    expect(typeReel(new TextEncoder().encode("<?php system($_GET[0]); ?>"))).toBeNull();
+    expect(
+      typeReel(new TextEncoder().encode("<?php system($_GET[0]); ?>")),
+    ).toBeNull();
   });
 });
 
@@ -86,7 +92,9 @@ describe("verifierFichier", () => {
   });
 
   it("accepte une photo dans le coffre des missions", () => {
-    expect(verifierFichier(jpeg([]), "missions")).toEqual({ type: "image/jpeg" });
+    expect(verifierFichier(jpeg([]), "missions")).toEqual({
+      type: "image/jpeg",
+    });
   });
 
   /*
@@ -94,7 +102,9 @@ describe("verifierFichier", () => {
    * une pièce justificative acceptable, jamais une preuve de ménage.
    */
   it("refuse un PDF parmi les photos de mission", () => {
-    const pdf = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37]);
+    const pdf = new Uint8Array([
+      0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37,
+    ]);
     expect(verifierFichier(pdf, "missions")).toEqual({ refus: "type-refuse" });
     expect(verifierFichier(pdf, "kyc")).toEqual({ type: "application/pdf" });
   });
@@ -149,7 +159,9 @@ describe("nettoyerJpeg", () => {
     ]);
     const nettoye = nettoyerJpeg(avec);
     const queue = Array.from(nettoye.subarray(nettoye.length - 9));
-    expect(queue).toEqual([0xff, 0xda, 0x00, 0x02, 0x11, 0x22, 0x33, 0xff, 0xd9]);
+    expect(queue).toEqual([
+      0xff, 0xda, 0x00, 0x02, 0x11, 0x22, 0x33, 0xff, 0xd9,
+    ]);
   });
 
   it("laisse tranquille ce qui n'est pas un JPEG", () => {
@@ -191,7 +203,9 @@ describe("nettoyer", () => {
     const avecExif = jpeg([
       { marqueur: 0xe1, charge: [0x45, 0x78, 0x69, 0x66, 0x00] },
     ]);
-    expect(nettoyer(avecExif, "image/jpeg").length).toBeLessThan(avecExif.length);
+    expect(nettoyer(avecExif, "image/jpeg").length).toBeLessThan(
+      avecExif.length,
+    );
   });
 
   /*
@@ -285,6 +299,8 @@ describe("stockage en mémoire", () => {
    */
   it("échoue bruyamment quand aucun fournisseur distant n'est configuré", async () => {
     const { stockageDistantIndisponible } = await import("./index");
-    expect(() => stockageDistantIndisponible()).toThrow(/Aucun stockage distant/);
+    expect(() => stockageDistantIndisponible()).toThrow(
+      /Aucun stockage distant/,
+    );
   });
 });

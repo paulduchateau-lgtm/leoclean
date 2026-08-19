@@ -44,8 +44,18 @@ const poserSchema = z
      * de 95 % des cas — des vacances — et celle qui ne se saisit pas de travers.
      */
     journeeEntiere: z.boolean().default(true),
-    debutMinute: z.number().int().min(0).max(24 * 60).optional(),
-    finMinute: z.number().int().min(0).max(24 * 60).optional(),
+    debutMinute: z
+      .number()
+      .int()
+      .min(0)
+      .max(24 * 60)
+      .optional(),
+    finMinute: z
+      .number()
+      .int()
+      .min(0)
+      .max(24 * 60)
+      .optional(),
     motif: z.string().trim().max(200).optional(),
   })
   .refine(
@@ -61,7 +71,11 @@ const poserSchema = z
   );
 
 /** « 2026-09-01 » → les trois nombres qu'attend la conversion de fuseau. */
-function decouperJour(jour: string): { year: number; month: number; day: number } {
+function decouperJour(jour: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
   const [year, month, day] = jour.split("-").map(Number) as [
     number,
     number,

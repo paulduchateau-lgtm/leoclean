@@ -15,9 +15,10 @@ import {
 describe("taxonomie", () => {
   it("nomme chaque événement objet puis verbe au passé", () => {
     for (const nom of NOMS_EVENEMENTS) {
-      expect(nom, `« ${nom} » doit être en minuscules avec des tirets bas`).toMatch(
-        /^[a-z]+(_[a-z]+)+$/,
-      );
+      expect(
+        nom,
+        `« ${nom} » doit être en minuscules avec des tirets bas`,
+      ).toMatch(/^[a-z]+(_[a-z]+)+$/);
     }
   });
 
@@ -84,9 +85,10 @@ describe("aucune donnée personnelle", () => {
       "utf8",
     );
 
-    const union = /export type Evenement =([\s\S]*?)\n\nexport type NomEvenement/.exec(
-      source,
-    );
+    const union =
+      /export type Evenement =([\s\S]*?)\n\nexport type NomEvenement/.exec(
+        source,
+      );
     expect(union, "union des événements introuvable").not.toBeNull();
 
     /*
@@ -99,7 +101,10 @@ describe("aucune donnée personnelle", () => {
       .filter((correspondance) => !/^"/.test(correspondance[2]!.trim()))
       .map((correspondance) => correspondance[1]!);
 
-    expect(champs.length, "aucun champ balayé : la regex ne mord plus").toBeGreaterThan(5);
+    expect(
+      champs.length,
+      "aucun champ balayé : la regex ne mord plus",
+    ).toBeGreaterThan(5);
 
     for (const champ of champs) {
       expect(

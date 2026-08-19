@@ -199,20 +199,21 @@ create index on properties using gist (point(lng, lat));
 
 ## 2. Politiques RLS (principes)
 
-| Table | Client | Intervenant | Admin |
-|---|---|---|---|
-| `missions` | `client_id = auth_client()` | `pro_id = auth_pro()` **ou** offre active en cours | selon rôle |
-| `properties` | ses propres logements | lecture des logements de ses missions **et** `access_secret_enc` déchiffré via RPC uniquement dans la fenêtre J-24h/J+2h | `owner`/`ops` |
-| `pro_documents` | aucun accès | ses propres documents | `owner`, `admin_recruiter` seulement, accès journalisé |
-| `messages` | conversations où il est partie | idem | selon rôle, notes internes invisibles aux non-admins |
-| `gestures`, `pricing_rules` | aucun | aucun | `owner` en écriture, plafonds par rôle |
-| `audit_log` | aucun | aucun | lecture `owner` seulement, aucune écriture applicative directe |
+| Table                       | Client                         | Intervenant                                                                                                              | Admin                                                          |
+| --------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `missions`                  | `client_id = auth_client()`    | `pro_id = auth_pro()` **ou** offre active en cours                                                                       | selon rôle                                                     |
+| `properties`                | ses propres logements          | lecture des logements de ses missions **et** `access_secret_enc` déchiffré via RPC uniquement dans la fenêtre J-24h/J+2h | `owner`/`ops`                                                  |
+| `pro_documents`             | aucun accès                    | ses propres documents                                                                                                    | `owner`, `admin_recruiter` seulement, accès journalisé         |
+| `messages`                  | conversations où il est partie | idem                                                                                                                     | selon rôle, notes internes invisibles aux non-admins           |
+| `gestures`, `pricing_rules` | aucun                          | aucun                                                                                                                    | `owner` en écriture, plafonds par rôle                         |
+| `audit_log`                 | aucun                          | aucun                                                                                                                    | lecture `owner` seulement, aucune écriture applicative directe |
 
 Le déchiffrement du code d'accès passe obligatoirement par une fonction `security definer` (`rpc_get_access_secret(mission_id)`) qui vérifie l'affectation et la fenêtre temporelle, et écrit dans `audit_log`. Aucun accès direct à la colonne.
 
 ## 3. Endpoints principaux
 
 ### Public / client
+
 ```
 POST /api/quote                        estimation de prix (sans compte)
 GET  /api/coverage?lat&lng             couverture isochrone
@@ -229,6 +230,7 @@ POST /api/referrals/share
 ```
 
 ### Intervenant
+
 ```
 GET  /api/pro/today                    tournée + ordre suggéré
 GET  /api/pro/offers                   propositions actives
@@ -244,6 +246,7 @@ POST /api/pro/delay-notice             prévenir d'un retard (1 tap)
 ```
 
 ### Candidature
+
 ```
 POST /api/apply/start                  éligibilité + création dossier
 PATCH/api/apply/:id                    sauvegarde incrémentale par étape
@@ -255,6 +258,7 @@ POST /api/apply/:id/sign               charte, CGU, mandat de facturation
 ```
 
 ### Admin
+
 ```
 GET  /api/admin/radar                  agrégat unique de l'écran d'accueil
 GET  /api/admin/actions?filters
@@ -286,51 +290,51 @@ Nommage `objet_verbe_au_passé`, propriétés en `snake_case`, `user_id` pseudon
 
 ## 5. Matrice de notifications
 
-| Événement | Client | Intervenant | Admin |
-|---|---|---|---|
-| Réservation confirmée | Push + e-mail | Proposition (push + SMS) | — |
-| Mission acceptée | Push | Push | — |
-| Aucune acceptation H-48 | — | Rediffusion élargie | **P0 + SMS** |
-| Rappel J-1 | Push + SMS 18 h | Push 18 h | — |
-| Heure resserrée | Push matin | — | — |
-| En route | Push | — | — |
-| Check-in | Push | — | — |
-| Check-in manquant H+10 | — | Push | — |
-| Check-in manquant H+20 | — | — | **P0 + SMS** |
-| Mission terminée | Push + rapport | — | — |
-| Note ≤ 3 | — | Groupé quotidien | **P1** |
-| Réclamation | Accusé + SLA | Sollicitation de version | **P0/P1** |
-| Annulation client < 24 h | Confirmation + montant | Push + SMS | P2 |
-| Annulation intervenant | Push + SMS | Accusé | **P0 si < 48 h** |
-| Paiement échoué | J+1 push/e-mail, J+3 SMS | — | P1 puis P0 |
-| Document expirant | — | J-45/15/3/0 | P2 |
-| Compte mis en pause | — | Push + e-mail + chemin de régularisation | — |
-| Virement exécuté | — | Push + e-mail | — |
-| Dossier : pièce refusée | — | Push + e-mail avec motif clair | — |
-| Dossier validé | — | Push + e-mail + propositions immédiates | — |
-| Relances funnel | — | J+1/3/7 contextuelles | — |
-| Attestation fiscale | E-mail janvier | — | — |
-| Récap quotidien | — | — | E-mail 7 h et 19 h |
+| Événement                | Client                   | Intervenant                              | Admin              |
+| ------------------------ | ------------------------ | ---------------------------------------- | ------------------ |
+| Réservation confirmée    | Push + e-mail            | Proposition (push + SMS)                 | —                  |
+| Mission acceptée         | Push                     | Push                                     | —                  |
+| Aucune acceptation H-48  | —                        | Rediffusion élargie                      | **P0 + SMS**       |
+| Rappel J-1               | Push + SMS 18 h          | Push 18 h                                | —                  |
+| Heure resserrée          | Push matin               | —                                        | —                  |
+| En route                 | Push                     | —                                        | —                  |
+| Check-in                 | Push                     | —                                        | —                  |
+| Check-in manquant H+10   | —                        | Push                                     | —                  |
+| Check-in manquant H+20   | —                        | —                                        | **P0 + SMS**       |
+| Mission terminée         | Push + rapport           | —                                        | —                  |
+| Note ≤ 3                 | —                        | Groupé quotidien                         | **P1**             |
+| Réclamation              | Accusé + SLA             | Sollicitation de version                 | **P0/P1**          |
+| Annulation client < 24 h | Confirmation + montant   | Push + SMS                               | P2                 |
+| Annulation intervenant   | Push + SMS               | Accusé                                   | **P0 si < 48 h**   |
+| Paiement échoué          | J+1 push/e-mail, J+3 SMS | —                                        | P1 puis P0         |
+| Document expirant        | —                        | J-45/15/3/0                              | P2                 |
+| Compte mis en pause      | —                        | Push + e-mail + chemin de régularisation | —                  |
+| Virement exécuté         | —                        | Push + e-mail                            | —                  |
+| Dossier : pièce refusée  | —                        | Push + e-mail avec motif clair           | —                  |
+| Dossier validé           | —                        | Push + e-mail + propositions immédiates  | —                  |
+| Relances funnel          | —                        | J+1/3/7 contextuelles                    | —                  |
+| Attestation fiscale      | E-mail janvier           | —                                        | —                  |
+| Récap quotidien          | —                        | —                                        | E-mail 7 h et 19 h |
 
 Règles transverses : fenêtre 7 h-21 h sauf urgence opérationnelle du jour ; regroupement des notifications non critiques ; préférences respectées sauf pour les notifications strictement contractuelles (annulation, paiement, mission) ; tout envoi journalisé avec statut de délivrabilité.
 
 ## 6. Jobs planifiés
 
-| Job | Fréquence | Rôle |
-|---|---|---|
-| `matching_waves` | 5 min | Progression des vagues de diffusion, expiration des offres |
-| `mission_reminders` | 15 min | J-1, H-1, resserrement d'ETA |
-| `checkin_watchdog` | 5 min | Détection H+10 / H+20 / H+40 |
-| `recurrence_generator` | quotidien 2 h | Génération des missions récurrentes à J+21 |
-| `scores_recompute` | quotidien 3 h | Churn, fiabilité, risque, score de dossier |
-| `friction_detectors` | quotidien 4 h | Règles du § 7 de `04` |
-| `document_expiry` | quotidien 6 h | Relances et mises en pause |
-| `application_nudges` | quotidien 9 h | Relances contextuelles du funnel |
-| `payout_batch` | vendredi 6 h | Lot de reversements |
-| `payment_retries` | quotidien | Relances Stripe échelonnées |
-| `tax_certificates` | 5 janvier | Génération et envoi |
-| `gdpr_retention` | quotidien 1 h | Purge photos > 13 mois, géoloc > 13 mois, comptes > 3 ans |
-| `sirene_revalidation` | mensuel | Revérification des SIRET actifs |
+| Job                    | Fréquence     | Rôle                                                       |
+| ---------------------- | ------------- | ---------------------------------------------------------- |
+| `matching_waves`       | 5 min         | Progression des vagues de diffusion, expiration des offres |
+| `mission_reminders`    | 15 min        | J-1, H-1, resserrement d'ETA                               |
+| `checkin_watchdog`     | 5 min         | Détection H+10 / H+20 / H+40                               |
+| `recurrence_generator` | quotidien 2 h | Génération des missions récurrentes à J+21                 |
+| `scores_recompute`     | quotidien 3 h | Churn, fiabilité, risque, score de dossier                 |
+| `friction_detectors`   | quotidien 4 h | Règles du § 7 de `04`                                      |
+| `document_expiry`      | quotidien 6 h | Relances et mises en pause                                 |
+| `application_nudges`   | quotidien 9 h | Relances contextuelles du funnel                           |
+| `payout_batch`         | vendredi 6 h  | Lot de reversements                                        |
+| `payment_retries`      | quotidien     | Relances Stripe échelonnées                                |
+| `tax_certificates`     | 5 janvier     | Génération et envoi                                        |
+| `gdpr_retention`       | quotidien 1 h | Purge photos > 13 mois, géoloc > 13 mois, comptes > 3 ans  |
+| `sirene_revalidation`  | mensuel       | Revérification des SIRET actifs                            |
 
 ## 7. Sécurité
 
@@ -346,12 +350,12 @@ Règles transverses : fenêtre 7 h-21 h sauf urgence opérationnelle du jour ; r
 
 ## 8. Environnements et qualité
 
-| Environnement | Données | Usage |
-|---|---|---|
-| `local` | seed anonymisé | Développement |
-| `preview` (par PR) | seed | Revue, tests E2E |
-| `staging` | anonymisé, Stripe test, SMS mock | Recette |
-| `production` | réel | — |
+| Environnement      | Données                          | Usage            |
+| ------------------ | -------------------------------- | ---------------- |
+| `local`            | seed anonymisé                   | Développement    |
+| `preview` (par PR) | seed                             | Revue, tests E2E |
+| `staging`          | anonymisé, Stripe test, SMS mock | Recette          |
+| `production`       | réel                             | —                |
 
 - Tests : unitaires sur pricing/matching/scores (cœur métier, couverture ≥ 85 %), intégration sur les transitions de mission, E2E Playwright sur les 4 parcours critiques (réservation client, cycle mission intervenant, funnel intervenant branche B, revue de dossier admin), test d'accès sur les documents et codes d'accès.
 - CI : typecheck, lint, tests, budget de bundle par surface, audit lexical anti-vocabulaire disciplinaire (`02 § 11.5`), scan de secrets.

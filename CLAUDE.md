@@ -1084,9 +1084,18 @@ dix minutes produirait des créneaux que le moteur ne peut pas remplir.
 
 **Ce qui n'y est pas, et pourquoi c'est bloquant pour la production** :
 l'inscription (un intervenant s'enregistre par `npm run db:intervenant`), le
-dépôt des pièces justificatives, la pose d'une absence — le moteur lit les
-`AvailabilityException`, rien ne les écrit — la clôture d'une mission et le suivi
-des revenus. Voir « Ce que la chaîne n'a pas encore ».
+dépôt des pièces justificatives, la clôture d'une mission et le suivi des
+revenus.
+
+**Les absences se déclarent depuis le 19 août 2026.** `availability/absences.ts`
+est pur, comme `semaine.ts`, et sert deux fois — l'écran empêche de se tromper,
+la server action empêche de contourner. Trois arbitrages : une absence déjà
+commencée est acceptée, parce que quelqu'un qui tombe malade un mardi doit
+pouvoir se retirer du reste de la semaine ; les bornes sont `[debut, fin)`,
+faute de quoi deux absences jointives se refuseraient sur une milliseconde ;
+et **l'écran ne retire aucune mission déjà acceptée**, il nomme celles que
+l'absence recouvre et renvoie au téléphone. Une absence change ce qui sera
+proposé ; se dégager d'un engagement pris regarde aussi le client. Voir « Ce que la chaîne n'a pas encore ».
 
 ## Back-office plateforme
 
@@ -1317,7 +1326,9 @@ src/
     assignments/       diffusion par lots, échéances et classement des candidats
       diffusion.ts     les quatre minuteries et leur ordre — pur
       echeances.ts     ce qui arrive quand personne ne fait rien (server-only)
-    availability/      semaine type déclarée — pur
+    availability/      semaine type et absences déclarées — pur
+    analytics/         taxonomie des événements (pure) et journal (server-only)
+    stockage/          politique de dépôt de fichiers (pure) et interface
     administration/    tableau de bord plateforme, ce qui attend un humain
     societes/          page publique d'une société cliente du SaaS
     rgpd/              accès et effacement, avec leurs limites
@@ -1547,7 +1558,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 17 août 2026 : **336 tests unitaires** (26 fichiers), **10 suites
+État au 19 août 2026 : **536 tests unitaires** (41 fichiers), **10 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
@@ -1626,6 +1637,19 @@ ils disent l'effort consenti à ce moment-là.
       plutôt que supprimée, limitation de débit en base sur les formulaires
       publics, IP condensée. **Manque** : la purge planifiée des compteurs, et
       tout ce qui relève du paiement.
+- [x] **Jalon A — Fondations** (plan du 19 août 2026). **Stockage de fichiers** :
+      politique pure — nombres magiques plutôt que type déclaré, deux coffres aux
+      politiques distinctes, métadonnées retirées par suppression de segments,
+      chemin engendré. L'implémentation mémoire applique la même politique que la
+      vraie ; le fournisseur distant échoue bruyamment tant qu'il n'est pas
+      configuré, direction inverse de `TRAVEL_TIME_PROVIDER`. **Taxonomie
+      d'événements** : `AnalyticsEvent` en base plutôt que chez un tiers, aucun
+      cookie, aucune donnée personnelle — la commune est mesurée, les coordonnées
+      ne le sont pas — purge à treize mois, et le traçage passe par
+      `BookingBackend` pour que la vitrine statique continue de construire.
+      **Variante dense** de tropical punch pour la console : espacements, rayons
+      et ombres seulement, aucune couleur touchée. **Absences** de l'intervenant.
+
 - [ ] Refonte UX, phase 5 — espace client (modification, annulation, notation,
       adresses, moyens de paiement, parrainage). La liste des réservations et les
       droits RGPD existent déjà ; le reste **ne peut pas précéder les

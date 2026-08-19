@@ -128,9 +128,7 @@ describe("verifierAbsence", () => {
 
   it("refuse au-delà du nombre maximal d'absences", () => {
     const existantes = Array.from({ length: MAXIMUM_ABSENCES }, (_, index) => {
-      const debut = new Date(
-        Date.UTC(2027, 0, 1 + index * 3, 0, 0, 0),
-      );
+      const debut = new Date(Date.UTC(2027, 0, 1 + index * 3, 0, 0, 0));
       return { debut, fin: new Date(debut.getTime() + 24 * 60 * 60 * 1000) };
     });
     expect(
@@ -170,7 +168,10 @@ describe("seChevauchent", () => {
   });
 
   it("détecte l'inclusion complète", () => {
-    const large = absence("2026-09-01T00:00:00.000Z", "2026-09-30T00:00:00.000Z");
+    const large = absence(
+      "2026-09-01T00:00:00.000Z",
+      "2026-09-30T00:00:00.000Z",
+    );
     const etroite = absence(
       "2026-09-10T00:00:00.000Z",
       "2026-09-11T00:00:00.000Z",
@@ -208,19 +209,25 @@ describe("absencesVivantes", () => {
 describe("recouvre", () => {
   it("reconnaît une mission prise dans l'absence", () => {
     expect(
-      recouvre(absence("2026-09-01T00:00:00.000Z", "2026-09-08T00:00:00.000Z"), {
-        debut: new Date("2026-09-03T07:00:00.000Z"),
-        fin: new Date("2026-09-03T09:30:00.000Z"),
-      }),
+      recouvre(
+        absence("2026-09-01T00:00:00.000Z", "2026-09-08T00:00:00.000Z"),
+        {
+          debut: new Date("2026-09-03T07:00:00.000Z"),
+          fin: new Date("2026-09-03T09:30:00.000Z"),
+        },
+      ),
     ).toBe(true);
   });
 
   it("laisse passer une mission qui commence quand l'absence finit", () => {
     expect(
-      recouvre(absence("2026-09-01T00:00:00.000Z", "2026-09-08T00:00:00.000Z"), {
-        debut: new Date("2026-09-08T00:00:00.000Z"),
-        fin: new Date("2026-09-08T02:30:00.000Z"),
-      }),
+      recouvre(
+        absence("2026-09-01T00:00:00.000Z", "2026-09-08T00:00:00.000Z"),
+        {
+          debut: new Date("2026-09-08T00:00:00.000Z"),
+          fin: new Date("2026-09-08T02:30:00.000Z"),
+        },
+      ),
     ).toBe(false);
   });
 });

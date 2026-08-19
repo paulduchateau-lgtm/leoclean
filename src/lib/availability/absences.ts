@@ -43,11 +43,7 @@ export const DUREE_MAXIMALE_JOURS = 366;
 export const MAXIMUM_ABSENCES = 40;
 
 export type ErreurAbsence =
-  | "ordre"
-  | "passee"
-  | "trop-longue"
-  | "chevauchement"
-  | "trop-nombreuses";
+  "ordre" | "passee" | "trop-longue" | "chevauchement" | "trop-nombreuses";
 
 /** Message destiné à la personne, pas au journal d'erreurs. */
 export const MESSAGES_ABSENCE: Record<ErreurAbsence, string> = {
@@ -87,7 +83,10 @@ export function verifierAbsence(
     return "passee";
   }
 
-  if (absence.fin.getTime() - absence.debut.getTime() > DUREE_MAXIMALE_JOURS * JOUR_MS) {
+  if (
+    absence.fin.getTime() - absence.debut.getTime() >
+    DUREE_MAXIMALE_JOURS * JOUR_MS
+  ) {
     return "trop-longue";
   }
 
@@ -111,7 +110,9 @@ export function verifierAbsence(
  * conflit d'une milliseconde.
  */
 export function seChevauchent(a: Absence, b: Absence): boolean {
-  return a.debut.getTime() < b.fin.getTime() && b.debut.getTime() < a.fin.getTime();
+  return (
+    a.debut.getTime() < b.fin.getTime() && b.debut.getTime() < a.fin.getTime()
+  );
 }
 
 /**

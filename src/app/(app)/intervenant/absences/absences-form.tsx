@@ -9,10 +9,7 @@ import {
   retirerAbsence,
 } from "@/app/(app)/intervenant/absences/actions";
 import { Button } from "@/components/ui/button";
-import {
-  MESSAGES_ABSENCE,
-  verifierAbsence,
-} from "@/lib/availability/absences";
+import { MESSAGES_ABSENCE, verifierAbsence } from "@/lib/availability/absences";
 import { PAS_MINUTES, heureLisible } from "@/lib/availability/semaine";
 
 /**

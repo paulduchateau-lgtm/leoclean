@@ -149,8 +149,8 @@ export default async function AbsencesPage() {
 
         {avecMissions.length === 0 ? (
           <p className="mt-3 rounded-xl border border-border bg-secondary/40 p-5 text-muted-foreground">
-            Aucune absence à venir. Vous recevrez des propositions sur toutes vos
-            heures déclarées.
+            Aucune absence à venir. Vous recevrez des propositions sur toutes
+            vos heures déclarées.
           </p>
         ) : (
           <ul className="mt-3 space-y-3">
@@ -191,8 +191,8 @@ export default async function AbsencesPage() {
                     </ul>
                     <p className="mt-2 text-muted-foreground">
                       Une absence ne les annule pas : le client compte sur vous.
-                      Appelez-nous au {SITE.phone} et nous cherchons quelqu&apos;un
-                      d&apos;autre.
+                      Appelez-nous au {SITE.phone} et nous cherchons
+                      quelqu&apos;un d&apos;autre.
                     </p>
                   </div>
                 ) : null}

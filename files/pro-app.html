@@ -1,623 +1,2059 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Léo Clean — Maquettes espace intervenant</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --paper-000:#FFFFFF;--paper-050:#FAF8F4;--paper-100:#F2EFE7;--paper-200:#E6E1D6;--paper-300:#D3CDBF;
-  --ink-900:#14150F;--ink-700:#3A3B33;--ink-500:#6B6C61;--ink-400:#8E8F84;
-  --signal:#A5D900;--signal-600:#8FBE00;--signal-050:#F2FADB;
-  --ok:#0F7A4A;--ok-050:#E8F5EE;--warn:#B4740A;--warn-050:#FDF3E1;--risk:#C0392B;--risk-050:#FBEAE7;
-  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
-  --r:12px;--rb:10px;
-}
-*{box-sizing:border-box}
-html{-webkit-font-smoothing:antialiased}
-body{margin:0;background:var(--paper-100);font-family:var(--sans);color:var(--ink-900);padding:48px 24px 96px}
-.sheet{max-width:1580px;margin:0 auto}
-.sheet-head{border-bottom:2px solid var(--ink-900);padding-bottom:20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
-.sheet-head h1{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
-.sheet-head p{margin:0;color:var(--ink-500);font-size:14px;max-width:60ch}
-.stamp{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-500);text-align:right;line-height:1.9}
-.stamp b{color:var(--ink-900);font-weight:500}
-.legend{display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);margin-bottom:44px;padding-top:10px}
-.legend i{width:9px;height:9px;display:inline-block;margin-right:6px;vertical-align:1px;border-radius:2px}
-.gallery{display:flex;flex-wrap:wrap;gap:52px 34px}
-figure.screen{margin:0;width:390px}
-figcaption{display:flex;align-items:baseline;gap:9px;margin-bottom:11px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--ink-400)}
-figcaption b{color:var(--ink-900);font-weight:500;text-transform:uppercase;letter-spacing:.07em;font-size:10.5px}
-figcaption span{margin-left:auto;color:var(--ink-400)}
-.phone{width:390px;height:844px;background:var(--paper-050);border:1px solid var(--paper-300);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 34px rgba(20,21,15,.09)}
-.sb{flex:0 0 36px;display:flex;justify-content:space-between;align-items:center;padding:0 22px 0 24px;font-family:var(--mono);font-size:11px;font-weight:500}
-.sb .dots{letter-spacing:1px;color:var(--ink-500)}
-.app{flex:1;overflow:hidden;position:relative}
-.scroll{height:100%;overflow:hidden;padding:0 20px 16px}
-.tabbar{flex:0 0 68px;border-top:1px solid var(--paper-200);background:var(--paper-000);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:8px}
-.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink-400);font-size:10.5px;font-weight:500;position:relative}
-.tabbar a.on{color:var(--ink-900)}
-.tabbar .ic{width:22px;height:22px;border:1.6px solid currentColor;border-radius:6px}
-.tabbar a.on .ic{background:var(--signal);border-color:var(--ink-900)}
-.tabbar .bdg{position:absolute;top:8px;right:24px;background:var(--risk);color:#fff;font-family:var(--mono);font-size:9px;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font-weight:700}
-.topbar{display:flex;align-items:center;gap:12px;padding:6px 0 16px}
-.topbar h2{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:0}
-.back{width:34px;height:34px;border:1px solid var(--paper-300);border-radius:var(--rb);display:grid;place-items:center;font-size:15px;color:var(--ink-700);background:var(--paper-000);flex:0 0 auto}
-.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);margin:16px 0 8px;display:flex;justify-content:space-between;align-items:baseline}
-.card{background:var(--paper-000);border:1px solid var(--paper-200);border-radius:var(--r);padding:16px}
-.card+.card{margin-top:10px}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:54px;border-radius:var(--rb);background:var(--ink-900);color:var(--paper-050);font-size:17px;font-weight:600;border:none;width:100%;letter-spacing:-.01em;font-family:var(--sans)}
-.btn.go{background:var(--signal);color:var(--ink-900)}
-.btn.ghost{background:transparent;color:var(--ink-900);border:1.5px solid var(--paper-300)}
-.btn.sm{height:42px;font-size:14px}
-.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 20px 18px;background:linear-gradient(to top,var(--paper-050) 72%,rgba(250,248,244,0))}
-.status{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px}
-.status.ok{background:var(--ok-050);color:var(--ok)}
-.status.live{background:var(--signal-050);color:#4A6100}
-.status.warn{background:var(--warn-050);color:var(--warn)}
-.status.risk{background:var(--risk-050);color:var(--risk)}
-.avatar{width:40px;height:40px;border-radius:50%;background:var(--paper-200);display:grid;place-items:center;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-700);flex:0 0 auto}
-.row{display:flex;align-items:center;gap:12px}
-.hr{height:1px;background:var(--paper-200);margin:14px 0}
-.note{font-size:11.5px;color:var(--ink-400);line-height:1.5}
-.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--paper-100);color:var(--ink-700);font-size:11px;font-weight:500}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:500;border:1px solid var(--paper-300);background:var(--paper-000);color:var(--ink-700)}
-.pill.on{background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
-.pills{display:flex;flex-wrap:wrap;gap:8px}
-.kv{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--paper-200);font-size:14px}
-.kv:last-child{border-bottom:none}
-.kv .k{color:var(--ink-500)}
-.kv .v{font-weight:500}
-.iso .v{font-family:var(--mono);font-size:13px;font-weight:500;line-height:1.1}
-.iso{display:flex;align-items:center;gap:9px}
-.iso .l{font-size:10.5px;color:var(--ink-400);line-height:1.1}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Léo Clean — Maquettes espace intervenant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper-000: #ffffff;
+        --paper-050: #faf8f4;
+        --paper-100: #f2efe7;
+        --paper-200: #e6e1d6;
+        --paper-300: #d3cdbf;
+        --ink-900: #14150f;
+        --ink-700: #3a3b33;
+        --ink-500: #6b6c61;
+        --ink-400: #8e8f84;
+        --signal: #a5d900;
+        --signal-600: #8fbe00;
+        --signal-050: #f2fadb;
+        --ok: #0f7a4a;
+        --ok-050: #e8f5ee;
+        --warn: #b4740a;
+        --warn-050: #fdf3e1;
+        --risk: #c0392b;
+        --risk-050: #fbeae7;
+        --sans: "DM Sans", system-ui, sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+        --r: 12px;
+        --rb: 10px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        margin: 0;
+        background: var(--paper-100);
+        font-family: var(--sans);
+        color: var(--ink-900);
+        padding: 48px 24px 96px;
+      }
+      .sheet {
+        max-width: 1580px;
+        margin: 0 auto;
+      }
+      .sheet-head {
+        border-bottom: 2px solid var(--ink-900);
+        padding-bottom: 20px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 32px;
+        flex-wrap: wrap;
+      }
+      .sheet-head h1 {
+        font-size: 30px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+      }
+      .sheet-head p {
+        margin: 0;
+        color: var(--ink-500);
+        font-size: 14px;
+        max-width: 60ch;
+      }
+      .stamp {
+        font-family: var(--mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-500);
+        text-align: right;
+        line-height: 1.9;
+      }
+      .stamp b {
+        color: var(--ink-900);
+        font-weight: 500;
+      }
+      .legend {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-500);
+        margin-bottom: 44px;
+        padding-top: 10px;
+      }
+      .legend i {
+        width: 9px;
+        height: 9px;
+        display: inline-block;
+        margin-right: 6px;
+        vertical-align: 1px;
+        border-radius: 2px;
+      }
+      .gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 52px 34px;
+      }
+      figure.screen {
+        margin: 0;
+        width: 390px;
+      }
+      figcaption {
+        display: flex;
+        align-items: baseline;
+        gap: 9px;
+        margin-bottom: 11px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        color: var(--ink-400);
+      }
+      figcaption b {
+        color: var(--ink-900);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        font-size: 10.5px;
+      }
+      figcaption span {
+        margin-left: auto;
+        color: var(--ink-400);
+      }
+      .phone {
+        width: 390px;
+        height: 844px;
+        background: var(--paper-050);
+        border: 1px solid var(--paper-300);
+        border-radius: 26px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 12px 34px rgba(20, 21, 15, 0.09);
+      }
+      .sb {
+        flex: 0 0 36px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 22px 0 24px;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .sb .dots {
+        letter-spacing: 1px;
+        color: var(--ink-500);
+      }
+      .app {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+      .scroll {
+        height: 100%;
+        overflow: hidden;
+        padding: 0 20px 16px;
+      }
+      .tabbar {
+        flex: 0 0 68px;
+        border-top: 1px solid var(--paper-200);
+        background: var(--paper-000);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding-bottom: 8px;
+      }
+      .tabbar a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        color: var(--ink-400);
+        font-size: 10.5px;
+        font-weight: 500;
+        position: relative;
+      }
+      .tabbar a.on {
+        color: var(--ink-900);
+      }
+      .tabbar .ic {
+        width: 22px;
+        height: 22px;
+        border: 1.6px solid currentColor;
+        border-radius: 6px;
+      }
+      .tabbar a.on .ic {
+        background: var(--signal);
+        border-color: var(--ink-900);
+      }
+      .tabbar .bdg {
+        position: absolute;
+        top: 8px;
+        right: 24px;
+        background: var(--risk);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 9px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 6px 0 16px;
+      }
+      .topbar h2 {
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+      .back {
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--paper-300);
+        border-radius: var(--rb);
+        display: grid;
+        place-items: center;
+        font-size: 15px;
+        color: var(--ink-700);
+        background: var(--paper-000);
+        flex: 0 0 auto;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-400);
+        margin: 16px 0 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .card {
+        background: var(--paper-000);
+        border: 1px solid var(--paper-200);
+        border-radius: var(--r);
+        padding: 16px;
+      }
+      .card + .card {
+        margin-top: 10px;
+      }
+      .mono {
+        font-family: var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 54px;
+        border-radius: var(--rb);
+        background: var(--ink-900);
+        color: var(--paper-050);
+        font-size: 17px;
+        font-weight: 600;
+        border: none;
+        width: 100%;
+        letter-spacing: -0.01em;
+        font-family: var(--sans);
+      }
+      .btn.go {
+        background: var(--signal);
+        color: var(--ink-900);
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--ink-900);
+        border: 1.5px solid var(--paper-300);
+      }
+      .btn.sm {
+        height: 42px;
+        font-size: 14px;
+      }
+      .dock {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 14px 20px 18px;
+        background: linear-gradient(
+          to top,
+          var(--paper-050) 72%,
+          rgba(250, 248, 244, 0)
+        );
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+      .status.ok {
+        background: var(--ok-050);
+        color: var(--ok);
+      }
+      .status.live {
+        background: var(--signal-050);
+        color: #4a6100;
+      }
+      .status.warn {
+        background: var(--warn-050);
+        color: var(--warn);
+      }
+      .status.risk {
+        background: var(--risk-050);
+        color: var(--risk);
+      }
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--paper-200);
+        display: grid;
+        place-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-700);
+        flex: 0 0 auto;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .hr {
+        height: 1px;
+        background: var(--paper-200);
+        margin: 14px 0;
+      }
+      .note {
+        font-size: 11.5px;
+        color: var(--ink-400);
+        line-height: 1.5;
+      }
+      .tag {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: var(--paper-100);
+        color: var(--ink-700);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 11px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 500;
+        border: 1px solid var(--paper-300);
+        background: var(--paper-000);
+        color: var(--ink-700);
+      }
+      .pill.on {
+        background: var(--ink-900);
+        color: var(--paper-050);
+        border-color: var(--ink-900);
+      }
+      .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .kv {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--paper-200);
+        font-size: 14px;
+      }
+      .kv:last-child {
+        border-bottom: none;
+      }
+      .kv .k {
+        color: var(--ink-500);
+      }
+      .kv .v {
+        font-weight: 500;
+      }
+      .iso .v {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.1;
+      }
+      .iso {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .iso .l {
+        font-size: 10.5px;
+        color: var(--ink-400);
+        line-height: 1.1;
+      }
 
-/* rail de tournée — signature */
-.tour{position:relative;padding-left:64px}
-.tour:before{content:"";position:absolute;left:44px;top:14px;bottom:14px;width:2px;background:var(--paper-200)}
-.stop{position:relative;margin-bottom:8px}
-.stop .hh{position:absolute;left:-64px;top:14px;width:40px;text-align:right;font-family:var(--mono);font-size:12px;font-weight:500;line-height:1.2}
-.stop .hh small{display:block;font-size:9.5px;color:var(--ink-400);font-weight:400}
-.stop:before{content:"";position:absolute;left:-24px;top:19px;width:12px;height:12px;border-radius:50%;background:var(--paper-000);border:2px solid var(--paper-300);z-index:1}
-.stop.done:before{background:var(--ink-900);border-color:var(--ink-900)}
-.stop.now:before{background:var(--signal);border-color:var(--ink-900);box-shadow:0 0 0 4px var(--signal-050)}
-.gap{position:relative;margin:0 0 10px;padding:9px 12px;border:1px dashed var(--paper-300);border-radius:var(--rb);font-size:12px;color:var(--ink-500);display:flex;justify-content:space-between;align-items:center}
-.gap b{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-900)}
-.trip{font-family:var(--mono);font-size:10.5px;color:var(--ink-400);padding:0 0 8px 0;letter-spacing:.03em}
+      /* rail de tournée — signature */
+      .tour {
+        position: relative;
+        padding-left: 64px;
+      }
+      .tour:before {
+        content: "";
+        position: absolute;
+        left: 44px;
+        top: 14px;
+        bottom: 14px;
+        width: 2px;
+        background: var(--paper-200);
+      }
+      .stop {
+        position: relative;
+        margin-bottom: 8px;
+      }
+      .stop .hh {
+        position: absolute;
+        left: -64px;
+        top: 14px;
+        width: 40px;
+        text-align: right;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.2;
+      }
+      .stop .hh small {
+        display: block;
+        font-size: 9.5px;
+        color: var(--ink-400);
+        font-weight: 400;
+      }
+      .stop:before {
+        content: "";
+        position: absolute;
+        left: -24px;
+        top: 19px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--paper-000);
+        border: 2px solid var(--paper-300);
+        z-index: 1;
+      }
+      .stop.done:before {
+        background: var(--ink-900);
+        border-color: var(--ink-900);
+      }
+      .stop.now:before {
+        background: var(--signal);
+        border-color: var(--ink-900);
+        box-shadow: 0 0 0 4px var(--signal-050);
+      }
+      .gap {
+        position: relative;
+        margin: 0 0 10px;
+        padding: 9px 12px;
+        border: 1px dashed var(--paper-300);
+        border-radius: var(--rb);
+        font-size: 12px;
+        color: var(--ink-500);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .gap b {
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--ink-900);
+      }
+      .trip {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-400);
+        padding: 0 0 8px 0;
+        letter-spacing: 0.03em;
+      }
 
-.doc{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--paper-200)}
-.doc:last-child{border-bottom:none}
-.doc .n{flex:1}
-.doc .n b{display:block;font-size:14px;font-weight:500}
-.bar{height:110px;display:flex;align-items:flex-end;gap:7px;padding-top:8px}
-.bar div{flex:1;background:var(--paper-200);border-radius:3px 3px 0 0;position:relative}
-.bar div.hi{background:var(--signal)}
-.bar span{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:9px;color:var(--ink-400)}
-.avgrid{display:grid;grid-template-columns:34px repeat(5,1fr);gap:5px;align-items:center}
-.avgrid .lb{font-family:var(--mono);font-size:9.5px;color:var(--ink-400);text-transform:uppercase}
-.avgrid .cell{height:34px;border:1px solid var(--paper-300);border-radius:7px;background:var(--paper-000)}
-.avgrid .cell.on{background:var(--signal);border-color:var(--signal-600)}
-.avgrid .cell.off{background:var(--paper-100);border-style:dashed}
-.photo{aspect-ratio:1;border-radius:8px;background:repeating-linear-gradient(135deg,var(--paper-100),var(--paper-100) 7px,var(--paper-200) 7px,var(--paper-200) 14px);border:1px solid var(--paper-300);position:relative}
-.photo b{position:absolute;left:5px;bottom:5px;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;background:var(--ink-900);color:var(--paper-050);padding:2px 5px;border-radius:3px;font-weight:500}
-.photo.add{background:var(--paper-000);border-style:dashed;display:grid;place-items:center;font-size:22px;color:var(--ink-400)}
-.chk{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--paper-200);font-size:14.5px}
-.chk:last-child{border-bottom:none}
-.chk i{width:23px;height:23px;border:1.6px solid var(--paper-300);border-radius:6px;flex:0 0 auto;display:grid;place-items:center;font-size:13px;color:transparent;font-style:normal}
-.chk.on i{background:var(--ink-900);border-color:var(--ink-900);color:var(--signal)}
-.chk.on span{color:var(--ink-400);text-decoration:line-through}
-.offline{background:var(--warn);color:#fff;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-align:center;padding:6px;font-weight:500}
-</style>
-</head>
-<body>
-<div class="sheet">
-  <header class="sheet-head">
-    <div>
-      <h1>Espace intervenant — planche de maquettes</h1>
-      <p>Même langage que l'espace client, densité légèrement supérieure. Contrainte dominante : utilisable debout, à une main, avec des gants, dans un hall d'immeuble sans réseau. L'action du moment est toujours un bouton unique de 54 px.</p>
-    </div>
-    <div class="stamp">Léo Clean · <b>/pro</b><br>v1.0 — 18.08.2026<br>390 × 844</div>
-  </header>
-  <div class="legend">
-    <span><i style="background:var(--signal)"></i>Action du moment</span>
-    <span><i style="background:var(--ink-900)"></i>Action primaire</span>
-    <span><i style="background:var(--warn)"></i>Conformité / hors-ligne</span>
-    <span><i style="background:var(--risk)"></i>Urgent</span>
-    <span>Ordre de tournée = suggéré, jamais imposé</span>
-  </div>
+      .doc {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--paper-200);
+      }
+      .doc:last-child {
+        border-bottom: none;
+      }
+      .doc .n {
+        flex: 1;
+      }
+      .doc .n b {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .bar {
+        height: 110px;
+        display: flex;
+        align-items: flex-end;
+        gap: 7px;
+        padding-top: 8px;
+      }
+      .bar div {
+        flex: 1;
+        background: var(--paper-200);
+        border-radius: 3px 3px 0 0;
+        position: relative;
+      }
+      .bar div.hi {
+        background: var(--signal);
+      }
+      .bar span {
+        position: absolute;
+        bottom: -18px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--ink-400);
+      }
+      .avgrid {
+        display: grid;
+        grid-template-columns: 34px repeat(5, 1fr);
+        gap: 5px;
+        align-items: center;
+      }
+      .avgrid .lb {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        color: var(--ink-400);
+        text-transform: uppercase;
+      }
+      .avgrid .cell {
+        height: 34px;
+        border: 1px solid var(--paper-300);
+        border-radius: 7px;
+        background: var(--paper-000);
+      }
+      .avgrid .cell.on {
+        background: var(--signal);
+        border-color: var(--signal-600);
+      }
+      .avgrid .cell.off {
+        background: var(--paper-100);
+        border-style: dashed;
+      }
+      .photo {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        background: repeating-linear-gradient(
+          135deg,
+          var(--paper-100),
+          var(--paper-100) 7px,
+          var(--paper-200) 7px,
+          var(--paper-200) 14px
+        );
+        border: 1px solid var(--paper-300);
+        position: relative;
+      }
+      .photo b {
+        position: absolute;
+        left: 5px;
+        bottom: 5px;
+        font-family: var(--mono);
+        font-size: 8.5px;
+        letter-spacing: 0.06em;
+        background: var(--ink-900);
+        color: var(--paper-050);
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-weight: 500;
+      }
+      .photo.add {
+        background: var(--paper-000);
+        border-style: dashed;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        color: var(--ink-400);
+      }
+      .chk {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--paper-200);
+        font-size: 14.5px;
+      }
+      .chk:last-child {
+        border-bottom: none;
+      }
+      .chk i {
+        width: 23px;
+        height: 23px;
+        border: 1.6px solid var(--paper-300);
+        border-radius: 6px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        color: transparent;
+        font-style: normal;
+      }
+      .chk.on i {
+        background: var(--ink-900);
+        border-color: var(--ink-900);
+        color: var(--signal);
+      }
+      .chk.on span {
+        color: var(--ink-400);
+        text-decoration: line-through;
+      }
+      .offline {
+        background: var(--warn);
+        color: #fff;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.05em;
+        text-align: center;
+        padding: 6px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header class="sheet-head">
+        <div>
+          <h1>Espace intervenant — planche de maquettes</h1>
+          <p>
+            Même langage que l'espace client, densité légèrement supérieure.
+            Contrainte dominante : utilisable debout, à une main, avec des
+            gants, dans un hall d'immeuble sans réseau. L'action du moment est
+            toujours un bouton unique de 54 px.
+          </p>
+        </div>
+        <div class="stamp">
+          Léo Clean · <b>/pro</b><br />v1.0 — 18.08.2026<br />390 × 844
+        </div>
+      </header>
+      <div class="legend">
+        <span><i style="background: var(--signal)"></i>Action du moment</span>
+        <span><i style="background: var(--ink-900)"></i>Action primaire</span>
+        <span
+          ><i style="background: var(--warn)"></i>Conformité / hors-ligne</span
+        >
+        <span><i style="background: var(--risk)"></i>Urgent</span>
+        <span>Ordre de tournée = suggéré, jamais imposé</span>
+      </div>
 
-  <div class="gallery">
-
-  <!-- 1 — AUJOURD'HUI -->
-  <figure class="screen">
-    <figcaption><b>Aujourd'hui</b> /pro <span>écran le plus utilisé</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">7:48</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 4px">
-            <h2 style="font-size:24px;font-weight:600;letter-spacing:-.025em;margin:0">Mardi 26 août</h2>
-            <span class="mono" style="font-size:12px;color:var(--ink-500)">3 missions</span>
-          </div>
-          <div class="mono" style="font-size:11.5px;color:var(--ink-500);margin-bottom:16px">7 h 30 de travail · <b style="font-weight:700;color:var(--ink-900)">217 € HT</b> · 26 min de trajet</div>
-
-          <div class="card" style="border:2px solid var(--ink-900);padding:0;overflow:hidden">
-            <div style="padding:16px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                <span class="status live">● Prochaine mission</span>
-                <span class="mono" style="font-size:12px">dans 42 min</span>
-              </div>
-              <div style="font-size:22px;font-weight:600;letter-spacing:-.02em">Camille D.</div>
-              <div style="font-size:14px;color:var(--ink-700);margin-top:2px">12 rue des Vignes, Léognan</div>
-              <div class="row" style="margin-top:14px;gap:18px">
-                <div class="iso">
-                  <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" fill="none" stroke="var(--paper-200)" stroke-width="3.5"/><circle cx="17" cy="17" r="14" fill="none" stroke="var(--signal-600)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="35" transform="rotate(-90 17 17)"/></svg>
-                  <div><div class="v">12 min</div><div class="l">de trajet</div></div>
+      <div class="gallery">
+        <!-- 1 — AUJOURD'HUI -->
+        <figure class="screen">
+          <figcaption>
+            <b>Aujourd'hui</b> /pro <span>écran le plus utilisé</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">7:48</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: baseline;
+                    padding: 10px 0 4px;
+                  "
+                >
+                  <h2
+                    style="
+                      font-size: 24px;
+                      font-weight: 600;
+                      letter-spacing: -0.025em;
+                      margin: 0;
+                    "
+                  >
+                    Mardi 26 août
+                  </h2>
+                  <span
+                    class="mono"
+                    style="font-size: 12px; color: var(--ink-500)"
+                    >3 missions</span
+                  >
                 </div>
-                <div><div class="mono" style="font-size:13px;font-weight:500">8 h – 11 h</div><div class="note">2 h 30 prévues</div></div>
-                <div><div class="mono" style="font-size:13px;font-weight:500">66,00 €</div><div class="note">HT</div></div>
+                <div
+                  class="mono"
+                  style="
+                    font-size: 11.5px;
+                    color: var(--ink-500);
+                    margin-bottom: 16px;
+                  "
+                >
+                  7 h 30 de travail ·
+                  <b style="font-weight: 700; color: var(--ink-900)"
+                    >217 € HT</b
+                  >
+                  · 26 min de trajet
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    border: 2px solid var(--ink-900);
+                    padding: 0;
+                    overflow: hidden;
+                  "
+                >
+                  <div style="padding: 16px">
+                    <div
+                      style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 12px;
+                      "
+                    >
+                      <span class="status live">● Prochaine mission</span>
+                      <span class="mono" style="font-size: 12px"
+                        >dans 42 min</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        font-size: 22px;
+                        font-weight: 600;
+                        letter-spacing: -0.02em;
+                      "
+                    >
+                      Camille D.
+                    </div>
+                    <div
+                      style="
+                        font-size: 14px;
+                        color: var(--ink-700);
+                        margin-top: 2px;
+                      "
+                    >
+                      12 rue des Vignes, Léognan
+                    </div>
+                    <div class="row" style="margin-top: 14px; gap: 18px">
+                      <div class="iso">
+                        <svg width="34" height="34" viewBox="0 0 34 34">
+                          <circle
+                            cx="17"
+                            cy="17"
+                            r="14"
+                            fill="none"
+                            stroke="var(--paper-200)"
+                            stroke-width="3.5"
+                          />
+                          <circle
+                            cx="17"
+                            cy="17"
+                            r="14"
+                            fill="none"
+                            stroke="var(--signal-600)"
+                            stroke-width="3.5"
+                            stroke-linecap="round"
+                            stroke-dasharray="88"
+                            stroke-dashoffset="35"
+                            transform="rotate(-90 17 17)"
+                          />
+                        </svg>
+                        <div>
+                          <div class="v">12 min</div>
+                          <div class="l">de trajet</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          class="mono"
+                          style="font-size: 13px; font-weight: 500"
+                        >
+                          8 h – 11 h
+                        </div>
+                        <div class="note">2 h 30 prévues</div>
+                      </div>
+                      <div>
+                        <div
+                          class="mono"
+                          style="font-size: 13px; font-weight: 500"
+                        >
+                          66,00 €
+                        </div>
+                        <div class="note">HT</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="padding: 0 16px 16px">
+                    <button class="btn go">Je suis arrivée</button>
+                    <div
+                      style="
+                        display: grid;
+                        grid-template-columns: 1fr 1fr 1fr;
+                        gap: 8px;
+                        margin-top: 8px;
+                      "
+                    >
+                      <button class="btn ghost sm">Itinéraire</button>
+                      <button class="btn ghost sm">Consignes</button>
+                      <button class="btn ghost sm">Appeler</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="eyebrow">
+                  <span>La suite de ta journée</span
+                  ><span
+                    style="
+                      text-transform: none;
+                      letter-spacing: 0;
+                      font-family: var(--sans);
+                      font-size: 11.5px;
+                      color: var(--ink-500);
+                    "
+                    >Réorganiser</span
+                  >
+                </div>
+
+                <div class="tour">
+                  <div class="stop now">
+                    <div class="hh">08:00<small>3 h</small></div>
+                    <div
+                      class="card"
+                      style="padding: 12px 14px; border-color: var(--ink-900)"
+                    >
+                      <div style="font-size: 15px; font-weight: 600">
+                        Camille D. · Léognan
+                      </div>
+                      <div class="note">Maison 120 m² · vitres en plus</div>
+                    </div>
+                  </div>
+                  <div class="trip">↓ 9 min de trajet</div>
+                  <div class="stop">
+                    <div class="hh">11:15<small>2 h</small></div>
+                    <div class="card" style="padding: 12px 14px">
+                      <div style="font-size: 15px; font-weight: 600">
+                        Marc T. · Cadaujac
+                      </div>
+                      <div class="note">Appartement 70 m² · 4ᵉ passage</div>
+                    </div>
+                  </div>
+                  <div class="gap">
+                    <span>Trou de 1 h 45 dans ta journée</span
+                    ><b>Voir 2 missions →</b>
+                  </div>
+                  <div class="stop">
+                    <div class="hh">15:00<small>2 h 30</small></div>
+                    <div class="card" style="padding: 12px 14px">
+                      <div style="font-size: 15px; font-weight: 600">
+                        Hélène R. · Villenave
+                      </div>
+                      <div class="note">Maison 95 m² · premier passage</div>
+                    </div>
+                  </div>
+                </div>
+
+                <p class="note" style="margin-top: 6px">
+                  Ordre suggéré pour limiter tes trajets. Tu restes libre de ton
+                  organisation.
+                </p>
               </div>
             </div>
-            <div style="padding:0 16px 16px">
-              <button class="btn go">Je suis arrivée</button>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
-                <button class="btn ghost sm">Itinéraire</button>
-                <button class="btn ghost sm">Consignes</button>
-                <button class="btn ghost sm">Appeler</button>
+            <nav class="tabbar">
+              <a class="on"><span class="ic"></span>Aujourd'hui</a>
+              <a><span class="bdg">2</span><span class="ic"></span>Missions</a>
+              <a><span class="ic"></span>Revenus</a>
+              <a><span class="ic"></span>Profil</a>
+            </nav>
+          </div>
+        </figure>
+
+        <!-- 2 — PROPOSITION -->
+        <figure class="screen">
+          <figcaption>
+            <b>Proposition de mission</b> /pro/offers/:id
+            <span>expire dans 30 min</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">19:12</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div
+                  style="
+                    margin: 12px -20px 16px;
+                    padding: 10px 20px;
+                    background: var(--ink-900);
+                    color: var(--paper-050);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                  "
+                >
+                  <span style="font-size: 13px; font-weight: 500"
+                    >Nouvelle proposition</span
+                  >
+                  <span
+                    class="mono"
+                    style="
+                      font-size: 13px;
+                      color: var(--signal);
+                      font-weight: 500;
+                    "
+                    >28:14</span
+                  >
+                </div>
+
+                <div style="text-align: center; padding: 6px 0 20px">
+                  <div
+                    class="mono"
+                    style="
+                      font-size: 38px;
+                      font-weight: 700;
+                      letter-spacing: -0.03em;
+                      line-height: 1;
+                    "
+                  >
+                    71,25 €
+                  </div>
+                  <div class="note" style="font-size: 12.5px">
+                    HT pour 2 h 30 · soit 28,50 €/h
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="kv">
+                    <span class="k">Quand</span
+                    ><span class="v">Jeu. 28 août, 14 h – 17 h</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Où</span
+                    ><span class="v">Rue Gambetta, Villenave</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Rythme</span
+                    ><span class="v">Toutes les 2 semaines</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Logement</span
+                    ><span class="v">Maison 95 m² · 3 ch.</span>
+                  </div>
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    margin-top: 10px;
+                    background: var(--signal-050);
+                    border-color: #dceda8;
+                  "
+                >
+                  <div class="row">
+                    <div class="iso">
+                      <svg width="40" height="40" viewBox="0 0 40 40">
+                        <circle
+                          cx="20"
+                          cy="20"
+                          r="16"
+                          fill="none"
+                          stroke="#DCEDA8"
+                          stroke-width="4"
+                        />
+                        <circle
+                          cx="20"
+                          cy="20"
+                          r="16"
+                          fill="none"
+                          stroke="#8FBE00"
+                          stroke-width="4"
+                          stroke-linecap="round"
+                          stroke-dasharray="100.5"
+                          stroke-dashoffset="60"
+                          transform="rotate(-90 20 20)"
+                        />
+                      </svg>
+                    </div>
+                    <div style="flex: 1">
+                      <div style="font-size: 15px; font-weight: 600">
+                        8 min depuis ta mission de 11 h 15
+                      </div>
+                      <div class="note" style="color: #5b7300">
+                        Comble le trou de ton jeudi après-midi
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="eyebrow">Bon à savoir</div>
+                <div class="pills">
+                  <span class="pill">🐈 Un chat</span
+                  ><span class="pill">🧴 Produits fournis</span
+                  ><span class="pill">🚗 Stationnement facile</span
+                  ><span class="pill">🔑 Boîte à clés</span>
+                </div>
+
+                <p class="note" style="margin-top: 16px">
+                  L'adresse exacte et les consignes d'accès te sont communiquées
+                  après acceptation.
+                </p>
+              </div>
+              <div
+                class="dock"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px"
+              >
+                <button class="btn ghost">Refuser</button>
+                <button class="btn go">Accepter</button>
               </div>
             </div>
           </div>
+        </figure>
 
-          <div class="eyebrow"><span>La suite de ta journée</span><span style="text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:11.5px;color:var(--ink-500)">Réorganiser</span></div>
+        <!-- 3 — FICHE MISSION / ACCES -->
+        <figure class="screen">
+          <figcaption>
+            <b>Fiche mission — accès</b> /pro/missions/:id
+            <span>onglet Infos</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">8:41</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div class="topbar">
+                  <div class="back">←</div>
+                  <div>
+                    <h2>Camille D.</h2>
+                    <div class="note">Mar. 26 août · 8 h – 11 h</div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 0;
+                    border: 1px solid var(--paper-300);
+                    border-radius: var(--rb);
+                    overflow: hidden;
+                    margin-bottom: 18px;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1;
+                      text-align: center;
+                      padding: 9px;
+                      background: var(--ink-900);
+                      color: var(--paper-050);
+                      font-size: 13.5px;
+                      font-weight: 600;
+                    "
+                  >
+                    Infos
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      text-align: center;
+                      padding: 9px;
+                      font-size: 13.5px;
+                      color: var(--ink-500);
+                    "
+                  >
+                    Checklist
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      text-align: center;
+                      padding: 9px;
+                      font-size: 13.5px;
+                      color: var(--ink-500);
+                    "
+                  >
+                    Rapport
+                  </div>
+                </div>
 
-          <div class="tour">
-            <div class="stop now">
-              <div class="hh">08:00<small>3 h</small></div>
-              <div class="card" style="padding:12px 14px;border-color:var(--ink-900)">
-                <div style="font-size:15px;font-weight:600">Camille D. · Léognan</div>
-                <div class="note">Maison 120 m² · vitres en plus</div>
+                <div
+                  class="card"
+                  style="
+                    border: 2px solid var(--ink-900);
+                    background: var(--paper-000);
+                  "
+                >
+                  <div class="note" style="margin-bottom: 6px">
+                    Code de la boîte à clés · visible aujourd'hui seulement
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span
+                      class="mono"
+                      style="
+                        font-size: 32px;
+                        font-weight: 700;
+                        letter-spacing: 0.12em;
+                      "
+                      >4 7 2 9</span
+                    >
+                    <span class="pill">Copier</span>
+                  </div>
+                  <div class="hr"></div>
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 13.5px;
+                      line-height: 1.5;
+                      color: var(--ink-700);
+                    "
+                  >
+                    Boîte à clés grise à droite du portail. Le portail peut être
+                    ouvert, refermer derrière soi.
+                  </p>
+                </div>
+
+                <div class="eyebrow">Le logement</div>
+                <div class="card">
+                  <div class="kv">
+                    <span class="k">Type</span
+                    ><span class="v">Maison 120 m² · plain-pied</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Pièces</span
+                    ><span class="v">4 ch. · 2 sdb · 2 wc</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Animaux</span
+                    ><span class="v">Nino, chat très craintif</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Produits</span
+                    ><span class="v">Fournis par la cliente</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Stationnement</span
+                    ><span class="v">Devant le portail</span>
+                  </div>
+                </div>
+
+                <div class="eyebrow">Consignes de Camille</div>
+                <div
+                  class="card"
+                  style="background: var(--warn-050); border-color: #f0ddb4"
+                >
+                  <p
+                    style="
+                      margin: 0 0 10px;
+                      font-size: 13.5px;
+                      line-height: 1.5;
+                    "
+                  >
+                    Ne pas toucher au bureau du fond, c'est mon espace de
+                    travail. Le chat se cache sous le canapé, il ne faut pas le
+                    chercher.
+                  </p>
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 13.5px;
+                      line-height: 1.5;
+                      padding-top: 10px;
+                      border-top: 1px dashed #e4cfa0;
+                    "
+                  >
+                    <b>Ajouté pour ce passage :</b> les draps sont sur le lit de
+                    la chambre du fond.
+                  </p>
+                </div>
+
+                <div class="eyebrow">Historique</div>
+                <div class="card">
+                  <div class="row" style="justify-content: space-between">
+                    <div>
+                      <div style="font-size: 14.5px; font-weight: 500">
+                        4ᵉ passage chez Camille
+                      </div>
+                      <div class="note">Dernière fois : 2 h 40 · ★★★★★</div>
+                    </div>
+                    <span class="tag">Cliente fidèle</span>
+                  </div>
+                </div>
+
+                <div class="eyebrow">Mes notes privées</div>
+                <div class="card" style="border-style: dashed">
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 13.5px;
+                      color: var(--ink-700);
+                      line-height: 1.5;
+                    "
+                  >
+                    L'aspirateur est dans le cellier, pas dans le placard de
+                    l'entrée. Prévoir 15 min de plus quand les enfants sont là.
+                  </p>
+                </div>
               </div>
-            </div>
-            <div class="trip">↓ 9 min de trajet</div>
-            <div class="stop">
-              <div class="hh">11:15<small>2 h</small></div>
-              <div class="card" style="padding:12px 14px">
-                <div style="font-size:15px;font-weight:600">Marc T. · Cadaujac</div>
-                <div class="note">Appartement 70 m² · 4ᵉ passage</div>
-              </div>
-            </div>
-            <div class="gap"><span>Trou de 1 h 45 dans ta journée</span><b>Voir 2 missions →</b></div>
-            <div class="stop">
-              <div class="hh">15:00<small>2 h 30</small></div>
-              <div class="card" style="padding:12px 14px">
-                <div style="font-size:15px;font-weight:600">Hélène R. · Villenave</div>
-                <div class="note">Maison 95 m² · premier passage</div>
+              <div class="dock">
+                <button class="btn go">Je suis arrivée</button>
               </div>
             </div>
           </div>
+        </figure>
 
-          <p class="note" style="margin-top:6px">Ordre suggéré pour limiter tes trajets. Tu restes libre de ton organisation.</p>
-        </div>
+        <!-- 4 — CHECKLIST -->
+        <figure class="screen">
+          <figcaption>
+            <b>Checklist en cours</b> /pro/missions/:id
+            <span>mission démarrée</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">10:22</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div
+                  style="
+                    margin: 10px -20px 0;
+                    padding: 12px 20px;
+                    background: var(--signal-050);
+                    border-bottom: 1px solid #dceda8;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                  "
+                >
+                  <div>
+                    <div
+                      class="mono"
+                      style="
+                        font-size: 11px;
+                        letter-spacing: 0.07em;
+                        text-transform: uppercase;
+                        color: #5b7300;
+                      "
+                    >
+                      En cours depuis 9 h 12
+                    </div>
+                    <div
+                      class="mono"
+                      style="font-size: 20px; font-weight: 700; margin-top: 2px"
+                    >
+                      1 h 10
+                    </div>
+                  </div>
+                  <div style="text-align: right">
+                    <div class="note">restant estimé</div>
+                    <div class="mono" style="font-size: 15px; font-weight: 500">
+                      1 h 20
+                    </div>
+                  </div>
+                </div>
+
+                <div class="eyebrow" style="margin-top: 18px">
+                  <span>Cuisine</span
+                  ><span class="mono" style="letter-spacing: 0">6/6</span>
+                </div>
+                <div class="card" style="padding: 4px 16px">
+                  <div class="chk on">
+                    <i>✓</i><span>Plan de travail et crédence</span>
+                  </div>
+                  <div class="chk on">
+                    <i>✓</i><span>Évier et robinetterie</span>
+                  </div>
+                  <div class="chk on">
+                    <i>✓</i><span>Façades de meubles</span>
+                  </div>
+                  <div class="chk on">
+                    <i>✓</i><span>Extérieur électroménager</span>
+                  </div>
+                  <div class="chk on"><i>✓</i><span>Poubelle</span></div>
+                  <div class="chk on"><i>✓</i><span>Sol</span></div>
+                </div>
+
+                <div class="eyebrow">
+                  <span>Salles de bain</span
+                  ><span class="mono" style="letter-spacing: 0">3/7</span>
+                </div>
+                <div class="card" style="padding: 4px 16px">
+                  <div class="chk on">
+                    <i>✓</i><span>Lavabo et miroir</span>
+                  </div>
+                  <div class="chk on"><i>✓</i><span>Douche</span></div>
+                  <div class="chk on"><i>✓</i><span>WC</span></div>
+                  <div class="chk"><i>✓</i><span>Baignoire</span></div>
+                  <div class="chk"><i>✓</i><span>Sol et plinthes</span></div>
+                </div>
+
+                <div class="eyebrow"><span>Ajouté par Camille</span></div>
+                <div
+                  class="card"
+                  style="
+                    padding: 4px 16px;
+                    background: var(--warn-050);
+                    border-color: #f0ddb4;
+                  "
+                >
+                  <div class="chk">
+                    <i>✓</i><span>Changer les draps (chambre du fond)</span>
+                  </div>
+                  <div class="chk"><i>✓</i><span>Vitres du séjour</span></div>
+                </div>
+              </div>
+              <div class="dock">
+                <button class="btn">Terminer la mission</button>
+              </div>
+            </div>
+          </div>
+        </figure>
+
+        <!-- 5 — RAPPORT / CHECKOUT -->
+        <figure class="screen">
+          <figcaption>
+            <b>Rapport de fin</b> /pro/missions/:id <span>onglet Rapport</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">11:48</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div class="topbar">
+                  <div class="back">←</div>
+                  <h2>Rapport</h2>
+                </div>
+
+                <div class="eyebrow">
+                  <span>Photos avant</span
+                  ><span class="mono" style="letter-spacing: 0">2</span>
+                </div>
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px;
+                  "
+                >
+                  <div class="photo"><b>CUISINE</b></div>
+                  <div class="photo"><b>SDB</b></div>
+                  <div class="photo add">+</div>
+                </div>
+
+                <div class="eyebrow">
+                  <span>Photos après</span
+                  ><span class="mono" style="letter-spacing: 0">3</span>
+                </div>
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px;
+                  "
+                >
+                  <div class="photo"><b>CUISINE</b></div>
+                  <div class="photo"><b>SDB</b></div>
+                  <div class="photo"><b>SÉJOUR</b></div>
+                </div>
+                <p class="note" style="margin-top: 8px">
+                  Cadre les pièces, pas les personnes ni les documents.
+                </p>
+
+                <div class="eyebrow">Un point à signaler ?</div>
+                <div
+                  class="card"
+                  style="background: var(--warn-050); border-color: #f0ddb4"
+                >
+                  <div class="row" style="align-items: flex-start; gap: 10px">
+                    <span style="font-size: 16px">⚠</span>
+                    <div style="flex: 1">
+                      <div style="font-size: 14px; font-weight: 600">
+                        Équipement / état du logement
+                      </div>
+                      <p
+                        style="
+                          margin: 5px 0 0;
+                          font-size: 13px;
+                          line-height: 1.5;
+                          color: var(--ink-700);
+                        "
+                      >
+                        Joint de douche du haut encrassé en profondeur, un
+                        anticalcaire spécifique serait nécessaire.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="pills" style="margin-top: 10px">
+                  <span class="pill">Dégât préexistant</span
+                  ><span class="pill">Produit épuisé</span
+                  ><span class="pill">Accès difficile</span>
+                </div>
+
+                <div class="eyebrow">Durée</div>
+                <div class="card">
+                  <div class="kv">
+                    <span class="k">Arrivée</span
+                    ><span class="v mono">09 h 12</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Départ</span
+                    ><span class="v mono">11 h 52</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Temps réel</span
+                    ><span class="v mono">2 h 40</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Facturé</span
+                    ><span class="v mono"
+                      >2 h 30
+                      <span class="note" style="display: inline"
+                        >(prévu)</span
+                      ></span
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="dock">
+                <button class="btn">Envoyer et terminer</button>
+              </div>
+            </div>
+          </div>
+        </figure>
+
+        <!-- 6 — HORS LIGNE -->
+        <figure class="screen">
+          <figcaption>
+            <b>Mode hors-ligne</b> /pro/missions/:id
+            <span>sous-sol, pas de réseau</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">15:03</span
+              ><span class="dots" style="color: var(--warn)">✕ ▪▪ ▮</span>
+            </div>
+            <div class="offline">
+              HORS CONNEXION · TES ACTIONS SONT ENREGISTRÉES
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div class="topbar" style="padding-top: 14px">
+                  <div class="back">←</div>
+                  <div>
+                    <h2>Hélène R.</h2>
+                    <div class="note">Villenave · 15 h – 17 h 30</div>
+                  </div>
+                </div>
+
+                <div class="card" style="border: 2px solid var(--warn)">
+                  <span class="status warn" style="margin-bottom: 10px"
+                    >En attente d'envoi</span
+                  >
+                  <div class="kv">
+                    <span class="k">Arrivée enregistrée</span
+                    ><span class="v mono">15 h 01</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Checklist</span
+                    ><span class="v mono">8 / 19 cochées</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Photos</span
+                    ><span class="v mono">3 en attente</span>
+                  </div>
+                  <p class="note" style="margin-top: 12px">
+                    Tout est enregistré sur ton téléphone. L'envoi se fait tout
+                    seul dès que le réseau revient.
+                  </p>
+                </div>
+
+                <div class="eyebrow">Ce que tu peux faire sans réseau</div>
+                <div class="card" style="padding: 4px 16px">
+                  <div class="chk on">
+                    <i>✓</i><span>Voir les consignes et le code</span>
+                  </div>
+                  <div class="chk on">
+                    <i>✓</i><span>Pointer ton arrivée et ton départ</span>
+                  </div>
+                  <div class="chk on">
+                    <i>✓</i><span>Cocher la checklist</span>
+                  </div>
+                  <div class="chk on">
+                    <i>✓</i><span>Prendre des photos</span>
+                  </div>
+                </div>
+
+                <div class="eyebrow">Ce qui attendra le réseau</div>
+                <div class="card" style="padding: 4px 16px; opacity: 0.55">
+                  <div class="chk">
+                    <i>✓</i><span>Envoyer un message à Hélène</span>
+                  </div>
+                  <div class="chk">
+                    <i>✓</i><span>Accepter une nouvelle mission</span>
+                  </div>
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    margin-top: 16px;
+                    background: var(--paper-100);
+                    border-style: dashed;
+                  "
+                >
+                  <div class="row">
+                    <span style="font-size: 18px">📶</span>
+                    <p
+                      style="
+                        margin: 0;
+                        font-size: 13px;
+                        line-height: 1.5;
+                        color: var(--ink-700);
+                      "
+                    >
+                      Dernière synchronisation il y a 12 minutes. Ta tournée de
+                      demain est déjà téléchargée.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="dock">
+                <button class="btn go">Terminer la mission</button>
+              </div>
+            </div>
+          </div>
+        </figure>
+
+        <!-- 7 — REVENUS -->
+        <figure class="screen">
+          <figcaption>
+            <b>Revenus</b> /pro/revenus <span>onglet 3</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">21:15</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div style="padding: 10px 0 16px">
+                  <h2
+                    style="
+                      font-size: 24px;
+                      font-weight: 600;
+                      letter-spacing: -0.025em;
+                      margin: 0;
+                    "
+                  >
+                    Revenus
+                  </h2>
+                </div>
+
+                <div class="card" style="border: 2px solid var(--ink-900)">
+                  <div class="note">Août 2026</div>
+                  <div
+                    class="mono"
+                    style="
+                      font-size: 36px;
+                      font-weight: 700;
+                      letter-spacing: -0.03em;
+                      line-height: 1.1;
+                      margin: 2px 0 14px;
+                    "
+                  >
+                    1 840 €
+                  </div>
+                  <div style="display: flex; gap: 20px">
+                    <div>
+                      <div class="note">Déjà versé</div>
+                      <div
+                        class="mono"
+                        style="
+                          font-size: 16px;
+                          font-weight: 500;
+                          color: var(--ok);
+                        "
+                      >
+                        1 240 €
+                      </div>
+                    </div>
+                    <div>
+                      <div class="note">À venir vendredi</div>
+                      <div
+                        class="mono"
+                        style="font-size: 16px; font-weight: 500"
+                      >
+                        600 €
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bar" style="margin-top: 20px">
+                    <div style="height: 52%"><span>S31</span></div>
+                    <div style="height: 71%"><span>S32</span></div>
+                    <div style="height: 64%"><span>S33</span></div>
+                    <div class="hi" style="height: 88%"><span>S34</span></div>
+                  </div>
+                  <div style="height: 20px"></div>
+                </div>
+
+                <div class="eyebrow">
+                  <span>Prochain virement</span
+                  ><span class="mono" style="letter-spacing: 0"
+                    >ven. 29/08</span
+                  >
+                </div>
+                <div class="card">
+                  <div class="kv">
+                    <span class="k">4 missions terminées</span
+                    ><span class="v mono">268,00 €</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Commission Léo Clean 22 %</span
+                    ><span class="v mono" style="color: var(--ink-500)"
+                      >−58,96 €</span
+                    >
+                  </div>
+                  <div class="kv">
+                    <span
+                      class="k"
+                      style="font-weight: 600; color: var(--ink-900)"
+                      >Net à recevoir</span
+                    ><span
+                      class="v mono"
+                      style="font-size: 16px; font-weight: 700"
+                      >209,04 €</span
+                    >
+                  </div>
+                </div>
+
+                <div class="eyebrow">Plafond micro-entreprise</div>
+                <div class="card">
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: baseline;
+                      margin-bottom: 9px;
+                    "
+                  >
+                    <span class="mono" style="font-size: 17px; font-weight: 600"
+                      >14 320 €</span
+                    >
+                    <span class="note">sur 77 700 € · 18 %</span>
+                  </div>
+                  <div
+                    style="
+                      height: 8px;
+                      border-radius: 999px;
+                      background: var(--paper-200);
+                      overflow: hidden;
+                    "
+                  >
+                    <i
+                      style="
+                        display: block;
+                        height: 100%;
+                        width: 18%;
+                        background: var(--signal);
+                      "
+                    ></i>
+                  </div>
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    margin-top: 10px;
+                    background: var(--warn-050);
+                    border-color: #f0ddb4;
+                  "
+                >
+                  <div class="row" style="align-items: flex-start; gap: 10px">
+                    <span style="font-size: 16px">📅</span>
+                    <div>
+                      <div style="font-size: 14px; font-weight: 600">
+                        Déclaration URSSAF le 31 octobre
+                      </div>
+                      <p
+                        style="
+                          margin: 4px 0 0;
+                          font-size: 13px;
+                          line-height: 1.5;
+                          color: var(--ink-700);
+                        "
+                      >
+                        Chiffre d'affaires du 3ᵉ trimestre à ce jour :
+                        <b class="mono">4 210 €</b>. Estimation à vérifier de
+                        ton côté.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    margin-top: 10px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                  "
+                >
+                  <div>
+                    <div style="font-size: 14.5px; font-weight: 500">
+                      Télécharger mon relevé
+                    </div>
+                    <div class="note">CSV ou PDF · par mois</div>
+                  </div>
+                  <span style="font-size: 18px; color: var(--ink-400)">›</span>
+                </div>
+              </div>
+            </div>
+            <nav class="tabbar">
+              <a><span class="ic"></span>Aujourd'hui</a
+              ><a><span class="ic"></span>Missions</a
+              ><a class="on"><span class="ic"></span>Revenus</a
+              ><a><span class="ic"></span>Profil</a>
+            </nav>
+          </div>
+        </figure>
+
+        <!-- 8 — PLANNING -->
+        <figure class="screen">
+          <figcaption>
+            <b>Mes disponibilités</b> /pro/planning <span>déclaratif</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">21:22</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div class="topbar">
+                  <div class="back">←</div>
+                  <h2>Mes disponibilités</h2>
+                </div>
+                <p
+                  style="
+                    margin: 0 0 20px;
+                    font-size: 13.5px;
+                    line-height: 1.5;
+                    color: var(--ink-500);
+                  "
+                >
+                  Tu décides quand tu travailles. Modifiable jusqu'à 72 h avant,
+                  sans avoir à te justifier.
+                </p>
+
+                <div class="avgrid" style="margin-bottom: 6px">
+                  <span></span>
+                  <span class="lb" style="text-align: center">Lun</span
+                  ><span class="lb" style="text-align: center">Mar</span
+                  ><span class="lb" style="text-align: center">Mer</span
+                  ><span class="lb" style="text-align: center">Jeu</span
+                  ><span class="lb" style="text-align: center">Ven</span>
+                </div>
+                <div class="avgrid" style="margin-bottom: 5px">
+                  <span class="lb">8-11</span><span class="cell on"></span
+                  ><span class="cell on"></span><span class="cell on"></span
+                  ><span class="cell on"></span><span class="cell on"></span>
+                </div>
+                <div class="avgrid" style="margin-bottom: 5px">
+                  <span class="lb">11-14</span><span class="cell on"></span
+                  ><span class="cell on"></span><span class="cell off"></span
+                  ><span class="cell on"></span><span class="cell on"></span>
+                </div>
+                <div class="avgrid" style="margin-bottom: 5px">
+                  <span class="lb">14-17</span><span class="cell off"></span
+                  ><span class="cell on"></span><span class="cell off"></span
+                  ><span class="cell on"></span><span class="cell off"></span>
+                </div>
+                <div class="avgrid">
+                  <span class="lb">17-20</span><span class="cell off"></span
+                  ><span class="cell off"></span><span class="cell off"></span
+                  ><span class="cell off"></span><span class="cell off"></span>
+                </div>
+
+                <div class="card" style="margin-top: 20px">
+                  <div class="kv">
+                    <span class="k">Objectif hebdomadaire</span
+                    ><span class="v mono">30 h</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Actuellement rempli</span
+                    ><span class="v mono" style="color: var(--ok)"
+                      >26 h 30</span
+                    >
+                  </div>
+                </div>
+
+                <div class="eyebrow">Ma zone</div>
+                <div class="card">
+                  <div class="row" style="margin-bottom: 12px">
+                    <div class="iso">
+                      <svg width="44" height="44" viewBox="0 0 44 44">
+                        <circle
+                          cx="22"
+                          cy="22"
+                          r="18"
+                          fill="none"
+                          stroke="var(--paper-200)"
+                          stroke-width="4"
+                        />
+                        <circle
+                          cx="22"
+                          cy="22"
+                          r="18"
+                          fill="none"
+                          stroke="var(--signal-600)"
+                          stroke-width="4"
+                          stroke-linecap="round"
+                          stroke-dasharray="113"
+                          stroke-dashoffset="20"
+                          transform="rotate(-90 22 22)"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <div style="font-size: 15px; font-weight: 600">
+                        20 minutes autour de Cadaujac
+                      </div>
+                      <div class="note">En voiture · 6 communes couvertes</div>
+                    </div>
+                  </div>
+                  <div class="pills">
+                    <span class="tag">Cadaujac</span
+                    ><span class="tag">Léognan</span
+                    ><span class="tag">Villenave</span
+                    ><span class="tag">Canéjan</span
+                    ><span class="tag">Gradignan</span
+                    ><span class="tag">Martillac</span>
+                  </div>
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    margin-top: 10px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                  "
+                >
+                  <div>
+                    <div style="font-size: 14.5px; font-weight: 500">
+                      Poser des congés
+                    </div>
+                    <div class="note">
+                      On prévient tes clientes et on remplace
+                    </div>
+                  </div>
+                  <span style="font-size: 18px; color: var(--ink-400)">›</span>
+                </div>
+              </div>
+            </div>
+            <nav class="tabbar">
+              <a><span class="ic"></span>Aujourd'hui</a
+              ><a><span class="ic"></span>Missions</a
+              ><a><span class="ic"></span>Revenus</a
+              ><a class="on"><span class="ic"></span>Profil</a>
+            </nav>
+          </div>
+        </figure>
+
+        <!-- 9 — CONFORMITE -->
+        <figure class="screen">
+          <figcaption>
+            <b>Mes documents</b> /pro/profil <span>conformité</span>
+          </figcaption>
+          <div class="phone">
+            <div class="sb">
+              <span class="mono">21:30</span><span class="dots">▪▪▪ ▪▪ ▮</span>
+            </div>
+            <div class="app">
+              <div class="scroll">
+                <div class="topbar">
+                  <div class="back">←</div>
+                  <h2>Mes documents</h2>
+                </div>
+
+                <div
+                  class="card"
+                  style="
+                    border: 2px solid var(--warn);
+                    background: var(--warn-050);
+                  "
+                >
+                  <span class="status warn" style="margin-bottom: 9px"
+                    >À renouveler</span
+                  >
+                  <div
+                    style="font-size: 16px; font-weight: 600; line-height: 1.3"
+                  >
+                    Ton attestation URSSAF expire dans 12 jours
+                  </div>
+                  <p
+                    style="
+                      margin: 6px 0 12px;
+                      font-size: 13px;
+                      line-height: 1.5;
+                      color: var(--ink-700);
+                    "
+                  >
+                    Sans elle, on ne pourra plus te proposer de nouvelles
+                    missions à partir du 7 septembre. Elle se télécharge en 2
+                    minutes depuis ton espace auto-entrepreneur.
+                  </p>
+                  <button class="btn sm">Comment la récupérer</button>
+                </div>
+
+                <div class="eyebrow">Statut</div>
+                <div class="card">
+                  <div class="kv">
+                    <span class="k">SIRET</span
+                    ><span class="v mono" style="font-size: 12.5px"
+                      >812 456 789 00023</span
+                    >
+                  </div>
+                  <div class="kv">
+                    <span class="k">Activité</span
+                    ><span class="v">Nettoyage courant des bâtiments</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Déclaration SAP</span
+                    ><span class="v mono" style="font-size: 12.5px"
+                      >SAP812456789</span
+                    >
+                  </div>
+                </div>
+
+                <div class="eyebrow">Pièces</div>
+                <div class="card" style="padding: 4px 16px">
+                  <div class="doc">
+                    <span class="status ok">✓</span>
+                    <div class="n">
+                      <b>Pièce d'identité</b>
+                      <div class="note">Valide jusqu'au 12/2029</div>
+                    </div>
+                  </div>
+                  <div class="doc">
+                    <span class="status ok">✓</span>
+                    <div class="n">
+                      <b>Avis SIRENE</b>
+                      <div class="note">Vérifié le 14/03/2026</div>
+                    </div>
+                  </div>
+                  <div class="doc">
+                    <span class="status warn">12 j</span>
+                    <div class="n">
+                      <b>Attestation de vigilance URSSAF</b>
+                      <div class="note">Expire le 07/09/2026</div>
+                    </div>
+                  </div>
+                  <div class="doc">
+                    <span class="status ok">✓</span>
+                    <div class="n">
+                      <b>Récépissé SAP</b>
+                      <div class="note">Déposé le 02/03/2026</div>
+                    </div>
+                  </div>
+                  <div class="doc">
+                    <span class="status ok">✓</span>
+                    <div class="n">
+                      <b>RC Professionnelle</b>
+                      <div class="note">Valide jusqu'au 31/12/2026</div>
+                    </div>
+                  </div>
+                  <div class="doc">
+                    <span class="status ok">✓</span>
+                    <div class="n">
+                      <b>Coordonnées bancaires</b>
+                      <div class="note">FR76 •••• 4412</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="eyebrow">Mes indicateurs</div>
+                <div class="card">
+                  <div class="kv">
+                    <span class="k">Ponctualité</span
+                    ><span class="v mono">97 %</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Note moyenne</span
+                    ><span class="v mono">★ 4,9 · 87 avis</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Missions réalisées</span
+                    ><span class="v mono">214</span>
+                  </div>
+                  <div class="kv">
+                    <span class="k">Réponse aux propositions</span
+                    ><span class="v mono">en 22 min</span>
+                  </div>
+                </div>
+                <p class="note" style="margin-top: 10px">
+                  Ces chiffres sont les tiens. Ils servent à te proposer les
+                  missions les plus adaptées, jamais à te sanctionner.
+                  <b style="color: var(--ink-700)">Comment ça marche →</b>
+                </p>
+              </div>
+            </div>
+            <nav class="tabbar">
+              <a><span class="ic"></span>Aujourd'hui</a
+              ><a><span class="ic"></span>Missions</a
+              ><a><span class="ic"></span>Revenus</a
+              ><a class="on"><span class="ic"></span>Profil</a>
+            </nav>
+          </div>
+        </figure>
       </div>
-      <nav class="tabbar">
-        <a class="on"><span class="ic"></span>Aujourd'hui</a>
-        <a><span class="bdg">2</span><span class="ic"></span>Missions</a>
-        <a><span class="ic"></span>Revenus</a>
-        <a><span class="ic"></span>Profil</a>
-      </nav>
     </div>
-  </figure>
-
-  <!-- 2 — PROPOSITION -->
-  <figure class="screen">
-    <figcaption><b>Proposition de mission</b> /pro/offers/:id <span>expire dans 30 min</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">19:12</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div style="margin:12px -20px 16px;padding:10px 20px;background:var(--ink-900);color:var(--paper-050);display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:13px;font-weight:500">Nouvelle proposition</span>
-            <span class="mono" style="font-size:13px;color:var(--signal);font-weight:500">28:14</span>
-          </div>
-
-          <div style="text-align:center;padding:6px 0 20px">
-            <div class="mono" style="font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1">71,25 €</div>
-            <div class="note" style="font-size:12.5px">HT pour 2 h 30 · soit 28,50 €/h</div>
-          </div>
-
-          <div class="card">
-            <div class="kv"><span class="k">Quand</span><span class="v">Jeu. 28 août, 14 h – 17 h</span></div>
-            <div class="kv"><span class="k">Où</span><span class="v">Rue Gambetta, Villenave</span></div>
-            <div class="kv"><span class="k">Rythme</span><span class="v">Toutes les 2 semaines</span></div>
-            <div class="kv"><span class="k">Logement</span><span class="v">Maison 95 m² · 3 ch.</span></div>
-          </div>
-
-          <div class="card" style="margin-top:10px;background:var(--signal-050);border-color:#DCEDA8">
-            <div class="row">
-              <div class="iso">
-                <svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" fill="none" stroke="#DCEDA8" stroke-width="4"/><circle cx="20" cy="20" r="16" fill="none" stroke="#8FBE00" stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="60" transform="rotate(-90 20 20)"/></svg>
-              </div>
-              <div style="flex:1">
-                <div style="font-size:15px;font-weight:600">8 min depuis ta mission de 11 h 15</div>
-                <div class="note" style="color:#5B7300">Comble le trou de ton jeudi après-midi</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="eyebrow">Bon à savoir</div>
-          <div class="pills">
-            <span class="pill">🐈 Un chat</span><span class="pill">🧴 Produits fournis</span><span class="pill">🚗 Stationnement facile</span><span class="pill">🔑 Boîte à clés</span>
-          </div>
-
-          <p class="note" style="margin-top:16px">L'adresse exacte et les consignes d'accès te sont communiquées après acceptation.</p>
-        </div>
-        <div class="dock" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <button class="btn ghost">Refuser</button>
-          <button class="btn go">Accepter</button>
-        </div>
-      </div>
-    </div>
-  </figure>
-
-  <!-- 3 — FICHE MISSION / ACCES -->
-  <figure class="screen">
-    <figcaption><b>Fiche mission — accès</b> /pro/missions/:id <span>onglet Infos</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">8:41</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div class="topbar"><div class="back">←</div><div><h2>Camille D.</h2><div class="note">Mar. 26 août · 8 h – 11 h</div></div></div>
-          <div style="display:flex;gap:0;border:1px solid var(--paper-300);border-radius:var(--rb);overflow:hidden;margin-bottom:18px">
-            <div style="flex:1;text-align:center;padding:9px;background:var(--ink-900);color:var(--paper-050);font-size:13.5px;font-weight:600">Infos</div>
-            <div style="flex:1;text-align:center;padding:9px;font-size:13.5px;color:var(--ink-500)">Checklist</div>
-            <div style="flex:1;text-align:center;padding:9px;font-size:13.5px;color:var(--ink-500)">Rapport</div>
-          </div>
-
-          <div class="card" style="border:2px solid var(--ink-900);background:var(--paper-000)">
-            <div class="note" style="margin-bottom:6px">Code de la boîte à clés · visible aujourd'hui seulement</div>
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <span class="mono" style="font-size:32px;font-weight:700;letter-spacing:.12em">4 7 2 9</span>
-              <span class="pill">Copier</span>
-            </div>
-            <div class="hr"></div>
-            <p style="margin:0;font-size:13.5px;line-height:1.5;color:var(--ink-700)">Boîte à clés grise à droite du portail. Le portail peut être ouvert, refermer derrière soi.</p>
-          </div>
-
-          <div class="eyebrow">Le logement</div>
-          <div class="card">
-            <div class="kv"><span class="k">Type</span><span class="v">Maison 120 m² · plain-pied</span></div>
-            <div class="kv"><span class="k">Pièces</span><span class="v">4 ch. · 2 sdb · 2 wc</span></div>
-            <div class="kv"><span class="k">Animaux</span><span class="v">Nino, chat très craintif</span></div>
-            <div class="kv"><span class="k">Produits</span><span class="v">Fournis par la cliente</span></div>
-            <div class="kv"><span class="k">Stationnement</span><span class="v">Devant le portail</span></div>
-          </div>
-
-          <div class="eyebrow">Consignes de Camille</div>
-          <div class="card" style="background:var(--warn-050);border-color:#F0DDB4">
-            <p style="margin:0 0 10px;font-size:13.5px;line-height:1.5">Ne pas toucher au bureau du fond, c'est mon espace de travail. Le chat se cache sous le canapé, il ne faut pas le chercher.</p>
-            <p style="margin:0;font-size:13.5px;line-height:1.5;padding-top:10px;border-top:1px dashed #E4CFA0"><b>Ajouté pour ce passage :</b> les draps sont sur le lit de la chambre du fond.</p>
-          </div>
-
-          <div class="eyebrow">Historique</div>
-          <div class="card">
-            <div class="row" style="justify-content:space-between">
-              <div><div style="font-size:14.5px;font-weight:500">4ᵉ passage chez Camille</div><div class="note">Dernière fois : 2 h 40 · ★★★★★</div></div>
-              <span class="tag">Cliente fidèle</span>
-            </div>
-          </div>
-
-          <div class="eyebrow">Mes notes privées</div>
-          <div class="card" style="border-style:dashed">
-            <p style="margin:0;font-size:13.5px;color:var(--ink-700);line-height:1.5">L'aspirateur est dans le cellier, pas dans le placard de l'entrée. Prévoir 15 min de plus quand les enfants sont là.</p>
-          </div>
-        </div>
-        <div class="dock"><button class="btn go">Je suis arrivée</button></div>
-      </div>
-    </div>
-  </figure>
-
-  <!-- 4 — CHECKLIST -->
-  <figure class="screen">
-    <figcaption><b>Checklist en cours</b> /pro/missions/:id <span>mission démarrée</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">10:22</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div style="margin:10px -20px 0;padding:12px 20px;background:var(--signal-050);border-bottom:1px solid #DCEDA8;display:flex;justify-content:space-between;align-items:center">
-            <div><div class="mono" style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#5B7300">En cours depuis 9 h 12</div><div class="mono" style="font-size:20px;font-weight:700;margin-top:2px">1 h 10</div></div>
-            <div style="text-align:right"><div class="note">restant estimé</div><div class="mono" style="font-size:15px;font-weight:500">1 h 20</div></div>
-          </div>
-
-          <div class="eyebrow" style="margin-top:18px"><span>Cuisine</span><span class="mono" style="letter-spacing:0">6/6</span></div>
-          <div class="card" style="padding:4px 16px">
-            <div class="chk on"><i>✓</i><span>Plan de travail et crédence</span></div>
-            <div class="chk on"><i>✓</i><span>Évier et robinetterie</span></div>
-            <div class="chk on"><i>✓</i><span>Façades de meubles</span></div>
-            <div class="chk on"><i>✓</i><span>Extérieur électroménager</span></div>
-            <div class="chk on"><i>✓</i><span>Poubelle</span></div>
-            <div class="chk on"><i>✓</i><span>Sol</span></div>
-          </div>
-
-          <div class="eyebrow"><span>Salles de bain</span><span class="mono" style="letter-spacing:0">3/7</span></div>
-          <div class="card" style="padding:4px 16px">
-            <div class="chk on"><i>✓</i><span>Lavabo et miroir</span></div>
-            <div class="chk on"><i>✓</i><span>Douche</span></div>
-            <div class="chk on"><i>✓</i><span>WC</span></div>
-            <div class="chk"><i>✓</i><span>Baignoire</span></div>
-            <div class="chk"><i>✓</i><span>Sol et plinthes</span></div>
-          </div>
-
-          <div class="eyebrow"><span>Ajouté par Camille</span></div>
-          <div class="card" style="padding:4px 16px;background:var(--warn-050);border-color:#F0DDB4">
-            <div class="chk"><i>✓</i><span>Changer les draps (chambre du fond)</span></div>
-            <div class="chk"><i>✓</i><span>Vitres du séjour</span></div>
-          </div>
-        </div>
-        <div class="dock"><button class="btn">Terminer la mission</button></div>
-      </div>
-    </div>
-  </figure>
-
-  <!-- 5 — RAPPORT / CHECKOUT -->
-  <figure class="screen">
-    <figcaption><b>Rapport de fin</b> /pro/missions/:id <span>onglet Rapport</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">11:48</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div class="topbar"><div class="back">←</div><h2>Rapport</h2></div>
-
-          <div class="eyebrow"><span>Photos avant</span><span class="mono" style="letter-spacing:0">2</span></div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-            <div class="photo"><b>CUISINE</b></div><div class="photo"><b>SDB</b></div><div class="photo add">+</div>
-          </div>
-
-          <div class="eyebrow"><span>Photos après</span><span class="mono" style="letter-spacing:0">3</span></div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-            <div class="photo"><b>CUISINE</b></div><div class="photo"><b>SDB</b></div><div class="photo"><b>SÉJOUR</b></div>
-          </div>
-          <p class="note" style="margin-top:8px">Cadre les pièces, pas les personnes ni les documents.</p>
-
-          <div class="eyebrow">Un point à signaler ?</div>
-          <div class="card" style="background:var(--warn-050);border-color:#F0DDB4">
-            <div class="row" style="align-items:flex-start;gap:10px">
-              <span style="font-size:16px">⚠</span>
-              <div style="flex:1">
-                <div style="font-size:14px;font-weight:600">Équipement / état du logement</div>
-                <p style="margin:5px 0 0;font-size:13px;line-height:1.5;color:var(--ink-700)">Joint de douche du haut encrassé en profondeur, un anticalcaire spécifique serait nécessaire.</p>
-              </div>
-            </div>
-          </div>
-          <div class="pills" style="margin-top:10px">
-            <span class="pill">Dégât préexistant</span><span class="pill">Produit épuisé</span><span class="pill">Accès difficile</span>
-          </div>
-
-          <div class="eyebrow">Durée</div>
-          <div class="card">
-            <div class="kv"><span class="k">Arrivée</span><span class="v mono">09 h 12</span></div>
-            <div class="kv"><span class="k">Départ</span><span class="v mono">11 h 52</span></div>
-            <div class="kv"><span class="k">Temps réel</span><span class="v mono">2 h 40</span></div>
-            <div class="kv"><span class="k">Facturé</span><span class="v mono">2 h 30 <span class="note" style="display:inline">(prévu)</span></span></div>
-          </div>
-        </div>
-        <div class="dock"><button class="btn">Envoyer et terminer</button></div>
-      </div>
-    </div>
-  </figure>
-
-  <!-- 6 — HORS LIGNE -->
-  <figure class="screen">
-    <figcaption><b>Mode hors-ligne</b> /pro/missions/:id <span>sous-sol, pas de réseau</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">15:03</span><span class="dots" style="color:var(--warn)">✕ ▪▪ ▮</span></div>
-      <div class="offline">HORS CONNEXION · TES ACTIONS SONT ENREGISTRÉES</div>
-      <div class="app">
-        <div class="scroll">
-          <div class="topbar" style="padding-top:14px"><div class="back">←</div><div><h2>Hélène R.</h2><div class="note">Villenave · 15 h – 17 h 30</div></div></div>
-
-          <div class="card" style="border:2px solid var(--warn)">
-            <span class="status warn" style="margin-bottom:10px">En attente d'envoi</span>
-            <div class="kv"><span class="k">Arrivée enregistrée</span><span class="v mono">15 h 01</span></div>
-            <div class="kv"><span class="k">Checklist</span><span class="v mono">8 / 19 cochées</span></div>
-            <div class="kv"><span class="k">Photos</span><span class="v mono">3 en attente</span></div>
-            <p class="note" style="margin-top:12px">Tout est enregistré sur ton téléphone. L'envoi se fait tout seul dès que le réseau revient.</p>
-          </div>
-
-          <div class="eyebrow">Ce que tu peux faire sans réseau</div>
-          <div class="card" style="padding:4px 16px">
-            <div class="chk on"><i>✓</i><span>Voir les consignes et le code</span></div>
-            <div class="chk on"><i>✓</i><span>Pointer ton arrivée et ton départ</span></div>
-            <div class="chk on"><i>✓</i><span>Cocher la checklist</span></div>
-            <div class="chk on"><i>✓</i><span>Prendre des photos</span></div>
-          </div>
-
-          <div class="eyebrow">Ce qui attendra le réseau</div>
-          <div class="card" style="padding:4px 16px;opacity:.55">
-            <div class="chk"><i>✓</i><span>Envoyer un message à Hélène</span></div>
-            <div class="chk"><i>✓</i><span>Accepter une nouvelle mission</span></div>
-          </div>
-
-          <div class="card" style="margin-top:16px;background:var(--paper-100);border-style:dashed">
-            <div class="row"><span style="font-size:18px">📶</span><p style="margin:0;font-size:13px;line-height:1.5;color:var(--ink-700)">Dernière synchronisation il y a 12 minutes. Ta tournée de demain est déjà téléchargée.</p></div>
-          </div>
-        </div>
-        <div class="dock"><button class="btn go">Terminer la mission</button></div>
-      </div>
-    </div>
-  </figure>
-
-  <!-- 7 — REVENUS -->
-  <figure class="screen">
-    <figcaption><b>Revenus</b> /pro/revenus <span>onglet 3</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">21:15</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div style="padding:10px 0 16px"><h2 style="font-size:24px;font-weight:600;letter-spacing:-.025em;margin:0">Revenus</h2></div>
-
-          <div class="card" style="border:2px solid var(--ink-900)">
-            <div class="note">Août 2026</div>
-            <div class="mono" style="font-size:36px;font-weight:700;letter-spacing:-.03em;line-height:1.1;margin:2px 0 14px">1 840 €</div>
-            <div style="display:flex;gap:20px">
-              <div><div class="note">Déjà versé</div><div class="mono" style="font-size:16px;font-weight:500;color:var(--ok)">1 240 €</div></div>
-              <div><div class="note">À venir vendredi</div><div class="mono" style="font-size:16px;font-weight:500">600 €</div></div>
-            </div>
-            <div class="bar" style="margin-top:20px">
-              <div style="height:52%"><span>S31</span></div><div style="height:71%"><span>S32</span></div>
-              <div style="height:64%"><span>S33</span></div><div class="hi" style="height:88%"><span>S34</span></div>
-            </div>
-            <div style="height:20px"></div>
-          </div>
-
-          <div class="eyebrow"><span>Prochain virement</span><span class="mono" style="letter-spacing:0">ven. 29/08</span></div>
-          <div class="card">
-            <div class="kv"><span class="k">4 missions terminées</span><span class="v mono">268,00 €</span></div>
-            <div class="kv"><span class="k">Commission Léo Clean 22 %</span><span class="v mono" style="color:var(--ink-500)">−58,96 €</span></div>
-            <div class="kv"><span class="k" style="font-weight:600;color:var(--ink-900)">Net à recevoir</span><span class="v mono" style="font-size:16px;font-weight:700">209,04 €</span></div>
-          </div>
-
-          <div class="eyebrow">Plafond micro-entreprise</div>
-          <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px">
-              <span class="mono" style="font-size:17px;font-weight:600">14 320 €</span>
-              <span class="note">sur 77 700 € · 18 %</span>
-            </div>
-            <div style="height:8px;border-radius:999px;background:var(--paper-200);overflow:hidden"><i style="display:block;height:100%;width:18%;background:var(--signal)"></i></div>
-          </div>
-
-          <div class="card" style="margin-top:10px;background:var(--warn-050);border-color:#F0DDB4">
-            <div class="row" style="align-items:flex-start;gap:10px">
-              <span style="font-size:16px">📅</span>
-              <div>
-                <div style="font-size:14px;font-weight:600">Déclaration URSSAF le 31 octobre</div>
-                <p style="margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--ink-700)">Chiffre d'affaires du 3ᵉ trimestre à ce jour : <b class="mono">4 210 €</b>. Estimation à vérifier de ton côté.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
-            <div><div style="font-size:14.5px;font-weight:500">Télécharger mon relevé</div><div class="note">CSV ou PDF · par mois</div></div>
-            <span style="font-size:18px;color:var(--ink-400)">›</span>
-          </div>
-        </div>
-      </div>
-      <nav class="tabbar">
-        <a><span class="ic"></span>Aujourd'hui</a><a><span class="ic"></span>Missions</a><a class="on"><span class="ic"></span>Revenus</a><a><span class="ic"></span>Profil</a>
-      </nav>
-    </div>
-  </figure>
-
-  <!-- 8 — PLANNING -->
-  <figure class="screen">
-    <figcaption><b>Mes disponibilités</b> /pro/planning <span>déclaratif</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">21:22</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div class="topbar"><div class="back">←</div><h2>Mes disponibilités</h2></div>
-          <p style="margin:0 0 20px;font-size:13.5px;line-height:1.5;color:var(--ink-500)">Tu décides quand tu travailles. Modifiable jusqu'à 72 h avant, sans avoir à te justifier.</p>
-
-          <div class="avgrid" style="margin-bottom:6px">
-            <span></span>
-            <span class="lb" style="text-align:center">Lun</span><span class="lb" style="text-align:center">Mar</span><span class="lb" style="text-align:center">Mer</span><span class="lb" style="text-align:center">Jeu</span><span class="lb" style="text-align:center">Ven</span>
-          </div>
-          <div class="avgrid" style="margin-bottom:5px">
-            <span class="lb">8-11</span><span class="cell on"></span><span class="cell on"></span><span class="cell on"></span><span class="cell on"></span><span class="cell on"></span>
-          </div>
-          <div class="avgrid" style="margin-bottom:5px">
-            <span class="lb">11-14</span><span class="cell on"></span><span class="cell on"></span><span class="cell off"></span><span class="cell on"></span><span class="cell on"></span>
-          </div>
-          <div class="avgrid" style="margin-bottom:5px">
-            <span class="lb">14-17</span><span class="cell off"></span><span class="cell on"></span><span class="cell off"></span><span class="cell on"></span><span class="cell off"></span>
-          </div>
-          <div class="avgrid">
-            <span class="lb">17-20</span><span class="cell off"></span><span class="cell off"></span><span class="cell off"></span><span class="cell off"></span><span class="cell off"></span>
-          </div>
-
-          <div class="card" style="margin-top:20px">
-            <div class="kv"><span class="k">Objectif hebdomadaire</span><span class="v mono">30 h</span></div>
-            <div class="kv"><span class="k">Actuellement rempli</span><span class="v mono" style="color:var(--ok)">26 h 30</span></div>
-          </div>
-
-          <div class="eyebrow">Ma zone</div>
-          <div class="card">
-            <div class="row" style="margin-bottom:12px">
-              <div class="iso">
-                <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--paper-200)" stroke-width="4"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--signal-600)" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="20" transform="rotate(-90 22 22)"/></svg>
-              </div>
-              <div><div style="font-size:15px;font-weight:600">20 minutes autour de Cadaujac</div><div class="note">En voiture · 6 communes couvertes</div></div>
-            </div>
-            <div class="pills">
-              <span class="tag">Cadaujac</span><span class="tag">Léognan</span><span class="tag">Villenave</span><span class="tag">Canéjan</span><span class="tag">Gradignan</span><span class="tag">Martillac</span>
-            </div>
-          </div>
-
-          <div class="card" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
-            <div><div style="font-size:14.5px;font-weight:500">Poser des congés</div><div class="note">On prévient tes clientes et on remplace</div></div>
-            <span style="font-size:18px;color:var(--ink-400)">›</span>
-          </div>
-        </div>
-      </div>
-      <nav class="tabbar">
-        <a><span class="ic"></span>Aujourd'hui</a><a><span class="ic"></span>Missions</a><a><span class="ic"></span>Revenus</a><a class="on"><span class="ic"></span>Profil</a>
-      </nav>
-    </div>
-  </figure>
-
-  <!-- 9 — CONFORMITE -->
-  <figure class="screen">
-    <figcaption><b>Mes documents</b> /pro/profil <span>conformité</span></figcaption>
-    <div class="phone">
-      <div class="sb"><span class="mono">21:30</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
-      <div class="app">
-        <div class="scroll">
-          <div class="topbar"><div class="back">←</div><h2>Mes documents</h2></div>
-
-          <div class="card" style="border:2px solid var(--warn);background:var(--warn-050)">
-            <span class="status warn" style="margin-bottom:9px">À renouveler</span>
-            <div style="font-size:16px;font-weight:600;line-height:1.3">Ton attestation URSSAF expire dans 12 jours</div>
-            <p style="margin:6px 0 12px;font-size:13px;line-height:1.5;color:var(--ink-700)">Sans elle, on ne pourra plus te proposer de nouvelles missions à partir du 7 septembre. Elle se télécharge en 2 minutes depuis ton espace auto-entrepreneur.</p>
-            <button class="btn sm">Comment la récupérer</button>
-          </div>
-
-          <div class="eyebrow">Statut</div>
-          <div class="card">
-            <div class="kv"><span class="k">SIRET</span><span class="v mono" style="font-size:12.5px">812 456 789 00023</span></div>
-            <div class="kv"><span class="k">Activité</span><span class="v">Nettoyage courant des bâtiments</span></div>
-            <div class="kv"><span class="k">Déclaration SAP</span><span class="v mono" style="font-size:12.5px">SAP812456789</span></div>
-          </div>
-
-          <div class="eyebrow">Pièces</div>
-          <div class="card" style="padding:4px 16px">
-            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Pièce d'identité</b><div class="note">Valide jusqu'au 12/2029</div></div></div>
-            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Avis SIRENE</b><div class="note">Vérifié le 14/03/2026</div></div></div>
-            <div class="doc"><span class="status warn">12 j</span><div class="n"><b>Attestation de vigilance URSSAF</b><div class="note">Expire le 07/09/2026</div></div></div>
-            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Récépissé SAP</b><div class="note">Déposé le 02/03/2026</div></div></div>
-            <div class="doc"><span class="status ok">✓</span><div class="n"><b>RC Professionnelle</b><div class="note">Valide jusqu'au 31/12/2026</div></div></div>
-            <div class="doc"><span class="status ok">✓</span><div class="n"><b>Coordonnées bancaires</b><div class="note">FR76 •••• 4412</div></div></div>
-          </div>
-
-          <div class="eyebrow">Mes indicateurs</div>
-          <div class="card">
-            <div class="kv"><span class="k">Ponctualité</span><span class="v mono">97 %</span></div>
-            <div class="kv"><span class="k">Note moyenne</span><span class="v mono">★ 4,9 · 87 avis</span></div>
-            <div class="kv"><span class="k">Missions réalisées</span><span class="v mono">214</span></div>
-            <div class="kv"><span class="k">Réponse aux propositions</span><span class="v mono">en 22 min</span></div>
-          </div>
-          <p class="note" style="margin-top:10px">Ces chiffres sont les tiens. Ils servent à te proposer les missions les plus adaptées, jamais à te sanctionner. <b style="color:var(--ink-700)">Comment ça marche →</b></p>
-        </div>
-      </div>
-      <nav class="tabbar">
-        <a><span class="ic"></span>Aujourd'hui</a><a><span class="ic"></span>Missions</a><a><span class="ic"></span>Revenus</a><a class="on"><span class="ic"></span>Profil</a>
-      </nav>
-    </div>
-  </figure>
-
-  </div>
-</div>
-</body>
+  </body>
 </html>

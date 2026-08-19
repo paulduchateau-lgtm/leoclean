@@ -1,64 +1,197 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Léo Clean — Maquettes</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-:root{--paper-050:#FAF8F4;--paper-100:#F2EFE7;--paper-200:#E6E1D6;--paper-300:#D3CDBF;--ink-900:#14150F;--ink-500:#6B6C61;--ink-400:#8E8F84;--signal:#A5D900;
---sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
-*{box-sizing:border-box}
-body{margin:0;background:var(--paper-100);font-family:var(--sans);color:var(--ink-900);padding:72px 24px}
-.w{max-width:960px;margin:0 auto}
-.hd{border-bottom:2px solid var(--ink-900);padding-bottom:22px;margin-bottom:34px}
-.hd .br{font-family:var(--mono);font-size:11px;letter-spacing:.18em;margin-bottom:16px}
-h1{font-size:38px;font-weight:600;letter-spacing:-.03em;margin:0 0 8px;line-height:1.1}
-p.l{margin:0;color:var(--ink-500);font-size:15px;line-height:1.6;max-width:64ch}
-a.card{display:grid;grid-template-columns:44px 1fr auto;gap:18px;align-items:center;background:#fff;border:1px solid var(--paper-300);padding:20px;text-decoration:none;color:inherit;margin-bottom:10px}
-a.card:hover{border-color:var(--ink-900)}
-a.card .n{font-family:var(--mono);font-size:11px;color:var(--ink-400);letter-spacing:.08em}
-a.card b{display:block;font-size:18px;font-weight:600;letter-spacing:-.015em;margin-bottom:4px}
-a.card span{font-size:13.5px;color:var(--ink-500);line-height:1.5}
-a.card .go{font-size:20px;color:var(--ink-400)}
-a.card:hover .go{color:var(--signal)}
-.meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-400);letter-spacing:.06em;margin-top:6px;text-transform:uppercase}
-.foot{margin-top:34px;padding-top:22px;border-top:1px solid var(--paper-300);font-size:13px;color:var(--ink-500);line-height:1.65}
-</style>
-</head>
-<body>
-<div class="w">
-  <div class="hd">
-    <div class="br">LÉO CLEAN — LEOCLEAN.FR</div>
-    <h1>Maquettes<br>des quatre surfaces</h1>
-    <p class="l">Modèle mandataire. Deux registres visuels : <b>consumer</b> pour le client et l'intervenant (tons papier, DM Sans, rayon 12 px, Signal Green réservée aux états actifs), <b>ops</b> pour la console d'exploitation (rayon 0, JetBrains Mono, filets 1 px).</p>
-  </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Léo Clean — Maquettes</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper-050: #faf8f4;
+        --paper-100: #f2efe7;
+        --paper-200: #e6e1d6;
+        --paper-300: #d3cdbf;
+        --ink-900: #14150f;
+        --ink-500: #6b6c61;
+        --ink-400: #8e8f84;
+        --signal: #a5d900;
+        --sans: "DM Sans", system-ui, sans-serif;
+        --mono: "JetBrains Mono", monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--paper-100);
+        font-family: var(--sans);
+        color: var(--ink-900);
+        padding: 72px 24px;
+      }
+      .w {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .hd {
+        border-bottom: 2px solid var(--ink-900);
+        padding-bottom: 22px;
+        margin-bottom: 34px;
+      }
+      .hd .br {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        margin-bottom: 16px;
+      }
+      h1 {
+        font-size: 38px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        margin: 0 0 8px;
+        line-height: 1.1;
+      }
+      p.l {
+        margin: 0;
+        color: var(--ink-500);
+        font-size: 15px;
+        line-height: 1.6;
+        max-width: 64ch;
+      }
+      a.card {
+        display: grid;
+        grid-template-columns: 44px 1fr auto;
+        gap: 18px;
+        align-items: center;
+        background: #fff;
+        border: 1px solid var(--paper-300);
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        margin-bottom: 10px;
+      }
+      a.card:hover {
+        border-color: var(--ink-900);
+      }
+      a.card .n {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-400);
+        letter-spacing: 0.08em;
+      }
+      a.card b {
+        display: block;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        margin-bottom: 4px;
+      }
+      a.card span {
+        font-size: 13.5px;
+        color: var(--ink-500);
+        line-height: 1.5;
+      }
+      a.card .go {
+        font-size: 20px;
+        color: var(--ink-400);
+      }
+      a.card:hover .go {
+        color: var(--signal);
+      }
+      .meta {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--ink-400);
+        letter-spacing: 0.06em;
+        margin-top: 6px;
+        text-transform: uppercase;
+      }
+      .foot {
+        margin-top: 34px;
+        padding-top: 22px;
+        border-top: 1px solid var(--paper-300);
+        font-size: 13px;
+        color: var(--ink-500);
+        line-height: 1.65;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="w">
+      <div class="hd">
+        <div class="br">LÉO CLEAN — LEOCLEAN.FR</div>
+        <h1>Maquettes<br />des quatre surfaces</h1>
+        <p class="l">
+          Modèle mandataire. Deux registres visuels : <b>consumer</b> pour le
+          client et l'intervenant (tons papier, DM Sans, rayon 12 px, Signal
+          Green réservée aux états actifs), <b>ops</b> pour la console
+          d'exploitation (rayon 0, JetBrains Mono, filets 1 px).
+        </p>
+      </div>
 
-  <a class="card" href="client-app.html">
-    <span class="n">01</span>
-    <span><b>Espace client</b><span>12 écrans — funnel de réservation, accueil, suivi jour J, rapport photo, notation, abonnement, messages, incident.</span><span class="meta">390 × 844 · thème consumer</span></span>
-    <span class="go">→</span>
-  </a>
+      <a class="card" href="client-app.html">
+        <span class="n">01</span>
+        <span
+          ><b>Espace client</b
+          ><span
+            >12 écrans — funnel de réservation, accueil, suivi jour J, rapport
+            photo, notation, abonnement, messages, incident.</span
+          ><span class="meta">390 × 844 · thème consumer</span></span
+        >
+        <span class="go">→</span>
+      </a>
 
-  <a class="card" href="pro-app.html">
-    <span class="n">02</span>
-    <span><b>Espace intervenant</b><span>9 écrans — tournée du jour, proposition, fiche d'accès, checklist, rapport de fin, mode hors-ligne, revenus, disponibilités, conformité.</span><span class="meta">390 × 844 · thème consumer</span></span>
-    <span class="go">→</span>
-  </a>
+      <a class="card" href="pro-app.html">
+        <span class="n">02</span>
+        <span
+          ><b>Espace intervenant</b
+          ><span
+            >9 écrans — tournée du jour, proposition, fiche d'accès, checklist,
+            rapport de fin, mode hors-ligne, revenus, disponibilités,
+            conformité.</span
+          ><span class="meta">390 × 844 · thème consumer</span></span
+        >
+        <span class="go">→</span>
+      </a>
 
-  <a class="card" href="funnel-inscription.html">
-    <span class="n">03</span>
-    <span><b>Funnel d'inscription intervenant</b><span>11 écrans — éligibilité par isochrone, aiguillage de statut, création d'auto-entreprise guidée écran par écran, attente accompagnée, déclaration SAP, activation.</span><span class="meta">390 × 844 · branches 4B et 5B incluses</span></span>
-    <span class="go">→</span>
-  </a>
+      <a class="card" href="funnel-inscription.html">
+        <span class="n">03</span>
+        <span
+          ><b>Funnel d'inscription intervenant</b
+          ><span
+            >11 écrans — éligibilité par isochrone, aiguillage de statut,
+            création d'auto-entreprise guidée écran par écran, attente
+            accompagnée, déclaration SAP, activation.</span
+          ><span class="meta"
+            >390 × 844 · branches 4B et 5B incluses</span
+          ></span
+        >
+        <span class="go">→</span>
+      </a>
 
-  <a class="card" href="admin-console.html">
-    <span class="n">04</span>
-    <span><b>Console d'exploitation</b><span>7 vues cliquables — Radar, file d'actions, missions et réaffectation assistée, fiche client 360, parc d'intervenants, revue de dossier, inbox, frictions, console mobile.</span><span class="meta">1440 × 940 · thème ops · navigation active</span></span>
-    <span class="go">→</span>
-  </a>
+      <a class="card" href="admin-console.html">
+        <span class="n">04</span>
+        <span
+          ><b>Console d'exploitation</b
+          ><span
+            >7 vues cliquables — Radar, file d'actions, missions et
+            réaffectation assistée, fiche client 360, parc d'intervenants, revue
+            de dossier, inbox, frictions, console mobile.</span
+          ><span class="meta"
+            >1440 × 940 · thème ops · navigation active</span
+          ></span
+        >
+        <span class="go">→</span>
+      </a>
 
-  <p class="foot">Les contenus sont réalistes mais fictifs. Les écrans sont statiques sauf la console d'exploitation, dont la navigation latérale fonctionne. Spécifications détaillées dans les fichiers <b>00</b> à <b>05</b> du corpus.</p>
-</div>
-</body>
+      <p class="foot">
+        Les contenus sont réalistes mais fictifs. Les écrans sont statiques sauf
+        la console d'exploitation, dont la navigation latérale fonctionne.
+        Spécifications détaillées dans les fichiers <b>00</b> à <b>05</b> du
+        corpus.
+      </p>
+    </div>
+  </body>
 </html>

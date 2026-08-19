@@ -11,15 +11,15 @@ que chaque lot sache ce qu'il attend des autres.
 
 ## 0. Arbitrages rendus — ce qui est désormais fermé
 
-| Sujet | Décision | Conséquence sur le plan |
-| --- | --- | --- |
-| **Créneau vendu** | **Heure ferme.** Le client choisit l'heure de son intervention, comme le tunnel le fait déjà, et le moteur ne restreint pas les heures proposées. | Aucun lot, aucun changement de schéma, aucune migration |
-| **Encaissement** | **Modèle du dépôt** : préautorisation à H-24, prélèvement à H+24. | Jalon E. La carte est enregistrée à la réservation par SetupIntent — sans quoi il n'y a rien à préautoriser à H-24 |
-| **Parrainage** | **5 % du CA du filleul**, dès sa 5ᵉ mission, 12 mois, plafond 150 €/mois. `referral/rules.ts` reste la vérité. | Jalon H. Aucune réécriture du moteur, seulement des écrans et un versement |
-| **Crédit d'impôt** | Rien ne s'affiche tant que `NEXT_PUBLIC_SAP_DECLARED` est faux. Le jour où la déclaration est obtenue, la variable et le numéro suffisent. | Aucun lot. `fiscal.ts` tient déjà la règle. Le seul travail est de ne pas la contourner dans les écrans neufs — un test le vérifiera à chaque jalon |
-| **Contre-proposition** | **L'intervenant peut proposer une autre heure dès l'écran de proposition.** Sous une heure d'écart, elle part au client immédiatement, comme une pré-acceptation. | Lot B1. `SlotProposal` existe déjà : c'est un déclencheur et un seuil qui changent, pas un modèle |
-| **Majorations** | **Samedi +10 %, dimanche et férié +25 %, réservation < 48 h +10 %.** | Lot B2 |
-| **Console** | **Pas de thème ops.** Une variante dense de tropical punch, même palette, mêmes tokens. | Lot A3 |
+| Sujet                  | Décision                                                                                                                                                          | Conséquence sur le plan                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Créneau vendu**      | **Heure ferme.** Le client choisit l'heure de son intervention, comme le tunnel le fait déjà, et le moteur ne restreint pas les heures proposées.                 | Aucun lot, aucun changement de schéma, aucune migration                                                                                             |
+| **Encaissement**       | **Modèle du dépôt** : préautorisation à H-24, prélèvement à H+24.                                                                                                 | Jalon E. La carte est enregistrée à la réservation par SetupIntent — sans quoi il n'y a rien à préautoriser à H-24                                  |
+| **Parrainage**         | **5 % du CA du filleul**, dès sa 5ᵉ mission, 12 mois, plafond 150 €/mois. `referral/rules.ts` reste la vérité.                                                    | Jalon H. Aucune réécriture du moteur, seulement des écrans et un versement                                                                          |
+| **Crédit d'impôt**     | Rien ne s'affiche tant que `NEXT_PUBLIC_SAP_DECLARED` est faux. Le jour où la déclaration est obtenue, la variable et le numéro suffisent.                        | Aucun lot. `fiscal.ts` tient déjà la règle. Le seul travail est de ne pas la contourner dans les écrans neufs — un test le vérifiera à chaque jalon |
+| **Contre-proposition** | **L'intervenant peut proposer une autre heure dès l'écran de proposition.** Sous une heure d'écart, elle part au client immédiatement, comme une pré-acceptation. | Lot B1. `SlotProposal` existe déjà : c'est un déclencheur et un seuil qui changent, pas un modèle                                                   |
+| **Majorations**        | **Samedi +10 %, dimanche et férié +25 %, réservation < 48 h +10 %.**                                                                                              | Lot B2                                                                                                                                              |
+| **Console**            | **Pas de thème ops.** Une variante dense de tropical punch, même palette, mêmes tokens.                                                                           | Lot A3                                                                                                                                              |
 
 ### Deux précisions que ces arbitrages appellent
 
@@ -96,14 +96,14 @@ pièces justificatives et les PDF de factures.
   mémoire pour les tests.
 - Deux préfixes cloisonnés, `kyc/` et `missions/`, jamais servis en direct :
   URL signée de 60 secondes engendrée à la demande, `Content-Disposition:
-  attachment`, aucun accès en masse.
+attachment`, aucun accès en masse.
 - Contrôle d'entrée : type MIME **et** nombres magiques, taille plafonnée,
   ré-encodage systématique des images, EXIF de géolocalisation retiré, date
   conservée.
 - Modèle `FileAccessLog` — qui, quand, quel fichier. Exigence RGPD et
   protection en cas de litige.
 
-*Sortie* : un fichier déposé n'est lisible que par une URL signée vivant moins
+_Sortie_ : un fichier déposé n'est lisible que par une URL signée vivant moins
 de 60 secondes, vérifié par test.
 
 ### A2 · Taxonomie d'événements
@@ -122,7 +122,7 @@ Le seul lot dont le coût monte chaque semaine où il n'est pas fait.
 - Instrumentation immédiate des deux funnels existants : tunnel de réservation
   et formulaire de rappel.
 
-*Sortie* : les six écrans du tunnel émettent `vus` / `complétés` / `abandonnés`
+_Sortie_ : les six écrans du tunnel émettent `vus` / `complétés` / `abandonnés`
 avec leur durée, et une requête SQL suffit à sortir le taux d'abandon par
 écran.
 
@@ -141,7 +141,7 @@ Pas un second design system : une densité.
   ceux du site. Une console qui ne ressemble pas à la marque est une console
   qu'on oublie de tenir à jour.
 
-*Sortie* : la même page rendue avec et sans l'attribut affiche le même contenu,
+_Sortie_ : la même page rendue avec et sans l'attribut affiche le même contenu,
 et `contrast.test.ts` passe dans les deux densités.
 
 ### A4 · Absences de l'intervenant
@@ -156,7 +156,7 @@ des missions.
 - Assistant lorsqu'une absence recouvre des missions acceptées : liste des
   missions concernées, et remise en diffusion à la demande de l'intéressé.
 
-*Sortie* : poser une absence retire les créneaux correspondants de la recherche
+_Sortie_ : poser une absence retire les créneaux correspondants de la recherche
 client en moins de 60 secondes. Le lot le moins cher du plan et le plus urgent.
 
 **Charge estimée : 2 à 3 semaines-personne.**
@@ -209,7 +209,7 @@ temps sont écrits et testés. Une seule ligne les bride : `canProposeSlot` exig
 - Le client peut voir jusqu'à trois heures alternatives et **garder son heure
   d'origine** : refuser doit être un bouton de même poids qu'accepter.
 
-*Sortie* : un intervenant qui pouvait faire la mission à 10 h mais pas à 9 h ne
+_Sortie_ : un intervenant qui pouvait faire la mission à 10 h mais pas à 9 h ne
 la refuse plus. Le taux de contre-proposition et le taux d'acceptation client
 sont mesurés — s'ils dérivent, on le verra ; aucune pénalité n'est prévue, et
 c'est volontaire.
@@ -228,7 +228,7 @@ c'est volontaire.
   tarifs et tunnel les affichent **avant** l'engagement.
 - `npm run db:tarifs` les propage comme il propage déjà la grille.
 
-*Sortie* : un dimanche coûte 25 % de plus qu'un mardi, l'intervenant touche la
+_Sortie_ : un dimanche coûte 25 % de plus qu'un mardi, l'intervenant touche la
 totalité de l'écart, et le test qui vérifie la répartition sur des milliers de
 combinaisons passe toujours.
 
@@ -242,7 +242,7 @@ est bien — mais le produit n'a donc aucun signal d'expansion.
 - Formulaire posé sur la page des zones desservies et à l'entrée du funnel
   intervenant, avec la même protection anti-robot que `LeadForm`.
 
-*Sortie* : la demande hors zone est comptée par commune. Alimente le module
+_Sortie_ : la demande hors zone est comptée par commune. Alimente le module
 Zones du jalon I.
 
 **Charge estimée : 1 semaine-personne.**
@@ -309,7 +309,7 @@ Le chaînon manquant. Aujourd'hui la vie d'une réservation s'arrête à
 - Repli sans GPS : code à quatre chiffres fourni par le client dans son espace.
 - Rétention 13 mois, purgée par le jalon J.
 
-*Sortie* : depuis l'écran d'accueil intervenant, le check-in de la mission
+_Sortie_ : depuis l'écran d'accueil intervenant, le check-in de la mission
 courante est atteignable en **un tap** — critère `02 § 11.1`.
 
 ### D2 · Checklist, photos, anomalies
@@ -373,7 +373,7 @@ chiffrés au repos · check-in et check-out horodatés localement et synchronis�
 automatique · checklist locale d'abord, fusion au dernier écrit · bandeau
 global non bloquant.
 
-*Sortie* : un cycle complet check-in → checklist → 4 photos → check-out se
+_Sortie_ : un cycle complet check-in → checklist → 4 photos → check-out se
 déroule **entièrement hors ligne** et se synchronise sans perte — critère
 `02 § 11.3`.
 
@@ -443,6 +443,7 @@ fiscal.
 **Charge estimée : 4 à 5 semaines-personne.**
 
 > ### Ligne de mise en production
+>
 > À la fin de E, le service prend des réservations, les fait exécuter, les
 > clôture et les encaisse. Ce qui suit augmente la capacité, pas la validité.
 
@@ -620,20 +621,20 @@ Hiscox déjà négocié.
 
 ## 2. Récapitulatif de charge
 
-| Jalon | Contenu | Charge |
-| --- | --- | --- |
-| A | Fondations | 2 – 3 |
-| B | Le prix et la demande | 1 |
-| C | Le logement | 2 |
-| D | La mission se termine | 4 – 6 |
-| E | L'argent | 4 – 5 |
-| | **Ligne de mise en production** | **13 – 17** |
-| F | Le recrutement | 6 – 8 |
-| G | La récurrence | 2 – 3 |
-| H | Les espaces complets | 3 – 4 |
-| I | Le pilotage | 5 – 7 |
-| J | Litiges et conformité | 2 – 3 |
-| | **Total** | **31 – 42 semaines-personne** |
+| Jalon | Contenu                         | Charge                        |
+| ----- | ------------------------------- | ----------------------------- |
+| A     | Fondations                      | 2 – 3                         |
+| B     | Le prix et la demande           | 1                             |
+| C     | Le logement                     | 2                             |
+| D     | La mission se termine           | 4 – 6                         |
+| E     | L'argent                        | 4 – 5                         |
+|       | **Ligne de mise en production** | **13 – 17**                   |
+| F     | Le recrutement                  | 6 – 8                         |
+| G     | La récurrence                   | 2 – 3                         |
+| H     | Les espaces complets            | 3 – 4                         |
+| I     | Le pilotage                     | 5 – 7                         |
+| J     | Litiges et conformité           | 2 – 3                         |
+|       | **Total**                       | **31 – 42 semaines-personne** |
 
 Les fourchettes supposent la stack en place et une personne qui connaît le
 dépôt. Elles n'incluent ni la recette, ni les allers-retours de design, ni les
