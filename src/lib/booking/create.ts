@@ -14,6 +14,7 @@ import { pointsOf } from "@/lib/scheduling/repository";
 import { composerLots, echeanceDuLot } from "@/lib/assignments/diffusion";
 
 import { annoncerLaDiffusion } from "@/lib/notifications/evenements";
+import { parisIsoWeekday, utcToParisWallClock } from "@/lib/time";
 
 import { NoCleanerAvailableError } from "./errors";
 
@@ -218,13 +219,47 @@ export async function createBooking(
     respondBy: Date,
   ): Promise<CreatedBooking> {
     return db.$transaction(async (tx) => {
+      /*
+       * L'abonnement naît avec la première réservation d'une série.
+       *
+       * Le tunnel vend un rythme depuis toujours — « toutes les deux semaines,
+       * le mardi matin » — et rien ne le matérialisait : chaque passage était
+       * une réservation isolée, et « le même intervenant chaque semaine »
+       * tenait à ce que le client reprenne rendez-vous de lui-même.
+       *
+       * L'ancrage est la première réservation, et c'est lui qui définit la
+       * parité d'une série bimensuelle : le recalculer plus tard depuis
+       * « maintenant » ferait changer de semaine sans que personne l'ait
+       * demandé.
+       */
+      let subscriptionId = input.subscriptionId ?? null;
+      if (!subscriptionId && input.frequency !== "ONE_OFF") {
+        const mur = utcToParisWallClock(input.scheduledStart);
+        const abonnement = await tx.subscription.create({
+          data: {
+            organizationId: organization.id,
+            clientProfileId: input.clientProfileId,
+            addressId: address.id,
+            serviceId: quote.serviceId,
+            frequency: input.frequency,
+            weekday: parisIsoWeekday(input.scheduledStart),
+            startMinute: mur.hour * 60 + mur.minute,
+            durationMinutes: quote.durationMinutes,
+            anchorDate: input.scheduledStart,
+            status: "ACTIVE",
+          },
+          select: { id: true },
+        });
+        subscriptionId = abonnement.id;
+      }
+
       const booking = await tx.booking.create({
         data: {
           organizationId: organization.id,
           clientProfileId: input.clientProfileId,
           addressId: address.id,
           serviceId: quote.serviceId,
-          subscriptionId: input.subscriptionId ?? null,
+          subscriptionId,
           /*
            * La demande naît en recherche, et non attribuée : personne n'a
            * encore accepté. Elle passera en CONFIRMED à la première

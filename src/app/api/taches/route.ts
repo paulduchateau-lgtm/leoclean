@@ -1,3 +1,4 @@
+import { genererLesRecurrences } from "@/lib/abonnement/generateur";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
 import { serverEnv } from "@/lib/env";
 
@@ -38,9 +39,22 @@ export async function GET(request: Request): Promise<Response> {
 
   const rapport = await traiterLesEcheances();
 
+  /*
+   * La génération des récurrences vient après les échéances, et séparément :
+   * une erreur dans l'une ne doit pas empêcher l'autre. Elle est idempotente,
+   * donc la repasser toutes les heures ne produit rien de plus.
+   */
+  let recurrences;
+  try {
+    recurrences = await genererLesRecurrences();
+  } catch (erreur) {
+    console.error("Génération des récurrences interrompue", erreur);
+    recurrences = { erreur: true };
+  }
+
   // Le compte rendu part dans les journaux de l'hébergeur : c'est la seule
   // trace de ce qui s'est passé pendant que personne ne regardait.
-  console.info("Ordonnanceur", rapport);
+  console.info("Ordonnanceur", { ...rapport, recurrences });
 
-  return Response.json(rapport);
+  return Response.json({ ...rapport, recurrences });
 }
