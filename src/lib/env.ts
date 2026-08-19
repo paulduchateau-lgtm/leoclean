@@ -78,6 +78,16 @@ const serverSchema = z.object({
     .enum(["haversine", "openrouteservice", "osrm"])
     .default("haversine"),
   OPENROUTESERVICE_API_KEY: z.string().min(1).optional(),
+
+  /**
+   * Clé de l'API Sirene de l'INSEE.
+   *
+   * Sans elle, un SIRET est enregistré **non vérifié** et le dossier passe en
+   * revue humaine — le funnel continue, et on ne prétend pas avoir vérifié.
+   * C'est la même direction que partout : échouer visiblement plutôt que
+   * dégrader en silence.
+   */
+  INSEE_API_KEY: z.string().min(1).optional(),
   /** Instance OSRM auto-hébergée, ex. https://osrm.leoclean.fr */
   OSRM_BASE_URL: z.url().optional(),
 

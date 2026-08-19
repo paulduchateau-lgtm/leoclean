@@ -1907,3 +1907,146 @@ model MissionChecklistItem {
 
   @@index([bookingId, position])
 }
+
+/// Candidature d'intervenant.
+///
+/// **Le principe qui gouverne tout le funnel : un candidat sans SIRET n'est pas
+/// un candidat disqualifié, c'est un candidat à quatre semaines.** C'est là que
+/// se trouve le vivier réel au sud de Bordeaux — quelqu'un qui sait faire le
+/// travail mais que l'administratif arrête.
+///
+/// Conséquence de conception : l'attente est un **état du parcours**, pas une
+/// sortie. Pendant les deux à six semaines que prennent les démarches, le
+/// dossier avance sur tout ce qui n'en dépend pas — profil, photo, pièces
+/// d'identité, entretien — pour que l'activation ait lieu le jour même de la
+/// réception du SIRET.
+///
+/// Hors du périmètre multi-tenant : une candidature précède l'appartenance, et
+/// c'est justement ce qu'elle sert à obtenir.
+model ProApplication {
+  id     String  @id @default(cuid())
+  userId String? @unique
+
+  /// Voir `candidature/parcours.ts` : quatorze valeurs, aucune ne porte de
+  /// jugement sur la personne.
+  status String @default("COMMENCE")
+
+  /// `SIRET_EXISTANT` · `CREATION_AE`
+  branchLegal String?
+  /// `SAP_EXISTANT` · `SAP_A_DECLARER`
+  branchSap   String?
+
+  firstName String?
+  lastName  String?
+  phone     String?
+  email     String?
+
+  declaredCity  String?
+  declaredInsee String?
+  travelMode    String?
+  hoursPerWeek  String?
+  experience    String?
+  presentation  String?
+  photoPath     String?
+  skills        String[] @default([])
+  availability  Json?
+
+  siret            String?
+  siretVerifiedAt  DateTime?
+  legalName        String?
+  apeCode          String?
+  siretSubmittedAt DateTime?
+  siretReceivedAt  DateTime?
+
+  sapNumber      String?
+  sapVerifiedAt  DateTime?
+  sapSubmittedAt DateTime?
+
+  interviewAt     DateTime?
+  interviewScores Json?
+  interviewNotes  String?
+
+  /// Signature horodatée des trois documents : CGU, charte, mandat de
+  /// facturation. Conservation cinq ans.
+  chartersSignedAt DateTime?
+  chartersIp       String?
+  chartersVersion  String?
+
+  /// Signaux d'attention, **volontairement hors de tout score** : un doublon
+  /// d'IBAN ne se compense pas par de bons points ailleurs.
+  flags String[] @default([])
+
+  decidedAt      DateTime?
+  decidedById    String?
+  decisionReason String?
+
+  source String?
+
+  /// Dernière activité du candidat, qui datte les relances.
+  lastActivityAt DateTime @default(now())
+  /// Relances déjà envoyées depuis le statut courant.
+  nudgesSent     Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events    ProApplicationEvent[]
+  documents ProApplicationDocument[]
+
+  @@index([status, lastActivityAt])
+  @@index([phone])
+  @@index([siret])
+}
+
+/// Journal d'une candidature.
+///
+/// Chaque changement y figure : sans lui, on ne sait pas pourquoi un dossier
+/// est là où il est, ni depuis quand — et c'est précisément ce qu'on veut
+/// savoir quand un candidat rappelle trois semaines plus tard.
+model ProApplicationEvent {
+  id            String @id @default(cuid())
+  applicationId String
+
+  event   String
+  payload Json?
+
+  at DateTime @default(now())
+
+  application ProApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, at])
+}
+
+/// Pièce justificative d'une candidature.
+///
+/// Distincte de `CleanerDocument`, qui suit un intervenant déjà actif : une
+/// candidature n'a pas encore de profil, et confondre les deux ferait exister
+/// des documents rattachés à personne.
+model ProApplicationDocument {
+  id            String @id @default(cuid())
+  applicationId String
+
+  /// Voir `PIECES` dans `candidature/parcours.ts`.
+  kind   String
+  status String @default("ATTENDUE")
+
+  /// Chemin dans le coffre `kyc/`. Jamais une URL.
+  storagePath String?
+
+  issuedOn  DateTime?
+  expiresOn DateTime?
+
+  verifiedAt   DateTime?
+  verifiedById String?
+  /// Motif rédigé en langage courant, jamais un code : un motif vague fait
+  /// redéposer la même pièce.
+  rejectReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application ProApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, kind])
+  @@index([status])
+}

@@ -39,6 +39,9 @@ const ECARTES = [
   // partent avec elle : ils n'ont pas d'autre consommateur, et le formulaire
   // de candidature importerait une action qui n'est plus là.
   "src/app/travailler-avec-nous",
+  // Le funnel d'inscription porte ses propres server actions et écrit un
+  // dossier en base : il n'a rien à faire sur une vitrine de démonstration.
+  "src/app/rejoindre",
   "src/components/intervenants",
   // Les pages société lisent la base pour lister les slugs publiables, et
   // `dynamicParams` est incompatible avec `output: export` — une page rendue
