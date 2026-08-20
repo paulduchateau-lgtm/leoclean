@@ -60,6 +60,34 @@ function interventionDe(booking: Reservation): Intervention {
   };
 }
 
+/**
+ * Une annonce ne rejette jamais.
+ *
+ * Le dépôt promet qu'« une notification qui échoue ne défait pas ce qu'elle
+ * annonce », et les appelants écrivent `void annoncerLaDiffusion(...)`. Mais
+ * **`void` n'attrape rien** : il signale au typage qu'on abandonne la promesse,
+ * pas à l'exécution qu'on en gère l'échec. Une annonce qui lève produisait donc
+ * un rejet non géré — que Node traite par défaut en terminant le processus,
+ * c'est-à-dire en faisant échouer une requête sans rapport, ou en tuant
+ * l'instance sans serveur qui la servait.
+ *
+ * Le filet est posé ici, une fois, plutôt qu'à chaque appel : un nouvel
+ * appelant ne peut pas l'oublier. Il journalise, parce qu'une notification
+ * perdue en silence est une notification qu'on ne saura jamais avoir perdue.
+ */
+function sansRejet<TArgs extends unknown[]>(
+  nom: string,
+  annonce: (...args: TArgs) => Promise<void>,
+): (...args: TArgs) => Promise<void> {
+  return async (...args: TArgs) => {
+    try {
+      await annonce(...args);
+    } catch (erreur) {
+      console.error(`Notification « ${nom} » non envoyée`, erreur);
+    }
+  };
+}
+
 async function lire(db: TenantClient, bookingId: string) {
   return db.booking.findUnique({
     where: { id: bookingId },
@@ -68,7 +96,7 @@ async function lire(db: TenantClient, bookingId: string) {
 }
 
 /** Le client vient de déposer sa demande ; le lot vient d'être sollicité. */
-export async function annoncerLaDiffusion(
+async function annoncerLaDiffusionBrut(
   db: TenantClient,
   bookingId: string,
   cleanerProfileIds: readonly string[],
@@ -111,7 +139,7 @@ export async function annoncerLaDiffusion(
  * évènement. Ne prévenir que le client laisserait quatre personnes croire
  * qu'une mission les attend encore.
  */
-export async function annoncerLAcceptation(
+async function annoncerLAcceptationBrut(
   db: TenantClient,
   bookingId: string,
   gagnantId: string,
@@ -154,7 +182,7 @@ export async function annoncerLAcceptation(
 }
 
 /** Le premier lot n'a rien donné : on élargit, et on le dit. */
-export async function annoncerLElargissement(
+async function annoncerLElargissementBrut(
   db: TenantClient,
   bookingId: string,
   nouveauxIds: readonly string[],
@@ -192,7 +220,7 @@ export async function annoncerLElargissement(
 }
 
 /** Des horaires alternatifs attendent la décision du client. */
-export async function annoncerLesAlternatives(
+async function annoncerLesAlternativesBrut(
   db: TenantClient,
   bookingId: string,
   nombre: number,
@@ -209,7 +237,7 @@ export async function annoncerLesAlternatives(
 }
 
 /** Une semaine sans intervenant : on cesse de chercher, et on le dit. */
-export async function annoncerLArretDeLaRecherche(
+async function annoncerLArretDeLaRechercheBrut(
   db: TenantClient,
   bookingId: string,
   alternatives: number,
@@ -227,7 +255,7 @@ export async function annoncerLArretDeLaRecherche(
 }
 
 /** La veille, aux deux : c'est demain. */
-export async function rappelerLaVeille(
+async function rappelerLaVeilleBrut(
   db: TenantClient,
   bookingId: string,
 ): Promise<void> {
@@ -261,3 +289,33 @@ export async function rappelerLaVeille(
     intervention,
   });
 }
+
+/*
+ * Les annonces exposées sont les mêmes, sous filet. Aucune ne rejette, quelle
+ * que soit la raison : donnée disparue entre l'écriture et l'envoi, service de
+ * messagerie en panne, gabarit fautif.
+ */
+export const annoncerLaDiffusion = sansRejet(
+  "annoncerLaDiffusion",
+  annoncerLaDiffusionBrut,
+);
+export const annoncerLAcceptation = sansRejet(
+  "annoncerLAcceptation",
+  annoncerLAcceptationBrut,
+);
+export const annoncerLElargissement = sansRejet(
+  "annoncerLElargissement",
+  annoncerLElargissementBrut,
+);
+export const annoncerLesAlternatives = sansRejet(
+  "annoncerLesAlternatives",
+  annoncerLesAlternativesBrut,
+);
+export const annoncerLArretDeLaRecherche = sansRejet(
+  "annoncerLArretDeLaRecherche",
+  annoncerLArretDeLaRechercheBrut,
+);
+export const rappelerLaVeille = sansRejet(
+  "rappelerLaVeille",
+  rappelerLaVeilleBrut,
+);

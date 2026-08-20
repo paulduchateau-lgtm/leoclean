@@ -89,3 +89,50 @@ BEGIN
   END LOOP;
 END
 $$;
+
+-- --- 4. Garde-fou : l'application doit rester propriétaire ------------------
+-- La RLS sans politique refuse **tout le monde sauf le propriétaire de la
+-- table**. C'est exactement ce qu'on veut : l'application se connecte avec le
+-- rôle propriétaire, et son cloisonnement est déjà assuré par l'extension
+-- Prisma.
+--
+-- Mais cette hypothèse est invérifiable depuis le dépôt : elle dépend du rôle
+-- que l'hébergeur donne à la chaîne de connexion. S'il n'est pas propriétaire,
+-- la migration passerait sans bruit et **le site entier deviendrait aveugle**
+-- au premier déploiement, sans qu'aucune erreur ne désigne la cause.
+--
+-- On vérifie donc le privilège, et **non le nombre de lignes lues** : quand la
+-- RLS bloque, elle bloque toutes les tables, si bien que deux comptages nuls se
+-- confirmeraient l'un l'autre et ne prouveraient rien. Trois façons de passer
+-- outre la RLS, et on les accepte toutes les trois : être propriétaire (ou
+-- membre du rôle propriétaire), être superutilisateur, porter `BYPASSRLS`.
+--
+-- Un échec ici fait échouer la migration, donc le déploiement, et laisse la
+-- version précédente en ligne. Un arrêt nommé vaut mieux qu'un site muet.
+DO $$
+DECLARE
+  contourne BOOLEAN;
+  orpheline TEXT;
+BEGIN
+  SELECT rolsuper OR rolbypassrls INTO contourne
+  FROM pg_roles WHERE rolname = current_user;
+
+  IF contourne THEN RETURN; END IF;
+
+  SELECT c.relname INTO orpheline
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relkind = 'r'
+    AND c.relrowsecurity
+    AND NOT pg_has_role(current_user, c.relowner, 'USAGE')
+  LIMIT 1;
+
+  IF orpheline IS NOT NULL THEN
+    RAISE EXCEPTION
+      'RLS activée sur "%" mais le rôle % n''en est pas propriétaire : '
+      'l''application ne lirait plus rien. Voir docs/SECURITE-ACCES.md.',
+      orpheline, current_user;
+  END IF;
+END
+$$;
