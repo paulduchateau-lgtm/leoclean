@@ -265,8 +265,15 @@ export default function TravaillerAvecNousPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              {/*
+               * Vers le tunnel, pas vers l'ancre du formulaire de rappel. Le
+               * tunnel ouvre un dossier, vérifie le SIRET auprès de l'INSEE et
+               * se reprend depuis n'importe quel appareil ; le formulaire ne
+               * fait que demander qu'on rappelle. Les laisser cohabiter
+               * envoyait la moitié des candidats sur le chemin le plus long.
+               */}
               <Link
-                href="#candidature"
+                href="/rejoindre"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
               >
                 Déposer ma candidature
@@ -479,19 +486,48 @@ export default function TravaillerAvecNousPage() {
             Déposer votre candidature
           </h2>
           <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
-            Six questions, et nous vous rappelons. Le reste se traite au
-            téléphone.
+            Quelques questions pour savoir si nous couvrons votre secteur, puis
+            votre dossier. Il se reprend depuis n&apos;importe quel appareil :
+            personne ne remplit tout d&apos;une traite entre deux missions.
           </p>
 
-          <div className="mt-8">
-            <CandidatureForm />
-          </div>
+          <Link
+            href="/rejoindre"
+            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+          >
+            Commencer ma candidature
+          </Link>
 
-          <div className="mt-10 border-t border-border/60 pt-6">
-            <p className="mb-4 text-sm text-muted-foreground">
-              Vous préférez en parler de vive voix ?
+          <p className="mt-4 max-w-prose text-sm text-pretty text-muted-foreground">
+            Pas encore de statut d&apos;auto-entrepreneur ? Ce n&apos;est pas un
+            obstacle : le parcours vous accompagne, et nous gardons vos missions
+            pendant les semaines d&apos;attente.
+          </p>
+
+          {/*
+           * Le formulaire de rappel reste, en second. Une partie de la cible
+           * candidate plus volontiers par message que par formulaire, et
+           * quelqu'un qui bloque sur le tunnel doit pouvoir aboutir autrement
+           * — c'est le point de sauvetage le plus rentable du recrutement.
+           */}
+          <div className="mt-12 border-t border-border/60 pt-8">
+            <h3 className="text-lg font-extrabold">
+              Vous préférez qu&apos;on vous rappelle ?
+            </h3>
+            <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
+              Six questions, et nous vous appelons. Le reste se traite de vive
+              voix.
             </p>
-            <ContactChannels className="[&>div]:sm:justify-start" />
+            <div className="mt-6">
+              <CandidatureForm />
+            </div>
+
+            <div className="mt-10 border-t border-border/60 pt-6">
+              <p className="mb-4 text-sm text-muted-foreground">
+                Ou tout de suite, au téléphone :
+              </p>
+              <ContactChannels className="[&>div]:sm:justify-start" />
+            </div>
           </div>
 
           <p className="mt-8 text-sm text-muted-foreground">

@@ -23,6 +23,7 @@
     "db:init": "tsx prisma/init.ts",
     "db:intervenant": "tsx prisma/intervenant.ts",
     "db:utilisateurs-test": "tsx prisma/utilisateurs-de-test.ts",
+    "db:roles": "tsx prisma/roles.ts",
     "db:tarifs": "tsx prisma/tarifs.ts",
     "db:studio": "prisma studio",
     "build:demo": "node scripts/build-demo-statique.mjs",

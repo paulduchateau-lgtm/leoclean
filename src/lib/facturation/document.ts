@@ -246,6 +246,31 @@ export function partEligible(
   return numeroSap ? montantCents : 0;
 }
 
+/**
+ * Décompose un montant toutes taxes comprises.
+ *
+ * **Le client est annoncé un prix tout compris** — 28 €/h — et la répartition
+ * entre les deux factures partage ce prix-là. Le montant stocké est donc du
+ * TTC, et la TVA s'en **extrait** ; l'ajouter par-dessus ferait somme des deux
+ * factures supérieure à ce que le client a réglé, ce qui est le même défaut que
+ * d'annoncer un prix et d'en prélever un autre.
+ *
+ * On calcule le HT et on **déduit** la TVA, jamais l'inverse : c'est la règle
+ * de toutes les répartitions du dépôt, et elle garantit que `ht + tva === ttc`
+ * au centime, quel que soit l'arrondi.
+ */
+export function decomposerTtc(
+  ttcCents: number,
+  regime: RegimeTva,
+  tauxBp: number | null,
+): { htCents: number; tvaCents: number } {
+  if (regime !== "ASSUJETTI" || !tauxBp) {
+    return { htCents: ttcCents, tvaCents: 0 };
+  }
+  const htCents = Math.round((ttcCents * 10_000) / (10_000 + tauxBp));
+  return { htCents, tvaCents: ttcCents - htCents };
+}
+
 /** Quantité lisible : 350 centièmes d'heure s'écrivent « 3,5 h ». */
 export function quantiteLisible(ligne: LigneFacture): string {
   const valeur = (ligne.quantiteCentiemes / 100).toLocaleString("fr-FR", {

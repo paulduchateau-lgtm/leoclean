@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type Emetteur,
   type Facture,
+  decomposerTtc,
   mentionsObligatoires,
   partEligible,
   quantiteLisible,
@@ -194,5 +195,68 @@ describe("quantiteLisible", () => {
         totalCents: 8050,
       }),
     ).toBe("3,5 h");
+  });
+});
+
+describe("decomposerTtc", () => {
+  it("laisse le montant intact en franchise en base", () => {
+    expect(decomposerTtc(6900, "FRANCHISE_EN_BASE", null)).toEqual({
+      htCents: 6900,
+      tvaCents: 0,
+    });
+  });
+
+  /*
+   * La règle qui compte : le client est annoncé un prix tout compris, et les
+   * deux factures se partagent ce prix-là. La TVA s'en **extrait**. L'ajouter
+   * ferait somme des deux factures supérieure à ce que le client a réglé — le
+   * même défaut que d'annoncer un prix et d'en prélever un autre.
+   */
+  it("extrait la TVA du montant, sans jamais l'y ajouter", () => {
+    const { htCents, tvaCents } = decomposerTtc(12_000, "ASSUJETTI", 2000);
+    expect(htCents).toBe(10_000);
+    expect(tvaCents).toBe(2000);
+    expect(htCents + tvaCents).toBe(12_000);
+  });
+
+  /* `ht + tva === ttc` au centime, quel que soit l'arrondi. */
+  it("retombe toujours exactement sur le montant d'origine", () => {
+    for (let ttc = 1; ttc <= 5000; ttc += 1) {
+      const { htCents, tvaCents } = decomposerTtc(ttc, "ASSUJETTI", 2000);
+      expect(htCents + tvaCents).toBe(ttc);
+    }
+  });
+
+  it("ignore un taux absent, faute de quoi il diviserait par le vide", () => {
+    expect(decomposerTtc(6900, "ASSUJETTI", null)).toEqual({
+      htCents: 6900,
+      tvaCents: 0,
+    });
+  });
+
+  /*
+   * Le cas qui a motivé le test : à 20 %, une part de coordination de 84,36 €
+   * est du TTC. La traiter comme du HT la porterait à 101,23 € et la somme des
+   * deux factures dépasserait de 16,87 € ce que le client a payé.
+   */
+  it("garde la somme des deux factures égale au prix client", () => {
+    const prixClient = 22_200;
+    const intervenant = 13_764;
+    const plateforme = prixClient - intervenant;
+
+    const partIntervenant = decomposerTtc(
+      intervenant,
+      "FRANCHISE_EN_BASE",
+      null,
+    );
+    const partPlateforme = decomposerTtc(plateforme, "ASSUJETTI", 2000);
+
+    const totalFacture =
+      partIntervenant.htCents +
+      partIntervenant.tvaCents +
+      partPlateforme.htCents +
+      partPlateforme.tvaCents;
+
+    expect(totalFacture).toBe(prixClient);
   });
 });

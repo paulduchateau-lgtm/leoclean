@@ -56,8 +56,10 @@ export function Portes() {
               </li>
             ))}
           </ul>
+          {/* Vers le tunnel, qui ouvre un dossier — pas vers le formulaire de
+              rappel, qui ne fait que demander qu'on appelle. */}
           <Link
-            href="#candidature"
+            href="/rejoindre"
             className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
           >
             Déposer ma candidature

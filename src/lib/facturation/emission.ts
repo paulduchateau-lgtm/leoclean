@@ -10,6 +10,7 @@ import {
   type LigneFacture,
   type RegimeTva,
   MESSAGES_MANQUE,
+  decomposerTtc,
   partEligible,
   verifierLaFacture,
 } from "./document";
@@ -98,23 +99,42 @@ function composerFacture(
   numero: string,
   emetteur: Emetteur,
   contexte: Contexte,
-  ligne: LigneFacture,
+  designation: string,
+  /** Part du prix client revenant à cet émetteur — toutes taxes comprises. */
+  ttcCents: number,
+  quantiteCentiemes: number,
 ): Facture {
   /*
-   * L'éligibilité est décidée ici et nulle part ailleurs : le devis dit ce qui
-   * *serait* éligible, `partEligible` dit ce qui l'est — c'est-à-dire zéro
-   * quand l'émetteur n'a pas de numéro de déclaration.
+   * Le montant réparti est du TTC : le client est annoncé un prix tout
+   * compris, et les deux factures se partagent ce prix-là. La TVA s'en extrait
+   * donc, elle ne s'y ajoute pas — l'ajouter ferait somme des deux factures
+   * supérieure à ce que le client a réglé.
    */
-  const eligible = partEligible(ligne.totalCents, emetteur.numeroSap);
+  const { htCents, tvaCents } = decomposerTtc(
+    ttcCents,
+    emetteur.regimeTva,
+    emetteur.tauxTvaBp,
+  );
+
+  const ligne: LigneFacture = {
+    designation,
+    quantiteCentiemes,
+    unite: "h",
+    /*
+     * Le prix unitaire est déduit du total hors taxes et de la durée, jamais
+     * l'inverse : c'est le total qui a été annoncé au client, et une facture
+     * dont les lignes ne totalisent pas ce total est une facture fausse.
+     */
+    prixUnitaireCents: Math.round((htCents * 100) / quantiteCentiemes),
+    totalCents: htCents,
+  };
 
   /*
-   * En franchise en base, le TTC égale le HT : il n'y a pas de TVA à ajouter.
-   * Pour un assujetti, elle se calcule sur le HT au taux déclaré.
+   * L'éligibilité au crédit d'impôt porte sur la somme **versée**, donc sur le
+   * TTC : c'est ce que le client a sorti de sa poche. `partEligible` la ramène
+   * à zéro quand l'émetteur n'a pas de numéro de déclaration.
    */
-  const tvaCents =
-    emetteur.regimeTva === "ASSUJETTI" && emetteur.tauxTvaBp
-      ? Math.round((ligne.totalCents * emetteur.tauxTvaBp) / 10_000)
-      : 0;
+  const eligible = partEligible(ttcCents, emetteur.numeroSap);
 
   return {
     numero,
@@ -124,9 +144,9 @@ function composerFacture(
     emetteur,
     destinataire: contexte.destinataire,
     lignes: [ligne],
-    totalHtCents: ligne.totalCents,
+    totalHtCents: htCents,
     tvaCents,
-    totalTtcCents: ligne.totalCents + tvaCents,
+    totalTtcCents: ttcCents,
     eligibleCreditImpotCents: eligible,
   };
 }
@@ -307,22 +327,6 @@ export async function emettreLesFactures(
     (reservation.durationMinutes / 60) * 100,
   );
 
-  function ligne(designation: string, totalCents: number): LigneFacture {
-    return {
-      designation,
-      quantiteCentiemes,
-      unite: "h",
-      /*
-       * Le prix unitaire est déduit du total et de la durée, jamais l'inverse :
-       * c'est le total qui a été annoncé au client et qui sera prélevé, et une
-       * facture dont les lignes ne totalisent pas le montant prélevé est une
-       * facture fausse.
-       */
-      prixUnitaireCents: Math.round((totalCents * 100) / quantiteCentiemes),
-      totalCents,
-    };
-  }
-
   const emetteurIntervenant: Emetteur = {
     nom: intervenant.user.name ?? intervenant.displayName,
     formeJuridique: "Entrepreneur individuel",
@@ -372,17 +376,17 @@ export async function emettreLesFactures(
       emetteur: emetteurIntervenant,
       cleanerProfileId: intervenant.id,
       serie: serieIntervenant(intervenant.siret.slice(0, 9)),
-      ligne: ligne("Ménage à domicile", reservation.professionalAmountCents),
+      designation: "Ménage à domicile",
+      /* Part du prix client, toutes taxes comprises. */
+      ttcCents: reservation.professionalAmountCents,
     },
     {
       type: "CLIENT_COORDINATION" as const,
       emetteur: emetteurPlateforme,
       cleanerProfileId: null,
       serie: SERIE_PLATEFORME,
-      ligne: ligne(
-        "Mise en relation et coordination",
-        reservation.platformFeeAmountCents,
-      ),
+      designation: "Mise en relation et coordination",
+      ttcCents: reservation.platformFeeAmountCents,
     },
   ];
 
@@ -403,7 +407,9 @@ export async function emettreLesFactures(
         numero,
         projet.emetteur,
         contexte,
-        projet.ligne,
+        projet.designation,
+        projet.ttcCents,
+        quantiteCentiemes,
       );
 
       /*

@@ -327,6 +327,22 @@ l'occasion d'interroger une autre organisation.
 frontière d'une organisation. Il est volontairement verbeux et journalise
 chaque accès de façon nominative et motivée.
 
+**Un compte se crée sans appartenance, et les espaces doivent le supporter.**
+`requireOrganization` lève quand elle manque — la bonne conception pour une
+primitive de sécurité, un appelant qui oublie d'attraper une exception fermant
+la porte plutôt que de l'ouvrir. Mais une page qui laisse remonter l'exception
+rend une **erreur 500** là où la réponse juste tient en une phrase, et le cas
+est nominal : quelqu'un qui se connecte par lien magique avant d'avoir réservé
+n'a de droit nulle part. `auth/espaces.ts` traduit donc le refus en résultat,
+sans rien relâcher — même vérification, et seule `ForbiddenError` est attrapée,
+une panne de base devant continuer de remonter. Trois refus, trois phrases,
+parce qu'ils appellent trois gestes différents.
+
+Sur un environnement de test, cette règle rend les espaces inatteignables :
+`npm run db:roles -- vous@exemple.fr --admin` accorde ce qu'il faut, et refuse
+de s'exécuter en production — accorder `PLATFORM_ADMIN` ouvre la lecture de
+toutes les organisations.
+
 **`src/proxy.ts` ne fait pas d'autorisation** — en Next 16, `middleware.ts` est
 d'ailleurs renommé `proxy.ts`. Il constate l'absence de cookie et évite un
 aller-retour ; il ne sait pas si le cookie est valide ni à qui il appartient.
@@ -1358,11 +1374,18 @@ client déclare le brut et se fait redresser.
 
 **Le régime de TVA est une donnée, pas une constante du code.** Il vit sur
 `Organization` et sur `CleanerProfile`, parce qu'il dépend du chiffre d'affaires
-et d'options que seul un comptable connaît, et qu'il n'est pas le même pour la
-plateforme et pour une société cliente. La valeur par défaut —
-`FRANCHISE_EN_BASE`, article 293 B — mérite d'être confirmée avant la première
-facture : une mention de TVA fausse rend la facture irrégulière dans les deux
-sens.
+et d'options que seul un comptable connaît. **PAPER PLANE est assujettie au taux
+normal** (20 %, confirmé le 20 août 2026) ; les intervenants restent en
+franchise en base sous le seuil. Deux régimes distincts sur la même prestation,
+puisque ce sont deux entités qui facturent.
+
+**La TVA s'extrait du montant, elle ne s'y ajoute pas.** Le client est annoncé
+un prix tout compris et les deux factures se partagent ce prix-là : la part de
+coordination est donc du TTC, dont le HT se déduit. L'ajouter par-dessus ferait
+somme des factures supérieure à ce qu'il a réglé — le même défaut que
+d'annoncer un prix et d'en prélever un autre. `decomposerTtc` calcule le HT et
+**déduit** la TVA, si bien que `ht + tva === ttc` au centime quel que soit
+l'arrondi ; un test le vérifie sur cinq mille montants.
 
 **Le document se télécharge par l'impression du navigateur.** Une bibliothèque
 de PDF ajouterait une dépendance lourde à une construction sans serveur pour
@@ -1739,6 +1762,7 @@ npm run db:seed         # remplit la base de développement (tronque tout d'abor
 npm run db:init         # installe une base de production, sans données fictives
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
 npm run db:utilisateurs-test # comptes nominatifs, avec mot de passe (refusé en production)
+npm run db:roles        # donne des rôles à un compte existant (refusé en production)
 npm run db:tarifs       # applique la grille publique aux tarifs en base
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
@@ -1874,7 +1898,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **810 tests unitaires** (58 fichiers), **13 suites
+État au 20 août 2026 : **815 tests unitaires** (58 fichiers), **13 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **152 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
