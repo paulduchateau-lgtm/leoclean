@@ -1847,6 +1847,14 @@ une anomalie validée, et une seule catégorie peut même le proposer : un
 supplément appliqué par celui qui en bénéficie n'est pas un ajustement, c'est
 une facture non consentie.
 
+**Le rapport photo existe depuis le 20 août**, débloqué par le coffre Scaleway.
+Deux avant, deux après, et **rien n'est bloquant** : il ne retient ni la fin de
+mission ni le paiement. Un produit qui empêche de travailler pour protéger une
+mesure obtient des mesures fausses — quelqu'un photographierait n'importe quoi
+pour finir sa journée. La lecture passe par une URL signée de soixante
+secondes, et l'appartenance est revérifiée à chaque appel : c'est le seul
+endroit où l'on décide qui voit l'intérieur du domicile d'un client.
+
 Restent à écrire : le mode hors ligne, dont le schéma est prêt mais dont la
 file d'envoi manque. `NO_SHOW` reste modélisé et non écrit.
 
@@ -1883,8 +1891,14 @@ chaque préautorisation, et un test échoue si quelqu'un allonge l'un des délai
 **Le prélèvement est conditionné à la clôture, jamais à l'horloge seule** — et
 le délai court depuis la clôture réelle, pas depuis l'heure prévue.
 
-Restent à écrire : Connect Express et les reversements, et les relances
-d'échec —
+**Les relances d'impayé partent depuis le 20 août.** Trois messages — J+1, J+3,
+J+7 — puis une suspension **annoncée** : jamais d'annulation silencieuse, qui
+ferait découvrir la rupture au client le matin où personne ne vient. La date du
+premier échec ne bouge jamais, sans quoi un impayé deviendrait éternel à
+condition d'échouer régulièrement. Et la suspension n'annule rien : elle
+appelle un humain.
+
+Restent à écrire : Connect Express et les reversements —
 dont le calendrier est écrit et testé mais que rien n'appelle. Les reversements
 restent à écrire en _separate charges and transfers_, le modèle à deux factures
 interdisant le _destination charge_. Rien n'a pu être vérifié contre le vrai
@@ -1898,7 +1912,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **815 tests unitaires** (58 fichiers), **13 suites
+État au 20 août 2026 : **824 tests unitaires** (60 fichiers), **13 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **152 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.

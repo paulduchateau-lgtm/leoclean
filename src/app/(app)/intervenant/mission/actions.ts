@@ -4,17 +4,24 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { authedAction } from "@/lib/actions";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { tracer } from "@/lib/analytics/journal";
 import { requireOrganization } from "@/lib/auth/session";
 import { BusinessError } from "@/lib/booking/errors";
 import { lireSecret, MESSAGES_REFUS_SECRET } from "@/lib/logement/secret";
 import { TYPES_ANOMALIE } from "@/lib/mission/cycle";
+import { PhotoRefuseeError, deposerUnePhoto } from "@/lib/mission/photos";
 import {
   basculerTache,
   pointer,
   signalerAnomalie,
 } from "@/lib/mission/travail";
 import { marketplaceOrganizationId } from "@/lib/organizations";
+import {
+  FichierRefuseError,
+  MESSAGES_REFUS,
+  type RefusFichier,
+} from "@/lib/stockage";
 
 /**
  * Le travail de la mission, du côté de l'intervenant.
@@ -145,3 +152,66 @@ export const signalerUneAnomalie = authedAction(
     return resultat;
   },
 );
+
+/**
+ * Dépôt d'une photo de mission.
+ *
+ * Par `FormData`, comme les pièces justificatives : c'est le seul moyen de
+ * faire traverser des octets à une server action sans les encoder en base64,
+ * ce qui gonflerait la charge d'un tiers — et une photo de téléphone pèse
+ * déjà plusieurs mégaoctets.
+ */
+export async function deposerUnePhotoDeMission(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const espace = await espaceIntervenant();
+  if (!espace.ouvert) {
+    return { ok: false, error: "Cet espace n'est pas le vôtre." };
+  }
+
+  const bookingId = formData.get("bookingId");
+  const phase = formData.get("phase");
+  const piece = formData.get("piece");
+  const fichier = formData.get("fichier");
+
+  if (
+    typeof bookingId !== "string" ||
+    (phase !== "AVANT" && phase !== "APRES")
+  ) {
+    return { ok: false, error: "Demande incomplète." };
+  }
+  if (!(fichier instanceof File) || fichier.size === 0) {
+    return { ok: false, error: "Aucune photo reçue." };
+  }
+
+  try {
+    await deposerUnePhoto(espace.db, espace.profil.id, {
+      bookingId,
+      phase,
+      piece: typeof piece === "string" ? piece : null,
+      octets: new Uint8Array(await fichier.arrayBuffer()),
+    });
+    revalidatePath(`/intervenant/mission/${bookingId}`);
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof FichierRefuseError) {
+      return {
+        ok: false,
+        error: MESSAGES_REFUS[error.refus as RefusFichier] ?? error.message,
+      };
+    }
+    if (error instanceof PhotoRefuseeError) {
+      return { ok: false, error: error.message };
+    }
+    /*
+     * Une photo qu'on ne peut pas déposer ne doit pas empêcher de finir la
+     * mission : le rapport est un mémo, pas un contrôle.
+     */
+    console.error("Dépôt de photo impossible", error);
+    return {
+      ok: false,
+      error:
+        "La photo n'a pas pu être enregistrée. Ce n'est pas bloquant : vous pouvez terminer la mission.",
+    };
+  }
+}

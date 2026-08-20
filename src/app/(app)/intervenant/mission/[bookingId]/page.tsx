@@ -3,6 +3,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { EcranDeTravail } from "@/app/(app)/intervenant/mission/[bookingId]/ecran-de-travail";
+import { PhotosDeMission } from "@/app/(app)/intervenant/mission/[bookingId]/photos";
+import { lireLesPhotos } from "@/lib/mission/photos";
+import { SITE } from "@/lib/site";
+import { stockageConfigure } from "@/lib/stockage/resolution";
 import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
@@ -115,6 +119,8 @@ export default async function MissionPage({
     select: { id: true, type: true, description: true, adjustmentStatus: true },
   });
 
+  const photos = await lireLesPhotos(db, booking.id);
+
   const arrivee = pointages.find((p) => p.kind === "ARRIVEE");
   const depart = pointages.find((p) => p.kind === "DEPART");
 
@@ -169,6 +175,18 @@ export default async function MissionPage({
           description: anomalie.description,
           ajustement: anomalie.adjustmentStatus,
         }))}
+      />
+
+      {/*
+       * Le rapport photo, débloqué par le coffre. Il ne retient ni la fin de
+       * mission ni le paiement : un produit qui empêche de travailler pour
+       * protéger une mesure obtient des mesures fausses.
+       */}
+      <PhotosDeMission
+        bookingId={booking.id}
+        photos={photos}
+        depotOuvert={stockageConfigure()}
+        telephone={SITE.phone}
       />
     </main>
   );

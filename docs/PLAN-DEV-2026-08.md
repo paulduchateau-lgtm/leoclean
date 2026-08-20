@@ -9,31 +9,53 @@ que chaque lot sache ce qu'il attend des autres.
 
 ---
 
-## État d'avancement au 20 août 2026
+## État d'avancement au 20 août 2026, en fin de journée
 
-| Jalon                         | État | Livré, et ce qui manque                                                                                                                                          |
-| ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** — Fondations            | ✅   | stockage (politique + interface), taxonomie d'événements, densité de la console, absences                                                                        |
-| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire dès l'écran de proposition, majorations, captation hors zone                                                                        |
-| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux de lecture et de clés                                                                             |
-| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation de bout en bout, écran « Aujourd'hui ». **Manquent** photos (adaptateur écrit, bucket à créer), hors ligne |
-| **E** — L'argent              | ◐    | calendrier pur, préautorisation, prélèvement, libération, webhook. **Manquent** SetupIntent au tunnel, Connect, factures, attestation                            |
-| **F** — Le recrutement        | ◐    | machine à états, vérification SIRET par l'API Sirene, éligibilité, ouverture de dossier. **Manquent** pièces, entretien, signature, parcours guidés              |
-| **G** — La récurrence         | ✅   | abonnement écrit par le tunnel, générateur idempotent, pause et rétention                                                                                        |
-| **H** — Les espaces           | ◐    | abonnement (pause, reprise, résiliation), notation, parrainage client et cooptation, revenus, suivi de candidature. **Manquent** messagerie, profil public       |
-| **I** — Le pilotage           | ◐    | file d'actions à dix règles, priorités et délais. **Manquent** Radar, scores, CRM, inbox                                                                         |
-| **J** — Conformité            | ◐    | rétention automatique branchée sur l'ordonnanceur. **Manquent** réclamations, rôles étendus, TOTP                                                                |
+| Jalon                         | État | Livré, et ce qui manque                                                                                                                                                                        |
+| ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** — Fondations            | ✅   | stockage, taxonomie d'événements, densité de la console, absences                                                                                                                              |
+| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire, majorations, captation hors zone                                                                                                                                 |
+| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux                                                                                                                                 |
+| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation, écran « Aujourd'hui ». **Manquent** photos de mission, mode hors ligne, suivi SMS du jour J                                             |
+| **E** — L'argent              | ◐    | calendrier, préautorisation, prélèvement, webhook, carte par Checkout, **facturation en deux documents**, **attestation annuelle**, **relances d'impayé**, revenus. **Manque** Connect Express |
+| **F** — Le recrutement        | ◐    | machine à états, SIRET par l'API Sirene, tunnel, dossier, dépôt de pièces, entretien, **signature des trois documents**, activation. **Manquent** guides des branches AE et SAP, Léo Academy   |
+| **G** — La récurrence         | ✅   | abonnement écrit par le tunnel, générateur idempotent, pause et rétention                                                                                                                      |
+| **H** — Les espaces           | ◐    | abonnement, notation, parrainage, cooptation, revenus, factures, messagerie, compte, connexion et sécurité. **Manquent** profil public, chat temps réel, proxy téléphonique                    |
+| **I** — Le pilotage           | ◐    | file d'actions, Radar, revue de dossier, **trois gestes d'exploitation**. **Manquent** scores, CRM 360, inbox, zones et capacité, détecteurs de friction                                       |
+| **J** — Conformité            | ◐    | rétention automatique, verrouillage de l'accès API Supabase, réclamations. **Manquent** rôles étendus, sinistres, TOTP                                                                         |
 
-**759 tests unitaires** (55 fichiers), **13 suites d'intégration**, vitrine
-statique et construction de production vérifiées à chaque jalon.
+**824 tests unitaires** (60 fichiers), **13 suites d'intégration**, **152 tests
+de bout en bout**, vitrine statique et construction de production vérifiées à
+chaque jalon.
 
-**Le stockage est tranché : Scaleway Object Storage** (arbitrage du 20 août
-2026), compatible S3 et hébergé en France — les pièces d'identité ne quittent
-pas l'Union européenne, ce qui évite d'avoir à documenter un transfert.
-L'adaptateur est écrit (`src/lib/stockage/s3.ts`) ; **il attend le bucket et sa
-clé**, et tant qu'ils manquent le dépôt reste fermé plutôt que d'accepter un
-fichier qu'on perdrait. Réglages à faire dans
-[SECURITE-ACCES.md](SECURITE-ACCES.md).
+### Ce qui bloque encore, et sur quoi
+
+Trois choses seulement, et **aucune n'est du code** :
+
+| Ce qui manque                  | Ce que ça bloque                                           |
+| ------------------------------ | ---------------------------------------------------------- |
+| Un contrat SMS                 | D6 (suivi du jour J), F1 (reprise de candidature par code) |
+| Stripe Connect activé et testé | E3 (reversements aux intervenants)                         |
+| Un fournisseur de téléphonie   | H4 (proxy de numéro)                                       |
+
+Le stockage n'y figure plus : **Scaleway est configuré** (buckets
+`leoclean-prod` et `leoclean-dev`), et `npm run stockage:verifier` prouve
+l'aller-retour. Réglages dans [SECURITE-ACCES.md](SECURITE-ACCES.md) et
+[infra/scaleway](../infra/scaleway/README.md).
+
+### Deux blocages durs levés dans la journée
+
+**Personne ne pouvait être activé.** `peutEtreActivee` exige une présentation,
+une photo et l'acceptation des documents ; les trois valeurs étaient lues et
+écrites nulle part. Le prédicat rendait faux quel que soit le reste du dossier.
+Le mandat de facturation aggravait le cas : les factures portent « conformément
+au mandat de facturation accepté par ce dernier », et rien ne recueillait cette
+acceptation que l'article 289, I-2 du CGI exige par écrit et à l'avance.
+
+**La file d'exploitation ne diminuait pas.** Elle listait toute réservation
+`PENDING_ASSIGNMENT`, c'est-à-dire l'état normal d'une demande proposée à cinq
+intervenants — vingt-quatre éléments là où cinq exigeaient quelqu'un. Une file
+de travail qui ne diminue pas quand on travaille cesse d'être lue.
 
 Stripe est connecté chez l'hébergeur mais pas en local, si bien que le code du
 paiement n'a pas pu être exercé contre le vrai service.
