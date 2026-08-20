@@ -24,7 +24,8 @@ que chaque lot sache ce qu'il attend des autres.
 | **I** — Le pilotage           | ◐    | file d'actions à dix règles, priorités et délais. **Manquent** Radar, scores, CRM, inbox                                                                         |
 | **J** — Conformité            | ◐    | rétention automatique branchée sur l'ordonnanceur. **Manquent** réclamations, rôles étendus, TOTP                                                                |
 
-**724 tests unitaires** (52 fichiers), vitrine statique vérifiée à chaque jalon.
+**729 tests unitaires** (53 fichiers), **12 suites d'intégration**, vitrine
+statique et construction de production vérifiées à chaque jalon.
 
 **Le stockage est tranché : Scaleway Object Storage** (arbitrage du 20 août
 2026), compatible S3 et hébergé en France — les pièces d'identité ne quittent
@@ -37,10 +38,11 @@ fichier qu'on perdrait. Réglages à faire dans
 Stripe est connecté chez l'hébergeur mais pas en local, si bien que le code du
 paiement n'a pas pu être exercé contre le vrai service.
 
-**Ce qui reste est surtout de l'interface.** Chaque jalon partiel a son module
-pur écrit et testé ; ce qui manque tient dans des écrans — revue de dossier,
-inbox, CRM, entretien, signature, messagerie — plus le dépôt de pièces, qui
-n'attend que le bucket.
+**Ce qui reste ne tient presque plus dans des écrans.** Les écrans manquants
+ont été écrits le 20 août ; ce qui subsiste dépend de tiers ou de décisions —
+Stripe Connect et les reversements, les factures et l'attestation fiscale, la
+signature électronique des trois documents, le CRM et l'inbox, le profil public
+d'un intervenant. Plus le dépôt de pièces, qui n'attend que le bucket.
 
 ---
 

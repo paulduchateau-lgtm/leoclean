@@ -1007,6 +1007,42 @@ intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
 personnes mélangerait deux interventions sans rapport. Sans intervenant
 désigné, l'envoi est refusé plutôt que d'écrire à personne.
 
+**Quatre écrans se sont ouverts le 20 août**, tous branchés sur des moteurs
+déjà écrits et testés qui n'avaient aucun appelant.
+
+_L'abonnement._ **La pause vient avant la résiliation, et elle est plus
+visible** : c'est le principal outil anti-résiliation, et le cacher derrière le
+bouton qui fait tout perdre serait un choix contre le client autant que contre
+l'entreprise. La sortie n'est pas cachée pour autant — aucun appel obligatoire,
+aucun préavis, un lien atteignable en un geste, parce qu'un parcours de
+résiliation qu'on n'atteint pas se termine par un appel à sa banque. Le motif
+décide de ce qu'on propose **une fois**, sans insister : proposer une remise à
+quelqu'un qui déménage transformerait un départ neutre en mauvais souvenir.
+
+_La notation._ Deux taps — les étoiles, puis des tags — et le commentaire reste
+facultatif : un champ libre obligatoire fait chuter le taux de réponse sans rien
+apprendre de plus qu'une étoile. Les mêmes cinq tags quel que soit le nombre
+d'étoiles ; deux jeux distincts feraient dire au formulaire ce que le client n'a
+pas dit. Trois étoiles ou moins ouvrent un ticket, dans la même transaction que
+l'avis — un mécontentement enregistré que personne ne voit passer est pire que
+pas d'avis du tout. `Review.isPublic` vaut désormais **faux par défaut** : ce
+qui se publie est décidé par `estPubliable`, jamais subi.
+
+_Le parrainage._ Les phrases sont **engendrées depuis le programme**
+(`referral/annonce.ts`, pur), jamais écrites : un plafond recopié dans une page
+finit par diverger de celui qui s'applique, et c'est le reproche fait aux
+plateformes nationales. Un test le vérifie en modifiant le programme. Le
+plafond et l'unique niveau sont annoncés.
+
+_Le moyen de paiement._ La saisie a lieu **chez Stripe**, par une session
+Checkout en mode `setup` : aucun champ de carte dans nos pages, aucune
+dépendance ajoutée, et la surface PCI reste chez celui dont c'est le métier.
+`setup_future_usage: off_session` est déclaré à l'enregistrement, ce qui fait
+demander l'authentification forte pendant que le client est devant son écran
+plutôt que la nuit d'avant la mission. **La carte n'est pas exigée à la
+réservation** — la préautorisation part à H-24 — et retirer la dernière est
+refusé quand une intervention est à venir, avec le geste à faire à la place.
+
 **La replanification à l'initiative du client n'y est toujours pas** : elle
 suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
 entier. Annuler puis reprendre reste le chemin.
@@ -1105,10 +1141,26 @@ est pur et sert deux fois — l'écran empêche de se tromper, la server action
 empêche de contourner. Pas de 30 minutes, plage minimale de 2 h : une plage de
 dix minutes produirait des créneaux que le moteur ne peut pas remplir.
 
+**Quatre écrans se sont ajoutés le 20 août.** _Aujourd'hui_ répond à trois
+questions d'un coup d'œil — où je vais maintenant, combien je gagne
+aujourd'hui, qu'est-ce qui a changé — et **l'ordre affiché est suggéré, jamais
+imposé** : c'est écrit sur la page, parce qu'un logiciel qui ordonne la journée
+d'un indépendant est un indice de subordination s'il le subit. _Mes revenus_
+tient **trois états jamais mélangés** — viré, en attente du virement, à venir —
+et ne calcule aucun montant : chaque euro vient de la rémunération proposée et
+acceptée avant la mission. Un virement dont la date est passée est signalé comme
+tel, l'écrire sous « prochain virement » présenterait un retard comme une
+promesse. _Mes messages_ est le symétrique du fil client, rattaché à
+l'intervention et non au couple de personnes ; ouvrir un fil le marque comme lu
+dans le même appel. _Coopter_ lit le même programme que le parrainage client.
+
 **Ce qui n'y est pas, et pourquoi c'est bloquant pour la production** :
-l'inscription (un intervenant s'enregistre par `npm run db:intervenant`), le
-dépôt des pièces justificatives, la clôture d'une mission et le suivi des
-revenus.
+l'inscription en autonomie existe désormais (`/rejoindre`, `/rejoindre/dossier`,
+et la revue de dossier côté plateforme), mais **le dépôt des pièces attend le
+bucket Scaleway** — l'adaptateur est écrit, et l'écran dit honnêtement que le
+dépôt n'est pas ouvert en donnant le téléphone plutôt que d'accepter un fichier
+qu'il perdrait. Restent les factures et l'attestation fiscale annuelle, qui
+attendent la facturation.
 
 **Les absences se déclarent depuis le 19 août 2026.** `availability/absences.ts`
 est pur, comme `semaine.ts`, et sert deux fois — l'écran empêche de se tromper,
@@ -1134,9 +1186,28 @@ La lecture traverse les organisations, ce que seul un administrateur plateforme
 peut faire : elle passe par le client non cloisonné, et `asPlatformAdmin()` est
 vérifié à l'entrée de la page, où cela se lit.
 
-**L'écran est en lecture seule** : il désigne le travail, il ne le fait pas
-encore. Rattraper une réservation orpheline ou relancer une proposition périmée
-se fait aujourd'hui à la main.
+**Deux écrans agissent désormais, le tableau des quatre listes reste en lecture
+seule.** Rattraper une réservation orpheline ou relancer une proposition périmée
+se fait toujours à la main.
+
+_La revue de dossier_ trie **du plus ancien au plus récent**, et ce n'est pas
+cosmétique : traiter le plus récent d'abord laisse indéfiniment au fond de la
+pile celui qui attend depuis trois semaines, et c'est celui-là qu'on perd. Les
+signaux d'attention s'affichent **hors de toute note** — un doublon d'IBAN ne se
+compense pas par de bons points ailleurs — et deux d'entre eux suspendent
+l'examen, le bouton d'activation disant alors pourquoi il est éteint. La grille
+d'entretien homogénéise **sans classer** : aucune moyenne n'en est tirée, une
+moyenne ferait compenser « français opérationnel » par « motivation ». Un refus
+de pièce choisit son motif dans une liste écrite en langage courant, parce
+qu'un motif vague fait redéposer la même pièce et que c'est le candidat qui
+paie l'aller-retour.
+
+_Les réclamations_ affichent leur origine en tête — note basse ou démarche du
+client — parce qu'elle décide de la première phrase au téléphone : on ne
+rappelle pas de la même façon quelqu'un qui a demandé quelque chose et quelqu'un
+à qui on écrit. **Un classement sans suite exige une résolution écrite** autant
+qu'une résolution : « on n'a rien fait » est une décision qui se justifie, et
+qui se relit quand la même personne rappelle.
 
 ## Données personnelles
 
@@ -1356,8 +1427,14 @@ src/
     logement/          chiffrement des consignes d'accès (pur) et module gardien
     mission/           cycle de travail et notation — purs ; travail.ts écrit
     abonnement/        récurrence — pure ; generateur.ts écrit les occurrences
-    paiement/          calendrier — pur ; stripe.ts et travaux.ts exécutent
+    paiement/          calendrier — pur ; stripe.ts, travaux.ts et moyen.ts exécutent
+      moyen.ts         carte du client, par session Checkout chez Stripe
+      revenus.ts       trois états jamais mélangés, aucun montant recalculé
     administration/    tableau de bord plateforme, ce qui attend un humain
+      reclamations.ts  file des réclamations (server-only)
+    candidature/       parcours (pur), dossier et revue (server-only)
+    messagerie/        vocabulaire (pur), fil de l'intervenant (server-only)
+    reclamation/       vocabulaire des réclamations — pur
     societes/          page publique d'une société cliente du SaaS
     rgpd/              accès et effacement, avec leurs limites
     securite/          limitation de débit des formulaires publics
@@ -1630,7 +1707,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **675 tests unitaires** (49 fichiers), **10 suites
+État au 20 août 2026 : **729 tests unitaires** (53 fichiers), **12 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
