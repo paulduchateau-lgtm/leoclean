@@ -1473,6 +1473,33 @@ l'export impose ce mode. D'où `lib/asset-path.ts` : tout fichier de `public/`
 référencé en dur doit passer par `assetPath()`, sinon il est cherché à la
 racine du domaine.
 
+## La frontière client / serveur, tenue par un test
+
+**Elle s'est vengée trois fois dans la même journée** : le vocabulaire des
+réclamations, celui de la messagerie, le plafond du rapport photo. À chaque
+fois le même geste — une constante ou un type lu depuis un module qui, lui,
+importe Prisma ou le SDK S3. Le typage ne voit rien, `tsc` passe, et c'est la
+**construction** qui s'arrête, ou le serveur de développement qui refuse de
+démarrer plusieurs minutes plus tard sur une trace qui ne nomme pas le geste
+fautif.
+
+`src/frontiere-client.test.ts` parcourt le graphe d'imports du dépôt et échoue
+si un fichier `"use client"` atteint un module `server-only`, en rendant la
+chaîne complète. Deux règles le rendent juste :
+
+- **Un `import type` est ignoré**, parce qu'il est effacé à la compilation et
+  ne tire rien dans le paquet. `sign-in-form.tsx` lit ainsi `ActionResult`
+  depuis un module `server-only` sans jamais en charger une ligne.
+- **La traversée s'arrête aux `"use server"`**. Une server action est la
+  frontière RPC prévue par React : un composant client a le droit de
+  l'importer, et elle a le droit d'atteindre la base. C'est exactement ce qui
+  distingue un appel légitime d'une fuite de dépendance.
+
+Le remède au piège n'était pas la vigilance. Quand il faut partager une
+constante, un type ou un libellé, il va dans un module pur — c'est déjà ce que
+font `reclamation/vocabulaire.ts`, `messagerie/vocabulaire.ts` et
+`mission/rapport-photo.ts`.
+
 ## Performance et accessibilité, mesurées
 
 `scripts/mesurer-vitals.mjs` relève les indicateurs sur une construction de
@@ -1912,7 +1939,7 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **824 tests unitaires** (60 fichiers), **13 suites
+État au 20 août 2026 : **826 tests unitaires** (61 fichiers), **13 suites
 d'intégration** exigeant PostgreSQL + PostGIS, **152 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
