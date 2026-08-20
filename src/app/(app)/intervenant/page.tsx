@@ -99,6 +99,18 @@ export default async function MissionsPage() {
         >
           Mes absences →
         </Link>
+        <Link
+          href="/intervenant/revenus"
+          className="text-primary hover:underline"
+        >
+          Mes revenus →
+        </Link>
+        <Link
+          href="/intervenant/cooptation"
+          className="text-primary hover:underline"
+        >
+          Coopter →
+        </Link>
       </p>
 
       <section className="mt-10">

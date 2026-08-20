@@ -185,6 +185,27 @@ export default async function MonEspacePage() {
         <h1 className="text-3xl font-black tracking-tight">Mes réservations</h1>
         <p className="mt-2 text-muted-foreground">{session.user.email}</p>
 
+        <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <Link
+            href="/mon-espace/abonnement"
+            className="text-primary hover:underline"
+          >
+            Mon abonnement →
+          </Link>
+          <Link
+            href="/mon-espace/noter"
+            className="text-primary hover:underline"
+          >
+            Noter une intervention →
+          </Link>
+          <Link
+            href="/mon-espace/parrainage"
+            className="text-primary hover:underline"
+          >
+            Parrainage →
+          </Link>
+        </p>
+
         <h2 className="mt-10 text-lg font-extrabold">Prochaines</h2>
         {upcoming.length === 0 ? (
           /* Un état vide sans issue est un bug : celui-ci dit ce qui manque et

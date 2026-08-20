@@ -126,6 +126,7 @@ model Organization {
   payouts                Payout[]
   invoices               Invoice[]
   reviews                Review[]
+  reclamations           Reclamation[]
   messages               Message[]
   cleanerDocuments       CleanerDocument[]
   leads                  Lead[]
@@ -279,6 +280,7 @@ model ClientProfile {
   bookings      Booking[]
   subscriptions Subscription[]
   reviews       Review[]
+  reclamations  Reclamation[]
 
   @@unique([organizationId, userId])
   @@index([organizationId])
@@ -806,6 +808,7 @@ model Booking {
   photos         MissionPhoto[]
   anomalies      MissionAnomaly[]
   checklistItems MissionChecklistItem[]
+  reclamations   Reclamation[]
 
   @@index([organizationId, status, scheduledStart])
   @@index([organizationId, clientProfileId])
@@ -1368,7 +1371,12 @@ model Review {
   comment      String?
   communeInsee String
 
-  isPublic    Boolean   @default(true)
+  /// Vocabulaire fermé — voir `TAGS_AVIS` dans `src/lib/mission/notation.ts`.
+  tags String[] @default([])
+
+  /// Faux par défaut : ce qui se publie est décidé par `estPubliable`, jamais
+  /// subi. Une étoile nue ne dit rien à personne et gonfle un compteur.
+  isPublic    Boolean   @default(false)
   publishedAt DateTime?
   reply       String?
 
@@ -1383,6 +1391,42 @@ model Review {
   @@index([organizationId, isPublic, publishedAt])
   @@index([communeInsee, isPublic])
   @@index([cleanerProfileId])
+}
+
+/// Ce qu'une mauvaise note ouvre — et ce qu'un client signale de lui-même.
+///
+/// Trois étoiles ou moins appellent quelqu'un, sans exception. La table sert
+/// aussi aux réclamations ouvertes sans note : un objet cassé se signale que la
+/// mission ait été notée ou non, d'où un `bookingId` facultatif.
+model Reclamation {
+  id              String  @id @default(cuid())
+  organizationId  String
+  bookingId       String?
+  clientProfileId String
+
+  /// PROPRETE | RETARD | COMPORTEMENT | CASSE | AUTRE
+  categorie String
+  /// OUVERTE | EN_COURS | RESOLUE | CLASSEE
+  statut    String @default("OUVERTE")
+  /// P0 | P1 | P2 | P3 — la même échelle que la file d'attente ops.
+  priorite  String @default("P2")
+
+  description     String?
+  /// Vrai quand le ticket est né d'une note basse plutôt que d'une démarche du
+  /// client : on ne relance pas de la même façon quelqu'un qui a demandé
+  /// quelque chose et quelqu'un à qui on écrit.
+  ouvertParLaNote Boolean @default(false)
+
+  ouverteLe  DateTime  @default(now())
+  resolueLe  DateTime?
+  resolution String?
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking       Booking?      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, statut, priorite])
+  @@index([clientProfileId])
 }
 
 model Message {
