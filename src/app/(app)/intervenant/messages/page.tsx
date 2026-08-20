@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { lireLesFils } from "@/lib/messagerie/intervenant";
-import { marketplaceOrganizationId } from "@/lib/organizations";
 import { SITE } from "@/lib/site";
 
 /**
@@ -30,19 +30,27 @@ const JOUR = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function MessagesPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/intervenant/messages");
+  /*
+   * `espaceIntervenant` traduit l'absence d'appartenance en résultat
+   * plutôt qu'en exception : `requireOrganization` lève, et l'exception
+   * remontait jusqu'au rendu — une erreur 500 sur un état parfaitement
+   * ordinaire du produit.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(
-    organizationId,
-    "assignment:read:own",
-  );
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant/messages");
+    }
+    return (
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
+    );
+  }
 
-  const profil = await db.cleanerProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
+  const { db, user, profil } = espace;
 
   const fils = profil ? await lireLesFils(db, profil.id, user.id) : [];
 

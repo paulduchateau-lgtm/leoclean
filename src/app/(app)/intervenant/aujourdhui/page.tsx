@@ -3,10 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { chargerLaJournee } from "@/lib/assignments/journee";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
-import { marketplaceOrganizationId } from "@/lib/organizations";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { formatEuros } from "@/lib/pricing";
-import { SITE } from "@/lib/site";
 
 /**
  * Aujourd'hui.
@@ -50,30 +49,27 @@ function dureeLisible(minutes: number): string {
 }
 
 export default async function AujourdhuiPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/intervenant/aujourdhui");
+  /*
+   * `espaceIntervenant` traduit l'absence d'appartenance en résultat
+   * plutôt qu'en exception : `requireOrganization` lève, et l'exception
+   * remontait jusqu'au rendu — une erreur 500 sur un état parfaitement
+   * ordinaire du produit.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "assignment:read:own");
-
-  const profil = await db.cleanerProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true, displayName: true },
-  });
-
-  if (!profil) {
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant/aujourdhui");
+    }
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Aujourd&apos;hui
-        </h1>
-        <p className="mt-4 rounded-xl border border-border bg-secondary/40 p-5 text-muted-foreground">
-          Votre compte n&apos;est pas rattaché à un profil d&apos;intervenant.
-          Appelez-nous au {SITE.phone}.
-        </p>
-      </main>
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
     );
   }
+
+  const { db, profil } = espace;
 
   const maintenant = new Date();
   const journee = await chargerLaJournee(db, profil.id, maintenant);
@@ -109,10 +105,7 @@ export default async function AujourdhuiPage() {
             >
               Mes disponibilités →
             </Link>
-            <Link
-              href="/intervenant"
-              className="text-primary hover:underline"
-            >
+            <Link href="/intervenant" className="text-primary hover:underline">
               Voir les propositions →
             </Link>
           </p>
@@ -167,9 +160,9 @@ export default async function AujourdhuiPage() {
               La suite de la tournée
             </h2>
             {/*
-              * La mention n'est pas décorative : un ordre imposé serait un
-              * indice de subordination. Elle est écrite là où l'ordre s'affiche.
-              */}
+             * La mention n'est pas décorative : un ordre imposé serait un
+             * indice de subordination. Elle est écrite là où l'ordre s'affiche.
+             */}
             <p className="mt-1 text-sm text-muted-foreground">
               Ordre suggéré — vous restez libre de votre organisation.
             </p>

@@ -5,10 +5,10 @@ import { redirect } from "next/navigation";
 import { FormulaireAvis } from "@/app/(app)/mon-espace/noter/formulaire";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceClient } from "@/lib/auth/espaces";
 import { interventionsANoter } from "@/lib/mission/avis";
 import { DELAI_NOTATION_JOURS } from "@/lib/mission/notation";
-import { marketplaceOrganizationId } from "@/lib/organizations";
 
 /**
  * Noter ses interventions.
@@ -26,16 +26,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function NoterPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/mon-espace/noter");
+  /*
+   * `espaceClient` traduit l'absence d'appartenance en résultat plutôt
+   * qu'en exception. Le cas est nominal : un compte se crée sans
+   * appartenance, le rattachement se faisant à la première réservation —
+   * cette page rendait donc une erreur 500 à qui venait de se connecter.
+   */
+  const espace = await espaceClient();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "booking:read:own");
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/mon-espace/noter");
+    }
+    return (
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/mon-espace", libelle: "Mes réservations" }}
+      />
+    );
+  }
 
-  const profil = await db.clientProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
+  const { db, profil } = espace;
 
   const interventions = profil
     ? await interventionsANoter(db, profil.id, new Date(), DELAI_NOTATION_JOURS)

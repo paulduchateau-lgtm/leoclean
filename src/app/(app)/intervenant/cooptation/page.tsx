@@ -3,8 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ParrainagePanneau } from "@/components/parrainage-panneau";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
-import { marketplaceOrganizationId } from "@/lib/organizations";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { reglesLisibles } from "@/lib/referral/annonce";
 import { lireLeParrainage, programme } from "@/lib/referral/espace";
 import { absoluteUrl } from "@/lib/site";
@@ -27,15 +27,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CooptationPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/intervenant/cooptation");
+  /*
+   * `espaceIntervenant` traduit l'absence d'appartenance en résultat
+   * plutôt qu'en exception : `requireOrganization` lève, et l'exception
+   * remontait jusqu'au rendu — une erreur 500 sur un état parfaitement
+   * ordinaire du produit.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(
-    organizationId,
-    "assignment:read:own",
-  );
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant/cooptation");
+    }
+    return (
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
+    );
+  }
 
+  const { db, user, organizationId } = espace;
   const vue = await lireLeParrainage(
     db,
     organizationId,

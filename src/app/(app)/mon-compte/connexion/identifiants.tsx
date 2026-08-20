@@ -289,10 +289,12 @@ export function Identifiants({
                 return;
               }
               /*
-               * La session courante vient d'être supprimée : on recharge vers
-               * l'accueil plutôt que de rafraîchir, ce qui afficherait une page
-               * dont le cookie ne vaut plus rien.
+               * La session courante vient d'être supprimée. Un `router.push`
+               * garderait le cache client et rendrait une page construite avec
+               * un cookie qui ne vaut plus rien ; on recharge donc réellement.
+               * C'est l'un des rares cas où la règle de Next ne s'applique pas.
                */
+              // eslint-disable-next-line @next/next/no-location-assign-relative-destination
               window.location.assign("/");
             })
           }

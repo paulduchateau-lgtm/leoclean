@@ -93,7 +93,23 @@ model Organization {
   /// Numéro de déclaration Services à la personne, requis pour communiquer
   /// sur le crédit d'impôt.
   sapDeclarationNumber String?
-  insuranceExpiresAt   DateTime?
+
+  /// `FRANCHISE_EN_BASE` · `ASSUJETTI` — voir `facturation/document.RegimeTva`.
+  ///
+  /// **C'est une donnée, pas une constante du code**, et c'est délibéré : le
+  /// régime de la plateforme dépend de son chiffre d'affaires et d'options que
+  /// seul son comptable connaît, et il n'est pas le même que celui d'une
+  /// société cliente du SaaS. L'écrire en dur dans `site.ts` obligerait à un
+  /// déploiement pour le corriger, et ferait porter la même mention à tout le
+  /// monde.
+  ///
+  /// La valeur par défaut mérite d'être vérifiée avant la première facture :
+  /// une mention de TVA fausse rend la facture irrégulière dans les deux sens.
+  vatRegime String @default("FRANCHISE_EN_BASE")
+  /// Taux en points de base, exigé si assujetti. 2 000 = 20 %.
+  vatRateBp Int?
+
+  insuranceExpiresAt DateTime?
 
   /// Stripe. `stripeAccountId` est le compte Connect qui reçoit les
   /// reversements ; `stripeCustomerId` porte l'abonnement SaaS des sociétés.
@@ -127,6 +143,8 @@ model Organization {
   invoices               Invoice[]
   reviews                Review[]
   reclamations           Reclamation[]
+  invoiceSequences       InvoiceSequence[]
+  taxCertificates        TaxCertificate[]
   messages               Message[]
   cleanerDocuments       CleanerDocument[]
   leads                  Lead[]
@@ -282,13 +300,14 @@ model ClientProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  addresses     Address[]
-  bookings      Booking[]
-  subscriptions Subscription[]
-  reviews       Review[]
-  reclamations  Reclamation[]
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses       Address[]
+  bookings        Booking[]
+  subscriptions   Subscription[]
+  reviews         Review[]
+  reclamations    Reclamation[]
+  taxCertificates TaxCertificate[]
 
   @@unique([organizationId, userId])
   @@index([organizationId])
@@ -334,10 +353,21 @@ model CleanerProfile {
   /// SIRET déclaré : deux identités différentes sont soit une faute de frappe,
   /// soit le numéro de quelqu'un d'autre.
   sapDeclarationNumber String?
-  insuranceExpiresAt   DateTime?
-  stripeAccountId      String?
+
+  /// `FRANCHISE_EN_BASE` · `ASSUJETTI` — voir `facturation/document.RegimeTva`.
+  ///
+  /// La franchise est la situation de tout auto-entrepreneur sous le seuil,
+  /// donc la quasi-totalité des intervenants. Elle commande la mention « TVA
+  /// non applicable, article 293 B du CGI », dont l'absence — ou la présence à
+  /// tort — rend la facture irrégulière.
+  vatRegime String @default("FRANCHISE_EN_BASE")
+  /// Taux en points de base, exigé si assujetti. 2 000 = 20 %.
+  vatRateBp Int?
+
+  insuranceExpiresAt DateTime?
+  stripeAccountId    String?
   /// Onboarding Stripe Connect achevé : sans cela, aucun reversement possible.
-  payoutsEnabled       Boolean   @default(false)
+  payoutsEnabled     Boolean   @default(false)
 
   /// Point de départ et d'arrivée de la tournée quotidienne.
   homeAddressId String? @unique
@@ -369,6 +399,7 @@ model CleanerProfile {
   payouts                   Payout[]
   reviews                   Review[]
   issuedInvoices            Invoice[]
+  issuedTaxCertificates     TaxCertificate[]
   preferredForSubscriptions Subscription[]          @relation("PreferredCleaner")
   propertyKeyLogs           PropertyKeyLog[]
   accessSecretReads         AccessSecretRead[]
@@ -1339,8 +1370,20 @@ model Invoice {
   issuedAt               DateTime @default(now())
   totalCents             Int
   /// Part de la facture ouvrant droit au crédit d'impôt services à la personne.
+  ///
+  /// **Zéro si l'émetteur n'est pas déclaré**, quelle que soit la prestation :
+  /// c'est `facturation/document.partEligible` qui tranche, et le devis ne dit
+  /// que ce qui *serait* éligible.
   taxCreditEligibleCents Int      @default(0)
   pdfUrl                 String?
+
+  /// Le document, figé à l'émission.
+  ///
+  /// Une facture est immuable : tout ce qu'elle imprime — identité de
+  /// l'émetteur, adresse du client, lieu d'exécution — vient de sources
+  /// vivantes qui changeront. Sans instantané, une facture de l'an dernier se
+  /// réimprimerait différemment. Forme : `facturation/document.Facture`.
+  snapshot Json?
 
   createdAt DateTime @default(now())
 
@@ -1352,6 +1395,10 @@ model Invoice {
   booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   subscription Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   issuedBy     CleanerProfile? @relation(fields: [issuedByCleanerProfileId], references: [id], onDelete: SetNull)
+  /// Une facture par prestation et par type — l'ordonnanceur repasse toutes les
+  /// heures, et une seconde émission laisserait un doublon impossible à retirer
+  /// sans faire un trou dans la suite. Index partiel posé à la main dans la
+  /// migration : Prisma ne sait pas exprimer le `WHERE`.
 
   @@unique([organizationId, number])
   @@index([organizationId, issuedAt])
@@ -1435,6 +1482,67 @@ model Reclamation {
 
   @@index([organizationId, statut, priorite])
   @@index([clientProfileId])
+}
+
+/// Compteur de la suite des factures.
+///
+/// L'article 242 nonies A de l'annexe II au CGI exige une séquence
+/// chronologique **continue, sans rupture**. Une `SEQUENCE` PostgreSQL ne
+/// convient pas : elle ne revient pas en arrière quand la transaction échoue, et
+/// laisse exactement le trou qu'on cherche à éviter. Une ligne de compteur,
+/// incrémentée dans la transaction qui écrit la facture, se comporte à
+/// l'inverse — et son verrou sérialise deux émissions simultanées.
+model InvoiceSequence {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// `LC` pour la plateforme, `LC-<siren>` pour l'autofacturation.
+  serie       String
+  /// Année civile française : l'exercice est civil et local.
+  annee       Int
+  dernierRang Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, serie, annee])
+}
+
+/// Attestation fiscale annuelle.
+///
+/// Elle se recalcule depuis les paiements, mais elle ne se **recompose** pas :
+/// un document joint à une déclaration de revenus doit pouvoir être rendu à
+/// l'identique. Comme la facture, elle est figée à l'émission.
+///
+/// Deux organismes déclarés, deux attestations — le même découpage que les
+/// factures, et pour la même raison : chacun atteste sur son propre montant.
+model TaxCertificate {
+  id                       String  @id @default(cuid())
+  organizationId           String
+  clientProfileId          String
+  /// Nul quand c'est la plateforme qui atteste sa coordination.
+  issuedByCleanerProfileId String?
+
+  annee Int
+
+  issuedAt      DateTime @default(now())
+  /// Sommes effectivement versées dans l'année, remboursements déduits.
+  verseCents    Int
+  /// Part ouvrant droit à l'avantage de l'article 199 sexdecies du CGI.
+  eligibleCents Int
+  /// Forme : `facturation/attestation.Attestation`.
+  snapshot      Json
+
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile   @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  issuedBy      CleanerProfile? @relation(fields: [issuedByCleanerProfileId], references: [id], onDelete: SetNull)
+  /// Unicité par client, année et émetteur : deux index partiels posés à la
+  /// main dans la migration, PostgreSQL considérant deux NULL comme distincts.
+
+  @@index([organizationId, annee])
+  @@index([clientProfileId, annee])
 }
 
 model Message {

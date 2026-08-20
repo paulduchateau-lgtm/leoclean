@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { Cartes } from "@/app/(app)/mon-espace/paiement/cartes";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
-import { marketplaceOrganizationId } from "@/lib/organizations";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceClient } from "@/lib/auth/espaces";
 import { PREAUTORISATION_HEURES_AVANT } from "@/lib/paiement/calendrier";
 import { lireLesMoyens } from "@/lib/paiement/moyen";
 import { stripeEstConfigure } from "@/lib/paiement/stripe";
@@ -35,20 +35,30 @@ export const dynamic = "force-dynamic";
 export default async function PaiementPage({
   searchParams,
 }: PageProps<"/mon-espace/paiement">) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/mon-espace/paiement");
-
   const { carte } = await searchParams;
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "booking:read:own");
+  /*
+   * `espaceClient` traduit l'absence d'appartenance en résultat plutôt qu'en
+   * exception. Le cas est nominal : un compte se crée sans appartenance, le
+   * rattachement se faisant à la première réservation — cette page rendait donc
+   * une erreur 500 à qui venait de se connecter.
+   */
+  const espace = await espaceClient();
 
-  const profil = await db.clientProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/mon-espace/paiement");
+    }
+    return (
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/mon-espace", libelle: "Mes réservations" }}
+      />
+    );
+  }
 
-  const moyens = profil ? await lireLesMoyens(db, profil.id) : [];
+  const { db, profil } = espace;
+  const moyens = await lireLesMoyens(db, profil.id);
 
   return (
     <>

@@ -7,8 +7,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { lireAbonnements } from "@/lib/abonnement/gestion";
 import { JOURS } from "@/lib/availability/semaine";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
-import { marketplaceOrganizationId } from "@/lib/organizations";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceClient } from "@/lib/auth/espaces";
 
 /**
  * Mon abonnement.
@@ -45,16 +45,27 @@ function heureLisible(minutes: number): string {
 }
 
 export default async function AbonnementPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/mon-espace/abonnement");
+  /*
+   * `espaceClient` traduit l'absence d'appartenance en résultat plutôt
+   * qu'en exception. Le cas est nominal : un compte se crée sans
+   * appartenance, le rattachement se faisant à la première réservation —
+   * cette page rendait donc une erreur 500 à qui venait de se connecter.
+   */
+  const espace = await espaceClient();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "booking:read:own");
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/mon-espace/abonnement");
+    }
+    return (
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/mon-espace", libelle: "Mes réservations" }}
+      />
+    );
+  }
 
-  const profil = await db.clientProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
+  const { db, profil } = espace;
 
   const abonnements = profil ? await lireAbonnements(db, profil.id) : [];
 

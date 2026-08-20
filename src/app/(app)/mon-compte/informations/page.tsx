@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { Formulaire } from "@/app/(app)/mon-compte/informations/formulaire";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceClient } from "@/lib/auth/espaces";
 import { lireLesInformations } from "@/lib/compte/informations";
-import { marketplaceOrganizationId } from "@/lib/organizations";
 
 /**
  * Informations personnelles.
@@ -26,11 +26,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function InformationsPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/mon-compte/informations");
+  /*
+   * `espaceClient` traduit l'absence d'appartenance en résultat plutôt
+   * qu'en exception. Le cas est nominal : un compte se crée sans
+   * appartenance, le rattachement se faisant à la première réservation —
+   * cette page rendait donc une erreur 500 à qui venait de se connecter.
+   */
+  const espace = await espaceClient();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(organizationId, "booking:read:own");
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/mon-compte/informations");
+    }
+    return (
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/mon-compte", libelle: "Mon compte" }}
+      />
+    );
+  }
+
+  const { db, user } = espace;
   const informations = await lireLesInformations(db, user.id);
 
   return (

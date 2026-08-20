@@ -3,11 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { MissionProposeeCarte } from "@/app/(app)/intervenant/mission-proposee";
+import { EspaceFerme } from "@/components/espace-ferme";
 import { chargerMissions } from "@/lib/assignments/repository";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
-import { marketplaceOrganizationId } from "@/lib/organizations";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { formatEuros } from "@/lib/pricing";
-import { SITE } from "@/lib/site";
 
 /**
  * Espace intervenant : les missions.
@@ -42,37 +41,28 @@ function dureeLisible(minutes: number): string {
 }
 
 export default async function MissionsPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/connexion?callbackUrl=/intervenant");
-  }
+  /*
+   * `espaceIntervenant` remplace le couple `requireOrganization` + lecture du
+   * profil. La différence n'est pas cosmétique : `requireOrganization` **lève**
+   * quand l'appartenance manque, et l'exception remontait jusqu'au rendu — un
+   * client qui ouvrait cette adresse recevait une erreur 500, c'est-à-dire un
+   * site en panne, là où la réponse juste tient en une phrase.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(
-    organizationId,
-    "assignment:read:own",
-  );
-
-  const profil = await db.cleanerProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true, displayName: true },
-  });
-
-  if (!profil) {
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant");
+    }
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Espace intervenant
-        </h1>
-        <p className="mt-4 rounded-xl border border-border bg-secondary/40 p-5 text-muted-foreground">
-          Votre compte n&apos;est pas encore rattaché à un profil
-          d&apos;intervenant. Si vous pensez qu&apos;il s&apos;agit d&apos;une
-          erreur, appelez-nous au {SITE.phone}.
-        </p>
-      </main>
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
     );
   }
 
+  const { db, profil } = espace;
   const { propositions, aVenir } = await chargerMissions(db, profil.id);
 
   return (

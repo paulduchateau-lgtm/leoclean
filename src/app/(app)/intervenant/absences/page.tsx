@@ -6,9 +6,9 @@ import {
   AbsenceForm,
   RetraitAbsence,
 } from "@/app/(app)/intervenant/absences/absences-form";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { absencesVivantes, recouvre } from "@/lib/availability/absences";
-import { marketplaceOrganizationId } from "@/lib/organizations";
 import { SITE } from "@/lib/site";
 
 /**
@@ -43,36 +43,28 @@ const DATE_HEURE = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function AbsencesPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/connexion?callbackUrl=/intervenant/absences");
-  }
+  /*
+   * `espaceIntervenant` traduit l'absence d'appartenance en résultat
+   * plutôt qu'en exception : `requireOrganization` lève, et l'exception
+   * remontait jusqu'au rendu — une erreur 500 sur un état parfaitement
+   * ordinaire du produit.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(
-    organizationId,
-    "availability:manage:own",
-  );
-
-  const profil = await db.cleanerProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
-
-  if (!profil) {
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant/absences");
+    }
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Mes absences
-        </h1>
-        <p className="mt-4 rounded-xl border border-border bg-secondary/40 p-5 text-muted-foreground">
-          Votre compte n&apos;est pas encore rattaché à un profil
-          d&apos;intervenant. Appelez-nous au {SITE.phone} si vous pensez
-          qu&apos;il s&apos;agit d&apos;une erreur.
-        </p>
-      </main>
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
     );
   }
+
+  const { db, profil } = espace;
+
 
   const maintenant = new Date();
 

@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
-import { marketplaceOrganizationId } from "@/lib/organizations";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import { REVERSEMENT_DECALAGE_JOURS } from "@/lib/paiement/calendrier";
 import { chargerLesRevenus } from "@/lib/paiement/revenus";
 import { formatEuros } from "@/lib/pricing";
@@ -47,33 +47,28 @@ function dureeLisible(minutes: number): string {
 }
 
 export default async function RevenusPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/connexion?callbackUrl=/intervenant/revenus");
+  /*
+   * `espaceIntervenant` traduit l'absence d'appartenance en résultat
+   * plutôt qu'en exception : `requireOrganization` lève, et l'exception
+   * remontait jusqu'au rendu — une erreur 500 sur un état parfaitement
+   * ordinaire du produit.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(
-    organizationId,
-    "assignment:read:own",
-  );
-
-  const profil = await db.cleanerProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
-
-  if (!profil) {
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant/revenus");
+    }
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Mes revenus
-        </h1>
-        <p className="mt-4 rounded-xl border border-border bg-secondary/40 p-5 text-muted-foreground">
-          Votre compte n&apos;est pas rattaché à un profil d&apos;intervenant.
-          Appelez-nous au {SITE.phone}.
-        </p>
-      </main>
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
     );
   }
+
+  const { db, profil } = espace;
+
 
   const revenus = await chargerLesRevenus(db, profil.id);
 
