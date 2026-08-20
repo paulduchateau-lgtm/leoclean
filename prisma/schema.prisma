@@ -1302,6 +1302,16 @@ model Payment {
   capturedAt   DateTime?
   failureCode  String?
 
+  /// Date du **premier** échec, jamais du dernier : c'est elle qui datte toute
+  /// la suite des relances. La remplacer à chaque tentative repousserait
+  /// indéfiniment la suspension.
+  firstFailedAt  DateTime?
+  failedAttempts Int       @default(0)
+  /// Dernière relance envoyée. L'ordonnanceur repasse toutes les heures, la
+  /// relance se compte en jours : sans cette date, elle partirait vingt-quatre
+  /// fois par jour.
+  lastReminderAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1309,6 +1319,8 @@ model Payment {
   booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, status])
+  /// L'ordonnanceur cherche « ce qui a échoué et attend une relance ».
+  @@index([status, firstFailedAt])
 }
 
 enum PayoutStatus {

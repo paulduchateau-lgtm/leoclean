@@ -1,4 +1,5 @@
 import { genererLesRecurrences } from "@/lib/abonnement/generateur";
+import { traiterLesImpayes } from "@/lib/paiement/impayes";
 import { traiterLesPaiements } from "@/lib/paiement/travaux";
 import { purgerSelonLaRetention } from "@/lib/rgpd/retention";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
@@ -73,6 +74,19 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   /*
+   * Les impayés suivent les paiements et précèdent la facturation : une
+   * relance non partie coûte de l'argent, une facture émise une heure plus
+   * tard ne coûte rien.
+   */
+  let impayes;
+  try {
+    impayes = await traiterLesImpayes();
+  } catch (erreur) {
+    console.error("Traitement des impayés interrompu", erreur);
+    impayes = { erreur: true };
+  }
+
+  /*
    * La facturation suit les paiements et précède la purge. Elle est idempotente
    * — un index unique sur `(bookingId, type)` — donc la repasser toutes les
    * heures n'émet rien de plus. Chaque prestation est traitée séparément : un
@@ -106,6 +120,7 @@ export async function GET(request: Request): Promise<Response> {
     ...rapport,
     recurrences,
     paiements,
+    impayes,
     factures,
     retention,
   });
@@ -114,6 +129,7 @@ export async function GET(request: Request): Promise<Response> {
     ...rapport,
     recurrences,
     paiements,
+    impayes,
     factures,
     retention,
   });

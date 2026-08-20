@@ -71,6 +71,25 @@ export type Evenement =
       prenom: string;
       pour: "client" | "intervenant";
       intervention: Intervention;
+    }
+  /**
+   * Le prélèvement a été refusé.
+   *
+   * **Trois relances, puis une suspension annoncée** — jamais d'annulation
+   * silencieuse, qui ferait découvrir la rupture au client le matin où
+   * personne ne vient. Le ton monte avec le rang sans jamais devenir
+   * comminatoire : une carte expirée n'est pas une mauvaise foi, et c'est le
+   * cas le plus fréquent.
+   */
+  | {
+      type: "prelevement-refuse";
+      prenom: string;
+      montantCents: number;
+      /** 1, 2 ou 3. Le troisième annonce la suspension. */
+      rang: number;
+      /** Nombre de relances avant suspension, lu du calendrier. */
+      avantSuspension: number;
+      lienMoyenDePaiement: string;
     };
 
 export interface Message {
@@ -232,5 +251,40 @@ export function composer(evenement: Evenement): Message {
               "Si quelque chose vous empêche d'y aller, prévenez-nous au plus tôt : plus c'est tôt, plus nous avons de chances de trouver un remplaçant.",
             ],
           };
+
+    case "prelevement-refuse": {
+      const montant = new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR",
+      }).format(evenement.montantCents / 100);
+
+      const dernier = evenement.rang >= evenement.avantSuspension;
+
+      return {
+        objet: dernier
+          ? "Votre prochain ménage est suspendu"
+          : "Le paiement de votre ménage n'est pas passé",
+        apercu: dernier
+          ? "Un geste suffit à le rétablir."
+          : "Votre banque a refusé le prélèvement.",
+        paragraphes: [
+          `Bonjour ${evenement.prenom},`,
+          /*
+           * On dit d'abord ce qui s'est passé et pour combien, avant de
+           * demander quoi que ce soit : une relance qui commence par une
+           * consigne se lit comme un reproche, et la cause la plus fréquente
+           * est une carte expirée.
+           */
+          `Le prélèvement de ${montant} pour votre ménage a été refusé par votre banque. Le plus souvent, c'est une carte arrivée à expiration.`,
+          dernier
+            ? "Votre prochaine intervention est suspendue le temps d'y remédier. Elle n'est pas annulée : mettez votre carte à jour et nous la rétablissons — ou appelez-nous, on s'en occupe ensemble."
+            : "Mettez votre moyen de paiement à jour et nous représentons le prélèvement. Rien d'autre à faire.",
+        ],
+        action: {
+          libelle: "Mettre à jour ma carte",
+          url: evenement.lienMoyenDePaiement,
+        },
+      };
+    }
   }
 }
