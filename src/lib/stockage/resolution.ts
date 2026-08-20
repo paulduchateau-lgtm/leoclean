@@ -24,9 +24,25 @@ import { stockageS3 } from "./s3";
 
 let instance: Stockage | null = null;
 
-/** Y a-t-il un stockage ? Les écrans le demandent avant d'offrir un dépôt. */
+/**
+ * Y a-t-il un stockage **complet** ? Les écrans le demandent avant d'offrir un
+ * dépôt.
+ *
+ * On vérifie le fournisseur **et ses clés**, pas seulement le fournisseur : une
+ * configuration à moitié faite afficherait un bouton de dépôt qui échoue au
+ * clic, devant quelqu'un qui téléverse sa pièce d'identité. Mieux vaut dire
+ * « pas encore ouvert » et donner le téléphone.
+ */
 export function stockageConfigure(): boolean {
-  return serverEnv.STOCKAGE_PROVIDER !== undefined;
+  if (serverEnv.STOCKAGE_PROVIDER === "memoire") return true;
+  if (serverEnv.STOCKAGE_PROVIDER !== "scaleway") return false;
+
+  return Boolean(
+    serverEnv.SCALEWAY_S3_ENDPOINT &&
+    serverEnv.SCALEWAY_S3_BUCKET &&
+    serverEnv.SCALEWAY_ACCESS_KEY &&
+    serverEnv.SCALEWAY_SECRET_KEY,
+  );
 }
 
 export function stockage(): Stockage {

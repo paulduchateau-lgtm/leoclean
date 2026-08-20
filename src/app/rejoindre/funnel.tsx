@@ -1,10 +1,16 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import { ouvrirUnDossier } from "@/app/rejoindre/actions";
 import { Button } from "@/components/ui/button";
+import {
+  LIBELLES_PIECES,
+  PIECES,
+  PIECES_ENGENDRABLES,
+} from "@/lib/candidature/parcours";
 import { COMMUNES } from "@/lib/territory";
 
 /**
@@ -102,16 +108,74 @@ export function FunnelCandidature({ className }: { className?: string }) {
 
   if (issue === "ouvert") {
     return (
-      <div
-        role="status"
-        className={`rounded-2xl border border-success/40 bg-success/10 p-6 ${className ?? ""}`}
-      >
-        <p className="font-semibold">Votre dossier est ouvert.</p>
-        <p className="mt-2 text-muted-foreground">
-          Un lien vient de partir vers votre email. Il vous permet de reprendre
-          où vous en êtes, depuis n&apos;importe quel appareil — rien de ce que
-          vous avez saisi n&apos;est perdu.
-        </p>
+      <div role="status" className={className}>
+        <div className="rounded-2xl border border-success/40 bg-success/10 p-6">
+          <p className="font-semibold">Votre dossier est ouvert.</p>
+          <p className="mt-2 text-muted-foreground">
+            Un lien vient de partir vers votre email. Il vous permet de
+            reprendre où vous en êtes, depuis n&apos;importe quel appareil —
+            rien de ce que vous avez saisi n&apos;est perdu.
+          </p>
+        </div>
+
+        {/*
+         * Ce bloc manquait, et son absence était le défaut le plus coûteux du
+         * parcours : on répondait à six questions, on lisait « dossier
+         * ouvert », et rien ne disait qu'il restait des pièces à fournir. La
+         * personne repartait en croyant avoir postulé.
+         *
+         * La liste est **lue dans `parcours.ts`**, jamais recopiée : c'est
+         * exactement celle qu'on promet aux clients sous « professionnels
+         * vérifiés » et celle que la revue de dossier exige. Trois surfaces,
+         * une seule vérité — une liste écrite ici finirait par en annoncer une
+         * quatrième.
+         */}
+        <section className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-heading text-lg font-extrabold">
+            Ce qu&apos;il vous restera à fournir
+          </h2>
+          <p className="mt-1 text-pretty text-muted-foreground">
+            Rien à faire tout de suite. Vous les déposerez à votre rythme, une
+            par une, et votre dossier avance entre-temps.
+          </p>
+
+          <ul className="mt-4 space-y-2">
+            {PIECES.filter((piece) => !PIECES_ENGENDRABLES.includes(piece)).map(
+              (piece) => (
+                <li key={piece} className="flex gap-2">
+                  <span aria-hidden className="text-brand">
+                    ·
+                  </span>
+                  <span>{LIBELLES_PIECES[piece]}</span>
+                </li>
+              ),
+            )}
+          </ul>
+
+          {/*
+           * L'avis de situation SIRENE ne figure pas dans la liste : on le
+           * récupère depuis l'INSEE. Faire télécharger au candidat ce qu'on
+           * vient de lire est un abandon gratuit, et le dire évite qu'il le
+           * cherche.
+           */}
+          <p className="mt-4 text-sm text-pretty text-muted-foreground">
+            Votre avis de situation SIRENE, nous le récupérons pour vous.
+          </p>
+
+          {/*
+           * Un lien direct, en plus de l'email. Quelqu'un qui vient de remplir
+           * six écrans est encore devant son navigateur : l'obliger à aller
+           * chercher un message pour continuer est une rupture qu'on paie en
+           * abandons. Le lien demande la connexion — c'est le lien qui vient
+           * de partir qui l'ouvrira — mais il évite de chercher où aller.
+           */}
+          <Link
+            href="/rejoindre/dossier"
+            className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs"
+          >
+            Voir mon dossier
+          </Link>
+        </section>
       </div>
     );
   }

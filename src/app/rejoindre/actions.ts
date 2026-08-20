@@ -25,7 +25,7 @@ import {
   MESSAGES_REFUS,
   type RefusFichier,
 } from "@/lib/stockage";
-import { isCoveredInsee } from "@/lib/territory";
+import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
 
 /**
  * Le funnel d'inscription intervenant.
@@ -109,6 +109,14 @@ export const ouvrirUnDossier = publicAction(
         phone: input.phone,
         email: input.email.toLowerCase(),
         declaredInsee: input.communeInsee,
+        /*
+         * Le nom de la commune est écrit à côté de son code INSEE. Le code seul
+         * suffit au produit, mais la revue de dossier lit une identité, pas un
+         * référentiel : elle affichait « commune inconnue » sur des candidats
+         * qui l'avaient pourtant choisie au premier écran. Un code INSEE ne se
+         * lit pas au téléphone.
+         */
+        declaredCity: getCommuneByInsee(input.communeInsee)?.name ?? null,
         travelMode: input.travelMode,
         hoursPerWeek: input.hoursPerWeek,
         experience: input.experience,
