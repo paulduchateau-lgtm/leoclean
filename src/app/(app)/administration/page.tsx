@@ -94,9 +94,24 @@ export default async function AdministrationPage() {
       <h1 className="font-heading text-3xl font-semibold tracking-tight">
         Ce qui attend
       </h1>
-      <p className="mt-2 text-sm">
-        <Link href="/administration/radar" className="text-primary hover:underline">
+      <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        <Link
+          href="/administration/radar"
+          className="font-semibold text-primary hover:underline"
+        >
           Ouvrir le Radar →
+        </Link>
+        <Link
+          href="/administration/candidatures"
+          className="text-primary hover:underline"
+        >
+          Candidatures →
+        </Link>
+        <Link
+          href="/administration/reclamations"
+          className="text-primary hover:underline"
+        >
+          Réclamations →
         </Link>
       </p>
       <p className="mt-3 max-w-prose text-muted-foreground">
