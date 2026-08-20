@@ -28,7 +28,7 @@ import {
   MESSAGES_REFUS,
   type RefusFichier,
 } from "@/lib/stockage";
-import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
+import { getCommuneByInsee } from "@/lib/territory";
 
 /**
  * Le funnel d'inscription intervenant.
@@ -41,7 +41,18 @@ import { getCommuneByInsee, isCoveredInsee } from "@/lib/territory";
  */
 
 const eligibiliteSchema = z.object({
-  communeInsee: z.string().min(1),
+  /**
+   * Commune de résidence, choisie dans le référentiel **ou saisie librement**.
+   *
+   * Elle ne conditionne rien. Habiter hors des seize communes n'empêche pas d'y
+   * travailler : quelqu'un de Bordeaux centre dessert Villenave-d'Ornon sans
+   * difficulté, et refuser sa candidature écarterait des gens parfaitement
+   * capables. La commune sert au calcul de tournée et au score de trajet, pas
+   * à l'éligibilité — et c'est un humain qui juge, en entretien, si le trajet
+   * quotidien tient.
+   */
+  communeInsee: z.string().min(1).optional(),
+  communeLibre: z.string().trim().min(2).max(80).optional(),
   travelMode: z.enum(["VEHICULE", "DEUX_ROUES", "TRANSPORTS", "A_PIED"]),
   hoursPerWeek: z.enum(["MOINS_10", "DE_10_A_20", "DE_20_A_35", "PLUS_35"]),
   experience: z.enum(["AUCUNE", "OCCASIONNELLE", "PLUSIEURS_ANNEES", "PRO"]),
@@ -85,24 +96,18 @@ export const ouvrirUnDossier = publicAction(
       (input.renderedAt !== undefined && Date.now() - input.renderedAt < 3000);
     if (automatise) return { dossierId: null, envoye: true as const };
 
-    if (!isCoveredInsee(input.communeInsee)) {
-      /*
-       * Hors zone, on ne fait pas semblant : la candidature n'ouvre pas, la
-       * demande rejoint la liste d'attente, et c'est elle qui décidera un jour
-       * d'ouvrir la commune. Faire venir quelqu'un pour rien coûte davantage
-       * qu'un refus honnête.
-       */
-      await prisma.waitlist.create({
-        data: {
-          kind: "CLEANER",
-          email: input.email.toLowerCase(),
-          phone: input.phone,
-          communeName: input.communeInsee,
-          sourcePath: "/rejoindre",
-        },
-      });
-      return { dossierId: null, horsZone: true as const };
-    }
+    /*
+     * **Aucun blocage de secteur.** La version précédente refusait la
+     * candidature de quiconque n'habitait pas l'une des seize communes, et
+     * versait ses coordonnées en liste d'attente. C'était confondre deux
+     * choses : le rayon court est une contrainte sur les **missions**, pas sur
+     * le domicile de celui qui les fait. On écartait ainsi des gens qui
+     * pouvaient parfaitement travailler ici.
+     *
+     * La commune reste collectée — elle nourrit le calcul de tournée et la
+     * composante trajet du score — et l'entretien décide si le trajet
+     * quotidien tient. Une machine ne tranche pas cela sur un code INSEE.
+     */
 
     const dossier = await prisma.proApplication.create({
       data: {
@@ -111,7 +116,12 @@ export const ouvrirUnDossier = publicAction(
         lastName: input.lastName,
         phone: input.phone,
         email: input.email.toLowerCase(),
-        declaredInsee: input.communeInsee,
+        /*
+         * L'INSEE n'est renseigné que pour une commune du référentiel : c'est
+         * une clé de jointure, pas un texte. Une saisie libre laisse le champ
+         * nul et ne garde que le nom.
+         */
+        declaredInsee: input.communeInsee ?? null,
         /*
          * Le nom de la commune est écrit à côté de son code INSEE. Le code seul
          * suffit au produit, mais la revue de dossier lit une identité, pas un
@@ -119,7 +129,9 @@ export const ouvrirUnDossier = publicAction(
          * qui l'avaient pourtant choisie au premier écran. Un code INSEE ne se
          * lit pas au téléphone.
          */
-        declaredCity: getCommuneByInsee(input.communeInsee)?.name ?? null,
+        declaredCity: input.communeInsee
+          ? (getCommuneByInsee(input.communeInsee)?.name ?? null)
+          : (input.communeLibre ?? null),
         travelMode: input.travelMode,
         hoursPerWeek: input.hoursPerWeek,
         experience: input.experience,

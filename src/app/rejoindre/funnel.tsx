@@ -4,6 +4,7 @@ import { Loader2Icon } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
+import { requestMagicLink } from "@/app/(auth)/actions";
 import { ouvrirUnDossier } from "@/app/rejoindre/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,8 +78,17 @@ export function FunnelCandidature({ className }: { className?: string }) {
   const [question, setQuestion] = useState<Question>("commune");
   const [reponses, setReponses] = useState<Record<string, string>>({});
   const [erreur, setErreur] = useState<string | null>(null);
-  const [issue, setIssue] = useState<"ouvert" | "hors-zone" | null>(null);
+  const [issue, setIssue] = useState<"ouvert" | null>(null);
+  /*
+   * Commune tapée à la main, quand elle n'est pas dans le référentiel.
+   * Habiter ailleurs n'empêche pas de travailler ici : la commune sert au
+   * calcul de tournée, pas à l'éligibilité.
+   */
+  const [communeLibre, setCommuneLibre] = useState<string | null>(null);
   const [affiche] = useState(() => Date.now());
+  /* L'adresse saisie, pour la nommer et pouvoir renvoyer le lien. */
+  const [email, setEmail] = useState("");
+  const [renvoye, setRenvoye] = useState(false);
 
   const index = ORDRE.indexOf(question);
 
@@ -89,33 +99,57 @@ export function FunnelCandidature({ className }: { className?: string }) {
     if (suivante) setQuestion(suivante);
   }
 
-  if (issue === "hors-zone") {
-    return (
-      <div
-        role="status"
-        className={`rounded-2xl border border-border bg-secondary/40 p-6 ${className ?? ""}`}
-      >
-        <p className="font-semibold">On n&apos;est pas encore chez vous.</p>
-        <p className="mt-2 text-muted-foreground">
-          On ouvre une commune quand quelqu&apos;un peut y travailler à moins de
-          vingt minutes — c&apos;est ce qui rend tenable « toujours la même
-          personne ». On garde vos coordonnées et on vous écrit le jour où
-          c&apos;est le cas. Sans rien vous envoyer d&apos;autre entre-temps.
-        </p>
-      </div>
-    );
-  }
-
   if (issue === "ouvert") {
     return (
       <div role="status" className={className}>
         <div className="rounded-2xl border border-success/40 bg-success/10 p-6">
           <p className="font-semibold">Votre dossier est ouvert.</p>
-          <p className="mt-2 text-muted-foreground">
-            Un lien vient de partir vers votre email. Il vous permet de
-            reprendre où vous en êtes, depuis n&apos;importe quel appareil —
-            rien de ce que vous avez saisi n&apos;est perdu.
+          {/*
+           * **Le lien n'est pas un accusé de réception, c'est la porte.**
+           * L'écran annonçait « un lien vient de partir » comme une politesse,
+           * et le dépôt des pièces se trouve derrière — donc personne ne
+           * comprenait comment déposer quoi que ce soit. On nomme donc
+           * l'adresse, on dit à quoi le lien sert, et on offre de le renvoyer :
+           * un email qui n'arrive pas ferme le parcours entier.
+           */}
+          <p className="mt-2 text-pretty text-muted-foreground">
+            <strong className="text-foreground">
+              Ouvrez le lien que nous venons d&apos;envoyer à {email}
+            </strong>{" "}
+            : c&apos;est lui qui vous donne accès à votre dossier, et c&apos;est
+            ainsi qu&apos;on s&apos;assure que personne d&apos;autre n&apos;y
+            dépose de documents à votre place.
           </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending || renvoye}
+              onClick={() =>
+                startTransition(async () => {
+                  await requestMagicLink({
+                    email,
+                    callbackUrl: "/rejoindre/dossier",
+                  });
+                  /*
+                   * On confirme l'envoi sans le conditionner au résultat : le
+                   * même message quoi qu'il arrive, sinon ce bouton dirait qui
+                   * possède un compte.
+                   */
+                  setRenvoye(true);
+                })
+              }
+            >
+              {renvoye ? "Lien renvoyé" : "Je n'ai rien reçu"}
+            </Button>
+            <Link
+              href="/rejoindre/dossier"
+              className="text-sm font-medium text-brand underline underline-offset-4"
+            >
+              J&apos;ai déjà cliqué sur le lien →
+            </Link>
+          </div>
         </div>
 
         {/*
@@ -162,19 +196,9 @@ export function FunnelCandidature({ className }: { className?: string }) {
             Votre avis de situation SIRENE, nous le récupérons pour vous.
           </p>
 
-          {/*
-           * Un lien direct, en plus de l'email. Quelqu'un qui vient de remplir
-           * six écrans est encore devant son navigateur : l'obliger à aller
-           * chercher un message pour continuer est une rupture qu'on paie en
-           * abandons. Le lien demande la connexion — c'est le lien qui vient
-           * de partir qui l'ouvrira — mais il évite de chercher où aller.
-           */}
-          <Link
-            href="/rejoindre/dossier"
-            className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs"
-          >
-            Voir mon dossier
-          </Link>
+          <p className="mt-4 text-sm text-pretty text-muted-foreground">
+            Vous les déposerez depuis votre dossier, une fois le lien ouvert.
+          </p>
         </section>
       </div>
     );
@@ -205,14 +229,45 @@ export function FunnelCandidature({ className }: { className?: string }) {
           ))}
           <button
             type="button"
-            onClick={() => {
-              setReponses((etat) => ({ ...etat, commune: "hors-zone" }));
-              setQuestion("identite");
-            }}
+            onClick={() => setCommuneLibre("")}
+            aria-pressed={communeLibre !== null}
             className="min-h-12 rounded-full border border-dashed border-input bg-background px-4 text-base"
           >
             Une autre commune
           </button>
+        </div>
+      ) : null}
+
+      {/*
+       * Une commune hors de nos seize n'arrête plus rien. Le rayon court est
+       * une contrainte sur les **missions**, pas sur le domicile de celui qui
+       * les fait : quelqu'un de Bordeaux centre dessert Villenave-d'Ornon sans
+       * difficulté. On dit ce que cela implique, et on laisse continuer.
+       */}
+      {question === "commune" && communeLibre !== null ? (
+        <div className="mt-4 rounded-xl border border-border bg-secondary/30 p-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Où habitez-vous ?</span>
+            <input
+              autoFocus
+              value={communeLibre}
+              onChange={(event) => setCommuneLibre(event.target.value)}
+              placeholder="Bordeaux, Pessac, Talence…"
+              className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
+            />
+          </label>
+          <p className="mt-2 text-sm text-pretty text-muted-foreground">
+            Nos missions sont sur nos {COMMUNES.length} communes du sud de
+            Bordeaux. Vous pouvez y travailler sans y habiter — on regardera
+            ensemble si le trajet vous convient.
+          </p>
+          <Button
+            className="mt-3"
+            disabled={communeLibre.trim().length < 2}
+            onClick={() => setQuestion("deplacement")}
+          >
+            Continuer
+          </Button>
         </div>
       ) : null}
 
@@ -246,8 +301,13 @@ export function FunnelCandidature({ className }: { className?: string }) {
             setErreur(null);
 
             startTransition(async () => {
+              const adresse = String(donnees.get("email") ?? "");
+              setEmail(adresse);
+
               const resultat = await ouvrirUnDossier({
-                communeInsee: reponses.commune ?? "hors-zone",
+                ...(reponses.commune
+                  ? { communeInsee: reponses.commune }
+                  : { communeLibre: communeLibre ?? undefined }),
                 travelMode: (reponses.deplacement ?? "VEHICULE") as never,
                 hoursPerWeek: (reponses.heures ?? "DE_20_A_35") as never,
                 experience: (reponses.experience ?? "AUCUNE") as never,
@@ -255,7 +315,7 @@ export function FunnelCandidature({ className }: { className?: string }) {
                 firstName: String(donnees.get("firstName") ?? ""),
                 lastName: String(donnees.get("lastName") ?? ""),
                 phone: String(donnees.get("phone") ?? ""),
-                email: String(donnees.get("email") ?? ""),
+                email: adresse,
                 website: String(donnees.get("website") ?? ""),
                 renderedAt: affiche,
               });
@@ -264,11 +324,7 @@ export function FunnelCandidature({ className }: { className?: string }) {
                 setErreur(resultat.error);
                 return;
               }
-              setIssue(
-                "horsZone" in resultat.data && resultat.data.horsZone
-                  ? "hors-zone"
-                  : "ouvert",
-              );
+              setIssue("ouvert");
             });
           }}
         >
@@ -315,7 +371,16 @@ export function FunnelCandidature({ className }: { className?: string }) {
             </label>
           </div>
 
-          <div aria-hidden="true" className="absolute -left-[9999px]">
+          {/*
+           * Le piège doit être invisible **et** hors du flux. `-left-[9999px]`
+           * ne l'était pas : Tailwind 4 n'émet pas cette forme, la classe
+           * tombait, et le champ s'affichait en plein milieu du formulaire.
+           * Un candidat qui écrivait dedans voyait sa candidature acceptée à
+           * l'écran et jetée en silence — exactement ce que le piège doit
+           * faire aux robots, appliqué à un humain. On reprend la boîte
+           * collabée de `lead-form.tsx`, qui, elle, tient.
+           */}
+          <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden">
             <label>
               Ne rien écrire ici
               <input name="website" tabIndex={-1} autoComplete="off" />

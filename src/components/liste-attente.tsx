@@ -161,7 +161,16 @@ export function ListeAttente({
       </div>
 
       {/* Champ piège : invisible pour un humain, rempli par un robot. */}
-      <div aria-hidden="true" className="absolute -left-[9999px]">
+      {/*
+       * Le piège doit être invisible **et** hors du flux. `-left-[9999px]`
+       * ne l'était pas : Tailwind 4 n'émet pas cette forme, la classe
+       * tombait, et le champ s'affichait en plein milieu du formulaire.
+       * Un candidat qui écrivait dedans voyait sa candidature acceptée à
+       * l'écran et jetée en silence — exactement ce que le piège doit
+       * faire aux robots, appliqué à un humain. On reprend la boîte
+       * collabée de `lead-form.tsx`, qui, elle, tient.
+       */}
+      <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden">
         <label>
           Ne rien écrire ici
           <input name="website" tabIndex={-1} autoComplete="off" />

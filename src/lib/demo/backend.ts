@@ -201,6 +201,7 @@ export const demoBookingBackend: BookingBackend = {
         end,
         location: addressLabel,
         cleanerFirstName: cleaner?.firstName ?? null,
+        confirmed: cleaner !== null,
         stampedAt: new Date(),
       }),
     };

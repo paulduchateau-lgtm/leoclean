@@ -159,9 +159,17 @@ test.describe("réservation", () => {
 
     await page.getByRole("button", { name: /^Réserver / }).click();
 
-    await expect(page.getByText("C'est réservé.")).toBeVisible({
+    await expect(page.getByText("C'est noté.")).toBeVisible({
       timeout: 30_000,
     });
+
+    // Sortir du tunnel crée une demande proposée à cinq intervenants, jamais
+    // une réservation tenue. L'écran ne doit donc promettre ni un rendez-vous
+    // ferme ni un créneau bloqué — c'est la formulation qui a été corrigée, et
+    // rien n'empêcherait qu'elle revienne.
+    const ecran = await page.locator("main").innerText();
+    expect(ecran).not.toContain("C'est réservé");
+    expect(ecran).not.toMatch(/créneau[^.]*bloqué/);
     // Les montants portent une espace fine insécable avant l'euro : on
     // normalise toutes les espaces Unicode plutôt que d'en énumérer deux.
     const main = await page.locator("main").innerText();
@@ -175,7 +183,7 @@ test.describe("réservation", () => {
     await expect(
       page
         .getByText("Vous serez suivi par")
-        .or(page.getByText(/votre intervenant sous 24 heures/)),
+        .or(page.getByText(/on vous trouve quelqu'un/i)),
     ).toBeVisible();
 
     // Le fichier iCalendar est produit là où la réservation est écrite, et

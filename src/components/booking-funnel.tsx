@@ -3052,12 +3052,29 @@ function IntervenantCard({ cleaner }: { cleaner: CleanerCardView | null }) {
   if (!cleaner) {
     return (
       <div className="rounded-xl border border-border bg-card p-5 text-left">
+        {/*
+         * **« Le créneau est bloqué » était faux, et c'était le pire des
+         * deux.** Une proposition ne réserve rien — ni en base, ni dans le
+         * moteur — précisément pour qu'un intervenant puisse recevoir deux
+         * offres et choisir. Promettre un créneau tenu, c'est promettre ce
+         * qu'aucune ligne du produit ne tient.
+         *
+         * On dit donc le mécanisme réel : la mission part aux plus proches de
+         * chez vous, le premier qui accepte l'emporte, et si personne n'est
+         * libre à cette heure-là c'est vous qui tranchez l'heure suivante.
+         * C'est exactement ce que font `diffusion.ts` et `SlotProposal`.
+         */}
         <p className="font-medium">
-          Nous vous confirmons votre intervenant sous 24 heures.
+          Maintenant, on vous trouve quelqu&apos;un.
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Le créneau, lui, est bloqué : c&apos;est la personne qui reste à
-          confirmer, pas le rendez-vous.
+        <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+          Votre mission part aux intervenants les plus proches de chez vous. Le
+          premier qui l&apos;accepte la prend, et vous recevez son prénom — sous
+          24 heures.
+        </p>
+        <p className="mt-2 text-sm text-pretty text-muted-foreground">
+          Si personne n&apos;est libre à cette heure-là, on vous propose une
+          autre heure. Rien ne bouge sans votre accord.
         </p>
       </div>
     );
@@ -3142,10 +3159,18 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
         <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <CheckIcon className="size-6" aria-hidden />
         </span>
-        <h2 className="mt-5 text-2xl font-black">C&apos;est réservé.</h2>
+        {/*
+         * **« C'est réservé » promettait ce que le produit ne fait pas.**
+         * Depuis la diffusion par lots, sortir du tunnel crée une demande
+         * proposée à cinq intervenants : aucun n'a accepté, et la formule
+         * laissait croire que quelqu'un viendrait. Le titre dit donc ce qui
+         * vient d'être fait — la demande est prise — et ce qui commence :
+         * la recherche.
+         */}
+        <h2 className="mt-5 text-2xl font-black">C&apos;est noté.</h2>
         <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
-          Rendez-vous{" "}
-          <strong className="text-foreground first-letter:uppercase">
+          Votre demande est enregistrée pour le{" "}
+          <strong className="text-foreground">
             {dayFormatter.format(start)} à {hourLabel(start)}
           </strong>{" "}
           au {confirmation.addressLabel}, pour{" "}
@@ -3159,9 +3184,10 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
             lui-même déclarée acceptable. */}
         {confirmation.usedAlternate ? (
           <p className="mx-auto mt-4 max-w-prose rounded-lg bg-pineapple-100 px-4 py-3 text-sm">
-            Votre créneau préféré est parti pendant que vous remplissiez le
-            formulaire. Nous avons retenu l&apos;un de ceux que vous aviez
-            acceptés — c&apos;est bien l&apos;heure ci-dessus qui est réservée.
+            Votre créneau préféré n&apos;était plus tenable pendant que vous
+            remplissiez le formulaire. Nous avons retenu l&apos;un de ceux que
+            vous aviez acceptés — c&apos;est bien l&apos;heure ci-dessus que
+            nous cherchons à pourvoir.
           </p>
         ) : null}
       </div>
@@ -3213,7 +3239,11 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
       <InstallPrompt />
 
       <p className="text-center text-sm text-muted-foreground">
-        Un email de confirmation part maintenant. Pour modifier ou annuler,
+        {/* L'email qui part est « demande reçue », pas une confirmation :
+            `messages.ts` s'interdit de confirmer avant qu'un intervenant ait
+            accepté, et cette ligne était le dernier endroit du parcours à
+            promettre le contraire. */}
+        Un récapitulatif part maintenant par email. Pour modifier ou annuler,
         répondez-y ou appelez-nous — c&apos;est gratuit jusqu&apos;à{" "}
         {FREE_CANCELLATION_HOURS} heures avant.
       </p>

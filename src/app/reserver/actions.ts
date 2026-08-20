@@ -428,6 +428,12 @@ export const confirmBooking = publicAction(confirmSchema, async (input) => {
         // Personne n'a encore accepté : le fichier d'agenda ne peut nommer
         // quiconque, et il annonce donc l'intervention seule.
         cleanerFirstName: null,
+        /*
+         * La mission vient d'être proposée, pas acceptée : l'agenda reçoit un
+         * `TENTATIVE`. Poser `CONFIRMED` ferait entrer chez le client une
+         * certitude que la réservation n'a pas encore.
+         */
+        confirmed: false,
         stampedAt: now,
       }),
     };
