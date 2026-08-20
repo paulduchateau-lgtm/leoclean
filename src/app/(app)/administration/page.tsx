@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { Geste } from "@/app/(app)/administration/geste";
 import { chargerTableauDeBord } from "@/lib/administration/tableau-de-bord";
 import { asPlatformAdmin, getCurrentUser } from "@/lib/auth/session";
 import { formatEuros } from "@/lib/pricing";
@@ -115,7 +116,9 @@ export default async function AdministrationPage() {
         </Link>
       </p>
       <p className="mt-3 max-w-prose text-muted-foreground">
-        Quatre situations que rien ne rattrape tout seul.
+        Quatre situations que rien ne rattrape tout seul. Les trois premières se
+        traitent ici : relancer rejoue le moteur d&apos;attribution, avec les
+        mêmes plannings et les mêmes trajets réels.
       </p>
 
       <Section
@@ -151,6 +154,12 @@ export default async function AdministrationPage() {
                     {reservation.clientEmail}
                   </a>
                 </p>
+                <Geste
+                  geste={{
+                    type: "recherche",
+                    bookingId: reservation.bookingId,
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -184,6 +193,12 @@ export default async function AdministrationPage() {
                     ? ` · réponse attendue le ${jour.format(proposition.repondreAvant)}`
                     : ""}
                 </p>
+                <Geste
+                  geste={{
+                    type: "proposition",
+                    assignmentId: proposition.assignmentId,
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -218,6 +233,7 @@ export default async function AdministrationPage() {
                     : ""}
                   reçue le {jour.format(demande.recueLe)}
                 </p>
+                <Geste geste={{ type: "rappel", leadId: demande.leadId }} />
               </li>
             ))}
           </ul>

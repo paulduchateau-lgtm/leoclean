@@ -74,6 +74,20 @@ export async function chargerTableauDeBord(
       where: {
         status: "PENDING_ASSIGNMENT",
         scheduledStart: { gte: maintenant },
+        /*
+         * `PENDING_ASSIGNMENT` ne suffit pas à faire une réservation orpheline.
+         * Depuis la diffusion par lots, c'est l'état **normal** d'une demande
+         * proposée à cinq intervenants qui n'ont pas encore répondu : seule une
+         * acceptation écrit `CONFIRMED`. La liste en comptait donc vingt-quatre
+         * là où deux ou trois exigeaient vraiment quelqu'un — et une file de
+         * travail qui ne diminue pas quand on travaille cesse d'être lue.
+         *
+         * Est orpheline la réservation dont **plus aucune proposition ne
+         * court** : tout le monde a refusé, ou tout a expiré.
+         */
+        assignments: {
+          none: { status: { in: ["PROPOSED", "ACCEPTED"] } },
+        },
       },
       orderBy: { scheduledStart: "asc" },
       take: 50,

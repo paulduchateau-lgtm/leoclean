@@ -94,6 +94,15 @@ async function chargerLesFaits(maintenant: Date): Promise<FaitsExploitation> {
       where: {
         status: "PENDING_ASSIGNMENT",
         scheduledStart: { gt: new Date(maintenant.getTime() - 86_400_000) },
+        /*
+         * Même règle que le tableau de bord : `PENDING_ASSIGNMENT` est l'état
+         * **normal** d'une demande proposée à cinq intervenants qui n'ont pas
+         * encore répondu. Est orpheline celle dont plus aucune proposition ne
+         * court — tout le monde a refusé, ou tout a expiré.
+         */
+        assignments: {
+          none: { status: { in: ["PROPOSED", "ACCEPTED"] } },
+        },
       },
       select: {
         id: true,
