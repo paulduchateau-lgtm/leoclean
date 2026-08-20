@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { FOURNISSEURS_ACTIFS } from "@/lib/auth/fournisseurs";
+import { MESSAGE_ECHEC } from "@/lib/auth/identifiants";
 import { getCurrentUser } from "@/lib/auth/session";
 
 import { SignInForm } from "./sign-in-form";
@@ -27,6 +29,14 @@ export default async function SignInPage({
   const callbackUrl =
     candidate?.startsWith("/") && !candidate.startsWith("//") ? candidate : "/";
 
+  /*
+   * Auth.js redirige ici avec `?error=CredentialsSignin` quand la connexion est
+   * postée hors de notre formulaire — par un gestionnaire de mots de passe qui
+   * soumet directement, par exemple. Sans ce rappel, la personne reverrait le
+   * formulaire vide et croirait que rien ne s'est passé.
+   */
+  const echecIdentifiants = params.error === "CredentialsSignin";
+
   return (
     <>
       <h1 className="text-2xl font-black tracking-tight">Se connecter</h1>
@@ -34,7 +44,19 @@ export default async function SignInPage({
         Pour suivre vos ménages, vos factures et votre intervenant attitré.
       </p>
 
-      <SignInForm callbackUrl={callbackUrl} />
+      {echecIdentifiants ? (
+        <p
+          role="alert"
+          className="mb-6 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm"
+        >
+          {MESSAGE_ECHEC}
+        </p>
+      ) : null}
+
+      <SignInForm
+        callbackUrl={callbackUrl}
+        fournisseurs={FOURNISSEURS_ACTIFS}
+      />
     </>
   );
 }

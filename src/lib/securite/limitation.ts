@@ -48,6 +48,20 @@ export const QUOTAS = {
   /** Envoi de liens de connexion, par source et non plus seulement par adresse. */
   connexion: { max: 15, fenetreMs: 3_600_000 },
   /**
+   * Tentatives de connexion par mot de passe.
+   *
+   * **Le quota le plus serré du module**, et pour une raison différente des
+   * autres : ceux-là protègent d'un abus de service, celui-ci protège d'une
+   * attaque par force brute. Dix essais par heure et par source ramènent un
+   * bourrage d'identifiants à une vitesse inutile, sans gêner quelqu'un qui
+   * cherche lequel de ses trois mots de passe habituels est le bon.
+   *
+   * Il porte sur la **source** et non sur l'adresse visée : compter par compte
+   * laisserait un attaquant essayer le même mot de passe sur mille comptes,
+   * ce qui est la forme la plus rentable de l'attaque.
+   */
+  "connexion-mot-de-passe": { max: 10, fenetreMs: 3_600_000 },
+  /**
    * Candidature d'intervenant.
    *
    * Plus rare encore qu'une demande de rappel : on ne postule pas trois fois

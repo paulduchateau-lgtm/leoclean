@@ -1,24 +1,37 @@
+import { ChevronRightIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import { auth, signOut } from "@/lib/auth/config";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { auth, signOut } from "@/lib/auth/config";
+import { composerLeMenu } from "@/lib/compte/menu";
+import { prisma } from "@/lib/db";
+import { canShowTaxCredit } from "@/lib/fiscal";
+
+/**
+ * Mon compte.
+ *
+ * Un sommaire, pas un tableau de bord : on y vient pour atteindre un réglage,
+ * jamais pour lire. Les réservations vivent à côté, sur la page qu'un client
+ * ouvre réellement tous les jours.
+ *
+ * **Ce qui n'existe pas n'apparaît pas.** `compte/menu.ts` est pur et compose
+ * la liste à partir de ce qui est réellement disponible ; un test lui interdit
+ * de proposer une fonction que le produit n'a pas, et de prononcer le mot
+ * « fiscal » tant que la déclaration SAP n'est pas obtenue. Une entrée qui
+ * déçoit apprend à ne plus faire confiance au menu, et le menu entier perd sa
+ * valeur pour une ligne de trop.
+ */
 
 export const metadata: Metadata = {
   title: "Mon compte",
   robots: { index: false, follow: false },
 };
 
-/** Libellés destinés aux personnes, pas aux développeurs. */
-const ROLE_LABELS: Record<string, string> = {
-  PLATFORM_ADMIN: "Administration Léo Clean",
-  ORG_OWNER: "Responsable",
-  ORG_MANAGER: "Gestion",
-  CLEANER: "Intervenant",
-  CLIENT: "Client",
-};
+export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await auth();
@@ -29,79 +42,94 @@ export default async function AccountPage() {
     redirect("/connexion?callbackUrl=/mon-compte");
   }
 
-  const memberships = session.user.memberships;
+  const userId = session.user.id;
+
+  /*
+   * Deux comptages plutôt que deux chargements : le menu n'a besoin de savoir
+   * que si la fonction a lieu d'être proposée, pas de son contenu.
+   */
+  const [abonnements, profilIntervenant] = await Promise.all([
+    prisma.subscription.count({
+      where: { clientProfile: { userId }, status: { not: "CANCELLED" } },
+    }),
+    prisma.cleanerProfile.count({ where: { userId } }),
+  ]);
+
+  const groupes = composerLeMenu({
+    attestationsFiscales: canShowTaxCredit(),
+    abonnement: abonnements > 0,
+    administrateurPlateforme: session.user.memberships.some(
+      (appartenance) => appartenance.role === "PLATFORM_ADMIN",
+    ),
+    intervenant: profilIntervenant > 0,
+  });
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <h1 className="text-3xl font-black tracking-tight">Mon compte</h1>
-      <p className="mt-2 text-muted-foreground">{session.user.email}</p>
+    <>
+      <SiteHeader variant="tunnel" />
 
-      {/* Le compte porte les accès ; les réservations vivent à côté, sur la
-          page qu'un client ouvre réellement. */}
-      <Link
-        href="/mon-espace"
-        className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
-      >
-        Voir mes réservations
-      </Link>
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
+        <h1 className="font-heading text-3xl font-black tracking-tight">
+          Mon compte
+        </h1>
+        <p className="mt-2 text-muted-foreground">{session.user.email}</p>
 
-      <section className="mt-10">
-        <h2 className="text-lg font-extrabold">Mes accès</h2>
-
-        {memberships.length === 0 ? (
-          /* Un état vide sans issue est un bug : celui-ci dit ce qui manque et
-             donne le geste qui le comble. */
-          <div className="mt-3 rounded-lg border border-border bg-secondary/40 p-5">
-            <p className="text-sm text-muted-foreground">
-              Votre compte n&apos;est rattaché à aucun espace pour
-              l&apos;instant. Il le sera à votre première réservation.
-            </p>
-            <Link
-              href="/reserver"
-              className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
-            >
-              Réserver un ménage
-            </Link>
-          </div>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {memberships.map((membership) => (
-              <li
-                key={membership.organizationId}
-                className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
-              >
-                <span className="font-medium">
-                  {membership.organizationName}
-                </span>
-                <Badge variant="secondary">
-                  {ROLE_LABELS[membership.role] ?? membership.role}
-                </Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <p className="mt-10 text-sm">
         <Link
-          href="/mon-compte/mes-donnees"
-          className="text-primary hover:underline"
+          href="/mon-espace"
+          data-booking-cta
+          className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
         >
-          Mes données personnelles : copie et suppression
+          Voir mes réservations
         </Link>
-      </p>
 
-      <form
-        className="mt-10"
-        action={async () => {
-          "use server";
-          await signOut({ redirectTo: "/" });
-        }}
-      >
-        <Button type="submit" variant="outline">
-          Me déconnecter
-        </Button>
-      </form>
-    </main>
+        {groupes.map((groupe) => (
+          <section key={groupe.titre} className="mt-10">
+            <h2 className="text-xs tracking-overline text-muted-foreground uppercase">
+              {groupe.titre}
+            </h2>
+
+            <ul className="mt-3 divide-y divide-border border-y border-border">
+              {groupe.entrees.map((entree) => (
+                <li key={entree.id}>
+                  <Link
+                    href={entree.href}
+                    className="flex min-h-16 items-center gap-4 py-3"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold">
+                        {entree.libelle}
+                      </span>
+                      {entree.detail ? (
+                        <span className="mt-0.5 block text-sm text-pretty text-muted-foreground">
+                          {entree.detail}
+                        </span>
+                      ) : null}
+                    </span>
+                    <ChevronRightIcon
+                      className="size-5 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+
+        <form
+          className="mt-12"
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        >
+          <Button type="submit" variant="outline">
+            Me déconnecter
+          </Button>
+        </form>
+      </main>
+
+      <SiteFooter />
+    </>
   );
 }

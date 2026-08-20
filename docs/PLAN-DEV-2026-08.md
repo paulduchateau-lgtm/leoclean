@@ -24,7 +24,7 @@ que chaque lot sache ce qu'il attend des autres.
 | **I** — Le pilotage           | ◐    | file d'actions à dix règles, priorités et délais. **Manquent** Radar, scores, CRM, inbox                                                                         |
 | **J** — Conformité            | ◐    | rétention automatique branchée sur l'ordonnanceur. **Manquent** réclamations, rôles étendus, TOTP                                                                |
 
-**729 tests unitaires** (53 fichiers), **12 suites d'intégration**, vitrine
+**759 tests unitaires** (55 fichiers), **13 suites d'intégration**, vitrine
 statique et construction de production vérifiées à chaque jalon.
 
 **Le stockage est tranché : Scaleway Object Storage** (arbitrage du 20 août

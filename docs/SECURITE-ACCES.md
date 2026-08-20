@@ -62,6 +62,41 @@ La migration ferme la porte ; ces réglages la murent. Ils ne peuvent pas être
 - [ ] **Restreindre les IP autorisées** si l'offre le permet — la connexion
       applicative vient de Vercel, pas d'un poste.
 
+## Mots de passe
+
+Facultatifs, et ajoutés au lien de connexion plutôt que substitués : un compte
+qui n'en a pas n'a rien à se faire voler. Ils ne se définissent que depuis une
+session ouverte, donc après avoir prouvé qu'on reçoit les emails de l'adresse —
+**il n'y a par conséquent aucun parcours de récupération à sécuriser**, le lien
+magique en tenant lieu.
+
+- **scrypt** (`node:crypto`), `N = 2^15, r = 8, p = 1`. Argon2id vient en tête
+  des recommandations de l'OWASP mais exige une dépendance native, ce qui casse
+  une construction sans serveur au premier changement d'architecture de
+  l'exécuteur. Les paramètres sont écrits dans l'empreinte : un durcissement
+  futur n'invalide rien, les empreintes se réencodent à la connexion suivante.
+- **Comparaison en temps constant** (`timingSafeEqual`), et **empreinte factice**
+  quand le compte n'existe pas : sans elle, la différence de durée énumérerait
+  les comptes malgré le message identique.
+- **Aucune règle de composition** — NIST 800-63B les décourage : elles
+  produisent `Motdepasse1!` et non de l'entropie. Dix caractères minimum, liste
+  des plus courants comparée après aplatissement des substitutions naïves, refus
+  de tout ce qui contient l'adresse ou le nom.
+- **Dix tentatives par heure et par source** (`connexion-mot-de-passe`), vérifié
+  dans `authorize` et non dans la server action : le point d'entrée réel est la
+  route d'Auth.js, qu'un script appelle sans passer par l'écran. Le quota porte
+  sur la source et non sur le compte visé, sans quoi un attaquant essaierait le
+  même mot de passe sur mille comptes.
+- **Les sessions restent en base**, y compris pour une connexion par mot de
+  passe : Auth.js bascule sur un jeton signé pour le fournisseur `Credentials`,
+  et `authConfig.jwt.encode` intercepte l'encodage pour rendre le jeton d'une
+  vraie ligne `Session`. Sans cela, la suspension d'un intervenant et
+  l'effacement d'un compte cesseraient de couper l'accès aux connexions par mot
+  de passe. Un test d'intégration et un test de bout en bout le tiennent.
+- `npm run db:utilisateurs-test` pose un mot de passe **écrit en clair dans le
+  dépôt** sur des comptes administrateurs. La commande **refuse de s'exécuter**
+  si `NEXT_PUBLIC_ENVIRONMENT` vaut `production`.
+
 ## Secrets : où ils vivent, et ce qui les empêche de sortir
 
 `src/lib/env.ts` est la seule frontière. Deux jeux, séparés par construction :

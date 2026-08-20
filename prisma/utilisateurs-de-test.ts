@@ -2,6 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import "dotenv/config";
 
+import { hacher } from "../src/lib/auth/mot-de-passe";
 import { quote } from "../src/lib/pricing";
 import { getCommuneBySlug } from "../src/lib/territory";
 
@@ -38,6 +39,16 @@ import { getCommuneBySlug } from "../src/lib/territory";
 
 const BOITE = "paul.duchateau";
 const DOMAINE = "gmail.com";
+
+/**
+ * Mot de passe commun aux cinq comptes.
+ *
+ * Il est **écrit en clair dans le dépôt**, et c'est assumé : son intérêt est
+ * précisément qu'on puisse le lire ici plutôt que le retrouver quelque part.
+ * C'est aussi ce qui rend la garde ci-dessous non négociable — un mot de passe
+ * public ne doit jamais ouvrir de vraies données clients.
+ */
+const MOT_DE_PASSE = "leoclean-demo-2026";
 
 /** Adresse plus, qui arrive dans la boîte ci-dessus. */
 function adresse(tag: string | null): string {
@@ -85,6 +96,19 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 
 async function main(): Promise<void> {
+  /*
+   * Garde-fou, au même titre que celui de `prisma/seed.ts` sur le nom de base.
+   * Cette commande pose un mot de passe connu de tous sur des comptes
+   * administrateurs : en production, elle ouvrirait le back-office à quiconque
+   * a lu ce fichier. Elle refuse donc, plutôt que d'avertir.
+   */
+  if (process.env.NEXT_PUBLIC_ENVIRONMENT === "production") {
+    throw new Error(
+      "Refus : cette commande installe un mot de passe public sur des comptes " +
+        "administrateurs. Elle n'a rien à faire en production.",
+    );
+  }
+
   const organization = await prisma.organization.findFirst({
     where: { type: "MARKETPLACE" },
   });
@@ -119,10 +143,23 @@ async function main(): Promise<void> {
   for (const compte of COMPTES) {
     const email = adresse(compte.tag);
 
+    /*
+     * L'empreinte est dérivée à chaque compte plutôt qu'une fois pour toutes :
+     * le sel doit différer, sinon deux comptes portant le même mot de passe
+     * porteraient la même empreinte, et une seule attaque les ouvrirait tous.
+     */
+    const passwordHash = await hacher(MOT_DE_PASSE);
+
     const user = await prisma.user.upsert({
       where: { email },
-      update: { name: compte.nom },
-      create: { email, name: compte.nom, emailVerified: new Date() },
+      update: { name: compte.nom, passwordHash, passwordUpdatedAt: new Date() },
+      create: {
+        email,
+        name: compte.nom,
+        emailVerified: new Date(),
+        passwordHash,
+        passwordUpdatedAt: new Date(),
+      },
     });
 
     await prisma.membership.upsert({
@@ -372,8 +409,11 @@ Comptes de test installés sur ${organization.name}.
   ${adresse("micheline")}     Micheline Proprette — intervenante (Gradignan)
   ${adresse("michel")}        Michel Crado — client
 
-Les cinq adresses arrivent dans la même boîte. On se connecte par lien magique
-depuis ${site}/connexion — un lien par compte, demandé à la volée.
+Les cinq comptes partagent le mot de passe  ${MOT_DE_PASSE}
+et se connectent depuis ${site}/connexion, sans passer par la boîte mail.
+
+Le lien magique reste disponible pour tous : les cinq adresses arrivent dans la
+même boîte, l'adressage plus de Gmail les distinguant pour la base seule.
 
   ${site}/mon-espace              interventions du client, annulation, messages
   ${site}/mon-compte              profil, et /mon-compte/mes-donnees pour le RGPD

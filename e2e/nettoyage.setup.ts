@@ -7,6 +7,7 @@ import "dotenv/config";
 
 import { test as nettoyage } from "@playwright/test";
 
+import { hacher } from "@/lib/auth/mot-de-passe";
 import { prisma } from "@/lib/db";
 
 /**
@@ -86,6 +87,35 @@ nettoyage("efface les réservations des exécutions précédentes", async () => 
   console.log(
     `Nettoyage : ${comptes.length} compte(s) de test et leurs réservations effacés.`,
   );
+
+  await prisma.$disconnect();
+});
+
+/**
+ * Le compte qui sert à vérifier la connexion par mot de passe.
+ *
+ * Il est **posé ici et non dans le test** parce qu'il doit exister avant que la
+ * suite démarre, et parce qu'un test qui écrit en base pour se donner ses
+ * propres conditions ne teste plus que lui-même. Son adresse porte le domaine
+ * de test, donc le nettoyage de la prochaine exécution l'emporte.
+ */
+export const COMPTE_MOT_DE_PASSE = {
+  email: `connexion${DOMAINE_DE_TEST}`,
+  motDePasse: "le chat dort sur le radiateur",
+};
+
+nettoyage("prépare un compte avec mot de passe", async () => {
+  await prisma.user.upsert({
+    where: { email: COMPTE_MOT_DE_PASSE.email },
+    update: { passwordHash: await hacher(COMPTE_MOT_DE_PASSE.motDePasse) },
+    create: {
+      email: COMPTE_MOT_DE_PASSE.email,
+      name: "Camille Connexion",
+      emailVerified: new Date(),
+      passwordHash: await hacher(COMPTE_MOT_DE_PASSE.motDePasse),
+      passwordUpdatedAt: new Date(),
+    },
+  });
 
   await prisma.$disconnect();
 });

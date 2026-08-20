@@ -245,9 +245,70 @@ déployer de clé `service_role` — ne s'écrit pas en SQL versionné et vit da
 
 ## Authentification et autorisation
 
-Connexion sans mot de passe : lien envoyé par email, ou Google. Sessions en
-base plutôt qu'en jeton signé, afin de pouvoir être révoquées immédiatement
-— suspension d'un intervenant, suppression de compte au titre du RGPD.
+Trois moyens de se connecter : lien envoyé par email, fournisseur social, et
+mot de passe. Sessions en base plutôt qu'en jeton signé, afin de pouvoir être
+révoquées immédiatement — suspension d'un intervenant, suppression de compte au
+titre du RGPD.
+
+**Le mot de passe s'ajoute, il ne remplace rien.** Il est facultatif, et un
+compte qui n'en a pas continue de se connecter par lien : la raison d'origine
+tient toujours, un mot de passe qu'on n'a pas ne peut pas fuir. Ce qu'il
+apporte est de ne plus réclamer un aller-retour par la boîte mail à chaque
+connexion, ce qui compte pour un intervenant qui ouvre l'application tous les
+matins.
+
+**Il ne se définit que depuis une session déjà ouverte**, donc après avoir
+prouvé qu'on reçoit les emails de l'adresse. Conséquence : il n'y a **aucun
+parcours « mot de passe oublié »**, et c'est délibéré — le lien magique en
+tient lieu, déjà à usage unique, expirant et limité en débit. Un second
+mécanisme de récupération serait une deuxième surface à sécuriser, pas un
+raccourci. Changer un mot de passe existant exige l'ancien, en revanche : un
+poste laissé ouvert ne doit pas permettre de verrouiller le compte de son
+propriétaire.
+
+**scrypt plutôt qu'Argon2id**, qui vient pourtant en tête des recommandations
+de l'OWASP : Argon2 exige une dépendance native, et une dépendance native est
+ce qui casse une construction sans serveur le jour où l'exécuteur change
+d'architecture. `N = 2^15` demande 32 Mio — `2^17`, la valeur citée pour un
+serveur dédié, en réclamerait 128, et quelques connexions simultanées
+épuiseraient la mémoire de l'instance. Les paramètres sont **écrits dans
+l'empreinte**, si bien qu'un durcissement futur n'invalide rien : les
+empreintes se réencodent à la connexion suivante, seul moment où le mot de
+passe en clair est disponible.
+
+**Aucune règle de composition** — ni majuscule, ni chiffre, ni caractère
+spécial. Le NIST 800-63B les décourage explicitement parce qu'elles produisent
+`Motdepasse1!` et non de l'entropie. Dix caractères minimum, une liste des
+mots de passe les plus courants comparée après aplatissement des substitutions
+naïves (`M0td3p@sse` vaut `motdepasse`), et refus de tout ce qui contient
+l'adresse ou le nom.
+
+**Auth.js n'écrit pas de session en base pour le fournisseur `Credentials`** :
+il bascule sur un jeton signé, quelle que soit la stratégie déclarée. L'accepter
+donnerait deux régimes de session — révocable pour le lien, non révocable pour
+le mot de passe — et ferait tomber la garantie dont dépend tout le reste.
+`authConfig.jwt.encode` intercepte donc l'encodage et rend le jeton d'une vraie
+ligne `Session`, créée par `auth/session-connexion.ts`. Ce montage s'appuie sur
+un comportement interne, donc il casse en silence à une mise à jour : un test
+d'intégration vérifie l'écriture, et un test de bout en bout vérifie qu'Auth.js
+passe bien par là — le cookie doit contenir un identifiant de session, pas un
+jeton à trois segments.
+
+**Le message d'échec est unique** et ne dit jamais laquelle des deux valeurs
+est fausse, ni si l'adresse existe. La durée de réponse non plus : quand le
+compte est inconnu, on dérive contre une empreinte factice, sans quoi une
+réponse instantanée d'un côté et soixante millisecondes de l'autre suffiraient
+à énumérer les comptes. La limitation de débit vit dans `authorize` et non dans
+la server action, parce que le point d'entrée réel est la route d'Auth.js,
+qu'un script appelle sans passer par notre écran.
+
+**Les fournisseurs sociaux ne sont déclarés que s'ils sont configurés**
+(`auth/fournisseurs.ts`, pur et lu deux fois) : l'écran de connexion n'affiche
+donc jamais un bouton menant à une erreur, et la server action valide contre la
+même liste. `allowDangerousEmailAccountLinking` est activé — le nom dit un vrai
+risque, mais Google, Apple et Facebook vérifient tous l'adresse avant de la
+transmettre, et sans cette option quelqu'un qui a réservé par lien puis revient
+par Google trouverait un compte vide.
 
 **Les rôles ne sont pas hiérarchisés sur une échelle unique.** Un intervenant
 n'est pas « plus » qu'un client. On raisonne en capacités explicites
@@ -1043,6 +1104,25 @@ plutôt que la nuit d'avant la mission. **La carte n'est pas exigée à la
 réservation** — la préautorisation part à H-24 — et retirer la dernière est
 refusé quand une intervention est à venir, avec le geste à faire à la place.
 
+**« Mon compte » est un sommaire, pas un tableau de bord.** `compte/menu.ts`
+est pur et compose la liste à partir de ce qui est réellement disponible ; un
+test lui interdit de proposer une fonction que le produit n'a pas, et de
+prononcer le mot « fiscal » tant que la déclaration SAP n'est pas obtenue. Le
+corpus de référence propose « Carte cadeau » et « Compte URSSAF » : ni l'un ni
+l'autre n'est repris, les copier reviendrait à promettre le service d'un autre.
+**Une entrée qui déçoit apprend à ne plus faire confiance au menu**, et le
+menu entier perd sa valeur pour une ligne de trop.
+
+_Les informations personnelles._ Le nom et le téléphone se corrigent ;
+**l'adresse email non**, parce qu'elle identifie le compte et reçoit les liens
+de connexion — la changer sur simple saisie permettrait de détourner un compte
+depuis un poste laissé ouvert. **Les adresses postales ne s'éditent pas** : une
+adresse porte des coordonnées géocodées, des consignes d'accès et un code de
+porte chiffré, et la corriger hors du parcours qui les collecte produirait un
+texte qui ne correspond plus à son point géographique — le moteur calculerait
+des trajets vers un endroit où personne n'habite. Celles qui n'ont jamais servi
+se retirent ; les autres restent, leurs factures y étant rattachées.
+
 **La replanification à l'initiative du client n'y est toujours pas** : elle
 suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
 entier. Annuler puis reprendre reste le chemin.
@@ -1411,6 +1491,11 @@ src/
       config.ts        configuration Auth.js
       permissions.ts   capacités par rôle
       session.ts       vérifications d'accès côté serveur
+      mot-de-passe.ts  politique et dérivation scrypt — pur
+      identifiants.ts  vérification, définition, sessions (server-only)
+      session-connexion.ts session en base d'une connexion par mot de passe
+      fournisseurs.ts  les fournisseurs sociaux réellement configurés — pur
+    compte/            sommaire de « Mon compte » (pur) et informations
     catalogue.ts       lecture du catalogue et devis, sur client cloisonné
     organizations.ts   résolution de l'organisation côté serveur
     booking/           création de réservation, transactionnelle (server-only)
@@ -1570,7 +1655,7 @@ npm run db:migrate      # applique une nouvelle migration
 npm run db:seed         # remplit la base de développement (tronque tout d'abord)
 npm run db:init         # installe une base de production, sans données fictives
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
-npm run db:utilisateurs-test # comptes nominatifs pour parcourir les espaces
+npm run db:utilisateurs-test # comptes nominatifs, avec mot de passe (refusé en production)
 npm run db:tarifs       # applique la grille publique aux tarifs en base
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
@@ -1707,8 +1792,8 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **729 tests unitaires** (53 fichiers), **12 suites
-d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
+État au 20 août 2026 : **759 tests unitaires** (55 fichiers), **13 suites
+d'intégration** exigeant PostgreSQL + PostGIS, **78 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
 

@@ -173,6 +173,14 @@ model User {
   name          String?
   image         String?
 
+  /// Empreinte scrypt, paramètres compris — voir `auth/mot-de-passe.ts`.
+  ///
+  /// **Nullable, et destinée à le rester.** Le mot de passe s'ajoute au lien de
+  /// connexion, il ne le remplace pas : un compte sans mot de passe n'a rien à
+  /// se faire voler, et c'est la meilleure protection qui soit.
+  passwordHash      String?
+  passwordUpdatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
