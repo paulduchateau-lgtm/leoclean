@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { chargerTableauDeBord } from "@/lib/administration/tableau-de-bord";
@@ -93,6 +94,11 @@ export default async function AdministrationPage() {
       <h1 className="font-heading text-3xl font-semibold tracking-tight">
         Ce qui attend
       </h1>
+      <p className="mt-2 text-sm">
+        <Link href="/administration/radar" className="text-primary hover:underline">
+          Ouvrir le Radar →
+        </Link>
+      </p>
       <p className="mt-3 max-w-prose text-muted-foreground">
         Quatre situations que rien ne rattrape tout seul.
       </p>

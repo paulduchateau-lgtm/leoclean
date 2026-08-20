@@ -82,6 +82,12 @@ export default async function MissionsPage() {
       </h1>
       <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <Link
+          href="/intervenant/aujourdhui"
+          className="font-semibold text-primary hover:underline"
+        >
+          Aujourd&apos;hui →
+        </Link>
+        <Link
           href="/intervenant/disponibilites"
           className="text-primary hover:underline"
         >
