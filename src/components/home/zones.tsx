@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CouvertureCheck } from "@/components/home/couverture-check";
 import { publishedCommunes } from "@/lib/communes-content";
 import { FACTS } from "@/lib/facts";
 import { SITE } from "@/lib/site";
@@ -18,6 +19,12 @@ import { TERRITORY_POPULATION } from "@/lib/territory";
  *
  * Aucun lien interne n'est perdu au passage : ce sont les seize pages commune
  * qui étaient déjà liées depuis l'accueil, vers les mêmes URL.
+ *
+ * Le champ de couverture ouvre le bloc, avant les pastilles. Seize noms de
+ * commune répondent à qui sait déjà lire une carte ; « est-ce que vous venez
+ * chez moi ? » se répond mieux en tapant cinq chiffres. Les pastilles restent
+ * dessous, et elles restent le maillage interne — un champ de recherche ne
+ * s'indexe pas.
  *
  * Deux familles, parce qu'en confondre une avec l'autre serait inexact :
  * Gradignan, Villenave-d'Ornon et Cestas sont desservies aux mêmes conditions
@@ -51,11 +58,33 @@ export function Zones() {
   return (
     <section className="border-y border-border-subtle bg-cream-50">
       <div className="mx-auto w-full max-w-4xl px-6 py-16">
-        <h2 className="text-2xl font-black tracking-tight">Où nous venons</h2>
-        <p className="mt-2 max-w-prose text-muted-foreground">
-          {FACTS.communeCount} communes du sud de Bordeaux, soit{" "}
-          {TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants. Le chiffre
-          en face de chaque commune est le temps de route depuis notre siège de{" "}
+        <h2 className="text-2xl font-black tracking-tight">
+          Nous ne venons pas de loin
+        </h2>
+        <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
+          {FACTS.communeCount} communes du sud de Bordeaux et rien d&apos;autre,
+          soit {TERRITORY_POPULATION.toLocaleString("fr-FR")} habitants et{" "}
+          {FACTS.maxDriveMinutes} minutes de route au maximum depuis notre siège
+          de {SITE.address.city}. C&apos;est cette contrainte qui nous permet de
+          vous envoyer quelqu&apos;un qui habite votre commune ou celle d&apos;à
+          côté — et de vous renvoyer le même la fois suivante.
+        </p>
+
+        <CouvertureCheck
+          className="mt-8"
+          phoneE164={FACTS.phoneE164}
+          communes={published.map(({ commune, content }) => ({
+            slug: commune.slug,
+            name: commune.name,
+            postalCode: commune.postalCode,
+            driveMinutes: commune.isHeadquarters
+              ? null
+              : content.driveMinutesFromLeognan,
+          }))}
+        />
+
+        <p className="mt-10 text-sm text-muted-foreground">
+          Le chiffre en face de chaque commune est le temps de route depuis{" "}
           {SITE.address.city}.
         </p>
 

@@ -265,3 +265,44 @@ Reprise du plan initial, avec l'ajout issu de la décision du 15 août.
 | 13    | Durcissement et conformité                                                                          |                                                                       |
 | —     | **Refonte UX, phase 5** — espace client                                                             | après la 12                                                           |
 | —     | **Refonte UX, phase 7** — passe UI + refonte du design system                                       | sur décision                                                          |
+
+---
+
+## Addendum du 20 août 2026 — l'adresse revient en tête
+
+Décision du porteur du projet, appliquée le même jour. Elle défait un
+arbitrage de ce journal, et c'est pour cela qu'elle est écrite ici plutôt que
+de disparaître dans un diff.
+
+**Ce qui change.** L'écran de choix de commune est supprimé. Le tunnel ouvre
+sur la recherche d'adresse, et le dernier écran devient le récapitulatif seul.
+Ordre : **adresse, durée, rythme, créneau, coordonnées, récapitulatif.**
+
+**Pourquoi la règle d'origine ne suffisait pas.** « Plus une information coûte
+à donner, plus tard on la demande » avait produit un tunnel qui demandait la
+commune au premier écran et l'adresse complète au dernier : deux fois le même
+renseignement, dont la première fois exigeait de se reconnaître dans un
+référentiel administratif — savoir que Cadaujac n'est pas Cestas, se trouver
+parmi seize noms. Le coût comparé n'était donc pas « une commune contre une
+adresse » mais « une commune **plus** une adresse contre une adresse ». La
+règle tient toujours pour les coordonnées, qui restent au cinquième écran.
+
+**Ce que cela coûte, mesuré.** Le prix passe du deuxième au troisième geste —
+il était déjà au troisième depuis la refonte narrative de l'accueil, donc rien
+ne bouge en pratique. La réservation complète perd un geste et revient à
+**9**, sa cible, dépassée depuis l'ajout des créneaux de repli. La reprise d'un
+parcours interrompu en gagne un et passe à **5** pour une cible de 4 :
+l'adresse n'étant jamais enregistrée, une reprise repasse par le premier écran.
+C'est le seul compteur qui dépasse, et l'alternative — conserver l'adresse du
+domicile dans le stockage du navigateur — reste refusée.
+
+**Ce qui n'a pas bougé, et qui est testé.** La garde de couverture (résultat
+hors zone désactivé, référentiel fermé en saisie manuelle), la bascule manuelle
+toujours offerte, la modification de chaque ligne depuis le récapitulatif, le
+prix visible sur toutes les étapes, et le fait qu'aucune donnée d'identité ne
+soit demandée avant l'affichage du prix.
+
+**Ce qui a été ajouté en compensation.** L'accueil porte un champ de code
+postal (`CouvertureCheck`) : « est-ce que vous venez chez moi ? » se répond
+sans engager de parcours, ce que l'écran commune faisait implicitement. Il ne
+transmet aucune commune au tunnel — il n'y a plus rien à transmettre.

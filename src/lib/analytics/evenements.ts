@@ -25,7 +25,14 @@
  * listes coïncident — c'est la duplication assumée, pas la duplication subie.
  */
 export const ETAPES_TUNNEL = [
-  "commune",
+  /*
+   * « adresse » ouvre désormais le tunnel et « recap » le ferme : l'écran de
+   * choix de commune a disparu au profit d'une seule saisie d'adresse, en
+   * tête. Les identifiants changent donc de rang, et les séries mesurées
+   * avant ce déplacement ne se comparent pas aux suivantes — « adresse » y
+   * désignait le dernier écran.
+   */
+  "adresse",
   /*
    * L'identifiant est resté « logement » alors que l'écran demande désormais
    * une durée : le renommer casserait les parcours enregistrés en stockage
@@ -36,7 +43,7 @@ export const ETAPES_TUNNEL = [
   "rythme",
   "creneau",
   "coordonnees",
-  "adresse",
+  "recap",
 ] as const;
 
 export type EtapeTunnel = (typeof ETAPES_TUNNEL)[number];

@@ -59,6 +59,23 @@ Contenu à conserver :
 > description du site et les trois canaux de contact restent, replacés après
 > ce bloc. Le même bloc a été ajouté à `/tarifs` et `/menage-a-domicile`.
 
+> ⟳ **Corrigé le 20 août.** Le badge dit « Les pros du ménage au sud de
+> Bordeaux » — le décompte des seize communes reste au paragraphe d'identité
+> et au bloc des communes. Le bloc des communes s'ouvre sur `CouvertureCheck`,
+> un champ de code postal qui répond « oui » (avec les communes concernées et
+> leur temps de trajet, puis un lien `/reserver`) ou « pas encore » (avec le
+> numéro). `CommuneStart` — absent de l'accueil depuis la refonte narrative —
+> reste sur `/tarifs`, `/menage-a-domicile` et `/zones-desservies` ; sa copie ne
+> promet plus de montrer les créneaux au geste suivant, le tunnel demandant
+> désormais l'adresse avant tout.
+>
+> Deux retraits assumés, arbitrés avec le porteur du projet : le nom du
+> fondateur — sur la page comme dans le `founder` du JSON-LD, où il voisinait
+> l'adresse du siège, qui est son domicile — et la formule « la seule promesse
+> qui compte vraiment : la même personne chez vous, à chaque passage », que
+> remplace « Léo Clean s'occupe du reste ». La continuité d'intervenant reste
+> écrite dans les engagements, le comparatif et la FAQ.
+
 ### 1.2 `/menage-a-domicile` — Index des communes
 
 |         |                                      |
@@ -228,10 +245,24 @@ Ne fait pas d'autorisation. Ne pas y déplacer de contrôle.
 
 ## 3. Le tunnel, écran par écran ⟳
 
-Ordre depuis le 15 août : **Adresse → Logement → Rythme → Créneau →
+Ordre depuis le 20 août : **Adresse → Durée → Rythme → Créneau → Coordonnées →
 Récapitulatif → Confirmation**, une décision par écran. Repère de progression
-« Étape n sur 5 » et barre segmentée ; **barre de prix collante en bas, à
+« Étape n sur 6 » et barre segmentée ; **barre de prix collante en bas, à
 toutes les étapes**.
+
+> ⟳ **Corrigé le 20 août.** Le tunnel a ouvert entre-temps sur un écran de
+> choix de commune, l'adresse exacte étant repoussée au dernier rang. Cet
+> écran a été **supprimé** : la commune est déduite du code INSEE de l'adresse,
+> et le même renseignement n'est plus demandé deux fois. La description de
+> l'étape 1 ci-dessous redevient donc exacte, aux deux détails près que le
+> bouton de la saisie manuelle dit « Valider mon adresse » et que le choix
+> d'une adresse déclenche aussi la recherche de créneaux. Rien n'est perdu au
+> passage : la garde de couverture, la bascule manuelle, le référentiel fermé
+> et la modification depuis le récapitulatif sont tous en place, et testés.
+>
+> Deux conséquences à ne pas redécouvrir : les coordonnées ont leur écran
+> propre (étape 5) depuis la refonte du tunnel, et **une reprise de parcours
+> repasse par l'adresse** — le stockage local n'en garde aucune, par choix.
 
 Ce qui a changé de place, sans rien perdre :
 

@@ -65,7 +65,7 @@ describe("décomposer", () => {
   it("laisse des propriétés vides quand l'événement n'en porte pas", () => {
     const { proprietes } = decomposer({
       nom: "tunnel_etape_vue",
-      etape: "commune",
+      etape: "adresse",
     });
     expect(Object.keys(proprietes)).toEqual(["etape"]);
   });

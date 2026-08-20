@@ -349,9 +349,11 @@ export default async function CommunePage({
               resté sans réponse.
             </p>
 
-            {/* La commune voyage avec le lien : sans elle, le tunnel
-                s'ouvrait sur un champ vide et il fallait retaper la ville dont
-                on venait de lire la page entière. */}
+            {/* La commune voyage avec le lien. Elle ne fait plus sauter
+                d'écran — le tunnel demande l'adresse dès le premier — mais
+                elle reste utile : la saisie manuelle s'ouvre sur la bonne
+                commune, l'exemple du champ la nomme, et les créneaux se
+                préchargent depuis son centre pendant qu'on tape sa rue. */}
             <Link
               href={`/reserver?commune=${commune.slug}`}
               /* Tant que ce bouton est à l'écran, la barre collante s'efface :

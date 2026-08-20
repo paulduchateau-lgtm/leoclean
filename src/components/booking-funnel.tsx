@@ -181,53 +181,65 @@ const WHOLE_HOUR_CHOICES = wholeHourChoices(DURATION_SERVICE);
 /**
  * Les six écrans, dans l'ordre.
  *
- * L'ordre est la décision de conception la plus lourde du tunnel, et il obéit
- * à une seule règle : **plus une information coûte à donner, plus tard on la
- * demande.** L'adresse exacte et les coordonnées sont ce qu'on donne le moins
- * volontiers à un service qu'on n'a jamais essayé ; le prix est ce qu'on est
- * venu chercher. Le tunnel demandait auparavant l'adresse complète en premier
- * et n'affichait le prix qu'à la fin — friction maximale au moment où
- * l'engagement est minimal.
+ * **L'adresse est demandée d'emblée.** Le tunnel ouvrait auparavant sur une
+ * liste de seize communes, qui répondait à « intervenez-vous chez moi ? » sans
+ * qu'on ait rien à saisir. C'était moins coûteux à donner qu'une adresse, mais
+ * cela demandait de se reconnaître dans un référentiel administratif — de
+ * savoir que Cadaujac n'est pas Cestas, de trouver son nom parmi seize — pour
+ * finir par redemander l'adresse au dernier écran. Une seule saisie remplace
+ * les deux : on tape son adresse, la complétion la reconnaît, et la couverture
+ * se prononce sur le même geste. Le code postal reste une entrée valable, la
+ * Base Adresse Nationale le comprenant aussi bien qu'un nom de rue.
  *
- * La commune suffit à répondre « intervenez-vous chez moi ? » et à chercher
- * des créneaux : le moteur les cherche alors depuis le centre de la commune,
- * avec une marge de trajet qui les garde tenables une fois l'adresse connue
- * (`COMMUNE_TRAVEL_MARGIN_MINUTES`).
+ * Ce que ce déplacement coûte, et qu'il faut assumer : l'ordre du tunnel
+ * obéissait à la règle **« plus une information coûte à donner, plus tard on
+ * la demande »**, et l'adresse exacte est ce qu'on donne le moins volontiers à
+ * un service qu'on n'a pas essayé. Elle passe donc devant le prix. Deux choses
+ * en limitent le prix : elle n'est demandée qu'une fois au lieu de deux, et la
+ * barre basse annonce le tarif d'entrée dès cet écran — la question « combien
+ * ça coûte » reçoit une réponse avant la première frappe. Les coordonnées,
+ * elles, ne bougent pas : elles restent au cinquième écran, après le prix et
+ * le créneau.
+ *
+ * Deuxième conséquence, technique : les créneaux sont désormais cherchés
+ * depuis l'adresse réelle du premier écran au dernier, jamais depuis le centre
+ * de la commune. `COMMUNE_TRAVEL_MARGIN_MINUTES` ne sert donc plus au tunnel —
+ * elle reste dans le moteur, qui accepte toujours une recherche imprécise, et
+ * les créneaux proposés sont d'autant plus justes.
  *
  * Le prix n'a pas d'écran à lui : il apparaît au troisième, celui du rythme,
- * qui porte les quatre formules avec leur montant et leur durée — un écran
- * qui ne ferait que l'annoncer coûterait un geste sans rien apprendre. La
- * barre basse le montre de toute façon dès le premier écran.
+ * qui porte les formules avec leur montant et leur durée — un écran qui ne
+ * ferait que l'annoncer coûterait un geste sans rien apprendre.
  */
 const STEPS = [
-  "commune",
+  "adresse",
   "logement",
   "rythme",
   "creneau",
   "coordonnees",
-  "adresse",
+  "recap",
 ] as const;
 
 type Step = (typeof STEPS)[number];
 
 /** Titre lu par la personne, et repère de progression. */
 const STEP_TITLES: Record<Step, string> = {
-  commune: "Où habitez-vous ?",
+  adresse: "À quelle adresse venons-nous ?",
   logement: "De combien de temps avez-vous besoin ?",
   rythme: "À quel rythme souhaitez-vous nous voir ?",
   creneau: "Quand voulez-vous que nous venions ?",
   coordonnees: "Comment vous joindre ?",
-  adresse: "À quelle adresse exactement ?",
+  recap: "Vérifions votre réservation",
 };
 
 /** Libellé court de chaque étape, pour la barre d'avancement nommée. */
 const STEP_LABELS: Record<Step, string> = {
-  commune: "Commune",
+  adresse: "Adresse",
   logement: "Durée",
   rythme: "Rythme",
   creneau: "Créneau",
   coordonnees: "Coordonnées",
-  adresse: "Récapitulatif",
+  recap: "Récapitulatif",
 };
 
 const dayFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -357,14 +369,16 @@ const savedStateSchema = z.object({
   /**
    * La commune, et rien de plus précis.
    *
-   * L'ancienne version conservait l'adresse complète — rue, code postal,
-   * coordonnées. Une adresse de domicile est une donnée personnelle, et la
-   * laisser au repos dans le stockage d'un navigateur possiblement partagé
-   * n'était justifié par rien : la reprise n'en a pas besoin, puisque
-   * l'adresse exacte est désormais demandée au dernier écran.
+   * Une adresse de domicile est une donnée personnelle, et la laisser au repos
+   * dans le stockage d'un navigateur possiblement partagé n'est justifié par
+   * rien. Seul un slug de notre référentiel y va, comme celui qui voyage déjà
+   * dans l'URL des pages communes.
    *
-   * Un slug de notre référentiel, donc, comme celui qui voyage déjà dans
-   * l'URL des pages communes.
+   * Conséquence assumée du déplacement de l'adresse en tête : **reprendre un
+   * parcours interrompu demande de retaper son adresse.** Le reste est
+   * restauré — durée, rythme, créneau — et l'écran de reprise y ramène
+   * directement une fois l'adresse redonnée. C'est le prix d'un stockage qui
+   * ne garde rien d'identifiant, et il est moins cher que l'inverse.
    */
   communeSlug: z.string().max(60),
   surfaceSqm: z.number().int().min(15).max(400).nullable(),
@@ -480,9 +494,14 @@ export function BookingFunnel({
   knownClient?: KnownClient | null;
 }) {
   /**
-   * Commune d'arrivée, quand le tunnel est ouvert depuis une page locale ou
-   * depuis le bloc « Où habitez-vous ? » de l'accueil. Elle vaut réponse au
-   * premier écran : le tunnel s'ouvre alors directement sur le logement.
+   * Commune d'arrivée, quand le tunnel est ouvert depuis une page locale.
+   *
+   * Elle ne vaut plus réponse au premier écran — l'adresse exacte s'y demande
+   * désormais, et une commune n'en est pas une. Elle sert trois choses moins
+   * visibles mais réelles : le repère de la saisie manuelle, l'exemple du
+   * champ, et surtout le préchargement des créneaux depuis le centre de la
+   * commune pendant qu'on tape son adresse — de sorte que l'écran des heures
+   * est le plus souvent déjà prêt quand on y arrive.
    */
   const originCommune =
     communes.find((entry) => entry.slug === defaultCommuneSlug) ?? null;
@@ -490,24 +509,29 @@ export function BookingFunnel({
   const [commune, setCommune] = useState<CommuneOption | null>(originCommune);
 
   /**
-   * Écran d'ouverture.
+   * Le tunnel ouvre toujours sur l'adresse, et il n'y a rien à en déduire.
    *
-   * Il est **ramené à ce que les choix connus rendent atteignable** : sans
-   * commune on ne dépasse pas le premier écran, sans surface pas le deuxième.
-   * Une URL bricolée à la main ne doit pas ouvrir un écran de créneaux qui n'a
-   * ni durée à chercher ni prix à afficher. Au-delà du rythme, l'URL ne suffit
-   * plus — le créneau retenu n'y voyage pas — et c'est la reprise depuis le
-   * stockage local qui prend le relais.
+   * L'URL ne porte jamais d'adresse et n'en portera pas : une barre d'adresse
+   * se partage, s'enregistre en favori et se retrouve dans les journaux d'un
+   * serveur. Aucun lien, aucun rechargement, aucune reprise ne peut donc
+   * franchir le premier écran sans qu'on ait saisi quelque chose.
+   *
+   * Ce que l'URL et le stockage savent n'est pas perdu pour autant : l'écran
+   * à rejoindre est mis de côté et rejoint **dès l'adresse donnée**, sans
+   * refaire les écrans déjà remplis. Il est ramené à ce que les choix connus
+   * rendent atteignable — sans surface, on ne dépasse pas le deuxième écran,
+   * une URL bricolée à la main n'ouvrant pas un écran de créneaux qui n'a ni
+   * durée à chercher ni prix à afficher.
    */
-  const openingStep: Step = !originCommune
-    ? "commune"
-    : defaultSurfaceSqm === undefined
-      ? "logement"
-      : defaultStep === "rythme" || defaultStep === "logement"
-        ? defaultStep
-        : "rythme";
+  const [step, setStep] = useState<Step>("adresse");
 
-  const [step, setStep] = useState<Step>(openingStep);
+  const [pendingStep, setPendingStep] = useState<Step | null>(
+    defaultSurfaceSqm === undefined
+      ? null
+      : defaultStep === "rythme"
+        ? "rythme"
+        : null,
+  );
 
   /* Mesure du parcours : voir `tunnel-tracage.ts`. Sans cookie, sans identité. */
   useTracageTunnel(backend, step);
@@ -597,8 +621,17 @@ export function BookingFunnel({
 
   /* --- Persistance ------------------------------------------------------ */
 
+  /*
+   * On n'enregistre qu'un parcours **commencé**.
+   *
+   * La commune est désormais déduite de l'adresse, et non plus choisie au
+   * premier écran : sans cette garde, arriver sur `/reserver?commune=cestas`
+   * depuis une page locale suffirait à écrire un parcours à reprendre alors
+   * que rien n'a été décidé — et le bandeau de reprise s'afficherait en
+   * accueil pour une visite. La durée est le premier vrai choix.
+   */
   useEffect(() => {
-    if (!commune || confirmation) return;
+    if (!commune || surfaceSqm === null || confirmation) return;
     try {
       const state: SavedState = {
         savedAt: Date.now(),
@@ -864,8 +897,8 @@ export function BookingFunnel({
   /**
    * Avance d'un écran, ou revient au récapitulatif si l'on en venait.
    *
-   * Le récapitulatif n'est plus un écran à lui : il occupe le dernier, celui
-   * de l'adresse, où l'on a enfin tout ce qu'il faut pour le montrer.
+   * Le récapitulatif occupe le dernier écran, où l'on a enfin tout ce qu'il
+   * faut pour le montrer.
    */
   const LAST_STEP: Step = STEPS[STEPS.length - 1]!;
 
@@ -919,29 +952,43 @@ export function BookingFunnel({
   }
 
   /**
-   * Adresse exacte, au dernier écran.
+   * Adresse exacte, au premier écran.
    *
-   * Les créneaux ne sont **pas** invalidés : ils ont été cherchés depuis le
-   * centre de la commune avec une marge de trajet précisément pour rester
-   * tenables ici. Les jeter obligerait à rechoisir une heure au moment de
-   * confirmer, ce qui est le pire endroit pour faire recommencer quelqu'un.
-   * `createBooking` réévalue de toute façon le créneau sur cette adresse-là,
-   * et essaie le candidat suivant si le premier ne tient plus.
+   * Trois choses en découlent, dans cet ordre :
+   *
+   * - **La commune s'en déduit**, par le code INSEE — seul identifiant fiable
+   *   de couverture. Elle n'est plus une réponse mais une conséquence, et
+   *   c'est elle qui part dans le stockage et dans l'URL, jamais la rue.
+   * - **Les créneaux ne sont pas jetés** quand l'adresse change depuis le
+   *   récapitulatif. La clé de recherche porte le point : l'effet relance de
+   *   lui-même une recherche sur la nouvelle adresse. Effacer l'heure retenue
+   *   obligerait à rechoisir au moment de confirmer, ce qui est le pire
+   *   endroit pour faire recommencer quelqu'un — et `createBooking` réévalue
+   *   de toute façon le créneau sur l'adresse réelle, en essayant les replis
+   *   si le premier ne tient plus.
+   * - **On rejoint l'écran mis de côté**, s'il y en a un : c'est ce qui rend
+   *   une reprise ou un lien partagé utiles malgré une adresse qui ne voyage
+   *   nulle part.
    */
   function chooseAddress(choice: AddressChoice) {
     setAddress(choice);
     setError(null);
-  }
 
-  function chooseCommune(choice: CommuneOption) {
-    setCommune(choice);
-    // Une autre commune change les intervenants joignables et les temps de
-    // trajet : les créneaux calculés pour la précédente sont faux.
-    if (choice.slug !== commune?.slug) {
-      setAddress(null);
-      invalidateSlots();
+    const resolved =
+      communes.find((entry) => entry.insee === choice.inseeCode) ?? null;
+    if (resolved) setCommune(resolved);
+
+    /* Un écran mis de côté qui serait celui-ci n'en est pas un : c'est le
+       cas d'un parcours interrompu pendant qu'on corrigeait son adresse. On
+       avance normalement, sinon le geste ne ferait rien. */
+    if (!returnToRecap && pendingStep && pendingStep !== "adresse") {
+      const target = pendingStep;
+      setPendingStep(null);
+      goTo(target);
+      return;
     }
-    advance("commune");
+    setPendingStep(null);
+    advance("adresse");
   }
 
   /**
@@ -1086,7 +1133,7 @@ export function BookingFunnel({
    * porte déjà son propre récapitulatif, ligne à ligne — deux résumés côte à
    * côte se contrediraient au premier oubli de synchronisation.
    */
-  const showAside = !(step === "adresse" && address && quote && chosenSlot);
+  const showAside = step !== "recap";
 
   return (
     <div>
@@ -1147,7 +1194,12 @@ export function BookingFunnel({
                     void loadQuotes(resumable.surfaceSqm);
                   }
                   setResumeHandled(true);
-                  goTo(saved ? resumable.step : "commune");
+                  /* L'adresse n'est jamais enregistrée : on la redemande, et
+                     l'écran où l'on en était est rejoint dès qu'elle est
+                     donnée. Une reprise qui rouvrirait directement le choix du
+                     créneau chercherait des heures sans savoir où aller. */
+                  setPendingStep(resumable.step);
+                  goTo("adresse");
                 }}
                 onDiscard={() => {
                   clearSavedState();
@@ -1158,11 +1210,16 @@ export function BookingFunnel({
 
             {error ? <ErrorNotice error={error} /> : null}
 
-            {step === "commune" ? (
-              <CommuneStep
+            {step === "adresse" ? (
+              <AddressStep
+                backend={backend}
                 communes={communes}
-                selected={commune}
-                onChoose={chooseCommune}
+                defaultQuery={defaultQuery}
+                originCommune={commune ?? originCommune}
+                savedAddresses={knownClient?.addresses ?? []}
+                selected={address}
+                onSelect={chooseAddress}
+                onSelectSaved={chooseKnownAddress}
               />
             ) : null}
 
@@ -1208,31 +1265,18 @@ export function BookingFunnel({
               />
             ) : null}
 
-            {/* Dernier écran. Tant que l'adresse exacte n'est pas donnée, il ne
-            montre qu'elle ; une fois donnée, il devient le récapitulatif —
-            c'est le premier moment où l'on a tout ce qu'il faut pour le
-            montrer. */}
-            {step === "adresse" && !address ? (
-              <AddressStep
-                backend={backend}
-                communes={communes}
-                defaultQuery={defaultQuery}
-                originCommune={commune}
-                savedAddresses={knownClient?.addresses ?? []}
-                selected={address}
-                onSelect={chooseAddress}
-                onSelectSaved={chooseKnownAddress}
-              />
-            ) : null}
-
-            {step === "adresse" && address && (!quote || !chosenSlot) ? (
+            {/* Dernier écran : le récapitulatif, une fois qu'on a tout ce
+            qu'il faut pour le montrer. Le devis se refait sur le créneau
+            retenu — majorations comprises — et il peut n'être pas encore
+            revenu. */}
+            {step === "recap" && (!address || !quote || !chosenSlot) ? (
               <div className="space-y-3" aria-hidden>
                 <div className="h-48 animate-pulse rounded-xl bg-secondary" />
                 <div className="h-32 animate-pulse rounded-xl bg-secondary" />
               </div>
             ) : null}
 
-            {step === "adresse" && address && quote && chosenSlot ? (
+            {step === "recap" && address && quote && chosenSlot ? (
               <RecapStep
                 address={address}
                 quote={quote}
@@ -1241,7 +1285,6 @@ export function BookingFunnel({
                 contact={contact}
                 onContactChange={setContact}
                 onEdit={editFromRecap}
-                onChangeAddress={() => setAddress(null)}
                 onSubmit={submit}
                 submitting={submitting}
               />
@@ -1264,7 +1307,6 @@ export function BookingFunnel({
         {showAside ? (
           <RecapAside
             step={step}
-            commune={commune}
             address={address}
             surfaceSqm={surfaceSqm}
             quote={quote}
@@ -1293,7 +1335,6 @@ export function BookingFunnel({
  */
 function RecapAside({
   step,
-  commune,
   address,
   surfaceSqm,
   quote,
@@ -1303,7 +1344,6 @@ function RecapAside({
   onEdit,
 }: {
   step: Step;
-  commune: CommuneOption | null;
   address: AddressChoice | null;
   surfaceSqm: number | null;
   quote: QuoteView | null;
@@ -1328,15 +1368,7 @@ function RecapAside({
   }[] = [
     ...(address
       ? [{ label: "Adresse", value: address.label, target: "adresse" as Step }]
-      : commune
-        ? [
-            {
-              label: "Commune",
-              value: `${commune.name} (${commune.postalCode})`,
-              target: "commune" as Step,
-            },
-          ]
-        : []),
+      : []),
     ...(durationMinutes !== null
       ? [
           {
@@ -1773,121 +1805,6 @@ function ErrorNotice({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Étape 1 — Commune                                                          */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Premier écran : « intervenez-vous chez moi ? ».
- *
- * C'est la question que se pose réellement quelqu'un devant un service local,
- * et la seule à laquelle il faut répondre avant toute autre. Elle ne coûte
- * presque rien à donner — le nom de sa ville n'est pas une donnée personnelle —
- * alors que l'adresse complète, qui était demandée ici, est ce qu'on donne le
- * moins volontiers à un service qu'on n'a jamais essayé.
- *
- * Le choix se fait dans **notre référentiel**, jamais dans un champ libre : il
- * est ainsi structurellement impossible d'engager un parcours hors zone, et
- * chaque commune répond « oui » d'un seul geste. Le code postal reste accepté
- * parce que c'est ce que beaucoup tapent d'abord — il filtre la liste, il ne
- * la remplace pas.
- */
-function CommuneStep({
-  communes,
-  selected,
-  onChoose,
-}: {
-  communes: readonly CommuneOption[];
-  selected: CommuneOption | null;
-  onChoose: (commune: CommuneOption) => void;
-}) {
-  const [query, setQuery] = useState("");
-
-  const normalized = query.trim().toLowerCase();
-  const matches = normalized
-    ? communes.filter(
-        (commune) =>
-          commune.postalCode.startsWith(normalized) ||
-          commune.name
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/\p{Diacritic}/gu, "")
-            .includes(
-              normalized.normalize("NFD").replace(/\p{Diacritic}/gu, ""),
-            ),
-      )
-    : communes;
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <Label htmlFor="commune-filter">
-          Votre commune ou votre code postal
-        </Label>
-        <div className="relative mt-3">
-          <MapPinIcon
-            className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            id="commune-filter"
-            value={query}
-            /* Le clavier numérique s'ouvre pour un code postal, sans empêcher
-               d'écrire un nom de commune : `inputMode` propose, il n'impose
-               pas. */
-            inputMode="numeric"
-            autoComplete="postal-code"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="33850 ou Léognan"
-            className="min-h-12 pl-9"
-          />
-        </div>
-      </div>
-
-      {matches.length === 0 ? (
-        <p className="rounded-xl border border-border bg-secondary/40 p-4 text-sm">
-          Léo Clean intervient dans {communes.length} communes au sud de
-          Bordeaux, et pas encore ici —{" "}
-          <Link href="/menage-a-domicile" className="text-brand underline">
-            voir la liste des communes
-          </Link>
-          .
-        </p>
-      ) : (
-        <ul className="flex flex-wrap gap-2">
-          {matches.map((commune) => (
-            <li key={commune.slug}>
-              <button
-                type="button"
-                onClick={() => onChoose(commune)}
-                aria-pressed={selected?.slug === commune.slug}
-                className={`inline-flex min-h-12 items-center gap-2 rounded-full border-2 px-4 text-sm font-bold transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] motion-reduce:active:scale-100 ${
-                  selected?.slug === commune.slug
-                    ? "border-teal-500 bg-teal-50 ring-3 ring-teal-100"
-                    : "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
-                }`}
-              >
-                {commune.name}
-                <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                  {commune.postalCode}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <p className="flex items-start gap-2 text-sm text-muted-foreground">
-        <CheckIcon className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
-        Toutes ces communes sont desservies, au même tarif. Nous vous
-        demanderons votre adresse exacte au dernier écran.
-      </p>
-
-      <Reassurance />
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Étape 1 — Adresse                                                          */
 /* -------------------------------------------------------------------------- */
 
@@ -1944,6 +1861,21 @@ function ChoiceCard({
   );
 }
 
+/**
+ * Premier écran : l'adresse, et la réponse à « intervenez-vous chez moi ? ».
+ *
+ * Une seule saisie fait trois choses que le tunnel demandait auparavant en
+ * deux écrans : elle dit où l'on va, elle dit si c'est desservi — chaque
+ * résultat porte sa pastille, et un résultat hors zone n'est pas cliquable —
+ * et elle donne le point exact depuis lequel les créneaux seront cherchés.
+ *
+ * La complétion reste **un confort, pas une dépendance**. La Base Adresse
+ * Nationale est un service public qui limite son débit et renvoie parfois
+ * 503 ; quand elle ne rend rien, la saisie manuelle prend le relais, et sa
+ * commune se choisit dans notre référentiel — ce qui rend structurellement
+ * impossible d'engager un parcours hors zone. C'est ce chemin-là que teste le
+ * parcours de bout en bout, précisément pour ne pas dépendre d'un tiers.
+ */
 function AddressStep({
   backend,
   communes,
@@ -2048,8 +1980,9 @@ function AddressStep({
       <div>
         <Label htmlFor="address">Votre adresse</Label>
         <p className="mt-1 text-sm text-muted-foreground">
-          Dernière question. Commencez à taper, nous la complétons — elle sert à
-          l&apos;intervenant pour venir, et à personne d&apos;autre.
+          Commencez à taper — le code postal marche aussi — nous la complétons.
+          Elle sert à savoir si nous venons chez vous et à calculer le trajet de
+          l&apos;intervenant, à rien d&apos;autre.
         </p>
         <div className="relative mt-3">
           <MapPinIcon
@@ -2148,6 +2081,10 @@ function AddressStep({
           Saisir mon adresse manuellement
         </button>
       )}
+
+      {/* Le premier écran porte la réassurance, comme les autres : c'est là
+          que quelqu'un décide s'il continue. */}
+      <Reassurance />
     </div>
   );
 }
@@ -2232,8 +2169,8 @@ function ManualAddress({
           ))}
         </select>
         <p className="mt-2 text-sm text-muted-foreground">
-          Reprise de votre premier choix. Seules les communes desservies
-          figurent dans cette liste.
+          Seules les communes desservies figurent dans cette liste : il est
+          impossible d&apos;engager un parcours hors zone.
         </p>
       </div>
 
@@ -2244,7 +2181,7 @@ function ManualAddress({
           className="min-h-12 w-full"
           disabled={street.trim().length < 3}
         >
-          Voir mon récapitulatif
+          Valider mon adresse
         </Button>
         <Button
           type="button"
@@ -2772,7 +2709,7 @@ function SlotStep({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Étape 5 — Récapitulatif et coordonnées                                     */
+/* Étape 6 — Récapitulatif                                                    */
 /* -------------------------------------------------------------------------- */
 
 function RecapLine({
@@ -2813,7 +2750,6 @@ function RecapStep({
   contact,
   onContactChange,
   onEdit,
-  onChangeAddress,
   onSubmit,
   submitting,
 }: {
@@ -2824,8 +2760,6 @@ function RecapStep({
   contact: ContactInput;
   onContactChange: (contact: ContactInput) => void;
   onEdit: (step: Step) => void;
-  /** Revenir à la recherche d'adresse, sur ce même écran. */
-  onChangeAddress: () => void;
   onSubmit: () => void;
   submitting: boolean;
 }) {
@@ -2859,12 +2793,14 @@ function RecapStep({
           onEdit={() => onEdit("creneau")}
           editLabel="Modifier le créneau"
         />
+        {/* L'adresse se modifie comme les autres lignes, en revenant à son
+            écran : c'est le premier, et il porte déjà la complétion, les
+            adresses enregistrées et la saisie manuelle. La rouvrir ici en
+            aurait fait une seconde recherche d'adresse à maintenir. */}
         <RecapLine
           label="Adresse"
           value={address.label}
-          /* L'adresse se change sur place : c'est l'écran où on la donne, y
-             revenir par la navigation serait un détour pour rien. */
-          onEdit={onChangeAddress}
+          onEdit={() => onEdit("adresse")}
           editLabel="Modifier l'adresse"
         />
         {/* La durée affichée est celle du devis, pas celle qu'on recalculerait
@@ -3089,7 +3025,7 @@ function ContactStep({
 
       {/* Le bouton annonce l'écran suivant plutôt que « Continuer ». */}
       <Button type="submit" size="lg" className="min-h-12 w-full">
-        Indiquer mon adresse
+        Voir mon récapitulatif
       </Button>
       <Reassurance />
     </form>

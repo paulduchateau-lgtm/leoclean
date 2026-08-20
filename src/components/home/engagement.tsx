@@ -10,11 +10,15 @@ import { SITE } from "@/lib/site";
  * pratique commerciale trompeuse au sens de l'article L121-2 du code de la
  * consommation — pour un gain sans rapport avec le risque. Un engagement
  * vérifiable est l'inverse d'un avis : il n'est pas une preuve du passé mais
- * une promesse tenue par quelqu'un dont le nom et l'adresse sont sur la page.
+ * une promesse que n'importe qui peut aller contrôler.
  *
- * Le dernier bloc nomme le fondateur et le siège : il n'apparaît que si les
- * deux sont renseignés — une carte de visite à moitié vide dirait le
- * contraire de ce qu'elle veut dire.
+ * **Le fondateur n'est plus nommé ici.** Le dernier bloc écrivait son nom
+ * suivi de l'adresse du siège, qui est aussi son domicile : c'était publier
+ * un couple identité–adresse pour appuyer un argument qui n'en a pas besoin.
+ * Ce qui rend la promesse vérifiable est ce qu'on peut contrôler — un SIRET,
+ * une attestation d'assurance, un numéro où quelqu'un décroche — et rien de
+ * cela ne demande un patronyme. La NAP du siège reste publiée là où elle
+ * doit l'être : le pied de page, les mentions légales et le JSON-LD.
  */
 
 const ENGAGEMENTS = [
@@ -30,16 +34,13 @@ const ENGAGEMENTS = [
   },
   {
     icon: ShieldCheckIcon,
-    title: "Des professionnels vérifiés",
-    body: "SIRET actif, attestation de responsabilité civile professionnelle, pièce d'identité et RIB contrôlés avant la première intervention.",
+    title: "Des professionnels sélectionnés",
+    body: "Nos professionnels sont sélectionnés pour leur expérience, leur sérieux et leur fiabilité. SIRET actif, attestation de responsabilité civile professionnelle, pièce d'identité et RIB contrôlés avant la première intervention.",
   },
   {
     icon: UserIcon,
     title: "Une vraie personne en face",
-    body:
-      SITE.founder !== null && SITE.address.street !== null
-        ? `${SITE.founder}, ${SITE.address.street} à ${SITE.address.city}. Vous écrivez, quelqu'un répond. Pas de standard, pas de message resté sans réponse.`
-        : "Vous écrivez, quelqu'un répond. Pas de standard, pas de message resté sans réponse.",
+    body: `Une entreprise installée à ${SITE.address.city}, pas un standard à l'autre bout du pays. Vous écrivez, quelqu'un répond ; vous appelez, quelqu'un décroche.`,
   },
 ];
 
@@ -73,12 +74,6 @@ export function Engagement() {
           </li>
         ))}
       </ul>
-
-      {SITE.founder !== null && (
-        <p className="mt-6 text-sm text-muted-foreground">
-          — {SITE.founder}, fondateur de {SITE.name}.
-        </p>
-      )}
 
       {/* En place, et muet tant qu'aucun avis réel n'existe. */}
       <Avis />

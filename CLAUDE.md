@@ -131,7 +131,7 @@ règle complète et son unique point de bascule vivent dans `src/lib/fiscal.ts`.
 ## Canaux de conversion
 
 Cinq portes. Le **tunnel de réservation** (`/reserver`) est la principale : le
-client choisit son adresse, voit son prix, choisit son heure et repart avec un
+client donne son adresse, voit son prix, choisit son heure et repart avec un
 rendez-vous ferme. Le formulaire de rappel (`/etre-rappele`, également intégré à
 chaque page commune avec la commune pré-sélectionnée) reste pour ceux qui ne
 veulent pas réserver seuls. Les trois autres sont directes, par ordre
@@ -478,20 +478,34 @@ par un `validUntil` et en ouvre de nouvelles. Rien n'est écrasé : une
 réservation passée continue de pointer sur le tarif qui l'a chiffrée. Seule la
 marketplace est touchée, une société cliente fixant ses propres prix.
 
-### L'accueil raconte pourquoi le rayon est court
+### L'accueil raconte ce qu'on n'aura plus à faire
 
-**La thèse du site est que le périmètre est petit exprès.** Léo Clean vend
-l'inverse d'une plateforme : là où l'argument national est l'échelle et le
-choix, le nôtre est qu'une vingtaine de minutes de route est la limite qui
-rend tenable « la même personne chaque semaine ». Ce n'est pas une faiblesse à
-excuser ni une couverture en construction, c'est le mécanisme. La phrase qui
-le dit ouvre désormais la page au lieu d'être enterrée en milieu de parcours.
+**La promesse est qu'on s'occupe du reste.** Quelqu'un dont la maison est sale
+n'achète pas un intervenant attitré : il achète de ne plus avoir à y penser.
+L'accueil ouvrait auparavant sur « la seule promesse qui compte vraiment : la
+même personne chez vous, à chaque passage » — arbitrage revu le 20 août 2026
+avec le porteur du projet. La continuité est un **moyen**, pas la promesse :
+elle reste écrite dans les engagements, à sa place de conséquence. Le titre
+dit « Votre ménage à domicile, simplement », le chapeau « Des professionnels
+sélectionnés près de chez vous. Léo Clean s'occupe du reste. »
 
-**L'ordre des blocs découle de là**, repris du prototype à la refonte d'août
+**La proximité reste la thèse, elle n'est plus l'accroche.** Le périmètre est
+petit exprès : une vingtaine de minutes de route est la limite qui rend
+tenable « la même personne chaque semaine », et c'est un mécanisme, pas une
+couverture en construction. Elle a désormais son bloc à elle — « Nous ne
+venons pas de loin » — au lieu d'occuper la première phrase.
+
+**La pastille dit le territoire, pas son décompte.** « Les pros du ménage au
+sud de Bordeaux », et non plus « 16 communes au sud de Bordeaux » : un chiffre
+en tête de page se lit comme une limite là où un lieu se lit comme une
+adresse. Le décompte n'est pas perdu — il vit dans le paragraphe d'identité et
+dans le bloc des communes, aux deux endroits où il sert de preuve.
+
+**L'ordre des blocs** est repris du prototype à la refonte d'août
 2026 : thèse (avec la réassurance sous le geste), preuves chiffrées,
 paragraphe d'identité, quatre prestations, offre à deux tarifs, déroulé sur la
-bande sombre — qui raconte la diffusion par lots réelle, plus l'attribution
-d'avant —, comparatif des modèles, engagements (« Ce que ça change chez
+bande sombre — « Vous réservez. Nous nous occupons du reste. » —, comparatif
+des modèles, engagements (« Ce que ça change chez
 vous », fusion des anciennes promesses et du bloc de confiance), communes,
 conseils lus dans `blog.ts`, questions fréquentes aux chiffres dérivés du
 barème, formulaire de contact (le `LeadForm` de `/etre-rappele`, distingué par
@@ -502,12 +516,32 @@ Les engagements précèdent les communes, seule entorse à l'ordre du prototype 
 le test de la page impose qu'aucun lien commune n'apparaisse avant les
 conséquences de la thèse.
 
+**Le déroulé raconte ce que le client fait — presque rien.** Il détaillait la
+mécanique interne : cinq intervenants sollicités, le premier qui accepte
+l'emporte. C'est vrai, et cela reste écrit **là où cela engage** — au
+récapitulatif, juste avant le geste qui réserve, et sur l'écran de
+confirmation. L'accueil n'a pas à faire porter au visiteur le fonctionnement
+de l'attribution. Une ligne sous la liste garde en revanche la promesse
+exacte, et un test l'impose : « vous êtes prévenu sous 24 h ». Sans elle,
+« vous profitez de votre maison » se lirait comme un rendez-vous acquis à la
+seconde, et se découvrirait à la première réservation.
+
 **Les seize communes n'ont pas disparu, elles ont changé de fonction.**
 Placées en fin de page et groupées en deux familles, chaque pastille portant
 son temps de trajet, elles ne sont plus un menu mais la preuve de la thèse.
 Aucun lien interne n'est perdu et `src/app/page.test.tsx` le vérifie sur le
 HTML rendu, pas sur les constantes : une donnée juste qui n'atteint pas la
 page ne vaut rien.
+
+**Un champ de code postal ouvre le bloc des communes.** Seize pastilles
+répondent à qui sait déjà lire une carte ; « est-ce que vous venez chez
+moi ? » se répond mieux en tapant cinq chiffres. `CouvertureCheck` est le seul
+composant client de l'accueil : il reçoit le référentiel réduit à quatre
+champs par commune — importer `territory.ts` embarquerait des coordonnées et
+des codes INSEE dont l'écran n'a rien à faire — nomme **toutes** les communes
+d'un code postal partagé (33650 en couvre sept) et ne transmet aucune commune
+au tunnel, qui demande désormais l'adresse. Un refus donne le numéro plutôt
+qu'un champ qui ne rend rien.
 
 **`src/lib/facts.ts` n'est pas une source de vérité, c'est un agrégateur.** Un
 bandeau de crédibilité rassemble en quatre nombres ce que quatre modules
@@ -526,11 +560,24 @@ formulations peuvent coexister.
 **Il n'y a aucun avis client, et rien ne le maquille.** Fabriquer un
 témoignage est une pratique commerciale trompeuse au sens de l'article L121-2
 du code de la consommation, pour un gain sans rapport avec le risque. Le bloc
-d'engagements signés tient ce rôle : une promesse vérifiable, tenue par
-quelqu'un dont le nom et le numéro sont sur la page, ce qui est la seule forme
-de confiance qu'un service neuf peut offrir honnêtement. `<Avis />` est en
-place et muet, gardé par `FACTS.hasReviews` — le même drapeau que le
+d'engagements tient ce rôle : des promesses **vérifiables** — SIRET actif,
+attestation de responsabilité civile, pièce d'identité et RIB contrôlés avant
+la première intervention, un vrai numéro où quelqu'un décroche — ce qui est la
+seule forme de confiance qu'un service neuf peut offrir honnêtement. `<Avis />`
+est en place et muet, gardé par `FACTS.hasReviews` — le même drapeau que le
 `aggregateRating` du JSON-LD.
+
+**Le fondateur n'est plus nommé, ni sur la page ni dans le balisage.** Le bloc
+d'engagements écrivait « Prénom Nom, <rue> à <ville> », et le JSON-LD déclarait
+`founder` dans le même objet que `address` : le siège étant le domicile du
+porteur du projet, cela publiait une identité associée à une adresse
+d'habitation — et le balisage étant émis sur toutes les pages, partout.
+Arbitrage du 20 août 2026 : la NAP garde sa place — pied de page, mentions
+légales, `PostalAddress` du JSON-LD — parce que c'est celle de l'entreprise, et
+`taxID` identifie déjà la structure de façon vérifiable. `SITE.founder` reste
+renseigné et reste affiché sur `/a-propos`, où le nommer est l'objet de la
+page. `src/app/page.test.tsx` échoue si le nom revient sur l'accueil, texte
+rendu et balisage compris.
 
 **Le comparatif oppose des modèles, jamais des sociétés.** Aucun concurrent
 n'est nommé, aucun superlatif n'est employé, et chaque case défavorable à un
@@ -909,18 +956,41 @@ du centre de la commune : les temps de trajet sont moins justes, donc les
 créneaux un peu plus prudents. C'est ce chemin que teste le parcours de bout en
 bout, précisément pour ne pas dépendre d'un service tiers.
 
+Depuis que l'adresse ouvre le tunnel, ce repli porte davantage : une complétion
+en panne arrêtait auparavant un parcours au dernier écran, elle l'arrêterait
+désormais au premier. C'est pour cela que le bouton « Saisir mon adresse
+manuellement » est **toujours** présent, avant même toute recherche, et non
+seulement après un échec.
+
 ## Ordre des écrans du tunnel
 
-**Plus une information coûte à donner, plus tard on la demande.** C'est la
-seule règle, et elle décide de tout l'ordre. Le tunnel demandait auparavant
-l'adresse complète en premier et n'affichait le prix qu'à la fin : friction
-maximale au moment où l'engagement est minimal.
+Six écrans : **adresse, durée, rythme, créneau, coordonnées, récapitulatif.**
 
-Six écrans : commune, durée, rythme, créneau, coordonnées, adresse. La
-commune suffit à répondre « intervenez-vous chez moi ? » et à chercher des
-créneaux ; le prix apparaît au troisième, avant toute donnée personnelle ;
-l'adresse exacte, la plus coûteuse à donner, arrive en dernier et emporte le
-récapitulatif avec elle.
+**L'adresse ouvre le tunnel depuis le 20 août 2026**, à la place de l'écran de
+choix de commune. Le parcours obéissait jusque-là à « plus une information
+coûte à donner, plus tard on la demande » : la commune d'abord, presque
+gratuite à donner, l'adresse exacte au dernier écran. La règle vaut toujours
+pour les coordonnées — nom, téléphone, email restent au cinquième écran — mais
+elle avait pour l'adresse un défaut qu'elle ne voyait pas : **le même
+renseignement était demandé deux fois.** Il fallait d'abord se reconnaître dans
+un référentiel administratif — savoir que Cadaujac n'est pas Cestas, se
+trouver parmi seize — pour finir par taper sa rue de toute façon. Une seule
+saisie remplace les deux, et la complétion prononce la couverture sur le même
+geste : le code postal reste une entrée valable, la BAN le comprenant aussi
+bien qu'un nom de rue.
+
+Ce que cela coûte, et qu'il faut assumer : **l'adresse passe devant le prix**,
+qui n'apparaît qu'au troisième écran. Deux choses en limitent la portée — elle
+n'est demandée qu'une fois au lieu de deux, et la barre basse annonce le tarif
+d'entrée dès le premier écran, si bien que « combien ça coûte » reçoit une
+réponse avant la première frappe. Un test de bout en bout garde ce qui reste
+vraiment structurant : **aucune donnée d'identité n'est réclamée avant que le
+prix soit affiché.**
+
+Conséquence technique : les créneaux sont cherchés depuis l'adresse réelle du
+premier écran au dernier, jamais depuis le centre d'une commune. Ils sont donc
+plus justes, et `COMMUNE_TRAVEL_MARGIN_MINUTES` ne sert plus au tunnel — elle
+reste dans le moteur, qui accepte toujours une recherche imprécise.
 
 **Le deuxième écran demande une durée, pas une surface.** On demandait une
 taille de logement pour en déduire des heures ; on demande les heures et on
@@ -972,23 +1042,26 @@ avec leur montant et leur durée, et la barre basse l'annonce dès le premier
 écran : un écran de plus qui ne ferait que le répéter coûterait un geste sans
 rien apprendre.
 
-**Chercher des créneaux depuis un centre de commune impose une marge de
-trajet.** `COMMUNE_TRAVEL_MARGIN_MINUTES` élargit les deux tampons de route
-tant que l'adresse exacte est inconnue : ce qui est proposé doit rester tenable
-une fois l'adresse donnée, sinon la réservation échouerait au dernier écran,
-après que tout a été rempli. La marge ne rend jamais un créneau plus facile,
-seulement plus rare — et `createBooking` réévalue de toute façon sur l'adresse
-réelle, en essayant le candidat suivant si le premier ne tient plus.
-
 **Le stockage local ne contient ni adresse ni coordonnées** — une commune, une
-surface, un rythme, une heure, sept jours durant. L'ancienne version y laissait
-l'adresse du domicile, ce que la reprise n'exige pas.
+surface, un rythme, une heure, sept jours durant. La commune y est désormais
+**déduite** du code INSEE de l'adresse choisie, et non plus saisie ; la rue n'y
+va toujours pas. Un parcours n'est enregistré qu'une fois une durée choisie :
+sans cette garde, arriver sur `/reserver?commune=cestas` depuis une page locale
+suffirait à faire apparaître un bandeau de reprise pour une simple visite.
 
 **L'URL porte la commune, la surface et l'écran**, et rien d'autre : une barre
 d'adresse se partage, s'enregistre en favori et se retrouve dans les journaux
-d'un serveur. Elle est relue côté serveur au premier rendu, et l'écran est
-ramené à ce que les choix connus rendent atteignable — une URL bricolée à la
-main n'ouvre pas un écran de créneaux sans durée à chercher.
+d'un serveur. Elle n'a jamais porté d'adresse et n'en portera pas.
+
+**Le tunnel ouvre donc toujours sur l'adresse — reprise et lien partagé
+compris.** Aucun lien, aucun rechargement, aucune reprise ne peut franchir le
+premier écran, puisque rien de ce qui est conservé ne dit où l'on va. C'est le
+prix d'un stockage qui ne garde rien d'identifiant, et il est moins cher que
+l'inverse. Ce qui est su n'est pas perdu pour autant : l'écran à rejoindre est
+mis de côté (`pendingStep`) et **rejoint dès l'adresse donnée**, sans refaire
+la durée, le rythme ni le créneau. Il reste ramené à ce que les choix connus
+rendent atteignable — une URL bricolée à la main n'ouvre pas un écran de
+créneaux sans durée à chercher.
 
 **La confirmation montre quelqu'un.** `IntervenantCard` porte le prénom, la
 commune de résidence et l'ancienneté : « le même intervenant, chaque semaine »
@@ -1007,20 +1080,30 @@ du barème des CGU.
 | Parcours                               | Cible | Mesuré |
 | -------------------------------------- | ----- | ------ |
 | Accueil → prix affiché                 | ≤ 4   | 3      |
-| Accueil → réservation confirmée        | ≤ 9   | **10** |
+| Accueil → réservation confirmée        | ≤ 9   | 9      |
 | Accueil → appel téléphonique           | ≤ 2   | 1      |
-| Reprise → confirmation (dernier écran) | ≤ 4   | 4      |
+| Reprise → confirmation (dernier écran) | ≤ 4   | **5**  |
 
 **Les deux premiers parcours ont coûté un geste à la refonte narrative de
 l'accueil**, et c'est un arbitrage assumé, pas une dérive. Le bloc « Où
 habitez-vous ? » répondait de la commune dès l'accueil, si bien que le tunnel
 s'ouvrait sur le logement ; l'accueil n'ayant plus qu'un bouton « Réserver »
 sans paramètre, le tunnel s'ouvre désormais sur son premier écran. Le prix
-apparaît donc au troisième geste au lieu du deuxième, et la réservation au
-neuvième au lieu du huitième. Les deux plafonds tiennent, mais **il ne reste
-plus de marge sur le second** : tout écran ajouté au tunnel dépasserait la
-cible, et c'est la cible qu'il faudrait alors rediscuter, pas la mesure qu'il
-faudrait arrondir.
+apparaît donc au troisième geste au lieu du deuxième.
+
+**Le geste rendu par l'adresse en tête ramène la réservation à neuf.** L'écran
+d'adresse du dernier rang a disparu — c'était le doublon de l'écran commune —
+et la cible de neuf, dépassée depuis l'ajout des créneaux de repli, est de
+nouveau tenue. Il n'y reste toujours **aucune marge** : tout écran ajouté la
+dépasserait, et c'est alors la cible qu'il faudrait rediscuter, pas la mesure
+qu'il faudrait arrondir.
+
+**La reprise, elle, coûte un geste de plus et dépasse sa cible.** L'adresse
+n'étant jamais enregistrée, un parcours repris repasse par le premier écran
+avant de rejoindre celui où il s'était arrêté. Les deux issues sont connues :
+soit on assume cinq, soit on conserve l'adresse en stockage local — ce que le
+dépôt refuse, et pour une raison qui n'a pas changé. La cible est donc à
+rediscuter, pas la mesure à arrondir.
 
 Ce que le geste achète : un visiteur qui a compris pourquoi le rayon est court
 avant qu'on lui demande où il habite. Les seize communes ouvraient la page —
@@ -1602,6 +1685,8 @@ src/
     app-tab-bar.tsx      navigation du pouce, mobile, hors espaces applicatifs
     sticky-booking-cta.tsx rappel de prix à la lecture, effacé par le vrai bouton
     contact-sheet.tsx    les trois canaux, en panneau bas
+    booking-funnel.tsx   le tunnel — adresse, durée, rythme, créneau, contact, récap
+    home/couverture-check.tsx « venez-vous chez moi ? », par code postal
   lib/
     db.ts              client Prisma et cloisonnement multi-tenant
     env.ts             variables d'environnement validées par Zod
@@ -1770,10 +1855,9 @@ double.
   projet (18 août 2026), en desktop seulement. Elles paraissent générées — à
   faire valider avant une communication publique — et aucune autre image ne
   doit entrer sans le même arbitrage.
-- Le prototype ouvre le tunnel sur l'adresse ; le produit garde son écran
-  commune (même fonction, la couverture se dit tout de suite) et l'adresse
-  exacte reste au dernier écran, conformément à « plus une information coûte à
-  donner, plus tard on la demande ».
+- ~~Le prototype ouvre le tunnel sur l'adresse ; le produit garde son écran
+  commune.~~ **Divergence levée le 20 août 2026** : le tunnel ouvre lui aussi
+  sur l'adresse. Voir « Ordre des écrans du tunnel ».
 
 ## Commandes
 

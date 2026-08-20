@@ -55,30 +55,36 @@ export const metadata: Metadata = pageMetadata({
 export const revalidate = 86_400;
 
 /**
- * Le déroulé réel : diffusion par lots, acceptation explicite.
+ * Le déroulé, du point de vue du client.
  *
- * L'ancienne copy annonçait « nous choisissons la personne la plus proche »,
- * ce qui décrivait le modèle d'avant : depuis la diffusion par lots, personne
- * ne se voit imposer une mission — la demande part chez cinq intervenants et
- * le premier qui accepte l'emporte. Le déroulé raconte ce qui se passe
- * vraiment, parce qu'une promesse de fonctionnement fausse se découvre à la
- * première réservation.
+ * L'ancienne version racontait la mécanique interne — diffusion par lots,
+ * cinq intervenants, premier qui accepte. C'est vrai, et cela reste écrit là
+ * où cela engage : au récapitulatif, juste avant le geste qui réserve, et sur
+ * l'écran de confirmation. Mais l'accueil n'a pas à faire porter au visiteur
+ * le fonctionnement de l'attribution : ce qu'il achète, c'est de ne plus s'en
+ * occuper.
+ *
+ * D'où trois étapes qui disent ce qu'il fait (presque rien) et ce que nous
+ * faisons (le reste) — suivies d'une ligne qui garde la promesse exacte : la
+ * confirmation arrive sous 24 h, elle n'est pas immédiate. Sans elle,
+ * quelqu'un lirait « vous profitez de votre maison » comme un rendez-vous
+ * acquis à la seconde, et le découvrirait à la première réservation.
  */
 const STEPS = [
   {
     number: "1",
-    title: "Vous choisissez votre créneau",
-    body: "Six écrans, deux minutes. Le prix s'affiche avant qu'on vous demande la moindre donnée personnelle.",
+    title: "Dites-nous ce dont vous avez besoin",
+    body: "Quelques clics suffisent : votre adresse, la durée, le rythme, votre créneau. Le prix s'affiche avant qu'on vous demande la moindre donnée personnelle.",
   },
   {
     number: "2",
-    title: "La mission part chez cinq intervenants",
-    body: "Ceux qui habitent le plus près de chez vous et connaissent déjà le secteur. Personne ne se voit imposer une mission.",
+    title: "Nous trouvons le bon professionnel près de chez vous",
+    body: `Sélectionné et suivi par ${SITE.name}, et choisi parmi ceux qui habitent votre commune ou la commune d'à côté.`,
   },
   {
     number: "3",
-    title: "Le premier qui accepte l'emporte",
-    body: "Vous êtes prévenu sous 24 h, avec son prénom, sa commune et son ancienneté.",
+    title: "Vous profitez de votre maison",
+    body: "Planning, paiement et suivi : on reste disponible si vous avez besoin de nous.",
   },
 ];
 
@@ -128,25 +134,37 @@ export default function Home() {
               <ResumeBookingBanner />
 
               {/* La pilule ananas : le badge des moments d'accroche, texte
-                encre — la signature la plus pétillante de la palette. */}
+                encre — la signature la plus pétillante de la palette.
+
+                Elle dit le territoire et non son décompte : « seize communes »
+                se lit comme une limite là où « au sud de Bordeaux » se lit
+                comme une adresse. Le chiffre n'est pas perdu — il vit dans le
+                paragraphe d'identité et dans le bloc des communes, aux deux
+                endroits où il sert de preuve plutôt que de restriction. */}
               <Badge className="mb-5 gap-1.5 bg-pineapple-300 text-ink-900">
                 <MapPinIcon className="size-3.5" aria-hidden />
-                {FACTS.communeCount} communes au sud de Bordeaux
+                Les pros du ménage au sud de Bordeaux
               </Badge>
 
               {/* Un seul mot d'accent, en sarcelle : le tropical punch accentue
                 par la couleur, pas par un changement de plume. */}
               <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
-                Le ménage à domicile, par des personnes qui habitent{" "}
-                <span className="accent-word">à côté</span> de chez vous.
+                Votre ménage à domicile,{" "}
+                <span className="accent-word">simplement</span>.
               </h1>
 
-              {/* La thèse, dite en personnes plutôt qu'en minutes : c'est la
-                proximité qui rend possible la seule promesse qui compte. */}
+              {/* La thèse.
+
+                Elle disait auparavant que la proximité rendait possible « la
+                seule promesse qui compte vraiment : la même personne à chaque
+                passage ». C'était faire de l'intervenant attitré la promesse
+                centrale, alors que ce n'est qu'un moyen : ce qu'achète
+                quelqu'un dont la maison est sale, c'est de ne plus avoir à
+                s'en occuper. La continuité reste dite — plus bas, dans les
+                engagements, à sa vraie place de conséquence. */}
               <p className="mt-6 max-w-prose text-lg text-pretty">
-                Nos intervenants vivent dans les communes où ils travaillent.
-                C&apos;est ce qui rend possible la seule promesse qui compte
-                vraiment : la même personne chez vous, à chaque passage.
+                Des professionnels sélectionnés près de chez vous. {SITE.name}{" "}
+                s&apos;occupe du reste.
               </p>
 
               {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
@@ -230,11 +248,10 @@ export default function Home() {
                 </span>
                 <span className="flex flex-col gap-0.5">
                   <span className="font-bold">
-                    Le même intervenant à chaque passage
+                    Des professionnels sélectionnés
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    Il habite l&apos;une des {FACTS.communeCount} communes du
-                    secteur
+                    Pour leur expérience, leur sérieux et leur fiabilité
                   </span>
                 </span>
               </div>
@@ -279,7 +296,7 @@ export default function Home() {
           <div className="mx-auto grid w-full max-w-5xl items-center gap-14 px-6 py-16 lg:grid-cols-2">
             <div>
               <h2 className="text-2xl font-black tracking-tight text-balance text-white">
-                Vous demandez une heure. Quelqu&apos;un l&apos;accepte.
+                Vous réservez. Nous nous occupons du reste.
               </h2>
 
               <ol className="mt-8 space-y-6">
@@ -302,6 +319,17 @@ export default function Home() {
                   </li>
                 ))}
               </ol>
+
+              {/* La promesse exacte, sous la liste et non à la place :
+                  « vous profitez de votre maison » ne doit pas se lire comme
+                  un rendez-vous acquis à la seconde. Le fonctionnement
+                  complet — la demande part chez cinq intervenants, le premier
+                  qui accepte l'emporte — est écrit au récapitulatif, juste
+                  avant le geste qui engage. */}
+              <p className="mt-6 text-sm text-teal-200">
+                Vous êtes prévenu sous 24 h, avec le prénom de votre
+                intervenant, sa commune et son ancienneté.
+              </p>
 
               {/* L'accent de la bande sombre : la pilule ananas, texte
                   encre. */}
@@ -357,12 +385,14 @@ export default function Home() {
                 <h2 className="text-2xl font-black tracking-tight text-balance">
                   Une question avant de réserver ?
                 </h2>
+                {/* Le prénom du fondateur figurait ici, à trois lignes de
+                    l'adresse du siège — qui est aussi son domicile. La
+                    promesse tenue par ce bloc est qu'une vraie personne
+                    répond, et elle tient sans nommer qui : c'est le délai de
+                    réponse et le numéro qui la rendent vérifiable. */}
                 <p className="mt-2 max-w-prose text-muted-foreground">
-                  Écrivez-nous
-                  {SITE.founder !== null
-                    ? ` : c'est ${SITE.founder.split(" ")[0]} qui lit, et qui répond`
-                    : ""}{" "}
-                  — dans la journée, en semaine.
+                  Écrivez-nous : quelqu&apos;un lit et répond, dans la journée,
+                  en semaine.
                 </p>
 
                 <ul className="mt-6 space-y-3 text-sm">

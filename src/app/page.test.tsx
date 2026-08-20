@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import Home from "@/app/page";
 import { PUBLISHED_COMMUNE_SLUGS } from "@/lib/communes-content";
 import { FACTS } from "@/lib/facts";
+import { SITE } from "@/lib/site";
 import { COMMUNES } from "@/lib/territory";
 
 /**
@@ -16,7 +17,17 @@ import { COMMUNES } from "@/lib/territory";
  * une donnée juste qui n'atteint pas la page ne vaut rien.
  */
 const html = renderToStaticMarkup(<Home />);
-const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+/*
+ * Le rendu échappe les apostrophes en `&#x27;` : sans ce retour en arrière,
+ * une assertion sur une phrase française ne trouve jamais rien, et le test
+ * passe pour de mauvaises raisons dès qu'il est écrit en négatif.
+ */
+const text = html
+  .replace(/<[^>]*>/g, " ")
+  .replace(/&#x27;/g, "'")
+  .replace(/&amp;/g, "&")
+  .replace(/&quot;/g, '"')
+  .replace(/\s+/g, " ");
 
 /** Toutes les destinations de la page, dans l'ordre du document. */
 const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]!);
@@ -69,6 +80,45 @@ describe("accueil — rien d'inventé", () => {
 
   it("annonce le trajet maximal réel, pas un chiffre rond", () => {
     expect(text).toContain(`${FACTS.maxDriveMinutes} min`);
+  });
+});
+
+describe("accueil — ce que la page publie du fondateur", () => {
+  it("ne met pas son nom sur la page qui porte l'adresse du siège", () => {
+    /*
+     * Le siège est le domicile du fondateur. La NAP a sa place — pied de page,
+     * mentions légales, JSON-LD — mais publier « Prénom Nom, <rue> à <ville> »
+     * dans le corps de l'accueil associait une identité à une adresse
+     * d'habitation pour appuyer un argument qui n'en a pas besoin : ce qui rend
+     * une promesse vérifiable est un SIRET, une assurance et un numéro où
+     * quelqu'un décroche.
+     *
+     * Le test porte sur le texte rendu, pas sur un composant : c'est la page
+     * entière qui doit rester propre, quelle que soit celle qui le réintroduit.
+     */
+    if (SITE.founder === null) return;
+
+    expect(text).not.toContain(SITE.founder);
+    for (const partie of SITE.founder.split(" ")) {
+      expect(text).not.toMatch(new RegExp(`\\b${partie}\\b`));
+    }
+  });
+});
+
+describe("accueil — la promesse tenue", () => {
+  it("dit qu'on s'occupe du reste, pas qu'on garantit la même personne", () => {
+    // La promesse centrale n'est pas la continuité d'intervenant — c'est un
+    // moyen, et il reste écrit plus bas comme tel. Ce que quelqu'un achète,
+    // c'est de ne plus avoir à s'en occuper.
+    expect(text).toContain("s'occupe du reste");
+    expect(text).not.toMatch(/seule promesse qui compte/i);
+  });
+
+  it("n'annonce jamais un rendez-vous immédiat", () => {
+    // Le déroulé s'arrête sur « vous profitez de votre maison » : sans le
+    // délai, cela se lirait comme une confirmation acquise à la seconde, et se
+    // découvrirait à la première réservation.
+    expect(text).toMatch(/prévenu sous 24 h/);
   });
 });
 

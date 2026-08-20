@@ -4,12 +4,19 @@ import Link from "next/link";
 import { COMMUNES_BY_POPULATION } from "@/lib/territory";
 
 /**
- * Première étape du tunnel, posée là où la personne arrive.
+ * Seize portes d'entrée du tunnel, posées là où la personne arrive.
  *
  * On ne présente pas le service, on commence à réserver. La question est celle
  * que se pose réellement quelqu'un devant une plateforme locale — « est-ce
- * que vous venez chez moi ? » — et y répondre ouvre le tunnel avec la commune
- * déjà connue, au lieu de le faire retaper à l'écran suivant.
+ * que vous venez chez moi ? » — et chaque pastille y répond « oui » d'un
+ * geste.
+ *
+ * **Elle n'ouvre plus le tunnel à l'écran suivant.** Le tunnel demande
+ * désormais l'adresse dès le premier écran, et une commune n'en est pas une :
+ * le paramètre reste transmis parce qu'il sert encore — repère de la saisie
+ * manuelle, exemple du champ, préchargement des créneaux depuis le centre de
+ * la commune pendant qu'on tape — mais il ne fait plus sauter d'étape. La
+ * copie ne promet donc plus un raccourci qui n'existe pas.
  *
  * Le composant ne porte aucun code client : ce sont seize liens. Il fonctionne
  * donc partout, y compris sur la vitrine statique, et n'ajoute rien au poids
@@ -30,7 +37,8 @@ export function CommuneStart({ className = "" }: { className?: string }) {
         Où habitez-vous ?
       </h2>
       <p className="mt-1 text-sm text-primary-foreground/80">
-        Choisissez votre commune : nous vous montrons les créneaux disponibles.
+        Choisissez votre commune : nous vous montrons les créneaux disponibles
+        dès que vous nous aurez donné votre adresse.
       </p>
 
       <ul className="mt-5 flex flex-wrap gap-2">
