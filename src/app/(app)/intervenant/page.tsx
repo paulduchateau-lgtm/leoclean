@@ -100,6 +100,12 @@ export default async function MissionsPage() {
           Mes absences →
         </Link>
         <Link
+          href="/intervenant/messages"
+          className="text-primary hover:underline"
+        >
+          Mes messages →
+        </Link>
+        <Link
           href="/intervenant/revenus"
           className="text-primary hover:underline"
         >
