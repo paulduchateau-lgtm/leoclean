@@ -1289,6 +1289,86 @@ rappelle pas de la même façon quelqu'un qui a demandé quelque chose et quelqu
 qu'une résolution : « on n'a rien fait » est une décision qui se justifie, et
 qui se relit quand la même personne rappelle.
 
+## Factures et attestations fiscales
+
+**Une prestation produit deux factures**, et le module les écrit ensemble ou
+pas du tout. Une prestation dont une seule moitié serait facturée laisserait la
+comptabilité fausse d'un côté, le client sans justificatif de l'autre — et la
+suite de numéros porterait déjà le trou.
+
+**La numérotation est une contrainte fiscale, pas une convention.** L'article
+242 nonies A de l'annexe II au CGI exige une séquence chronologique **continue,
+sans rupture** : un trou se présume être une facture retirée, et c'est ce qu'on
+cherche en premier. D'où trois choix :
+
+- **Une série par émetteur.** Léo Clean facture sa coordination pour son propre
+  compte, l'intervenant sa prestation pour le sien.
+- **Une série dédiée à l'autofacturation** (`LC-<siren>`). Les factures de
+  l'intervenant sont établies en son nom et pour son compte — article 289, I-2
+  du CGI — et il facture aussi ailleurs : une série distincte est la réponse
+  prévue pour ce cas. La mention correspondante est obligatoire, et son absence
+  rend la facture irrégulière.
+- **Le compteur vit en base et s'incrémente dans la transaction** qui écrit la
+  facture, jamais dans une `SEQUENCE` PostgreSQL — une séquence ne revient pas
+  en arrière quand la transaction échoue, et laisse exactement le trou qu'on
+  évite.
+
+**Une facture est immuable, donc figée à l'émission.** Tout ce qu'elle imprime
+— identité de l'émetteur, adresse du client, lieu d'exécution — vient de
+sources vivantes qui changeront ; sans instantané, une facture de l'an dernier
+se réimprimerait différemment. Le code de commerce impose dix ans.
+
+**`verifierLaFacture` refuse d'écrire une facture irrégulière.** Le régime
+applicable est celui de la « note » de l'arrêté du 3 octobre 1983 — prestation
+de services à un particulier — et non celui des factures entre professionnels :
+date de rédaction, identité et adresse du prestataire, nom du client, **date et
+lieu d'exécution**, décompte détaillé en quantité et en prix, total. Une facture
+déjà remise ne se corrige que par un avoir ; un refus, lui, se voit dans le
+back-office avant que quiconque l'ait vue.
+
+**La quantité facturée est la durée vendue, pas la durée réelle.** Le dépôt a
+déjà tranché que la durée réelle ne refacture rien ; porter la durée réelle en
+gardant le montant convenu produirait un prix unitaire de fiction — une
+intervention pointée en une minute affichait 6 882 € de l'heure — et c'est
+précisément le prix unitaire qu'un contrôle recalcule. L'écart appartient au
+rapport de mission.
+
+**L'éligibilité au crédit d'impôt se décide facture par facture, et le devis n'y
+suffit pas.** `partEligible` rend zéro quand l'émetteur n'a pas de numéro de
+déclaration, quelle que soit la prestation : annoncer une réduction sans
+déclaration ferait porter au client un avantage que l'administration lui
+reprendrait. C'est la même frontière que `fiscal.ts` tient pour le site,
+appliquée à chaque document — aujourd'hui la coordination affiche donc 0 €
+éligible, la plateforme n'étant pas déclarée.
+
+**L'attestation annuelle porte sur les sommes _versées_, jamais sur celles
+facturées** (CGI, art. 199 sexdecies). Une prestation de décembre payée en
+janvier appartient à l'année du paiement : la bâtir sur les factures donnerait
+un montant faux pour tout client servi à cheval sur deux années, c'est-à-dire
+pour un abonné — la clientèle que le service vise. Trois corollaires : un
+remboursement diminue la somme attestée, **des frais d'annulation n'ouvrent
+aucun droit** — ils indemnisent un créneau, ils ne rémunèrent pas un service —
+et le plafond de 12 000 € est **annoncé mais jamais appliqué**, l'administration
+le calculant sur l'ensemble du foyer.
+
+Elle est **figée comme la facture** : un document joint à une déclaration de
+revenus doit pouvoir être rendu à l'identique. Et elle avertit qu'il faut
+déduire les aides perçues — CESU préfinancé, employeur, APA, PCH — sans quoi le
+client déclare le brut et se fait redresser.
+
+**Le régime de TVA est une donnée, pas une constante du code.** Il vit sur
+`Organization` et sur `CleanerProfile`, parce qu'il dépend du chiffre d'affaires
+et d'options que seul un comptable connaît, et qu'il n'est pas le même pour la
+plateforme et pour une société cliente. La valeur par défaut —
+`FRANCHISE_EN_BASE`, article 293 B — mérite d'être confirmée avant la première
+facture : une mention de TVA fausse rend la facture irrégulière dans les deux
+sens.
+
+**Le document se télécharge par l'impression du navigateur.** Une bibliothèque
+de PDF ajouterait une dépendance lourde à une construction sans serveur pour
+produire ce que tous les appareils savent déjà faire. Ce qui rend le document
+stable n'est pas son format mais son instantané.
+
 ## Données personnelles
 
 **Le droit d'accès rend tout ce qui est rattaché à la personne**, en un fichier,
@@ -1520,6 +1600,9 @@ src/
     candidature/       parcours (pur), dossier et revue (server-only)
     messagerie/        vocabulaire (pur), fil de l'intervenant (server-only)
     reclamation/       vocabulaire des réclamations — pur
+    facturation/       numérotation, document et attestation — purs
+      emission.ts      les deux factures d'une prestation (server-only)
+      attestation-annuelle.ts  sommes versées dans l'année (server-only)
     societes/          page publique d'une société cliente du SaaS
     rgpd/              accès et effacement, avec leurs limites
     securite/          limitation de débit des formulaires publics
@@ -1754,9 +1837,9 @@ jamais mise en cache, une URL signée mise en cache étant une URL publique à
 retardement. Réglages du bucket dans
 [docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md).
 
-**Modélisé, seedé, jamais écrit par le produit** : `Payout`, `Invoice`,
-`Review`, `Referral` et `ReferralCode`, `CalendarConnection` et
-`ExternalBusyBlock`. `Payment`, `Subscription`, `Message` et `WebhookEvent` ont
+**Modélisé, seedé, jamais écrit par le produit** : `Payout`,
+`CalendarConnection` et `ExternalBusyBlock`. `Invoice` a rejoint le produit le
+20 août, avec `InvoiceSequence` et `TaxCertificate`. `Payment`, `Subscription`, `Message` et `WebhookEvent` ont
 rejoint le produit les 19 et 20 août. Le
 parrainage est le cas le plus trompeur : `src/lib/referral/` est écrit, pur et
 testé, sans un seul appelant ni écran. Les tables ne mentent pas sur l'intention,
@@ -1776,9 +1859,8 @@ chaque préautorisation, et un test échoue si quelqu'un allonge l'un des délai
 **Le prélèvement est conditionné à la clôture, jamais à l'horloge seule** — et
 le délai court depuis la clôture réelle, pas depuis l'heure prévue.
 
-Restent à écrire : l'empreinte à la réservation (SetupIntent dans le tunnel,
-sans laquelle la préautorisation n'a aucune carte à débiter), Connect Express et
-les reversements, les factures, l'attestation fiscale et les relances d'échec —
+Restent à écrire : Connect Express et les reversements, et les relances
+d'échec —
 dont le calendrier est écrit et testé mais que rien n'appelle. Les reversements
 restent à écrire en _separate charges and transfers_, le modèle à deux factures
 interdisant le _destination charge_. Rien n'a pu être vérifié contre le vrai
@@ -1792,8 +1874,8 @@ le code ne tient.
 
 ## Avancement
 
-État au 20 août 2026 : **759 tests unitaires** (55 fichiers), **13 suites
-d'intégration** exigeant PostgreSQL + PostGIS, **78 tests de bout en bout**. Les
+État au 20 août 2026 : **810 tests unitaires** (58 fichiers), **13 suites
+d'intégration** exigeant PostgreSQL + PostGIS, **152 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
 
@@ -1838,8 +1920,11 @@ ils disent l'effort consenti à ce moment-là.
 - [x] **Application installable et espace client.** Service worker limité aux
       fichiers versionnés, `/hors-ligne`, invitation d'installation après une
       réservation confirmée, `/mon-espace` sur le lien magique existant.
-- [ ] Phase 7 — Paiement Stripe _(non commencée : ni SDK, ni routes de webhook,
-      ni clés)_
+- [ ] **Phase 7 — Paiement Stripe, partielle.** **Fait** : socle et calendrier,
+      préautorisation à H-24, prélèvement à H+24, webhook signé et idempotent,
+      enregistrement de carte par session Checkout, **facturation en deux
+      documents et attestation fiscale annuelle**. **Manque** : Connect Express
+      et les reversements, les relances d'échec.
 - [ ] **Phase 8 — Espace intervenant, partielle** _(mise en production visée
       ici)_. **Fait** : missions et propositions, acceptation qui écrit `CONFIRMED`,
       refus qui rejoue l'attribution en écartant ceux qui ont décliné, semaine

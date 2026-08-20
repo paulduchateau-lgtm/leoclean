@@ -102,6 +102,12 @@ export default async function MissionsPage() {
           Mes revenus →
         </Link>
         <Link
+          href="/intervenant/factures"
+          className="text-primary hover:underline"
+        >
+          Mes factures →
+        </Link>
+        <Link
           href="/intervenant/cooptation"
           className="text-primary hover:underline"
         >

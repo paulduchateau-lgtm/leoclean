@@ -91,6 +91,13 @@ export function composerLeMenu(contexte: ContexteCompte): GroupeCompte[] {
     });
   }
 
+  parametres.push({
+    id: "factures",
+    libelle: "Mes factures",
+    detail: "Deux par intervention : le ménage et la coordination",
+    href: "/mon-compte/factures",
+  });
+
   if (contexte.attestationsFiscales) {
     parametres.push({
       id: "attestations",

@@ -2,7 +2,10 @@ import { genererLesRecurrences } from "@/lib/abonnement/generateur";
 import { traiterLesPaiements } from "@/lib/paiement/travaux";
 import { purgerSelonLaRetention } from "@/lib/rgpd/retention";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
+import { forOrganization } from "@/lib/db";
 import { serverEnv } from "@/lib/env";
+import { emettreLesFacturesDues } from "@/lib/facturation/emission";
+import { marketplaceOrganizationId } from "@/lib/organizations";
 
 /**
  * Point d'entrée de l'ordonnanceur.
@@ -70,6 +73,23 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   /*
+   * La facturation suit les paiements et précède la purge. Elle est idempotente
+   * — un index unique sur `(bookingId, type)` — donc la repasser toutes les
+   * heures n'émet rien de plus. Chaque prestation est traitée séparément : un
+   * SIRET manquant chez l'un ne doit pas empêcher de facturer les autres, un
+   * blocage silencieux se découvrant à la clôture comptable.
+   */
+  let factures;
+  try {
+    factures = await emettreLesFacturesDues(
+      forOrganization(await marketplaceOrganizationId()),
+    );
+  } catch (erreur) {
+    console.error("Émission des factures interrompue", erreur);
+    factures = { erreur: true };
+  }
+
+  /*
    * La purge de rétention vient en dernier : elle n'a aucune urgence, et une
    * erreur ne doit rien empêcher. Personne ne se plaint qu'on garde ses données
    * trop longtemps — c'est précisément pour cela qu'il faut une horloge.
@@ -86,8 +106,15 @@ export async function GET(request: Request): Promise<Response> {
     ...rapport,
     recurrences,
     paiements,
+    factures,
     retention,
   });
 
-  return Response.json({ ...rapport, recurrences, paiements, retention });
+  return Response.json({
+    ...rapport,
+    recurrences,
+    paiements,
+    factures,
+    retention,
+  });
 }
