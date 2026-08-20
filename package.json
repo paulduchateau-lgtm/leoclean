@@ -25,7 +25,8 @@
     "db:utilisateurs-test": "tsx prisma/utilisateurs-de-test.ts",
     "db:tarifs": "tsx prisma/tarifs.ts",
     "db:studio": "prisma studio",
-    "build:demo": "node scripts/build-demo-statique.mjs"
+    "build:demo": "node scripts/build-demo-statique.mjs",
+    "stockage:verifier": "node scripts/verifier-stockage.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
