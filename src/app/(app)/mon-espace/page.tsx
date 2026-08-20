@@ -199,6 +199,12 @@ export default async function MonEspacePage() {
             Noter une intervention →
           </Link>
           <Link
+            href="/mon-espace/paiement"
+            className="text-primary hover:underline"
+          >
+            Moyen de paiement →
+          </Link>
+          <Link
             href="/mon-espace/parrainage"
             className="text-primary hover:underline"
           >

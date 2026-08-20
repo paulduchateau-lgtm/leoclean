@@ -3228,8 +3228,13 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
               {confirmation.accessLinkEmail}
             </strong>
             . Vous y retrouverez cette intervention, pourrez écrire à votre
-            intervenant et annuler si besoin.
+            intervenant, enregistrer votre carte et annuler si besoin.
           </p>
+          {/* La carte n'est pas exigée ici, et c'est délibéré : la
+              préautorisation part vingt-quatre heures avant la mission, pas à
+              la réservation. Demander une carte pour obtenir une date est le
+              meilleur moyen de perdre quelqu'un qui n'a pas encore essayé le
+              service — et le tunnel a déjà atteint sa cible de gestes. */}
           <Link
             href="/mon-espace"
             className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-teal-300 hover:bg-teal-50"
