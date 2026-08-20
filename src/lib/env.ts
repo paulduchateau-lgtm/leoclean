@@ -104,6 +104,34 @@ const serverSchema = z.object({
   // --- Jobs asynchrones (phase 8) ----------------------------------------
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).optional(),
+
+  /**
+   * Dépôt des photos de mission et des pièces justificatives.
+   *
+   * Absente, il n'y a pas de stockage : les écrans le disent et le dépôt est
+   * refusé, plutôt que d'accepter un fichier qu'on perdrait. `memoire` existe
+   * pour le développement et **ne survit pas à un redémarrage** — la valeur est
+   * refusée hors développement, un stockage volatil en production perdant des
+   * preuves de réalisation et des pièces d'identité.
+   *
+   * `scaleway` est le fournisseur retenu : Object Storage compatible S3,
+   * hébergé en France, ce qui évite d'avoir à documenter un transfert hors
+   * Union européenne pour des pièces d'identité.
+   */
+  STOCKAGE_PROVIDER: z.enum(["memoire", "scaleway"]).optional(),
+
+  /**
+   * Object Storage Scaleway.
+   *
+   * L'endpoint porte la région (`https://s3.fr-par.scw.cloud`). Le bucket doit
+   * être **privé** : rien n'est jamais servi en direct, une lecture passe par
+   * une URL signée de soixante secondes.
+   */
+  SCALEWAY_S3_ENDPOINT: z.url().optional(),
+  SCALEWAY_S3_REGION: z.string().min(1).default("fr-par"),
+  SCALEWAY_S3_BUCKET: z.string().min(1).optional(),
+  SCALEWAY_ACCESS_KEY: z.string().min(1).optional(),
+  SCALEWAY_SECRET_KEY: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({

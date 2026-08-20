@@ -10,14 +10,21 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { sendMagicLink } from "@/lib/auth/magic-link";
 import {
   demanderDeLAide,
+  deposerUnePiece,
   enregistrerSiret,
   ouvrirLaCreationDAutoEntreprise,
 } from "@/lib/candidature/dossier";
+import { PIECES, type Piece } from "@/lib/candidature/parcours";
 import { MESSAGES_SIRENE, type RefusSirene } from "@/lib/candidature/sirene";
 import { prisma } from "@/lib/db";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 import { isValidFrenchPhone, normalizePhone } from "@/lib/phone";
 import { exigerQuota } from "@/lib/securite/limitation";
+import {
+  FichierRefuseError,
+  MESSAGES_REFUS,
+  type RefusFichier,
+} from "@/lib/stockage";
 import { isCoveredInsee } from "@/lib/territory";
 
 /**
@@ -218,4 +225,58 @@ export async function rattacherLeDossier(): Promise<void> {
     where: { email: user.email.toLowerCase(), userId: null },
     data: { userId: user.id },
   });
+}
+
+/**
+ * Dépôt d'une pièce.
+ *
+ * Le fichier arrive en `FormData` : c'est le seul moyen de faire traverser des
+ * octets à une server action sans les encoder en base64, ce qui gonflerait la
+ * charge d'un tiers.
+ */
+export async function deposerMaPiece(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Connectez-vous pour déposer." };
+
+  const kind = formData.get("kind");
+  const fichier = formData.get("fichier");
+
+  if (typeof kind !== "string" || !PIECES.includes(kind as Piece)) {
+    return { ok: false, error: "Pièce inconnue." };
+  }
+  if (!(fichier instanceof File) || fichier.size === 0) {
+    return { ok: false, error: "Aucun fichier reçu." };
+  }
+
+  try {
+    const dossier = await dossierDe(user.id);
+    await deposerUnePiece(
+      dossier.id,
+      kind as Piece,
+      new Uint8Array(await fichier.arrayBuffer()),
+    );
+    revalidatePath("/rejoindre/dossier");
+    return { ok: true };
+  } catch (error) {
+    /*
+     * Deux familles d'échec, deux messages. Un fichier refusé se corrige par
+     * la personne — on lui dit quoi. Un stockage absent ne se corrige pas par
+     * elle : on ne lui fait pas croire que son fichier était fautif.
+     */
+    if (error instanceof FichierRefuseError) {
+      return {
+        ok: false,
+        error: MESSAGES_REFUS[error.refus as RefusFichier] ?? error.message,
+      };
+    }
+    console.error("Dépôt de pièce impossible", error);
+    return {
+      ok: false,
+      error:
+        "Le dépôt de pièces n'est pas encore ouvert. Appelez-nous, on prend " +
+        "vos documents autrement.",
+    };
+  }
 }

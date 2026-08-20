@@ -220,6 +220,29 @@ Trois limites, documentées plutôt que masquées :
 Le client non cloisonné `prisma` est réservé à l'authentification, à
 l'administration plateforme sur un chemin explicite, et aux scripts.
 
+**L'extension ne protège que ce qui passe par l'application, et il y a une
+seconde porte.** Supabase expose PostgREST sur `/rest/v1/<Table>`, atteignable
+avec la clé anonyme — publique par construction — et accorde par défaut `ALL`
+aux rôles `anon` et `authenticated` sur toute table nouvellement créée du
+schéma `public` : les tables engendrées par `prisma migrate` en héritent
+silencieusement. Sans RLS, quiconque a la clé anonyme lit `User`, `Address`,
+`Booking` — noms, téléphones, adresses de domicile, consignes d'accès, sans
+qu'aucune ligne du dépôt ne s'en aperçoive.
+
+La migration `20260820040000_verrouiller_lacces_api` pose trois verrous : RLS
+activée partout **sans aucune politique**, privilèges retirés à `anon` et
+`authenticated`, privilèges par défaut annulés pour les tables futures.
+`FORCE ROW LEVEL SECURITY` n'est volontairement pas posée — le propriétaire
+contourne la RLS, et c'est exactement ce qu'on veut : l'application se connecte
+avec ce rôle et son cloisonnement est déjà assuré par l'extension. La forcer
+couperait l'application sans rien ajouter contre la porte qu'on ferme.
+
+`src/lib/acces-api.integration.test.ts` est le seul endroit où l'oubli se voit :
+`prisma migrate` n'active pas la RLS sur les tables qu'il crée, et rien d'autre
+ne le signalerait. Le reste — retirer `public` des schémas exposés, ne jamais
+déployer de clé `service_role` — ne s'écrit pas en SQL versionné et vit dans
+[docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md).
+
 ## Authentification et autorisation
 
 Connexion sans mot de passe : lien envoyé par email, ou Google. Sessions en
@@ -1328,7 +1351,8 @@ src/
       echeances.ts     ce qui arrive quand personne ne fait rien (server-only)
     availability/      semaine type et absences déclarées — pur
     analytics/         taxonomie des événements (pure) et journal (server-only)
-    stockage/          politique de dépôt de fichiers (pure) et interface
+    stockage/          politique de dépôt (pure), interface, résolution
+      s3.ts            Scaleway Object Storage — bucket privé, URL signées 60 s
     logement/          chiffrement des consignes d'accès (pur) et module gardien
     mission/           cycle de travail et notation — purs ; travail.ts écrit
     abonnement/        récurrence — pure ; generateur.ts écrit les occurrences
@@ -1554,9 +1578,19 @@ une anomalie validée, et une seule catégorie peut même le proposer : un
 supplément appliqué par celui qui en bénéficie n'est pas un ajustement, c'est
 une facture non consentie.
 
-Restent à écrire : le dépôt des photos, qui attend un fournisseur de stockage ;
-le mode hors ligne, dont le schéma est prêt mais dont la file d'envoi manque ;
-et l'écran « Aujourd'hui ». `NO_SHOW` reste modélisé et non écrit.
+Restent à écrire : le mode hors ligne, dont le schéma est prêt mais dont la
+file d'envoi manque. `NO_SHOW` reste modélisé et non écrit.
+
+**Le stockage objet est tranché : Scaleway Object Storage**, compatible S3 et
+hébergé en France — les pièces d'identité ne quittent pas l'Union européenne, ce
+qui évite d'avoir à documenter un transfert. `STOCKAGE_PROVIDER` vaut `memoire`
+en développement (volatil, et refusé en production) ou `scaleway`. Absent, il
+n'y a pas de stockage : les écrans le disent et le dépôt est refusé, plutôt que
+d'accepter un fichier qu'on perdrait. **Rien n'est jamais servi en direct** — une
+lecture passe par une URL signée de soixante secondes, engendrée à la demande et
+jamais mise en cache, une URL signée mise en cache étant une URL publique à
+retardement. Réglages du bucket dans
+[docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md).
 
 **Modélisé, seedé, jamais écrit par le produit** : `Payout`, `Invoice`,
 `Review`, `Referral` et `ReferralCode`, `CalendarConnection` et
@@ -1673,14 +1707,20 @@ ils disent l'effort consenti à ce moment-là.
 - [ ] **Phase 13 — Durcissement et conformité, partielle.** **Fait** : droits
       d'accès et d'effacement avec leurs limites comptables, identité neutralisée
       plutôt que supprimée, limitation de débit en base sur les formulaires
-      publics, IP condensée. **Manque** : la purge planifiée des compteurs, et
-      tout ce qui relève du paiement.
+      publics, IP condensée, purge planifiée des compteurs, **et la fermeture de
+      la seconde porte** — RLS sur toutes les tables, privilèges retirés à `anon`
+      et `authenticated`, test d'intégration qui refuse une table sans RLS.
+      **Manque** : les réglages de console Supabase listés dans
+      [docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md) — retirer `public` des
+      schémas exposés, vérifier l'absence de clé `service_role` déployée, faire
+      tourner le mot de passe de la base — et tout ce qui relève du paiement.
 - [x] **Jalon A — Fondations** (plan du 19 août 2026). **Stockage de fichiers** :
       politique pure — nombres magiques plutôt que type déclaré, deux coffres aux
       politiques distinctes, métadonnées retirées par suppression de segments,
       chemin engendré. L'implémentation mémoire applique la même politique que la
       vraie ; le fournisseur distant échoue bruyamment tant qu'il n'est pas
-      configuré, direction inverse de `TRAVEL_TIME_PROVIDER`. **Taxonomie
+      configuré, direction inverse de `TRAVEL_TIME_PROVIDER`. L'adaptateur
+      Scaleway a été écrit le 20 août. **Taxonomie
       d'événements** : `AnalyticsEvent` en base plutôt que chez un tiers, aucun
       cookie, aucune donnée personnelle — la commune est mesurée, les coordonnées
       ne le sont pas — purge à treize mois, et le traçage passe par
@@ -1702,9 +1742,11 @@ ils disent l'effort consenti à ce moment-là.
       refusées. Deux tests gardent la frontière plutôt qu'un comportement.
 - [ ] **Jalon D — La mission se termine, partielle.** **Fait** : pointage
       d'arrivée et de départ, checklist, anomalies, passage en `COMPLETED` avec
-      durée réelle, écran de travail, notation (module pur). **Manque** : le
-      dépôt des photos (attend un fournisseur de stockage), le mode hors ligne,
-      l'écran « Aujourd'hui », et les écrans de notation côté client.
+      durée réelle, écran de travail, écran « Aujourd'hui », notation de bout en
+      bout — module pur, écriture transactionnelle, écran client, ticket qualité
+      sous trois étoiles. **Manque** : le mode hors ligne, et le branchement du
+      dépôt de photos sur Scaleway (l'adaptateur existe, la configuration
+      attend le bucket).
 
 - [ ] Refonte UX, phase 5 — espace client (modification, annulation, notation,
       adresses, moyens de paiement, parrainage). La liste des réservations et les
@@ -1739,6 +1781,11 @@ espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalis
   sans elle les liens de connexion restent dans la console, donc personne ne se
   connecte ; le nom de domaine et ses deux sous-domaines, faute de quoi le
   `noindex` des hôtes `*.vercel.app` ne s'applique pas.
+- **Bucket Scaleway Object Storage** et sa clé d'API restreinte à ce seul
+  bucket. Sans lui, le dépôt des pièces justificatives et des photos de mission
+  reste fermé — les écrans le disent et proposent le téléphone, ils n'acceptent
+  pas un fichier qu'ils perdraient. C'est ce qui bloque la fin du dossier de
+  candidature en autonomie.
 - Accès **non bloquants** : projet Google Cloud (connexion Google, puis
-  Calendar), Stripe, Inngest, OpenRouteService. Chacun dégrade une
-  fonctionnalité identifiée, aucun n'empêche le site de fonctionner.
+  Calendar), Inngest, OpenRouteService. Chacun dégrade une fonctionnalité
+  identifiée, aucun n'empêche le site de fonctionner.

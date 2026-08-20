@@ -11,31 +11,36 @@ que chaque lot sache ce qu'il attend des autres.
 
 ## État d'avancement au 20 août 2026
 
-| Jalon                         | État | Livré, et ce qui manque                                                                                                                             |
-| ----------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A** — Fondations            | ✅   | stockage (politique + interface), taxonomie d'événements, densité de la console, absences                                                           |
-| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire dès l'écran de proposition, majorations, captation hors zone                                                           |
-| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux de lecture et de clés                                                                |
-| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation. **Manquent** photos, hors ligne, écran « Aujourd'hui »                                       |
-| **E** — L'argent              | ◐    | calendrier pur, préautorisation, prélèvement, libération, webhook. **Manquent** SetupIntent au tunnel, Connect, factures, attestation               |
-| **F** — Le recrutement        | ◐    | machine à états, vérification SIRET par l'API Sirene, éligibilité, ouverture de dossier. **Manquent** pièces, entretien, signature, parcours guidés |
-| **G** — La récurrence         | ✅   | abonnement écrit par le tunnel, générateur idempotent, pause et rétention                                                                           |
-| **H** — Les espaces           | ◐    | pause, reprise, résiliation d'abonnement. **Manquent** tous les écrans                                                                              |
-| **I** — Le pilotage           | ◐    | file d'actions à dix règles, priorités et délais. **Manquent** Radar, scores, CRM, inbox                                                            |
-| **J** — Conformité            | ◐    | rétention automatique branchée sur l'ordonnanceur. **Manquent** réclamations, rôles étendus, TOTP                                                   |
+| Jalon                         | État | Livré, et ce qui manque                                                                                                                                          |
+| ----------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** — Fondations            | ✅   | stockage (politique + interface), taxonomie d'événements, densité de la console, absences                                                                        |
+| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire dès l'écran de proposition, majorations, captation hors zone                                                                        |
+| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux de lecture et de clés                                                                             |
+| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation de bout en bout, écran « Aujourd'hui ». **Manquent** photos (adaptateur écrit, bucket à créer), hors ligne |
+| **E** — L'argent              | ◐    | calendrier pur, préautorisation, prélèvement, libération, webhook. **Manquent** SetupIntent au tunnel, Connect, factures, attestation                            |
+| **F** — Le recrutement        | ◐    | machine à états, vérification SIRET par l'API Sirene, éligibilité, ouverture de dossier. **Manquent** pièces, entretien, signature, parcours guidés              |
+| **G** — La récurrence         | ✅   | abonnement écrit par le tunnel, générateur idempotent, pause et rétention                                                                                        |
+| **H** — Les espaces           | ◐    | abonnement (pause, reprise, résiliation), notation, parrainage client et cooptation, revenus, suivi de candidature. **Manquent** messagerie, profil public       |
+| **I** — Le pilotage           | ◐    | file d'actions à dix règles, priorités et délais. **Manquent** Radar, scores, CRM, inbox                                                                         |
+| **J** — Conformité            | ◐    | rétention automatique branchée sur l'ordonnanceur. **Manquent** réclamations, rôles étendus, TOTP                                                                |
 
 **724 tests unitaires** (52 fichiers), vitrine statique vérifiée à chaque jalon.
 
-**Une dépendance externe bloque encore trois chantiers** : un fournisseur de
-stockage, sans lequel ni les photos de mission, ni les pièces justificatives, ni
-les PDF de factures n'ont d'endroit où vivre. Stripe est connecté chez
-l'hébergeur mais pas en local, si bien que le code du paiement n'a pas pu être
-exercé contre le vrai service.
+**Le stockage est tranché : Scaleway Object Storage** (arbitrage du 20 août
+2026), compatible S3 et hébergé en France — les pièces d'identité ne quittent
+pas l'Union européenne, ce qui évite d'avoir à documenter un transfert.
+L'adaptateur est écrit (`src/lib/stockage/s3.ts`) ; **il attend le bucket et sa
+clé**, et tant qu'ils manquent le dépôt reste fermé plutôt que d'accepter un
+fichier qu'on perdrait. Réglages à faire dans
+[SECURITE-ACCES.md](SECURITE-ACCES.md).
+
+Stripe est connecté chez l'hébergeur mais pas en local, si bien que le code du
+paiement n'a pas pu être exercé contre le vrai service.
 
 **Ce qui reste est surtout de l'interface.** Chaque jalon partiel a son module
-pur écrit et testé ; ce qui manque tient dans des écrans — Radar, revue de
-dossier, inbox, CRM, abonnement, parrainage, dépôt de pièces, entretien,
-signature.
+pur écrit et testé ; ce qui manque tient dans des écrans — revue de dossier,
+inbox, CRM, entretien, signature, messagerie — plus le dépôt de pièces, qui
+n'attend que le bucket.
 
 ---
 
@@ -122,8 +127,9 @@ Il n'y en a aucun aujourd'hui, et il conditionne les photos de mission, les
 pièces justificatives et les PDF de factures.
 
 - `src/lib/stockage/` avec une interface remplaçable, sur le modèle de
-  `scheduling/travel.ts` : une implémentation Vercel Blob, une implémentation
-  mémoire pour les tests.
+  `scheduling/travel.ts` : une implémentation **Scaleway Object Storage**
+  (compatible S3, hébergée en France — arbitrage du 20 août 2026, Vercel Blob
+  était l'hypothèse initiale), une implémentation mémoire pour les tests.
 - Deux préfixes cloisonnés, `kyc/` et `missions/`, jamais servis en direct :
   URL signée de 60 secondes engendrée à la demande, `Content-Disposition:
 attachment`, aucun accès en masse.
@@ -718,3 +724,45 @@ Rien ne bloque le démarrage du jalon A. Deux questions se poseront avant B et D
 - **Le fournisseur de SMS.** Il conditionne D6 (suivi du jour J), E6 (relance
   d'impayé) et F1 (OTP de reprise de candidature). Trois usages, un seul
   contrat — à choisir avant D.
+
+---
+
+## 5. Ce qui attend une action hors du code
+
+Ces points ne s'écrivent pas en SQL versionné ni en TypeScript : ils se règlent
+dans une console. Ils sont listés ici parce qu'un chantier bloqué par un
+formulaire d'administration se perd plus sûrement qu'un chantier bloqué par du
+code.
+
+### Scaleway — le bucket
+
+- [ ] Créer le bucket, **privé**, région `fr-par`. Ni visibilité publique, ni
+      site web statique.
+- [ ] Clé d'API restreinte à ce seul bucket, lecture-écriture, et à aucun autre
+      service du projet.
+- [ ] Renseigner `STOCKAGE_PROVIDER=scaleway` et les quatre variables
+      `SCALEWAY_*` chez l'hébergeur. Tant qu'elles manquent, le dépôt est refusé
+      et les écrans proposent le téléphone.
+- [ ] Cycle de vie sur `missions/` aligné sur la rétention de treize mois de
+      `src/lib/rgpd/retention.ts` : une purge en base qui laisserait les fichiers
+      ferait mentir la promesse d'effacement.
+- [ ] Versionnement **désactivé** sur `kyc/` : une version antérieure d'une pièce
+      d'identité survivrait à sa suppression, ce que le droit à l'effacement
+      interdit.
+
+### Supabase — la seconde porte
+
+La migration `20260820040000_verrouiller_lacces_api` a posé les verrous SQL, et
+`src/lib/acces-api.integration.test.ts` refuse désormais toute table sans RLS.
+Reste ce qui se règle dans la console :
+
+- [ ] **Retirer `public` des schémas exposés** (Settings → API → Exposed
+      schemas). Le produit n'emploie aucun client Supabase : la Data API ne lui
+      sert à rien, et la désactiver supprime la porte plutôt que de la garder.
+- [ ] Vérifier qu'**aucune clé `service_role` n'est déployée** : elle contourne
+      la RLS par conception, et le dépôt n'en a aucun usage.
+- [ ] Faire tourner le **mot de passe de la base** si l'URL de connexion a pu
+      circuler — elle porte l'identité qui, elle, contourne la RLS.
+- [ ] Restreindre les IP autorisées si l'offre le permet.
+
+Détail et raisons : [SECURITE-ACCES.md](SECURITE-ACCES.md).

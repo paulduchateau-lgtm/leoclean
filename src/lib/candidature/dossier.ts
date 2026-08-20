@@ -2,12 +2,14 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { serverEnv } from "@/lib/env";
+import { stockage } from "@/lib/stockage/resolution";
 
 import {
   type EtatCandidature,
   type Piece,
   type SignalAttention,
   type Statut,
+  PIECES_ENGENDRABLES,
   ceQuiManque,
   peutEtreActivee,
   progression,
@@ -310,4 +312,78 @@ export async function demanderDeLAide(
   });
 
   await journaliser(applicationId, "aide_demandee", { etape });
+}
+
+/**
+ * Dépôt d'une pièce justificative.
+ *
+ * Le fichier passe par le coffre `kyc/`, qui vérifie son type par ses octets et
+ * le nettoie de ses métadonnées — la vérification n'est pas laissée à
+ * l'appelant, sinon il suffirait d'un chemin distrait pour qu'une pièce
+ * d'identité arrive avec la position de la photo.
+ *
+ * **Le statut passe à `DEPOSEE`, jamais à `VALIDEE`.** Une pièce se valide par
+ * un humain qui l'a regardée ; s'auto-valider au dépôt viderait de son sens la
+ * promesse de « professionnels vérifiés » faite aux clients. La seule exception
+ * est l'avis SIRENE, qu'on engendre depuis l'API et qui n'est donc pas déposé.
+ */
+export async function deposerUnePiece(
+  applicationId: string,
+  kind: Piece,
+  octets: Uint8Array,
+  maintenant: Date = new Date(),
+): Promise<{ chemin: string }> {
+  if (PIECES_ENGENDRABLES.includes(kind)) {
+    throw new Error(`La pièce ${kind} est engendrée, elle ne se dépose pas.`);
+  }
+
+  const ancien = await prisma.proApplicationDocument.findUnique({
+    where: { applicationId_kind: { applicationId, kind } },
+    select: { storagePath: true },
+  });
+
+  const coffre = stockage();
+  const depose = await coffre.deposer({
+    coffre: "kyc",
+    proprietaireId: applicationId,
+    identifiant: kind,
+    octets,
+  });
+
+  await prisma.proApplicationDocument.upsert({
+    where: { applicationId_kind: { applicationId, kind } },
+    create: {
+      applicationId,
+      kind,
+      status: "DEPOSEE",
+      storagePath: depose.chemin,
+    },
+    update: {
+      status: "DEPOSEE",
+      storagePath: depose.chemin,
+      rejectReason: null,
+      verifiedAt: null,
+      verifiedById: null,
+    },
+  });
+
+  /*
+   * L'ancien fichier est supprimé **après** que la base pointe sur le nouveau :
+   * l'inverse laisserait, en cas d'échec, une ligne désignant un fichier qui
+   * n'existe plus. Une suppression ratée ne défait pas le dépôt — un octet de
+   * trop dans le coffre vaut mieux qu'une pièce perdue.
+   */
+  if (ancien?.storagePath && ancien.storagePath !== depose.chemin) {
+    await coffre.supprimer(ancien.storagePath).catch((erreur: unknown) => {
+      console.error("Ancienne pièce non supprimée", ancien.storagePath, erreur);
+    });
+  }
+
+  await prisma.proApplication.update({
+    where: { id: applicationId },
+    data: { lastActivityAt: maintenant, nudgesSent: 0 },
+  });
+  await journaliser(applicationId, "piece_deposee", { kind });
+
+  return { chemin: depose.chemin };
 }
