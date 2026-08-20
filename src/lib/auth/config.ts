@@ -11,7 +11,11 @@ import Resend from "next-auth/providers/resend";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { DEFAULT_EMAIL_SENDER } from "@/lib/email-sender";
-import { exigerQuota } from "@/lib/securite/limitation";
+import {
+  consommer,
+  estEpuise,
+  sourceDeLaRequete,
+} from "@/lib/securite/limitation";
 
 import { verifierIdentifiants } from "./identifiants";
 import { MagicLinkEmail } from "./magic-link-email";
@@ -128,17 +132,44 @@ export const authConfig: NextAuthConfig = {
          * script appelle directement sans passer par notre formulaire. Un
          * garde-fou posé sur l'écran ne garde rien.
          *
+         * Deux compteurs, et l'ordre n'est pas indifférent. Le large borne le
+         * **calcul** et se vérifie avant toute dérivation, scrypt coûtant
+         * délibérément cher. Le serré borne la **fraude** et ne se consomme
+         * qu'à l'échec : compter les réussites verrouillerait un foyer, un
+         * bureau, ou les abonnés qu'un opérateur mobile place derrière un seul
+         * NAT — des gens qui tapent leur mot de passe juste.
+         *
          * Un dépassement rend `null` comme un mot de passe faux : distinguer
          * les deux apprendrait à l'attaquant qu'il a trouvé le bon seuil.
          */
-        try {
-          await exigerQuota("connexion-mot-de-passe");
-        } catch {
+        const source = await sourceDeLaRequete();
+
+        /* Le plafond large, avant toute dérivation : il borne le calcul. */
+        if (!(await consommer("connexion-tentative", source)).autorise) {
           return null;
         }
 
+        /*
+         * Le compteur d'échecs se **lit** avant de dériver et se **consomme**
+         * après : on ne sait qu'ensuite si l'on a échoué. Le lire d'abord est
+         * ce qui le rend bloquant — sans cela il compterait les échecs sans
+         * jamais rien refuser, et l'attaquant qui finit par trouver le bon mot
+         * de passe entrerait malgré ses cent essais.
+         */
+        if (await estEpuise("connexion-mot-de-passe", source)) return null;
+
         const identite = await verifierIdentifiants(email, motDePasse);
-        if (!identite) return null;
+
+        if (!identite) {
+          await consommer("connexion-mot-de-passe", source);
+          return null;
+        }
+
+        /*
+         * Une réussite ne consomme pas le compteur d'échecs, et ne le remet pas
+         * non plus à zéro : un mot de passe trouvé ne doit pas rouvrir un lot
+         * d'essais.
+         */
 
         return {
           id: identite.id,

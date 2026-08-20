@@ -66,7 +66,7 @@ export const demoBookingBackend: BookingBackend = {
     return { ok: true, data: results };
   },
 
-  getQuote({ surfaceSqm, frequency }) {
+  getQuote({ surfaceSqm, frequency, startAt }) {
     const computed = quote({
       service: {
         slug: "menage-regulier",
@@ -79,6 +79,13 @@ export const demoBookingBackend: BookingBackend = {
       frequency,
       ...ratesFor(frequency),
       taxCreditRateBp: TAX_CREDIT_RATE_BP,
+      /*
+       * La vitrine applique les mêmes majorations que la production : c'est le
+       * bénéfice d'avoir tenu le moteur pur. Sans le créneau, le devis serait
+       * celui d'un jour ordinaire, et le récapitulatif annoncerait un prix que
+       * la confirmation démentirait — le défaut corrigé côté serveur.
+       */
+      ...(startAt ? { startAt: new Date(startAt), bookedAt: new Date() } : {}),
     });
 
     return Promise.resolve({

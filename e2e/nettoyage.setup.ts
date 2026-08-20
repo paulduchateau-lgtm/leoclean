@@ -92,6 +92,29 @@ nettoyage("efface les réservations des exécutions précédentes", async () => 
   await prisma.$disconnect();
 });
 
+/**
+ * Remet à zéro les compteurs de limitation de débit.
+ *
+ * Deux scénarios de la suite se trompent **volontairement** de mot de passe,
+ * pour vérifier que le message ne distingue pas l'adresse inconnue du mot de
+ * passe faux. Chacun consomme un jeton du compteur d'échecs — quatre par
+ * exécution, deux projets compris, et davantage avec les reprises de la CI.
+ *
+ * Au bout de quelques exécutions le quota tombe, et c'est le scénario de
+ * connexion **réussie** qui échoue : un test rouge pour une bonne raison, ce
+ * qui en fait un mauvais test. On repart donc d'un compteur vide, comme on
+ * repart d'une base sans réservations de test.
+ */
+nettoyage("remet à zéro la limitation de débit", async () => {
+  const { count } = await prisma.rateLimit.deleteMany({
+    where: { key: { startsWith: "connexion-" } },
+  });
+  if (count > 0) {
+    console.log(`Nettoyage : ${count} compteur(s) de connexion remis à zéro.`);
+  }
+  await prisma.$disconnect();
+});
+
 nettoyage("prépare un compte avec mot de passe", async () => {
   await prisma.user.upsert({
     where: { email: COMPTE_MOT_DE_PASSE.email },

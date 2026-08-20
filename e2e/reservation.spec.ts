@@ -70,7 +70,13 @@ test.describe("réservation", () => {
     await expect(
       page.getByRole("heading", { name: "Où habitez-vous ?" }),
     ).toBeVisible();
-    await expect(page.getByText(/À partir de 28/)).toBeVisible();
+    /*
+     * Le prix figure à deux endroits depuis que le récapitulatif accompagne le
+     * tunnel : la barre basse et le récapitulatif. On vise le premier, faute de
+     * quoi le sélecteur résout sur deux éléments et échoue — ce que le test
+     * lisait comme une absence de prix alors qu'il y en avait deux.
+     */
+    await expect(page.getByText(/À partir de 28/).first()).toBeVisible();
     await choisirCommune(page);
 
     // 2. Durée — un nombre d'heures, pas une surface à estimer.
@@ -128,16 +134,32 @@ test.describe("réservation", () => {
       .click();
     await page.fill("#accessNotes", "Digicode 1234, portail vert");
 
+    /*
+     * Le montant du récapitulatif est relevé **avant** de confirmer, et
+     * comparé à celui de la confirmation. C'est l'invariant qui compte : le
+     * client paie ce qu'on lui a montré.
+     *
+     * Un montant écrit en dur ne le vérifiait pas et se cassait tout seul —
+     * une majoration de dernière minute s'applique dès que le premier créneau
+     * libre est proche, si bien que le test passait ou échouait selon le jour
+     * et l'état du planning.
+     */
+    const recapitulatif = (await page.locator("main").innerText()).replace(
+      /\s+/g,
+      " ",
+    );
+    const devis = /(\d[\d ]*,\d{2} €)/.exec(recapitulatif)?.[1];
+    expect(devis, "aucun montant sur le récapitulatif").toBeTruthy();
+
     await page.getByRole("button", { name: /^Réserver / }).click();
 
     await expect(page.getByText("C'est réservé.")).toBeVisible({
       timeout: 30_000,
     });
-    // Le récapitulatif reprend l'heure choisie et le montant du devis.
     // Les montants portent une espace fine insécable avant l'euro : on
     // normalise toutes les espaces Unicode plutôt que d'en énumérer deux.
     const main = await page.locator("main").innerText();
-    expect(main.replace(/\s+/g, " ")).toContain("84,00 €");
+    expect(main.replace(/\s+/g, " ")).toContain(devis!);
     expect(chosenTime).toMatch(/^\d{2}:\d{2}$/);
 
     // « Le même intervenant, chaque semaine » est la promesse centrale : la

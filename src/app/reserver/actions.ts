@@ -91,6 +91,14 @@ const quoteSchema = z.object({
     ),
   frequency: z.enum(["ONE_OFF", "WEEKLY", "BIWEEKLY", "MONTHLY"]),
   optionSlugs: z.array(z.string()).max(6).default([]),
+  /**
+   * Début de l'intervention, dès qu'il est connu.
+   *
+   * Sans lui, le devis ignore les majorations que `confirmBooking` appliquera :
+   * le client verrait un prix et en paierait un autre. C'est le seul champ de
+   * ce schéma dont l'absence change le montant.
+   */
+  startAt: z.iso.datetime().optional(),
 });
 
 export const getQuote = publicAction(quoteSchema, async (input) => {
@@ -101,6 +109,7 @@ export const getQuote = publicAction(quoteSchema, async (input) => {
     optionSlugs: input.optionSlugs,
     surfaceSqm: input.surfaceSqm,
     frequency: input.frequency,
+    ...(input.startAt ? { startAt: new Date(input.startAt) } : {}),
   });
 
   // Le client n'a pas à connaître la ventilation entre les deux factures avant

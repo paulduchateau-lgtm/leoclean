@@ -732,7 +732,7 @@ export function BookingFunnel({
    * choix coûte, ou attendre un aller-retour à chaque changement d'avis.
    */
   const loadQuotes = useCallback(
-    async (surface: number) => {
+    async (surface: number, startAt?: string) => {
       setQuotesPending(true);
       const results = await Promise.all(
         FREQUENCIES.map(async (entry) => ({
@@ -741,6 +741,7 @@ export function BookingFunnel({
             surfaceSqm: surface,
             frequency: entry.value,
             optionSlugs: [],
+            ...(startAt ? { startAt } : {}),
           }),
         })),
       );
@@ -750,7 +751,7 @@ export function BookingFunnel({
         setQuotesPending(false);
         setError({
           message: failure.result.error,
-          retry: () => void loadQuotes(surface),
+          retry: () => void loadQuotes(surface, startAt),
         });
         return;
       }
@@ -992,6 +993,20 @@ export function BookingFunnel({
     // le serveur écarterait le doublon, mais l'écran l'aurait montré coché
     // deux fois.
     setAlternateSlots((current) => current.filter((entry) => entry !== start));
+
+    /*
+     * Le devis est refait avec l'heure retenue, et c'est le seul moment où il
+     * peut l'être : les majorations — samedi, dimanche, férié, dernière minute
+     * — dépendent du créneau. Sans ce second appel, le récapitulatif affichait
+     * le prix d'un jour ordinaire tandis que `confirmBooking`, qui recalcule
+     * côté serveur, prélevait le prix majoré. Le client voyait 84 € et payait
+     * 92,40 €.
+     *
+     * Les quatre rythmes sont refaits ensemble, comme au premier chargement :
+     * revenir en arrière pour changer de rythme doit montrer des prix qui
+     * tiennent compte du créneau déjà choisi.
+     */
+    if (surfaceSqm !== null) void loadQuotes(surfaceSqm, start);
   }
 
   function toggleAlternateSlot(start: string) {

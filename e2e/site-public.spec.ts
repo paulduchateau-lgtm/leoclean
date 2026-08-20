@@ -292,6 +292,7 @@ test.describe("cartes de partage", () => {
   test("chaque page porte une image de partage servie", async ({
     page,
     request,
+    baseURL,
   }) => {
     for (const path of PAGES) {
       await page.goto(path);
@@ -300,7 +301,15 @@ test.describe("cartes de partage", () => {
         .getAttribute("content");
       expect(image, `og:image manquant sur ${path}`).toBeTruthy();
 
-      const response = await request.get(image!);
+      /*
+       * L'URL est absolue et porte l'origine canonique — c'est ce qu'un réseau
+       * social doit lire. On la ramène pourtant sur l'origine testée avant de
+       * la chercher : sans cela, le test irait chercher l'image **en
+       * production** au lieu de celle qu'il vient de construire, et passerait
+       * même si la construction n'en produisait aucune.
+       */
+      const servie = new URL(new URL(image!).pathname, baseURL);
+      const response = await request.get(servie.toString());
       expect(response.status(), `image injoignable pour ${path}`).toBe(200);
       expect(response.headers()["content-type"]).toContain("image/png");
     }

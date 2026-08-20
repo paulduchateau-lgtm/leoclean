@@ -5,6 +5,7 @@ import {
   QUOTAS,
   consommer,
   empreinteSource,
+  estEpuise,
   purger,
 } from "@/lib/securite/limitation";
 
@@ -132,5 +133,75 @@ describe("purge", () => {
     const bienPlusTard = new Date(MAINTENANT.getTime() + 10 * 3_600_000);
     expect(await purger(bienPlusTard)).toBe(1);
     expect(await prisma.rateLimit.count()).toBe(0);
+  });
+});
+
+describe("estEpuise", () => {
+  /*
+   * Le compteur d'échecs de connexion ne peut pas être consommé d'avance : on
+   * ne sait qu'après avoir dérivé le mot de passe si l'on a échoué. Il se lit
+   * donc, et c'est cette lecture qui le rend bloquant.
+   */
+  it("rend faux tant que le quota n'est pas atteint", async () => {
+    const source = "203.0.113.77";
+    await expect(estEpuise("connexion-mot-de-passe", source)).resolves.toBe(
+      false,
+    );
+
+    for (
+      let essai = 0;
+      essai < QUOTAS["connexion-mot-de-passe"].max - 1;
+      essai += 1
+    ) {
+      await consommer("connexion-mot-de-passe", source);
+    }
+    await expect(estEpuise("connexion-mot-de-passe", source)).resolves.toBe(
+      false,
+    );
+  });
+
+  it("rend vrai une fois le quota atteint, sans rien consommer", async () => {
+    const source = "203.0.113.78";
+    const max = QUOTAS["connexion-mot-de-passe"].max;
+
+    for (let essai = 0; essai < max; essai += 1) {
+      await consommer("connexion-mot-de-passe", source);
+    }
+
+    await expect(estEpuise("connexion-mot-de-passe", source)).resolves.toBe(
+      true,
+    );
+    /* Deux lectures de suite : la seconde ne doit rien avoir aggravé. */
+    await expect(estEpuise("connexion-mot-de-passe", source)).resolves.toBe(
+      true,
+    );
+
+    const ligne = await prisma.rateLimit.findFirst({
+      where: { key: { startsWith: "connexion-mot-de-passe:" } },
+      orderBy: { updatedAt: "desc" },
+      select: { count: true },
+    });
+    expect(ligne?.count).toBe(max);
+  });
+
+  /*
+   * Une ligne d'une fenêtre révolue ne compte pas : la lire comme épuisée
+   * ferait durer un blocage au-delà de sa fenêtre.
+   */
+  it("oublie une fenêtre révolue", async () => {
+    const source = "203.0.113.79";
+    const quota = QUOTAS["connexion-mot-de-passe"];
+    const hier = new Date(Date.now() - quota.fenetreMs * 2);
+
+    for (let essai = 0; essai < quota.max; essai += 1) {
+      await consommer("connexion-mot-de-passe", source, hier);
+    }
+    await expect(
+      estEpuise("connexion-mot-de-passe", source, hier),
+    ).resolves.toBe(true);
+
+    await expect(estEpuise("connexion-mot-de-passe", source)).resolves.toBe(
+      false,
+    );
   });
 });

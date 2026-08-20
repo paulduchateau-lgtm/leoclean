@@ -121,10 +121,22 @@ export function SignInForm({
             placeholder="vous@exemple.fr"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+            /*
+             * `aria-describedby` rattache le message au champ : sans lui, un
+             * lecteur d'écran annonce « invalide » sans dire pourquoi, et la
+             * personne relit le champ au lieu du reproche.
+             */
+            aria-describedby={
+              etatLien?.ok === false ? "email-error" : undefined
+            }
             aria-invalid={etatLien?.ok === false || undefined}
           />
           {etatLien?.ok === false ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p
+              id="email-error"
+              role="alert"
+              className="text-sm text-destructive"
+            >
               {etatLien.fieldErrors?.email?.[0] ?? etatLien.error}
             </p>
           ) : null}
@@ -142,9 +154,15 @@ export function SignInForm({
              */
             autoComplete="current-password"
             placeholder="••••••••••"
+            aria-describedby={etatMotDePasse ? "password-error" : undefined}
+            aria-invalid={etatMotDePasse !== null || undefined}
           />
           {etatMotDePasse ? (
-            <p role="alert" className="text-sm text-destructive">
+            <p
+              id="password-error"
+              role="alert"
+              className="text-sm text-destructive"
+            >
               {etatMotDePasse.erreur}
             </p>
           ) : null}

@@ -169,6 +169,19 @@ export interface BookingBackend {
     surfaceSqm: number;
     frequency: Frequency;
     optionSlugs: string[];
+    /**
+     * Début de l'intervention, dès qu'il est choisi.
+     *
+     * **Sans lui, le devis ignore les majorations** — samedi, dimanche, férié,
+     * dernière minute — alors que la réservation les applique. Le client voyait
+     * alors un prix sur le récapitulatif et en payait un autre : 84 € annoncés,
+     * 92,40 € prélevés sur un créneau du lendemain.
+     *
+     * Il reste facultatif, et c'est voulu : avant le choix du créneau, le devis
+     * est celui d'un jour ordinaire réservé à l'avance, qui est le prix d'appel
+     * honnête.
+     */
+    startAt?: string;
   }): Promise<ActionResult<QuoteView>>;
 
   getSlots(input: {

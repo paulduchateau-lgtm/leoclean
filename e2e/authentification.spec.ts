@@ -118,7 +118,12 @@ test.describe("connexion par mot de passe", () => {
     await page.getByLabel("Votre mot de passe").fill("le chien dort ailleurs");
     await page.getByRole("button", { name: "Se connecter" }).click();
 
-    const message = page.getByRole("alert");
+    /*
+     * On cible le message du champ, comme le test voisin : Next.js expose lui
+     * aussi un élément `role="alert"` pour annoncer les changements de route,
+     * et `getByRole("alert")` résout alors sur deux éléments.
+     */
+    const message = page.locator("#password-error");
     await expect(message).toBeVisible();
     /* Ni « adresse inconnue », ni « mot de passe incorrect ». */
     await expect(message).toContainText("ne correspondent à aucun compte");
@@ -133,7 +138,7 @@ test.describe("connexion par mot de passe", () => {
     await page.getByLabel("Votre mot de passe").fill(COMPTE.motDePasse);
     await page.getByRole("button", { name: "Se connecter" }).click();
 
-    await expect(page.getByRole("alert")).toContainText(
+    await expect(page.locator("#password-error")).toContainText(
       "ne correspondent à aucun compte",
     );
   });

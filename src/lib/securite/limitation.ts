@@ -48,19 +48,38 @@ export const QUOTAS = {
   /** Envoi de liens de connexion, par source et non plus seulement par adresse. */
   connexion: { max: 15, fenetreMs: 3_600_000 },
   /**
-   * Tentatives de connexion par mot de passe.
+   * **Échecs** de connexion par mot de passe.
    *
-   * **Le quota le plus serré du module**, et pour une raison différente des
-   * autres : ceux-là protègent d'un abus de service, celui-ci protège d'une
-   * attaque par force brute. Dix essais par heure et par source ramènent un
-   * bourrage d'identifiants à une vitesse inutile, sans gêner quelqu'un qui
-   * cherche lequel de ses trois mots de passe habituels est le bon.
+   * Le quota le plus serré du module, et pour une raison différente des autres :
+   * ceux-là protègent d'un abus de service, celui-ci d'une attaque par force
+   * brute. Dix échecs par heure ramènent un bourrage d'identifiants à une
+   * vitesse inutile.
+   *
+   * **Il ne compte que les échecs, jamais les réussites**, et c'est ce qui le
+   * rend tenable. Compter les tentatives punit d'abord les innocents : derrière
+   * une même adresse IP vivent un foyer, un bureau, ou les milliers d'abonnés
+   * qu'un opérateur mobile place derrière un seul NAT. Dix connexions réussies
+   * par heure y sont ordinaires, et le verrou serait tombé sur des gens qui
+   * tapent leur mot de passe juste.
    *
    * Il porte sur la **source** et non sur l'adresse visée : compter par compte
    * laisserait un attaquant essayer le même mot de passe sur mille comptes,
    * ce qui est la forme la plus rentable de l'attaque.
    */
   "connexion-mot-de-passe": { max: 10, fenetreMs: 3_600_000 },
+  /**
+   * Plafond de tentatives, réussites comprises.
+   *
+   * Le quota d'échecs ne peut pas être vérifié en premier : il faut avoir
+   * dérivé le mot de passe pour savoir si l'on a échoué. Or scrypt coûte
+   * délibérément cher — c'est tout son intérêt — si bien qu'un attaquant
+   * obtiendrait un déni de service en envoyant des requêtes qu'on refusera
+   * ensuite.
+   *
+   * Ce plafond-ci se vérifie donc **avant** toute dérivation. Il est large :
+   * il ne borne pas la fraude, il borne le calcul.
+   */
+  "connexion-tentative": { max: 60, fenetreMs: 3_600_000 },
   /**
    * Candidature d'intervenant.
    *
@@ -177,6 +196,44 @@ export async function sourceDeLaRequete(): Promise<string> {
   const entetes = await headers();
   const transmise = entetes.get("x-forwarded-for");
   return transmise?.split(",")[0]?.trim() || "source-inconnue";
+}
+
+/**
+ * Le quota est-il déjà épuisé ? Sans rien consommer.
+ *
+ * Nécessaire au compteur d'échecs de connexion, qui ne peut pas être consommé
+ * d'avance : on ne sait qu'après avoir dérivé le mot de passe si l'on a échoué.
+ * Sans cette lecture, un attaquant qui finit par trouver le bon mot de passe
+ * entrerait malgré ses cent échecs — le compteur les aurait comptés sans jamais
+ * rien refuser.
+ *
+ * Lecture seule et sans écriture : appelée à chaque tentative, y compris
+ * légitime, elle ne doit pas peser.
+ */
+export async function estEpuise(
+  action: Action,
+  source: string,
+  maintenant: Date = new Date(),
+): Promise<boolean> {
+  const quota = QUOTAS[action];
+  const cle = `${action}:${empreinteSource(source)}`;
+  const debutFenetre = new Date(
+    Math.floor(maintenant.getTime() / quota.fenetreMs) * quota.fenetreMs,
+  );
+
+  const ligne = await prisma.rateLimit.findUnique({
+    where: { key: cle },
+    select: { count: true, windowAt: true },
+  });
+
+  /*
+   * Une ligne d'une fenêtre révolue ne compte pas : elle sera remise à un au
+   * prochain `consommer`. La lire comme épuisée ferait durer un blocage
+   * au-delà de sa fenêtre.
+   */
+  if (!ligne || ligne.windowAt < debutFenetre) return false;
+
+  return ligne.count >= quota.max;
 }
 
 /** Erreur métier levée quand le quota est dépassé. */
