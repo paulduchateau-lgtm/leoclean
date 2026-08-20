@@ -11,19 +11,31 @@ que chaque lot sache ce qu'il attend des autres.
 
 ## État d'avancement au 20 août 2026
 
-| Jalon                         | État | Livré                                                                                                               |
-| ----------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------- |
-| **A** — Fondations            | ✅   | stockage (politique + interface), taxonomie d'événements, densité de la console, absences                           |
-| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire, majorations, captation hors zone                                                      |
-| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux                                                      |
-| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation (pur). **Manquent** photos, hors ligne, écran « Aujourd'hui » |
-| **E** à **J**                 | ○    | non commencés                                                                                                       |
+| Jalon                         | État | Livré, et ce qui manque                                                                                                                             |
+| ----------------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** — Fondations            | ✅   | stockage (politique + interface), taxonomie d'événements, densité de la console, absences                                                           |
+| **B** — Le prix et la demande | ✅   | contre-proposition d'horaire dès l'écran de proposition, majorations, captation hors zone                                                           |
+| **C** — Le logement           | ✅   | champs du logement, code de porte chiffré et fenêtré, journaux de lecture et de clés                                                                |
+| **D** — La mission se termine | ◐    | pointage, checklist, anomalies, `COMPLETED`, notation. **Manquent** photos, hors ligne, écran « Aujourd'hui »                                       |
+| **E** — L'argent              | ◐    | calendrier pur, préautorisation, prélèvement, libération, webhook. **Manquent** SetupIntent au tunnel, Connect, factures, attestation               |
+| **F** — Le recrutement        | ◐    | machine à états, vérification SIRET par l'API Sirene, éligibilité, ouverture de dossier. **Manquent** pièces, entretien, signature, parcours guidés |
+| **G** — La récurrence         | ✅   | abonnement écrit par le tunnel, générateur idempotent, pause et rétention                                                                           |
+| **H** — Les espaces           | ◐    | pause, reprise, résiliation d'abonnement. **Manquent** tous les écrans                                                                              |
+| **I** — Le pilotage           | ◐    | file d'actions à dix règles, priorités et délais. **Manquent** Radar, scores, CRM, inbox                                                            |
+| **J** — Conformité            | ◐    | rétention automatique branchée sur l'ordonnanceur. **Manquent** réclamations, rôles étendus, TOTP                                                   |
 
-636 tests unitaires (47 fichiers), vitrine statique vérifiée à chaque jalon.
+**724 tests unitaires** (52 fichiers), vitrine statique vérifiée à chaque jalon.
 
-**Deux dépendances externes bloquent la suite** : un fournisseur de stockage
-(photos, pièces justificatives, PDF) et un compte Stripe. Aucune des deux ne
-s'invente en local.
+**Une dépendance externe bloque encore trois chantiers** : un fournisseur de
+stockage, sans lequel ni les photos de mission, ni les pièces justificatives, ni
+les PDF de factures n'ont d'endroit où vivre. Stripe est connecté chez
+l'hébergeur mais pas en local, si bien que le code du paiement n'a pas pu être
+exercé contre le vrai service.
+
+**Ce qui reste est surtout de l'interface.** Chaque jalon partiel a son module
+pur écrit et testé ; ce qui manque tient dans des écrans — Radar, revue de
+dossier, inbox, CRM, abonnement, parrainage, dépôt de pièces, entretien,
+signature.
 
 ---
 
