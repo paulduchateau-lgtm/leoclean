@@ -10,16 +10,19 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { sendMagicLink } from "@/lib/auth/magic-link";
 import {
   demanderDeLAide,
+  deposerLaPhoto,
   deposerUnePiece,
+  enregistrerLaPresentation,
   enregistrerSiret,
   ouvrirLaCreationDAutoEntreprise,
+  signerLesChartes,
 } from "@/lib/candidature/dossier";
 import { PIECES, type Piece } from "@/lib/candidature/parcours";
 import { MESSAGES_SIRENE, type RefusSirene } from "@/lib/candidature/sirene";
 import { prisma } from "@/lib/db";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 import { isValidFrenchPhone, normalizePhone } from "@/lib/phone";
-import { exigerQuota } from "@/lib/securite/limitation";
+import { exigerQuota, sourceDeLaRequete } from "@/lib/securite/limitation";
 import {
   FichierRefuseError,
   MESSAGES_REFUS,
@@ -285,6 +288,74 @@ export async function deposerMaPiece(
       error:
         "Le dépôt de pièces n'est pas encore ouvert. Appelez-nous, on prend " +
         "vos documents autrement.",
+    };
+  }
+}
+
+export const signerMesChartes = authedAction(
+  z.object({
+    acceptes: z.array(z.string()).max(10),
+    version: z.string().min(1).max(20),
+  }),
+  async ({ acceptes, version }, user) => {
+    const dossier = await dossierDe(user.id);
+    /*
+     * L'IP est relevée côté serveur, jamais reçue du navigateur : une valeur
+     * envoyée par le client ne prouve rien de son origine, et c'est la preuve
+     * qui est l'objet de ce champ.
+     */
+    await signerLesChartes(dossier.id, {
+      acceptes,
+      version,
+      ip: await sourceDeLaRequete(),
+    });
+    revalidatePath("/rejoindre/dossier");
+    return { signe: true };
+  },
+);
+
+export const enregistrerMaPresentation = authedAction(
+  z.object({ presentation: z.string().trim().min(1).max(2000) }),
+  async ({ presentation }, user) => {
+    const dossier = await dossierDe(user.id);
+    await enregistrerLaPresentation(dossier.id, presentation);
+    revalidatePath("/rejoindre/dossier");
+    return { enregistre: true };
+  },
+);
+
+/** Dépôt de la photo de profil, par `FormData` comme les pièces. */
+export async function deposerMaPhoto(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Connectez-vous pour déposer." };
+
+  const fichier = formData.get("fichier");
+  if (!(fichier instanceof File) || fichier.size === 0) {
+    return { ok: false, error: "Aucun fichier reçu." };
+  }
+
+  try {
+    const dossier = await dossierDe(user.id);
+    await deposerLaPhoto(
+      dossier.id,
+      new Uint8Array(await fichier.arrayBuffer()),
+    );
+    revalidatePath("/rejoindre/dossier");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof FichierRefuseError) {
+      return {
+        ok: false,
+        error: MESSAGES_REFUS[error.refus as RefusFichier] ?? error.message,
+      };
+    }
+    console.error("Dépôt de photo impossible", error);
+    return {
+      ok: false,
+      error:
+        "Le dépôt n'est pas encore ouvert. Appelez-nous, on prend votre photo autrement.",
     };
   }
 }

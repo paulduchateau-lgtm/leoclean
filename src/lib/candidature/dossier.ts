@@ -14,6 +14,12 @@ import {
   peutEtreActivee,
   progression,
 } from "./parcours";
+import {
+  MESSAGES_SIGNATURE,
+  VERSION_CHARTES,
+  signatureAJour,
+  verifierLaSignature,
+} from "./chartes";
 import { nomsConcordent, verifierSiret } from "./sirene";
 
 /**
@@ -37,6 +43,9 @@ export interface DossierVue {
   signaux: SignalAttention[];
   siret: string | null;
   raisonSociale: string | null;
+  presentation: string | null;
+  photoDeposee: boolean;
+  chartesSignees: boolean;
   pieces: { kind: Piece; status: string; motif: string | null }[];
 }
 
@@ -101,6 +110,14 @@ export async function lireDossier(userId: string): Promise<DossierVue | null> {
     signaux: dossier.flags as SignalAttention[],
     siret: dossier.siret,
     raisonSociale: dossier.legalName,
+    presentation: dossier.presentation,
+    photoDeposee: dossier.photoPath !== null,
+    /*
+     * Une signature d'une version antérieure ne compte pas : les textes ont
+     * changé, et on ne réactive personne sur un consentement donné à un autre
+     * document.
+     */
+    chartesSignees: signatureAJour(dossier.chartersVersion),
     pieces: dossier.documents.map((document) => ({
       kind: document.kind as Piece,
       status: document.status,
@@ -385,5 +402,120 @@ export async function deposerUnePiece(
   });
   await journaliser(applicationId, "piece_deposee", { kind });
 
+  return { chemin: depose.chemin };
+}
+
+/**
+ * Enregistre l'acceptation des documents.
+ *
+ * **L'adresse IP et la version sont conservées avec l'horodatage.** Ce n'est
+ * pas de la collecte pour la collecte : une acceptation qu'on ne peut ni dater,
+ * ni rattacher à une origine, ni relier à un texte précis ne prouve rien le jour
+ * où elle est contestée — et c'est le mandat de facturation qui serait contesté,
+ * donc la régularité de toutes les factures déjà émises pour cette personne.
+ *
+ * La conservation est de cinq ans, alignée sur la prescription de droit commun.
+ */
+export async function signerLesChartes(
+  applicationId: string,
+  input: { acceptes: readonly string[]; version: string; ip: string | null },
+  maintenant: Date = new Date(),
+): Promise<void> {
+  const dossier = await prisma.proApplication.findUniqueOrThrow({
+    where: { id: applicationId },
+    select: { chartersVersion: true },
+  });
+
+  const refus = verifierLaSignature({
+    acceptes: input.acceptes,
+    version: input.version,
+    dejaSigneEn: dossier.chartersVersion,
+  });
+  if (refus) throw new Error(MESSAGES_SIGNATURE[refus]);
+
+  await prisma.proApplication.update({
+    where: { id: applicationId },
+    data: {
+      chartersSignedAt: maintenant,
+      chartersVersion: VERSION_CHARTES,
+      chartersIp: input.ip,
+      lastActivityAt: maintenant,
+      nudgesSent: 0,
+    },
+  });
+
+  await journaliser(applicationId, "chartes_signees", {
+    version: VERSION_CHARTES,
+  });
+}
+
+/**
+ * Enregistre la présentation du candidat.
+ *
+ * Elle est **lue par les clients** sur l'écran de confirmation, sous le prénom
+ * de l'intervenant : c'est la seule chose qui incarne « la même personne chaque
+ * semaine ». Un minimum de longueur est exigé non par principe mais parce
+ * qu'une ligne de trois mots ne rassure personne — et qu'on la publierait.
+ */
+export async function enregistrerLaPresentation(
+  applicationId: string,
+  presentation: string,
+  maintenant: Date = new Date(),
+): Promise<void> {
+  const texte = presentation.trim();
+  if (texte.length < 80) {
+    throw new Error(
+      "Quelques phrases de plus : ce texte est lu par les clients avant votre première intervention.",
+    );
+  }
+
+  await prisma.proApplication.update({
+    where: { id: applicationId },
+    data: { presentation: texte, lastActivityAt: maintenant, nudgesSent: 0 },
+  });
+  await journaliser(applicationId, "presentation_enregistree");
+}
+
+/**
+ * Dépose la photo de profil.
+ *
+ * Elle passe par le coffre `kyc/` comme les pièces : c'est un portrait, donc une
+ * donnée personnelle, et rien n'est jamais servi en direct. Elle n'est pas une
+ * pièce justificative pour autant — elle ne se valide pas, elle s'affiche.
+ */
+export async function deposerLaPhoto(
+  applicationId: string,
+  octets: Uint8Array,
+  maintenant: Date = new Date(),
+): Promise<{ chemin: string }> {
+  const ancien = await prisma.proApplication.findUniqueOrThrow({
+    where: { id: applicationId },
+    select: { photoPath: true },
+  });
+
+  const coffre = stockage();
+  const depose = await coffre.deposer({
+    coffre: "kyc",
+    proprietaireId: applicationId,
+    identifiant: "photo",
+    octets,
+  });
+
+  await prisma.proApplication.update({
+    where: { id: applicationId },
+    data: {
+      photoPath: depose.chemin,
+      lastActivityAt: maintenant,
+      nudgesSent: 0,
+    },
+  });
+
+  if (ancien.photoPath && ancien.photoPath !== depose.chemin) {
+    await coffre.supprimer(ancien.photoPath).catch((erreur: unknown) => {
+      console.error("Ancienne photo non supprimée", ancien.photoPath, erreur);
+    });
+  }
+
+  await journaliser(applicationId, "photo_deposee");
   return { chemin: depose.chemin };
 }

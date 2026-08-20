@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { rattacherLeDossier } from "@/app/rejoindre/actions";
+import { ProfilEtChartes } from "@/app/rejoindre/dossier/profil-et-chartes";
 import { SuiviDossier } from "@/app/rejoindre/dossier/suivi";
 import { getCurrentUser } from "@/lib/auth/session";
 import { lireDossier } from "@/lib/candidature/dossier";
@@ -91,6 +92,19 @@ export default async function DossierPage() {
       <SuiviDossier
         dossier={dossier}
         pieces={pieces}
+        depotOuvert={stockageConfigure()}
+        telephone={SITE.phone}
+      />
+
+      {/*
+       * Profil, photo et signature : les trois valeurs que `peutEtreActivee`
+       * exige et que rien ne collectait. Sans elles, aucun dossier ne pouvait
+       * être activé, quel que soit le reste.
+       */}
+      <ProfilEtChartes
+        presentation={dossier.presentation}
+        photoDeposee={dossier.photoDeposee}
+        chartesSignees={dossier.chartesSignees}
         depotOuvert={stockageConfigure()}
         telephone={SITE.phone}
       />
