@@ -35,7 +35,7 @@ const fournisseur = process.env.STOCKAGE_PROVIDER;
 
 if (fournisseur !== "scaleway") {
   echouer(
-    `STOCKAGE_PROVIDER vaut « ${fournisseur ?? "rien" } », attendu « scaleway ».\n` +
+    `STOCKAGE_PROVIDER vaut « ${fournisseur ?? "rien"} », attendu « scaleway ».\n` +
       "  Sans elle, le dépôt est refusé et les écrans proposent le téléphone.",
   );
 }
