@@ -60,9 +60,8 @@ async function chargerLaJournee(maintenant: Date) {
     total: missions.length,
     terminees: missions.filter((m) => m.status === "COMPLETED").length,
     enCours: missions.filter((m) => m.status === "IN_PROGRESS").length,
-    aVenir: missions.filter((m) =>
-      ["CONFIRMED", "ASSIGNED"].includes(m.status),
-    ).length,
+    aVenir: missions.filter((m) => ["CONFIRMED", "ASSIGNED"].includes(m.status))
+      .length,
     sansIntervenant: missions.filter((m) => m.status === "PENDING_ASSIGNMENT")
       .length,
     caCents: missions
@@ -185,7 +184,9 @@ async function chargerLesFaits(maintenant: Date): Promise<FaitsExploitation> {
     prisma.proApplication.findMany({
       where: {
         status: { in: ["COMMENCE", "ATTENTE_SIRET", "PIECES_INCOMPLETES"] },
-        lastActivityAt: { lt: new Date(maintenant.getTime() - 14 * 86_400_000) },
+        lastActivityAt: {
+          lt: new Date(maintenant.getTime() - 14 * 86_400_000),
+        },
       },
       select: { id: true, lastActivityAt: true, firstName: true },
       take: 50,

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { COMPTE_MOT_DE_PASSE as COMPTE } from "./nettoyage.setup";
+import { COMPTE_MOT_DE_PASSE as COMPTE } from "./comptes";
 
 /**
  * Parcours de connexion.

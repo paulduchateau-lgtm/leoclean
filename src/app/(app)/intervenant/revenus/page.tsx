@@ -69,7 +69,6 @@ export default async function RevenusPage() {
 
   const { db, profil } = espace;
 
-
   const revenus = await chargerLesRevenus(db, profil.id);
 
   return (
@@ -93,9 +92,9 @@ export default async function RevenusPage() {
             {formatEuros(revenus.enAttenteCents)}
           </span>
           {/*
-            * Un virement dont la date est passée n'est pas « prochain » : le
-            * dire ainsi présenterait un retard comme une promesse.
-            */}
+           * Un virement dont la date est passée n'est pas « prochain » : le
+           * dire ainsi présenterait un retard comme une promesse.
+           */}
           <span
             className={`mt-1 block text-sm ${
               revenus.virementEnRetard

@@ -75,20 +75,17 @@ export default async function RadarPage() {
           Radar
         </h1>
         <p className="text-sm">
-          <Link
-            href="/administration"
-            className="text-primary hover:underline"
-          >
+          <Link href="/administration" className="text-primary hover:underline">
             Les quatre listes →
           </Link>
         </p>
       </div>
 
       {/*
-        * La barre de vitalité, en une ligne dense. Elle remplace un tableau de
-        * quarante lignes : ce qu'on cherche le matin, c'est de savoir si la
-        * journée tient, pas de la lire mission par mission.
-        */}
+       * La barre de vitalité, en une ligne dense. Elle remplace un tableau de
+       * quarante lignes : ce qu'on cherche le matin, c'est de savoir si la
+       * journée tient, pas de la lire mission par mission.
+       */}
       <div
         data-donnee
         className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-border bg-card px-4 py-3 text-sm"
@@ -120,10 +117,10 @@ export default async function RadarPage() {
             className={`rounded-md border px-3 py-1 ${COULEURS[priorite]}`}
           >
             {/*
-              * Le séparateur est explicite : sans lui, « P0 · 1 » suivi de
-              * « 1 h » se lit « P0 · 11 h », et un opérateur qui compte ses
-              * urgences du matin lit un nombre faux.
-              */}
+             * Le séparateur est explicite : sans lui, « P0 · 1 » suivi de
+             * « 1 h » se lit « P0 · 11 h », et un opérateur qui compte ses
+             * urgences du matin lit un nombre faux.
+             */}
             {priorite} · {radar.compte[priorite]}
             <span className="ml-2 opacity-70">
               {"— "}
@@ -184,10 +181,10 @@ export default async function RadarPage() {
       )}
 
       {/*
-        * L'écran désigne le travail ; il ne le fait pas encore. C'est dit
-        * plutôt que sous-entendu : un opérateur qui cherche un bouton absent
-        * perd plus de temps qu'un opérateur prévenu.
-        */}
+       * L'écran désigne le travail ; il ne le fait pas encore. C'est dit
+       * plutôt que sous-entendu : un opérateur qui cherche un bouton absent
+       * perd plus de temps qu'un opérateur prévenu.
+       */}
       <p className="mt-6 max-w-prose text-sm text-muted-foreground">
         Cet écran est en lecture seule. Réaffecter une mission, relancer une
         proposition ou arbitrer un ajustement se fait encore à la main — les

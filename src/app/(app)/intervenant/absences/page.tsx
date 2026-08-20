@@ -65,7 +65,6 @@ export default async function AbsencesPage() {
 
   const { db, profil } = espace;
 
-
   const maintenant = new Date();
 
   const lignes = await db.availabilityException.findMany({

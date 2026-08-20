@@ -10,6 +10,8 @@ import { test as nettoyage } from "@playwright/test";
 import { hacher } from "@/lib/auth/mot-de-passe";
 import { prisma } from "@/lib/db";
 
+import { COMPTE_MOT_DE_PASSE, DOMAINE_DE_TEST } from "./comptes";
+
 /**
  * Nettoyage des réservations écrites par les tests.
  *
@@ -30,7 +32,6 @@ import { prisma } from "@/lib/db";
  * laisserait sinon la base dans l'état qui l'a provoqué, et l'exécution
  * suivante partirait du même mauvais pied.
  */
-const DOMAINE_DE_TEST = "@leoclean.test";
 
 /**
  * Fixtures du formulaire de rappel.
@@ -90,19 +91,6 @@ nettoyage("efface les réservations des exécutions précédentes", async () => 
 
   await prisma.$disconnect();
 });
-
-/**
- * Le compte qui sert à vérifier la connexion par mot de passe.
- *
- * Il est **posé ici et non dans le test** parce qu'il doit exister avant que la
- * suite démarre, et parce qu'un test qui écrit en base pour se donner ses
- * propres conditions ne teste plus que lui-même. Son adresse porte le domaine
- * de test, donc le nettoyage de la prochaine exécution l'emporte.
- */
-export const COMPTE_MOT_DE_PASSE = {
-  email: `connexion${DOMAINE_DE_TEST}`,
-  motDePasse: "le chat dort sur le radiateur",
-};
 
 nettoyage("prépare un compte avec mot de passe", async () => {
   await prisma.user.upsert({

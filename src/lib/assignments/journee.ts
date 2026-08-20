@@ -97,7 +97,9 @@ export async function chargerLaJournee(
   );
 
   const etapes: EtapeDuJour[] = duJour.map((affectation) => {
-    const arrivee = affectation.booking.checks.find((c) => c.kind === "ARRIVEE");
+    const arrivee = affectation.booking.checks.find(
+      (c) => c.kind === "ARRIVEE",
+    );
     const depart = affectation.booking.checks.find((c) => c.kind === "DEPART");
 
     return {
@@ -147,7 +149,10 @@ export async function chargerLaJournee(
 
   return {
     etapes,
-    totalMinutes: etapes.reduce((somme, etape) => somme + etape.dureeMinutes, 0),
+    totalMinutes: etapes.reduce(
+      (somme, etape) => somme + etape.dureeMinutes,
+      0,
+    ),
     totalCents: etapes.reduce(
       (somme, etape) => somme + etape.remunerationCents,
       0,
