@@ -27,6 +27,8 @@ export interface FilVue {
    * obligé le second à lire un champ qui dit le contraire de ce qu'il porte.
    */
   interlocuteur: string | null;
+  /** Portrait de l'interlocuteur, ou `null` — l'avatar retombe sur ses initiales. */
+  photoUrl: string | null;
   dernierMessage: string | null;
   dernierLe: string | null;
   nonLus: number;

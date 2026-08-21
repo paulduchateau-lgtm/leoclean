@@ -364,6 +364,44 @@
     line-height: var(--lh-heading);
   }
 
+  /*
+   * **Le retour au clic, sur mobile.**
+   *
+   * Rien ne se passait quand on appuyait : les réinitialisations modernes
+   * neutralisent le halo natif d'Android et d'iOS, et le dépôt ne l'avait
+   * remplacé nulle part. Sur un téléphone, entre le doigt et le premier pixel
+   * de la page suivante, il n'y a alors **aucun signe** qu'on a été entendu —
+   * et on appuie une seconde fois.
+   *
+   * Le halo natif est rendu, teinté de la marque : il apparaît à la pression,
+   * avant toute exécution de JavaScript, ce qu'aucune animation ne sait faire.
+   */
+  a,
+  button,
+  [role="button"],
+  label[for],
+  summary {
+    -webkit-tap-highlight-color: color-mix(
+      in srgb,
+      var(--teal-600) 16%,
+      transparent
+    );
+  }
+
+  /*
+   * Et un enfoncement, réservé au tactile.
+   *
+   * Il ne porte que sur les liens : les boutons du système ont déjà leur état
+   * pressé — enfoncement et changement de fond — et en superposer un second
+   * produirait un double mouvement. `(hover: none)` exclut la souris, où le
+   * survol dit déjà que l'élément est vivant.
+   */
+  @media (hover: none) and (pointer: coarse) {
+    a:active {
+      opacity: 0.7;
+    }
+  }
+
   ::selection {
     background: var(--teal-200);
     color: var(--ink-900);

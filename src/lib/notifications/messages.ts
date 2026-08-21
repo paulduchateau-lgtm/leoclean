@@ -111,6 +111,26 @@ export type Evenement =
       lienMission: string;
     }
 
+  /**
+   * Au client, quelques jours après une intervention qu'il n'a pas notée.
+   *
+   * **Envoyé une fois, et une seule.** Une relance qui revient tous les jours
+   * n'obtient pas une note, elle obtient un désabonnement. La marque vit sur la
+   * réservation, comme celle des relances d'impayé.
+   *
+   * Le texte demande un service rendu à l'intervenant, pas à nous : c'est vrai,
+   * puisque la note décide de qui reviendra chez ce client, et c'est ce qui
+   * fait répondre.
+   */
+  | {
+      type: "avis-attendu";
+      prenom: string;
+      /** Prénom de l'intervenant. Jamais son nom complet. */
+      intervenant: string | null;
+      intervention: Intervention;
+      lienNotation: string;
+    }
+
   /** La situation est réglée, la mission reprend. */
   | {
       type: "intervention-degelee";
@@ -385,6 +405,30 @@ export function composer(evenement: Evenement): Message {
           "Vous n'avez rien à faire de plus — le créneau n'avait pas bougé.",
         ],
         action: { libelle: "Voir la mission", url: evenement.lienMission },
+      };
+
+    case "avis-attendu":
+      return {
+        objet: evenement.intervenant
+          ? `Comment s'est passé le ménage avec ${evenement.intervenant} ?`
+          : "Comment s'est passé votre ménage ?",
+        apercu: "Deux secondes, deux étoiles.",
+        paragraphes: [
+          `Bonjour ${evenement.prenom},`,
+          /*
+           * On rappelle laquelle : quelqu'un qui reçoit plusieurs passages par
+           * mois ne sait pas de quelle intervention on parle, et la question
+           * reste sans réponse faute de savoir quoi noter.
+           */
+          `Vous avez reçu ${evenement.intervenant ?? "votre intervenant"} ${recap(evenement.intervention, false)}`,
+          /*
+           * La demande est formulée comme un service rendu à l'intervenant —
+           * ce qu'elle est : la note décide de qui reviendra chez ce client.
+           */
+          "Deux secondes pour le noter ? C'est ce qui permet de vous renvoyer la même personne, et c'est ce qui compte le plus pour elle.",
+          "Si quelque chose n'a pas été, dites-le aussi : on rappelle.",
+        ],
+        action: { libelle: "Noter le passage", url: evenement.lienNotation },
       };
 
     case "intervention-terminee": {

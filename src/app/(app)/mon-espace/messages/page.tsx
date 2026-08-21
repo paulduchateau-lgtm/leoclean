@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { EspaceFerme } from "@/components/espace-ferme";
+import { IntervenantAvatar } from "@/components/intervenant-avatar";
 import { SiteHeader } from "@/components/site-header";
 import { espaceClient } from "@/lib/auth/espaces";
 import { lireLesFilsDuClient } from "@/lib/messagerie/client";
@@ -75,14 +76,23 @@ export default async function MessagesClientPage() {
                   href={`/mon-espace/messages/${fil.conversationId}`}
                   className="flex gap-3 py-4"
                 >
-                  {/* La pastille des non-lus : l'ananas est ici une pastille,
-                      pas du texte — le seul emploi qui lui va sur blanc. */}
-                  <span
-                    aria-hidden
-                    className={`mt-1.5 size-2.5 shrink-0 rounded-full ${
-                      fil.nonLus > 0 ? "bg-primary" : "bg-transparent"
-                    }`}
-                  />
+                  {/* Le visage d'abord : dans une liste de conversations, on
+                      cherche une personne, pas une ligne de texte. La pastille
+                      des non-lus se pose dessus — l'ananas y est une pastille et
+                      non du texte, le seul emploi qui lui va sur blanc. */}
+                  <span className="relative shrink-0">
+                    <IntervenantAvatar
+                      nom={fil.interlocuteur ?? "Votre intervenant"}
+                      photoUrl={fil.photoUrl}
+                      taille={44}
+                    />
+                    {fil.nonLus > 0 ? (
+                      <span
+                        aria-hidden
+                        className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background bg-primary"
+                      />
+                    ) : null}
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-baseline justify-between gap-x-3">
                       <span

@@ -36,7 +36,7 @@ export async function lireLesFilsDuClient(
     take: 50,
     select: {
       id: true,
-      cleaner: { select: { displayName: true } },
+      cleaner: { select: { displayName: true, photoUrl: true } },
       clientProfile: {
         select: {
           bookings: {
@@ -80,6 +80,7 @@ export async function lireLesFilsDuClient(
         commune: derniere?.address.cityName ?? null,
         /* Le prénom seul, jamais le nom complet : règle tenue partout. */
         interlocuteur: fil.cleaner.displayName.split(" ")[0] ?? null,
+        photoUrl: fil.cleaner.photoUrl,
         dernierMessage: fil.messages[0]?.body ?? null,
         dernierLe: fil.messages[0]?.createdAt.toISOString() ?? null,
         nonLus: parFil.get(fil.id) ?? 0,

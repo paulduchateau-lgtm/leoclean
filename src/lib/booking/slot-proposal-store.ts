@@ -1,6 +1,7 @@
 import "server-only";
 
 import { reattribuer } from "@/lib/assignments/reattribution";
+import { annoncerDansLeFil } from "@/lib/messagerie/conversation";
 import { BusinessError } from "@/lib/booking/errors";
 import {
   canAnswerProposal,
@@ -45,6 +46,16 @@ export class ProposalNotFoundError extends BusinessError {
  * la raison pour laquelle la table ne porte pas de contrainte d'exclusion —
  * une proposition n'occupe personne.
  */
+/** L'horaire tel qu'il se lit dans un fil. */
+const QUAND = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Paris",
+});
+
 export async function proposeSlot(
   db: TenantClient,
   cleanerProfileId: string,
@@ -319,6 +330,25 @@ export async function answerProposal(
       where: { id: proposal.id },
       data: { status: "ACCEPTED", respondedAt: now },
     });
+
+    /*
+     * L'horaire retenu est annoncé **dans le fil**, à l'intervenant qui l'a
+     * proposé : il a demandé un déplacement et il doit savoir qu'il est acté
+     * sans avoir à rouvrir la réservation.
+     *
+     * L'heure est écrite dans le texte, mais le message porte la réservation :
+     * c'est elle qui fait foi. Le fil dit qu'une chose a changé et désigne où
+     * la lire — si l'horaire vivait ici, un second déplacement laisserait deux
+     * heures contradictoires dans la même conversation.
+     */
+    await annoncerDansLeFil(
+      tx,
+      proposal.organizationId,
+      proposal.bookingId,
+      `Nouvel horaire accepté par le client : ${QUAND.format(proposal.proposedStart)}.`,
+      "intervenant",
+      now,
+    );
 
     // Les autres propositions sur la même réservation n'ont plus d'objet :
     // les laisser en attente ferait valider deux créneaux pour un rendez-vous.

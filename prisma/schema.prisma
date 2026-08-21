@@ -852,6 +852,12 @@ model Booking {
   /// photographier n'importe quoi.
   reportComplete Boolean @default(false)
 
+  /// Instant d'envoi du rappel de notation, `null` tant qu'il n'est pas parti.
+  ///
+  /// Marque et journal à la fois : l'ordonnanceur repasse toutes les heures, et
+  /// sans elle le même rappel partirait vingt-quatre fois par jour.
+  reviewReminderAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

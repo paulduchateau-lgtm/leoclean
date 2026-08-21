@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { EspaceFerme } from "@/components/espace-ferme";
 import { espaceIntervenant } from "@/lib/auth/espaces";
 import { lireLesFils } from "@/lib/messagerie/intervenant";
+import { IntervenantAvatar } from "@/components/intervenant-avatar";
 import { SITE } from "@/lib/site";
 
 /**
@@ -79,12 +80,19 @@ export default async function MessagesPage() {
                 href={`/intervenant/messages/${fil.conversationId}`}
                 className="flex gap-3 py-4"
               >
-                <span
-                  aria-hidden
-                  className={`mt-1.5 size-2.5 shrink-0 rounded-full ${
-                    fil.nonLus > 0 ? "bg-primary" : "bg-transparent"
-                  }`}
-                />
+                <span className="relative shrink-0">
+                  <IntervenantAvatar
+                    nom={fil.interlocuteur ?? "Client"}
+                    photoUrl={fil.photoUrl}
+                    taille={44}
+                  />
+                  {fil.nonLus > 0 ? (
+                    <span
+                      aria-hidden
+                      className="absolute -top-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background bg-primary"
+                    />
+                  ) : null}
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline justify-between gap-x-3">
                     <span

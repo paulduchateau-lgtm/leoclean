@@ -54,6 +54,7 @@ export async function lireLesFils(
       id: true,
       clientProfile: {
         select: {
+          photoUrl: true,
           user: { select: { name: true } },
           bookings: {
             orderBy: { scheduledStart: "desc" },
@@ -100,6 +101,7 @@ export async function lireLesFils(
         quand: derniere?.scheduledStart.toISOString() ?? null,
         commune: derniere?.address.cityName ?? null,
         interlocuteur: fil.clientProfile.user.name?.split(" ")[0] ?? null,
+        photoUrl: fil.clientProfile.photoUrl,
         dernierMessage: fil.messages[0]?.body ?? null,
         dernierLe: fil.messages[0]?.createdAt.toISOString() ?? null,
         nonLus: parFil.get(fil.id) ?? 0,
