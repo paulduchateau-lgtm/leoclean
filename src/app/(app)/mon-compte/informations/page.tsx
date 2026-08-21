@@ -3,7 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Formulaire } from "@/app/(app)/mon-compte/informations/formulaire";
-import { Portrait } from "@/app/(app)/mon-compte/informations/portrait";
+import { PortraitField } from "@/components/portrait-field";
+import {
+  enregistrerMonPortrait,
+  retirerMonPortrait,
+} from "@/app/(app)/mon-compte/informations/actions";
 import { portraitDisponible } from "@/lib/compte/portrait";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -72,10 +76,13 @@ export default async function InformationsPage() {
                 c'est le seul champ de cet écran qui sert à quelqu'un d'autre
                 qu'à l'administration du compte. */}
             <div className="mt-8">
-              <Portrait
+              <PortraitField
                 nom={informations.nom ?? "Vous"}
                 photoUrl={informations.photoUrl}
                 disponible={portraitDisponible()}
+                legende="Elle apparaît dans vos conversations, pour que votre intervenant sache à qui il écrit. Elle n'est pas obligatoire."
+                enregistrer={enregistrerMonPortrait}
+                retirer={retirerMonPortrait}
               />
             </div>
             <Formulaire informations={informations} />
