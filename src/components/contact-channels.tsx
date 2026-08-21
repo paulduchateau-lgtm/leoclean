@@ -33,7 +33,7 @@ export function ContactChannels({
       >
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500 hover:shadow-action"
         >
           <PhoneIcon className="size-4" aria-hidden />
           {SITE.phone}

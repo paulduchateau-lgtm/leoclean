@@ -23,10 +23,18 @@
   --ls-label: 0.01em;
   --ls-caps: 0.08em;
   /* --- Graisses : 400 pour lire, 900 pour trancher --- */
+  /*
+   * L'échelle a été adoucie le 21 août 2026, à la demande du porteur du
+   * projet : Alan Sans en 900 sur des titres de page produisait un bloc noir
+   * qui écrasait le reste, d'autant plus depuis qu'elle porte aussi le texte
+   * courant. Les noms ne bougent pas — ils disent la hiérarchie, pas la
+   * valeur — et c'est tout l'intérêt de les avoir nommés : le site entier
+   * s'allège sans qu'une seule classe soit réécrite.
+   */
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
-  --fw-bold: 700;
-  --fw-extrabold: 800;
-  --fw-black: 900;
+  --fw-bold: 600;
+  --fw-extrabold: 650;
+  --fw-black: 700;
 }

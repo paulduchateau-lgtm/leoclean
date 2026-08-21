@@ -81,7 +81,28 @@ parité est délibérée, l'avantage de Léo Clean n'étant pas le prix mais la
 proximité.
 
 - Tarifs : **28 €/h en régulier, 30 €/h en ponctuel**, minimum 2 h, estimation
-  à 25 m²/h, +30 min par option.
+  à **100 m² pour trois heures** — soit 33 m²/h — +30 min par option. Le
+  rendement était de 25 m²/h jusqu'au 21 août 2026 ; le relever raccourcit les
+  durées estimées d'un quart, donc les prix, et c'est un arbitrage commercial du
+  porteur du projet. La valeur est écrite `100 / 3` et non `33.3`, qui casserait
+  l'aller-retour de `surfaceForDuration` — trois heures y rendraient 99 m². Les
+  pages qui la citent en prose lisent `STANDARD_SQM_PER_HOUR_AFFICHE`, arrondi
+  une seule fois.
+
+  **Changer ce rendement ne suffit pas à changer ce qu'on facture**, exactement
+  comme pour les tarifs : le devis serveur chiffre depuis `Service.sqmPerHour`,
+  et le tunnel affiche la surface qu'il tire de la constante. Les laisser
+  diverger fait afficher « 3 h, idéal pour 100 m² » et facturer quatre heures,
+  sans qu'aucune erreur ne remonte. `socle.ts` lit donc la grille, et
+  `npm run db:tarifs` répare les bases déjà installées.
+
+  **Les durées citées dans le blog sont dérivées, plus recopiées.** Le
+  relèvement a rendu faux d'un coup trois tableaux et deux phrases — la page
+  annonçait encore 3 h 30 pour 80 m² quand le tunnel en chiffrait 2 h 30. Deux
+  tests le rattrapent désormais : tout rendement présenté comme le nôtre doit
+  être celui de la grille, et tout couple « surface → durée » du corpus est
+  repassé dans le moteur.
+
 - Marge de coordination : **un écart, pas un taux** — 23 €/h pour l'intervenant
   en régulier et 21 €/h en ponctuel, soit 5 € et 9 € de coordination. Une
   mission unique coûte davantage à placer : trajet non amorti, aucune tournée à
@@ -1176,6 +1197,32 @@ avec leur montant et leur durée, et la barre basse l'annonce dès le premier
 écran : un écran de plus qui ne ferait que le répéter coûterait un geste sans
 rien apprendre.
 
+**Le téléphone se met en forme à la frappe et se vérifie avant d'avancer.**
+`formatFrenchPhoneAsTyped` groupe par paires au fil de la saisie — forme
+partielle comprise, ce que `formatFrenchPhone` ne sait pas faire, elle qui rend
+l'entrée telle quelle dès qu'il manque un chiffre. Trois précautions, toutes
+destinées à ne pas se battre avec la personne : le `+` initial est conservé, un
+`0` qui le remplacerait ferait disparaître sous les doigts le caractère qu'on
+vient de taper ; aucun espace n'est ajouté en attente du chiffre suivant, un
+espace final que l'effacement doit franchir donnant l'impression d'une touche
+morte ; et les chiffres en trop sont montrés plutôt que tronqués. La fonction
+est **idempotente** — elle est rappelée sur sa propre sortie à chaque touche —
+et un test l'impose.
+
+**On ne reformate que si le curseur est en fin de champ.** Réécrire la valeur
+d'un champ contrôlé y replace le curseur à la fin : quelqu'un qui corrige le
+troisième chiffre le verrait sauter au bout à chaque touche, et ne pourrait
+plus corriger du tout.
+
+**L'erreur ne s'affiche qu'une fois le champ quitté**, puis à chaque frappe.
+Reprocher trois chiffres à quelqu'un qui en a tapé trois est hostile ; ne rien
+dire avant l'envoi lui fait découvrir la faute après avoir tout rempli.
+`diagnosticPhone` rend une phrase et non un booléen — « il manque 1 chiffre »
+apprend quelque chose, « numéro invalide » non, et c'est la faute la plus
+fréquente. Un garde de sortie révèle l'erreur au lieu de laisser partir une
+réservation qu'on ne pourra pas confirmer par téléphone : `required` ne vérifie
+que la présence, et neuf chiffres la satisfont.
+
 **Le stockage local ne contient ni adresse ni coordonnées** — une commune, une
 surface, un rythme, une heure, sept jours durant. La commune y est désormais
 **déduite** du code INSEE de l'adresse choisie, et non plus saisie ; la rue n'y
@@ -1940,9 +1987,17 @@ héros en lever de soleil, panneau de sortie. **Ciel**, **sauge**, **crème**
 succès, alerte, erreur, information — gardent la même teinte quel que soit le
 thème.
 
-**La mangue pleine ne sert qu'à l'action principale : un écran, un seul bouton
-mangue.** Elle porte du texte encre, jamais du blanc — à 400, elle ne tient pas
-le contraste ; sa lueur est `shadow-mango`. La même règle vaut pour la sarcelle
+**L'action principale est passée de la mangue à l'ananas** le 21 août 2026 :
+l'orange ressemblait trop à celui d'une plateforme nationale, et le bouton
+finissait par ressembler à celui qu'on cherche à ne pas être. `--primary` vaut
+donc `--pineapple-400`, le survol `--pineapple-500`, et la lueur s'appelle
+`--shadow-action` — le nom dit le rôle et non la teinte, pour que la prochaine
+bascule ne laisse pas un token qui ment.
+
+**Un écran, un seul bouton jaune.** Il porte du texte encre, jamais du blanc :
+11:1 avec l'encre, 1,5:1 avec le blanc — même règle que la mangue qu'il
+remplace, et `contrast.test.ts` la vérifie sur les deux nuances. La mangue reste
+au système pour les surfaces et les accents, elle ne porte plus l'action. La même règle vaut pour la sarcelle
 pleine des états sélectionnés (cases cochées, créneaux retenus) : texte encre.
 Pour écrire, une icône ou un trait fin, employer `text-brand` (sarcelle 600),
 jamais `text-primary`. `src/styles/contrast.test.ts` verrouille ces couples.
@@ -1955,15 +2010,25 @@ section ou un hero. Aucun angle vif.
 Gabarits tactiles : bouton primaire à 48 px, champ à 52 px, case à cocher et
 radio à 24 px. Rien qui porte une conversion ne descend sous 44 px.
 
-Typographie : **Alan Sans** porte les titres et les grands chiffres — la
-famille tranche, la graisse gradue (900 pour les titres de page, 800 en
-dessous). **Figtree** reste la famille de lecture, **JetBrains Mono** celle des
-chiffres posés — prix, codes postaux, temps de trajet. Alan Sans est
-auto-hébergée (`src/app/fonts/`, `next/font/local`, absente de
-`next/font/google`), les deux autres viennent de `next/font/google` — jamais
-l'`@import` Google Fonts du système, qui bloquerait le rendu. **Fraunces a
-disparu avec la refonte** : `.accent-word` ne change plus de plume, il colore
-le mot en sarcelle.
+Typographie : **Alan Sans porte tout le site** depuis le 21 août 2026 — titres,
+texte courant et grands chiffres. **Figtree a disparu** : la hiérarchie ne vient
+plus de deux familles qui tranchent l'une sur l'autre, mais de la taille et de
+la graisse seules. Une famille de moins, c'est aussi une requête réseau de moins
+sur le premier écran. **JetBrains Mono** reste pour les chiffres posés — prix,
+codes postaux, temps de trajet — parce qu'elle dit autre chose qu'une graisse :
+elle aligne. Alan Sans est auto-hébergée (`src/app/fonts/`, `next/font/local`,
+absente de `next/font/google`) et préchargée ; jamais l'`@import` Google Fonts du
+système, qui bloquerait le rendu. **Fraunces a disparu avec la refonte** :
+`.accent-word` ne change plus de plume, il colore le mot en sarcelle.
+
+**L'échelle des graisses a été adoucie**, à la demande du porteur du projet :
+Alan Sans en 900 sur un titre de page produisait un bloc noir qui écrasait le
+reste, d'autant plus depuis qu'elle porte aussi le texte courant. Les tokens
+gardent leurs noms — ils disent la hiérarchie, pas la valeur — et ne pèsent plus
+que 700 pour `--fw-black`, 650 pour `--fw-extrabold`, 600 pour `--fw-bold`.
+**L'échelle de Tailwind est câblée dessus** (`--font-weight-*` dans `@theme`) :
+sans cela `font-black` rendrait 900 quoi que le système décide, et les deux cent
+douze classes utilitaires du dépôt diraient le contraire des titres balisés.
 
 Le thème sombre n'est pas défini par le système : celui du projet en est une
 dérivation — fonds sarcelle profonde, action mangue — à revoir si le système

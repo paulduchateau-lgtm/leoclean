@@ -7,8 +7,13 @@ import {
   readingMinutes,
 } from "@/lib/blog";
 import { getPublishedCommune } from "@/lib/communes-content";
-import { formatHourlyRate } from "@/lib/pricing";
-import { PUBLIC_RATES } from "@/lib/pricing/public-grid";
+import { formatHourlyRate, estimateDuration } from "@/lib/pricing";
+import {
+  PUBLIC_RATES,
+  STANDARD_SQM_PER_HOUR,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
+  MINIMUM_BILLABLE_MINUTES,
+} from "@/lib/pricing/public-grid";
 
 describe("articles de conseil", () => {
   it("porte des slugs et des titres uniques", () => {
@@ -75,6 +80,66 @@ describe("articles de conseil", () => {
       expect(grid, `${value / 100} € annoncé comme tarif horaire`).toContain(
         value,
       );
+    }
+  });
+
+  it("n'écrit aucun rendement étranger à la grille publique", () => {
+    // Même piège que les tarifs, et il s'est refermé : le rendement est passé
+    // de 25 à 100 m² pour trois heures, et trois tableaux plus deux phrases ont
+    // continué d'annoncer 25 m²/h et 3 h 30 pour 80 m². Le tunnel en chiffrait
+    // 2 h 30. Une durée recopiée est une durée qui finit par contredire ce
+    // qu'on facture.
+    const source = JSON.stringify(ALL_ARTICLES);
+    // Ce que le corpus présente comme **notre** rendement doit être celui de
+    // la grille, au chiffre près.
+    const notre = [...source.matchAll(/(\d+) m² traités par heure/g)];
+    expect(notre.length).toBeGreaterThan(0);
+    for (const trouve of notre) {
+      expect(
+        Number(trouve[1]),
+        `rendement ${trouve[1]} m²/h annoncé hors de la grille`,
+      ).toBe(STANDARD_SQM_PER_HOUR_AFFICHE);
+    }
+
+    // Les variations citées — bâti ancien, logement encombré — n'ont pas à
+    // valoir le standard, mais elles doivent rester **plus lentes** que lui.
+    // Une variation plus rapide que le rendement de référence contredirait le
+    // devis sans que personne ne s'en aperçoive.
+    const variations = [...source.matchAll(/(\d+) m² par heure/g)];
+    for (const trouve of variations) {
+      expect(
+        Number(trouve[1]),
+        `variation ${trouve[1]} m²/h plus rapide que le rendement de référence`,
+      ).toBeLessThanOrEqual(STANDARD_SQM_PER_HOUR_AFFICHE);
+    }
+  });
+
+  it("n'annonce aucune durée que le moteur ne calculerait pas", () => {
+    // On relit le corpus à la recherche de couples « surface → durée » et on
+    // les repasse dans le moteur. C'est ce qui rattraperait une prose écrite à
+    // la main à côté d'un tableau dérivé.
+    const service = {
+      sqmPerHour: STANDARD_SQM_PER_HOUR,
+      minDurationMinutes: MINIMUM_BILLABLE_MINUTES,
+    };
+    const source = JSON.stringify(ALL_ARTICLES);
+    const couples = [
+      ...source.matchAll(/(\d+) m²[^0-9]{0,40}?(\d+) h(?: (30))?/g),
+    ];
+
+    expect(couples.length).toBeGreaterThan(0);
+    for (const couple of couples) {
+      const surface = Number(couple[1]);
+      const annonce = Number(couple[2]) * 60 + (couple[3] ? 30 : 0);
+      const calcule = estimateDuration({
+        surfaceSqm: surface,
+        service,
+      }).durationMinutes;
+
+      expect(
+        annonce,
+        `${surface} m² annoncés en ${annonce} min, le moteur en calcule ${calcule}`,
+      ).toBe(calcule);
     }
   });
 

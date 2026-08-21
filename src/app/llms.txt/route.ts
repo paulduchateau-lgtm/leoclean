@@ -7,7 +7,7 @@ import { formatHourlyRate } from "@/lib/pricing";
 import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
-  STANDARD_SQM_PER_HOUR,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
 } from "@/lib/pricing/public-grid";
 import { SITE, absoluteUrl } from "@/lib/site";
 import {
@@ -93,7 +93,7 @@ Le siège de Léo Clean est à ${SITE.address.city} (${SITE.address.postalCode})
 ${rateLines}
 
 Toute intervention dure au minimum ${MINIMUM_BILLABLE_MINUTES / 60} heures.
-La durée est estimée sur la base de ${STANDARD_SQM_PER_HOUR} m² traités par heure :
+La durée est estimée sur la base de ${STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure :
 un logement de 80 m² demande environ 3 h 30.
 
 Les prestations de ménage à domicile ouvrent droit au crédit d'impôt services à

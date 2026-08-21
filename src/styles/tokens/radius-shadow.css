@@ -26,7 +26,14 @@
     0 28px 60px -18px rgba(11, 27, 22, 0.18), 0 8px 18px rgba(11, 27, 22, 0.05);
   /* La lueur sous l'action principale suit la mangue — une lueur verte sous
      un bouton orange dirait deux marques. */
-  --sh-mango: 0 10px 24px -8px rgba(244, 102, 31, 0.4);
+  /*
+   * La lueur de l'action principale. Elle a suivi la couleur du bouton, passée
+   * de la mangue à l'ananas le 21 août 2026 : une lueur orange sous un bouton
+   * jaune se lit comme une erreur de rendu. Le nom dit désormais le rôle et
+   * non la teinte, pour que la prochaine bascule ne laisse pas un token qui
+   * ment.
+   */
+  --sh-action: 0 10px 24px -8px rgba(227, 182, 13, 0.45);
   --sh-inset: inset 0 1px 2px rgba(11, 27, 22, 0.05);
   --sh-focus: 0 0 0 4px var(--focus-halo);
 }

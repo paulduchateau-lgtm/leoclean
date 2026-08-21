@@ -94,7 +94,7 @@ export function ContactSheet({
         <div className="flex flex-col gap-3 px-4 pt-2 pb-2">
           <a
             href={`tel:${SITE.phoneE164}`}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-mango-500"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-pineapple-500"
             onClick={() => onOpenChange(false)}
           >
             <PhoneIcon className="size-4" aria-hidden />

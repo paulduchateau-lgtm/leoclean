@@ -12,7 +12,13 @@
 
 /** Paramètres d'estimation, portés par chaque prestation du catalogue. */
 export interface DurationParameters {
-  /** Surface traitée en une heure. Un ménage régulier tourne autour de 25 m². */
+  /**
+   * Surface traitée en une heure.
+   *
+   * Portée par la prestation, jamais supposée ici : l'entretien courant, le
+   * grand ménage et la fin de bail n'ont pas le même rendement. La valeur de
+   * l'entretien courant vit dans `public-grid.ts`.
+   */
   sqmPerHour: number;
   /** Plancher de facturation. Deux heures dans le catalogue standard. */
   minDurationMinutes: number;

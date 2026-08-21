@@ -1,7 +1,13 @@
-import { formatEuros, formatHourlyRate } from "./pricing";
+import {
+  formatEuros,
+  formatHourlyRate,
+  formatDuration,
+  estimateDuration,
+} from "./pricing";
 import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
   STANDARD_SQM_PER_HOUR,
 } from "./pricing/public-grid";
 
@@ -73,6 +79,44 @@ function priceFor(hourlyRateCents: number, minutes: number): string {
   return formatEuros(Math.round((hourlyRateCents * minutes) / 60));
 }
 
+/**
+ * Prestation de référence : celle que les tableaux d'article décrivent.
+ */
+const SERVICE_STANDARD = {
+  sqmPerHour: STANDARD_SQM_PER_HOUR,
+  minDurationMinutes: MINIMUM_BILLABLE_MINUTES,
+};
+
+/**
+ * Durée d'un logement, en minutes, calculée par le moteur du produit.
+ *
+ * **Elle était écrite à la main dans trois tableaux**, et le relèvement du
+ * rendement à 100 m² pour trois heures les a tous rendus faux d'un coup : la
+ * page annonçait encore 3 h 30 pour 80 m² quand le tunnel en chiffrait 2 h 30.
+ * C'est exactement la divergence que le dépôt interdit déjà pour les prix, et
+ * elle se corrige de la même façon — on ne recopie pas, on dérive.
+ */
+function minutesPour(surfaceSqm: number): number {
+  return estimateDuration({ surfaceSqm, service: SERVICE_STANDARD })
+    .durationMinutes;
+}
+
+/**
+ * Le rendement d'un logement encombré ou d'un bâti ancien.
+ *
+ * **Dérivé du standard, pas écrit.** Il valait 20 m²/h quand le standard était
+ * à 25, soit quatre cinquièmes. Le relèvement du standard l'aurait laissé à 20,
+ * c'est-à-dire creusé un écart que personne n'avait arbitré — la prose se
+ * serait mise à décrire un ralentissement de 40 % là où elle en décrivait un de
+ * 20 %. La proportion est ce qui a été voulu ; c'est donc elle qu'on garde.
+ */
+const RENDEMENT_BATI_ANCIEN = Math.round(STANDARD_SQM_PER_HOUR * 0.8);
+
+/** La même durée, telle qu'une cellule de tableau l'écrit. */
+function dureePour(surfaceSqm: number): string {
+  return formatDuration(minutesPour(surfaceSqm));
+}
+
 const ARTICLES: readonly Article[] = [
   {
     slug: "prix-menage-a-domicile-sud-bordeaux",
@@ -107,10 +151,10 @@ const ARTICLES: readonly Article[] = [
       {
         type: "paragraph",
         text:
-          `Nous retenons ${STANDARD_SQM_PER_HOUR} m² traités par heure pour un entretien courant : ` +
+          `Nous retenons ${STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure pour un entretien courant : ` +
           `sols, sanitaires, cuisine, poussières et surfaces. C'est une moyenne ` +
           `observée, pas une promesse — un logement encombré ou un bâti ancien à ` +
-          `tomettes descend plutôt vers 20 m² par heure.`,
+          `tomettes descend plutôt vers ${RENDEMENT_BATI_ANCIEN} m² par heure.`,
       },
       {
         type: "table",
@@ -125,33 +169,33 @@ const ARTICLES: readonly Article[] = [
         rows: [
           [
             "50 m²",
-            "2 h",
-            priceFor(REGULIER.hourlyRateCents, 120),
-            priceFor(PONCTUEL.hourlyRateCents, 120),
+            dureePour(50),
+            priceFor(REGULIER.hourlyRateCents, minutesPour(50)),
+            priceFor(PONCTUEL.hourlyRateCents, minutesPour(50)),
           ],
           [
             "65 m²",
-            "2 h 30",
-            priceFor(REGULIER.hourlyRateCents, 150),
-            priceFor(PONCTUEL.hourlyRateCents, 150),
+            dureePour(65),
+            priceFor(REGULIER.hourlyRateCents, minutesPour(65)),
+            priceFor(PONCTUEL.hourlyRateCents, minutesPour(65)),
           ],
           [
             "80 m²",
-            "3 h 30",
-            priceFor(REGULIER.hourlyRateCents, 210),
-            priceFor(PONCTUEL.hourlyRateCents, 210),
+            dureePour(80),
+            priceFor(REGULIER.hourlyRateCents, minutesPour(80)),
+            priceFor(PONCTUEL.hourlyRateCents, minutesPour(80)),
           ],
           [
             "100 m²",
-            "4 h",
-            priceFor(REGULIER.hourlyRateCents, 240),
-            priceFor(PONCTUEL.hourlyRateCents, 240),
+            dureePour(100),
+            priceFor(REGULIER.hourlyRateCents, minutesPour(100)),
+            priceFor(PONCTUEL.hourlyRateCents, minutesPour(100)),
           ],
           [
             "130 m²",
-            "5 h 30",
-            priceFor(REGULIER.hourlyRateCents, 330),
-            priceFor(PONCTUEL.hourlyRateCents, 330),
+            dureePour(130),
+            priceFor(REGULIER.hourlyRateCents, minutesPour(130)),
+            priceFor(PONCTUEL.hourlyRateCents, minutesPour(130)),
           ],
         ],
       },
@@ -262,8 +306,7 @@ const ARTICLES: readonly Article[] = [
     slug: "duree-menage-maison-100m2",
     title:
       "Combien de temps faut-il pour faire le ménage d'une maison de 100 m² ?",
-    description:
-      "Environ quatre heures pour un entretien courant de 100 m², sur la base de 25 m² traités par heure. Ce qui allonge ce temps, ce qui le raccourcit, et comment estimer le vôtre.",
+    description: `Environ ${dureePour(100)} pour un entretien courant de 100 m², sur la base de ${STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure. Ce qui allonge ce temps, ce qui le raccourcit, et comment estimer le vôtre.`,
     publishedAt: "2026-08-14",
     updatedAt: "2026-08-14",
     requiresSapDeclaration: false,
@@ -272,9 +315,9 @@ const ARTICLES: readonly Article[] = [
       {
         type: "paragraph",
         text:
-          `Un entretien courant de 100 m² demande environ quatre heures. Ce chiffre ` +
+          `Un entretien courant de 100 m² demande environ ${dureePour(100)}. Ce chiffre ` +
           `vient d'une règle simple, celle que Léo Clean applique pour construire ses ` +
-          `devis : ${STANDARD_SQM_PER_HOUR} m² traités par heure, sols, sanitaires, cuisine et ` +
+          `devis : ${STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure, sols, sanitaires, cuisine et ` +
           `poussières compris.`,
       },
       {
@@ -308,15 +351,14 @@ const ARTICLES: readonly Article[] = [
       { type: "heading", text: "Estimation par surface" },
       {
         type: "table",
-        caption:
-          "Durée estimée d'un entretien courant selon la surface, base 25 m² par heure",
+        caption: `Durée estimée d'un entretien courant selon la surface, base ${STANDARD_SQM_PER_HOUR_AFFICHE} m² par heure`,
         columns: ["Surface", "Durée estimée", "Typologie courante"],
         rows: [
-          ["50 m²", "2 h", "T2 ou T3 compact"],
-          ["65 m²", "2 h 30", "T3"],
-          ["80 m²", "3 h 30", "T4 ou petite maison"],
-          ["100 m²", "4 h", "Maison familiale de plain-pied"],
-          ["130 m²", "5 h 30", "Maison à étage"],
+          ["50 m²", dureePour(50), "T2 ou T3 compact"],
+          ["65 m²", dureePour(65), "T3"],
+          ["80 m²", dureePour(80), "T4 ou petite maison"],
+          ["100 m²", dureePour(100), "Maison familiale de plain-pied"],
+          ["130 m²", dureePour(130), "Maison à étage"],
           ["150 m² et plus", "Deux passages", "Grande maison ou propriété"],
         ],
       },
@@ -342,7 +384,7 @@ const ARTICLES: readonly Article[] = [
     faq: [
       {
         question: "Combien de temps pour le ménage d'un appartement de 65 m² ?",
-        answer: `Environ deux heures trente pour un entretien courant, sur la base de ${STANDARD_SQM_PER_HOUR} m² traités par heure. Un T3 avec deux salles d'eau se rapproche plutôt de trois heures.`,
+        answer: `Environ deux heures trente pour un entretien courant, sur la base de ${STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure. Un T3 avec deux salles d'eau se rapproche plutôt de trois heures.`,
       },
       {
         question: "Peut-on faire le ménage d'une maison en deux heures ?",

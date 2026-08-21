@@ -25,7 +25,7 @@ import { COMMUNES_BY_POPULATION } from "@/lib/territory";
 export function CommuneStart({ className = "" }: { className?: string }) {
   return (
     <section
-      className={`rounded-2xl bg-primary p-6 text-primary-foreground shadow-mango sm:p-8 ${className}`}
+      className={`rounded-2xl bg-primary p-6 text-primary-foreground shadow-action sm:p-8 ${className}`}
       aria-labelledby="commune-start"
       /* Tant que ce bloc est à l'écran, la barre collante s'efface. */
       data-booking-cta

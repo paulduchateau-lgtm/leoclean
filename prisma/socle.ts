@@ -1,6 +1,9 @@
 import type { PrismaClient } from "@prisma/client";
 
-import { PUBLIC_RATES } from "../src/lib/pricing/public-grid";
+import {
+  PUBLIC_RATES,
+  STANDARD_SQM_PER_HOUR,
+} from "../src/lib/pricing/public-grid";
 
 /**
  * Socle d'une organisation : ce sans quoi le produit ne répond pas.
@@ -42,7 +45,13 @@ export const CATALOGUE: ServiceSeed[] = [
     kind: "MENAGE_REGULIER",
     description:
       "Entretien complet du logement : sols, sanitaires, cuisine, poussière et rangement léger.",
-    sqmPerHour: 25,
+    /*
+     * Lu sur la grille publique, jamais réécrit. Le tunnel affiche la surface
+     * qu'il tire de cette constante, et le devis serveur chiffre depuis cette
+     * colonne : deux valeurs différentes feraient afficher trois heures et
+     * facturer quatre.
+     */
+    sqmPerHour: STANDARD_SQM_PER_HOUR,
     minDurationMinutes: 120,
     options: [
       {

@@ -176,7 +176,7 @@ export default function Home() {
               >
                 <Link
                   href="/reserver"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
                 >
                   Réserver un ménage
                 </Link>
@@ -468,7 +468,7 @@ export default function Home() {
               >
                 <Link
                   href="/reserver"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
                 >
                   Réserver
                 </Link>

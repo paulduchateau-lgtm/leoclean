@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import "dotenv/config";
 
 import { formatEuros } from "../src/lib/pricing";
+import { STANDARD_SQM_PER_HOUR } from "../src/lib/pricing/public-grid";
 import { RATES } from "./socle";
 
 /**
@@ -58,10 +59,38 @@ async function main(): Promise<void> {
     throw new Error("Aucune organisation de type MARKETPLACE.");
   }
 
+  let changementsRendement = 0;
+
   const services = await prisma.service.findMany({
     where: { organizationId: organization.id },
-    select: { id: true, slug: true, kind: true },
+    select: { id: true, slug: true, kind: true, sqmPerHour: true },
   });
+
+  /*
+   * Le rendement d'abord, parce qu'il est le piège le plus silencieux du lot.
+   * Le tunnel affiche la surface qu'il tire de la grille publique ; le devis
+   * serveur, lui, chiffre depuis cette colonne. Les laisser diverger fait
+   * afficher « 3 h, idéal pour 100 m² » et facturer quatre heures — sans
+   * qu'aucune erreur ne remonte, puisque chacun des deux fait son travail.
+   *
+   * Seule la prestation d'entretien courant est concernée : le grand ménage et
+   * la fin de bail ont leurs propres rendements, qui n'ont pas été arbitrés.
+   */
+  const standard = services.find((s) => s.kind === "MENAGE_REGULIER");
+  if (standard && standard.sqmPerHour !== STANDARD_SQM_PER_HOUR) {
+    console.info(
+      `  ${standard.slug.padEnd(20)} rendement   ` +
+        `${standard.sqmPerHour} → ${STANDARD_SQM_PER_HOUR.toFixed(2)} m²/h`,
+    );
+    changementsRendement += 1;
+
+    if (CONFIRME) {
+      await prisma.service.update({
+        where: { id: standard.id },
+        data: { sqmPerHour: STANDARD_SQM_PER_HOUR },
+      });
+    }
+  }
 
   const maintenant = new Date();
   let changements = 0;
@@ -122,15 +151,22 @@ async function main(): Promise<void> {
     }
   }
 
-  if (changements === 0) {
+  if (changements === 0 && changementsRendement === 0) {
     console.info(`\n${organization.name} : les tarifs sont déjà à jour.`);
     return;
   }
 
+  const resume = [
+    changements > 0 ? `${changements} tarif(s)` : null,
+    changementsRendement > 0 ? `${changementsRendement} rendement(s)` : null,
+  ]
+    .filter(Boolean)
+    .join(" et ");
+
   console.info(
     CONFIRME
-      ? `\n${changements} tarif(s) remplacé(s). Les anciens restent lisibles, fermés à cette date.`
-      : `\n${changements} tarif(s) à remplacer. Relancer avec --confirmer pour appliquer.`,
+      ? `\n${resume} remplacé(s). Les anciens tarifs restent lisibles, fermés à cette date.`
+      : `\n${resume} à remplacer. Relancer avec --confirmer pour appliquer.`,
   );
 }
 
