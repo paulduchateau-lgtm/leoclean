@@ -2,6 +2,7 @@ import {
   type Coffre,
   type TypeFichier,
   cheminDeFichier,
+  estPublic,
   nettoyer,
   verifierFichier,
 } from "./politique";
@@ -44,6 +45,17 @@ export interface Stockage {
 
   /** URL de lecture, valable soixante secondes. */
   lireUrl(chemin: string): Promise<string>;
+
+  /**
+   * URL stable d'un fichier d'un coffre public.
+   *
+   * Distincte de `lireUrl` à dessein : une signature qui périme est ce qu'on
+   * veut pour une pièce d'identité et ce qu'on ne veut pas pour un avatar, qui
+   * s'affiche dans des listes et reste ouvert dans un onglet. Appeler cette
+   * fonction sur un coffre privé lève — le choix se fait au dépôt, pas à la
+   * lecture.
+   */
+  urlPublique(chemin: string): string;
 
   supprimer(chemin: string): Promise<void>;
 }
@@ -93,6 +105,17 @@ export function stockageEnMemoire(): Stockage & {
     async lireUrl(chemin) {
       if (!fichiers.has(chemin)) throw new Error("Fichier introuvable");
       /* Aucune signature à imiter : l'implémentation mémoire ne sert rien. */
+      return `memoire://${chemin}`;
+    },
+
+    urlPublique(chemin) {
+      const coffre = chemin.split("/")[0] as Coffre;
+      if (!estPublic(coffre)) {
+        throw new Error(
+          `Le coffre « ${coffre} » n'est pas public : utilisez lireUrl.`,
+        );
+      }
+      /* La même forme que `lireUrl` : rien n'est servi en développement. */
       return `memoire://${chemin}`;
     },
 

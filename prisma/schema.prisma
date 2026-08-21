@@ -298,6 +298,12 @@ model ClientProfile {
 
   stripeCustomerId String?
 
+  /// Portrait choisi par le client, servi depuis le coffre public.
+  ///
+  /// Facultatif et le restera : l'avatar retombe sur les initiales, qui est le
+  /// cas courant. Exiger une photo pour réserver un ménage n'aurait aucun sens.
+  photoUrl String?
+
   /// Date d'entrée en recouvrement, `null` quand tout est en ordre.
   ///
   /// Le gel des interventions à venir s'en **dérive** : il n'est pas posé

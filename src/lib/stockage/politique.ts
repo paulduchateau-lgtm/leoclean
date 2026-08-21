@@ -11,7 +11,27 @@
  * les deux.
  */
 
-export type Coffre = "missions" | "kyc";
+export type Coffre = "missions" | "kyc" | "portraits";
+
+/**
+ * Les coffres dont les fichiers sont lisibles sans signature.
+ *
+ * **Un seul, et c'est un arbitrage explicite** (porteur du projet, 21 août
+ * 2026). Un portrait d'avatar s'affiche dans une liste de fils, dans un
+ * en-tête, sur une carte d'intervention : le servir par URL signée de soixante
+ * secondes obligerait à en engendrer une par image et par rendu, et une image
+ * dont l'URL périme se casse dans un onglet resté ouvert.
+ *
+ * Ce qui reste vrai : le chemin est **engendré**, jamais devinable, et un
+ * portrait est une photo qu'on choisit de montrer. Les photos de mission et les
+ * pièces d'identité, elles, ne sortent jamais sans signature.
+ */
+export const COFFRES_PUBLICS: readonly Coffre[] = ["portraits"];
+
+/** Ce coffre est-il lisible sans URL signée ? */
+export function estPublic(coffre: Coffre): boolean {
+  return COFFRES_PUBLICS.includes(coffre);
+}
 
 export type TypeFichier =
   "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
@@ -66,6 +86,11 @@ export const TYPES_ACCEPTES: Readonly<Record<Coffre, readonly TypeFichier[]>> =
     missions: ["image/jpeg", "image/png", "image/webp"],
     /* Une pièce justificative arrive aussi bien photographiée que téléchargée. */
     kyc: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    /*
+     * Un portrait est une image, et jamais un PDF : accepter un document ici
+     * produirait un avatar qu'aucun écran ne sait afficher.
+     */
+    portraits: ["image/jpeg", "image/png", "image/webp"],
   };
 
 /**
@@ -78,6 +103,12 @@ export const TYPES_ACCEPTES: Readonly<Record<Coffre, readonly TypeFichier[]>> =
 export const TAILLE_MAXIMALE: Readonly<Record<Coffre, number>> = {
   missions: 12 * 1024 * 1024,
   kyc: 20 * 1024 * 1024,
+  /*
+   * Un avatar s'affiche à cinquante pixels de côté. Deux mégaoctets sont déjà
+   * généreux pour une photo prise au téléphone, et borner ici évite de servir
+   * douze mégaoctets dans une liste de fils.
+   */
+  portraits: 2 * 1024 * 1024,
 };
 
 export type RefusFichier =

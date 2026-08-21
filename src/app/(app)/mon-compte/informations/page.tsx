@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Formulaire } from "@/app/(app)/mon-compte/informations/formulaire";
+import { Portrait } from "@/app/(app)/mon-compte/informations/portrait";
+import { portraitDisponible } from "@/lib/compte/portrait";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { EspaceFerme } from "@/components/espace-ferme";
@@ -65,7 +67,19 @@ export default async function InformationsPage() {
         </h1>
 
         {informations ? (
-          <Formulaire informations={informations} />
+          <>
+            {/* Le portrait avant le formulaire : c'est ce qui se voit, et
+                c'est le seul champ de cet écran qui sert à quelqu'un d'autre
+                qu'à l'administration du compte. */}
+            <div className="mt-8">
+              <Portrait
+                nom={informations.nom ?? "Vous"}
+                photoUrl={informations.photoUrl}
+                disponible={portraitDisponible()}
+              />
+            </div>
+            <Formulaire informations={informations} />
+          </>
         ) : (
           <p className="mt-6 rounded-2xl border border-border bg-secondary/40 p-6 text-muted-foreground">
             Votre compte n&apos;a pas encore d&apos;espace client. Il en aura un

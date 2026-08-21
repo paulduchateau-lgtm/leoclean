@@ -13,6 +13,7 @@ import {
   type Stockage,
   FichierRefuseError,
   cheminDeFichier,
+  estPublic,
   nettoyer,
   verifierFichier,
 } from "./index";
@@ -105,6 +106,27 @@ export function stockageS3(configuration: ConfigurationS3): Stockage {
         new GetObjectCommand({ Bucket: configuration.bucket, Key: chemin }),
         { expiresIn: URL_SIGNEE_SECONDES },
       );
+    },
+
+    urlPublique(chemin) {
+      const coffre = chemin.split("/")[0] as Coffre;
+      if (!estPublic(coffre)) {
+        /*
+         * Une erreur et non un repli silencieux vers une URL signée : servir
+         * une pièce d'identité derrière une adresse stable serait exactement la
+         * fuite que le coffre privé existe pour empêcher, et un repli la
+         * rendrait invisible.
+         */
+        throw new Error(
+          `Le coffre « ${coffre} » n'est pas public : utilisez lireUrl.`,
+        );
+      }
+      /*
+       * Style « chemin » comme le reste de l'adaptateur : Scaleway l'exige, et
+       * mélanger les deux styles produit une URL qui répond 404 sans dire
+       * pourquoi.
+       */
+      return `${configuration.endpoint.replace(/\/$/, "")}/${configuration.bucket}/${chemin}`;
     },
 
     async supprimer(chemin) {

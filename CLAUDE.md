@@ -1418,7 +1418,51 @@ session, jamais depuis l'entrée, et une réservation qui ne lui est pas
 rattachée est introuvable — le même message que si elle n'existait pas, pour
 ne pas confirmer un identifiant à un curieux.
 
-**Le chat est rattaché à l'intervention, pas au couple de personnes.** Un
+**Le chat est rattaché au couple, pas à l'intervention.** Il a suivi la
+réservation jusqu'au 21 août 2026, pour une raison qui se tenait — un
+intervenant peut changer d'une semaine sur l'autre. Mais la conséquence était
+qu'un client fidèle ouvrait un fil par semaine, et que retrouver ce qu'on
+s'était dit supposait de se rappeler à quelle réservation on avait écrit. La
+promesse du service étant « la même personne chaque semaine », c'est la
+relation qui dure.
+
+`Conversation` est unique sur (organisation, client, intervenant), et cette
+contrainte fait tout le travail : **changer d'intervenant ouvre un fil neuf sans
+qu'on l'écrive**, le couple changeant, donc la clé. Le remplaçant n'hérite
+d'aucun historique — ce qui protège la vie privée des deux — et l'ancien fil
+reste lisible sans être alimenté. Aucune condition à oublier, c'est le schéma
+qui tient la règle.
+
+**Les événements système sont des notifications, jamais la source de vérité.**
+`MessageKind.SYSTEM`, sans auteur humain — une annulation n'est pas une phrase
+du client, et la lui attribuer ferait lire une phrase de produit comme une
+phrase de personne. Ils portent la réservation qu'ils désignent : si l'horaire
+vivait dans le fil, quelqu'un finirait par l'y lire plutôt que sur la
+réservation, et le fil serait faux au changement suivant.
+
+**Le fil se rafraîchit toutes les trois secondes tant qu'il est ouvert**, et
+s'arrête dès que l'onglet passe à l'arrière-plan. C'est un sondage assumé
+(arbitrage du porteur du projet) : le poussé véritable demanderait soit de
+rouvrir l'accès direct à la base — que `20260820040000_verrouiller_lacces_api` a
+fermé, RLS sans politique et privilèges retirés à `anon`, et notre auth étant
+Auth.js, `auth.uid()` n'existe pas — soit une connexion longue que
+l'hébergement sans serveur tient mal. Le jour où un vrai canal sera branché,
+c'est cette seule fonction qu'il remplacera.
+
+**Le portrait est le seul fichier servi sans signature.** `COFFRES_PUBLICS` ne
+contient que `portraits`, et `estPublic()` garde la frontière : un avatar
+s'affiche dans une liste de fils, un en-tête, une carte — le servir par URL
+signée de soixante secondes obligerait à en engendrer une par image et par
+rendu, et l'image se casserait dans un onglet resté ouvert. Ce qui reste vrai :
+le chemin est engendré, jamais devinable, et un portrait est une photo qu'on
+choisit de montrer. Les photos de mission et les pièces d'identité ne sortent
+jamais sans signature, et `urlPublique()` **lève** sur leur coffre plutôt que de
+se replier en silence.
+
+Le chemin d'un portrait est **stable par personne** : redéposer écrase, sans
+quoi chaque changement laisserait un visage orphelin dans un coffre public.
+
+**L'ancien découpage.** Un
 intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
 personnes mélangerait deux interventions sans rapport. Sans intervenant
 désigné, l'envoi est refusé plutôt que d'écrire à personne.
