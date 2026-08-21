@@ -151,12 +151,51 @@ export const INTERVENANTS = {
    * « net, versé à date fixe » — qui est déjà un argument, et qui est vrai.
    */
   guarantee: {
-    /** Le client règle en retard. */
-    latePayment: null as string | null,
-    /** Le client ne règle pas du tout. L'impayé est-il porté par Léo Clean ? */
-    unpaidClient: null as string | null,
-    /** Le client annule tardivement : quelle part du barème revient à l'intervenant ? */
-    lateCancellation: null as string | null,
+    /**
+     * Le client règle en retard.
+     *
+     * Le délai de règlement du client n'entre pas dans le calcul : la
+     * rémunération part sur son propre délai. C'est la conséquence directe de
+     * la ligne suivante — si l'impayé complet ne prive de rien, le simple
+     * retard encore moins.
+     */
+    latePayment:
+      "Vous êtes payé sous 5 jours ouvrés après l'intervention. Le délai de règlement du client ne décale pas le vôtre." as
+        string | null,
+
+    /**
+     * Le client ne règle pas du tout.
+     *
+     * **L'impayé est porté par Léo Clean**, pas par l'intervenant : la
+     * prestation a été faite, elle est due. Ce qui est suspendu est la
+     * **suite** — l'intervention suivante est gelée tant que la situation
+     * n'est pas régularisée, et l'intervenant le sait avant de partir plutôt
+     * que de le découvrir devant la porte.
+     *
+     * La phrase dit le gel comme une règle, pas comme un écran : rien dans le
+     * produit ne pose aujourd'hui `SUSPENDED` sur une réservation impayée —
+     * `traiterLesImpayes` calcule la liste `aSuspendre` et personne ne la
+     * consomme, et aucune notification ne part vers l'intervenant. Le gel est
+     * donc tenu à la main. Écrire ici « vous êtes prévenu automatiquement »
+     * promettrait un logiciel qui n'existe pas.
+     */
+    unpaidClient:
+      "Vous êtes payé : la prestation a été réalisée, elle vous est due, et l'impayé reste notre affaire. Seule l'intervention suivante chez ce client est gelée tant que la situation n'est pas régularisée — vous en êtes informé, vous ne vous déplacez pas pour rien." as
+        string | null,
+
+    /**
+     * Le client annule tardivement.
+     *
+     * **Moitié-moitié sur les frais réellement encaissés**, jamais sur le prix
+     * de la mission : le barème des CGU est plafonné — 5 €, 10 €, 50 % dans la
+     * limite de 20 €, 80 % dans la limite de 30 €, 100 % dans la limite de
+     * 40 € — et annoncer une part du prix ferait attendre davantage que ce qui
+     * rentre. La formulation renvoie donc au barème public plutôt que de
+     * recopier un montant qui vieillirait.
+     */
+    lateCancellation:
+      "Les frais d'annulation encaissés sont partagés en deux parts égales entre vous et Léo Clean. Le barème est public et figure sur la page tarifs." as
+        string | null,
   },
 
   /** Frais d'inscription, en centimes. Zéro, et ce n'est pas provisoire. */

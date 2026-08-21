@@ -638,11 +638,33 @@ Le drapeau **ne gouverne plus le maillage interne**, et c'est une décision du
 porteur du projet (21 août 2026) : l'en-tête, l'accueil et le pied de page
 désignent « Devenir pro » sans condition. Il tenait deux choses à la fois — ce
 que les moteurs ont le droit d'indexer, et ce que le site a le droit
-d'annoncer — et les deux ne se décident pas de la même façon. La page dit déjà
-23 €/h et « versé sous 5 jours ouvrés » : elle ne fait venir personne à
-l'aveugle. Ce qui manque encore, ce sont les trois garanties, et c'est
-l'indexation qu'elles conditionnent. **Des liens pour les humains, pas pour
-les moteurs.**
+d'annoncer — et les deux ne se décident pas de la même façon.
+
+**Les cinq valeurs ont été arbitrées le 21 août 2026, et la page est donc
+ouverte** : `PENDING_INTERVENANT_FIELDS` est vide, la pastille « à préciser »
+a disparu d'elle-même, la page entre au sitemap et dans `llms.txt`, et le mot
+« garanti » s'écrit — parce qu'on peut enfin dire contre quoi.
+
+Les trois garanties, telles qu'elles ont été tranchées :
+
+- **Retard de règlement du client** : sans effet. Le versement part sous cinq
+  jours ouvrés après l'intervention, sur son propre délai.
+- **Impayé** : porté par Léo Clean. La prestation a été faite, elle est due.
+  Ce qui est suspendu est la **suite** — l'intervention suivante chez ce client
+  est gelée tant que la situation n'est pas régularisée, l'intervenant en étant
+  informé avant de partir, et le client passe en recouvrement.
+- **Annulation tardive** : les frais **encaissés** se partagent moitié-moitié.
+  Jamais une part du prix de la mission : le barème des CGU est plafonné, et
+  annoncer un pourcentage du prix ferait attendre plus que ce qui rentre.
+
+**Le gel de l'intervention suivante est une règle, pas encore un écran.**
+`traiterLesImpayes` envoie les trois relances, calcule la liste `aSuspendre` —
+et **personne ne la consomme** : aucune réservation ne passe en `SUSPENDED`
+pour impayé, aucune notification ne part vers l'intervenant, et le back-office
+ne liste pas les clients en recouvrement. La copy de la page dit donc le gel
+sans promettre d'alerte automatique, et un test le lui interdit. C'est la
+dette la plus visible du lot : la promesse est écrite sur une page publique,
+son exécution est manuelle et sans outil.
 
 **Le mot « garanti » est dérivé, pas écrit.** Il n'engage à rien tant qu'on
 n'a pas dit _contre quoi_ il garantit : `canSayGuaranteed()` n'est vrai que si
