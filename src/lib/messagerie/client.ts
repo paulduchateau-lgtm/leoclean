@@ -1,7 +1,12 @@
 import "server-only";
 
 import type { TenantClient } from "@/lib/db";
-import type { FilVue } from "@/lib/messagerie/vocabulaire";
+import {
+  filDe,
+  lireEtMarquer,
+  poserUnMessage,
+} from "@/lib/messagerie/conversation";
+import type { FilVue, MessageVue } from "@/lib/messagerie/vocabulaire";
 
 /**
  * La messagerie, côté client.
@@ -94,4 +99,75 @@ export async function compterLesNonLusDuClient(
   return db.message.count({
     where: { recipientUserId: userId, readAt: null },
   });
+}
+
+/**
+ * Le fil d'un couple, côté client, et sa lecture.
+ *
+ * Symétrique de `lireLeFil` côté intervenant : l'appartenance se vérifie dans
+ * la requête, un fil qui n'est pas le sien étant introuvable.
+ */
+export async function lireLeFilDuClient(
+  db: TenantClient,
+  clientProfileId: string,
+  userId: string,
+  conversationId: string,
+): Promise<{
+  interlocuteur: string | null;
+  photoUrl: string | null;
+  messages: MessageVue[];
+} | null> {
+  const fil = await filDe(db, conversationId, { clientProfileId });
+  if (!fil) return null;
+
+  const messages = await lireEtMarquer(db, fil.id, userId);
+
+  return {
+    interlocuteur: fil.interlocuteur,
+    photoUrl: fil.photoUrl,
+    messages: messages.map((message) => ({
+      id: message.id,
+      body: message.body,
+      createdAt: message.createdAt.toISOString(),
+      deMoi: message.senderUserId === userId,
+    })),
+  };
+}
+
+/**
+ * Écrit dans le fil du couple.
+ *
+ * Rien n'est vérifié sur une intervention : le fil dure au-delà d'elles, et
+ * exiger une mission à venir couperait la parole au lendemain d'un passage —
+ * c'est-à-dire au moment où on a le plus de raisons d'écrire.
+ */
+export async function ecrireDansLeFil(
+  db: TenantClient,
+  clientProfileId: string,
+  userId: string,
+  conversationId: string,
+  corps: string,
+): Promise<MessageVue> {
+  const fil = await filDe(db, conversationId, { clientProfileId });
+  if (!fil) throw new Error("Ce fil est introuvable.");
+
+  const texte = corps.trim();
+  if (texte.length === 0) {
+    throw new Error("Un message vide ne s'envoie pas.");
+  }
+
+  const cree = await poserUnMessage(db, {
+    organizationId: fil.organizationId,
+    conversationId: fil.id,
+    senderUserId: userId,
+    recipientUserId: fil.cleanerUserId,
+    body: texte,
+  });
+
+  return {
+    id: cree.id,
+    body: texte,
+    createdAt: cree.createdAt.toISOString(),
+    deMoi: true,
+  };
 }

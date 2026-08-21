@@ -212,6 +212,8 @@ export async function filDe(
   clientUserId: string;
   cleanerUserId: string;
   interlocuteur: string | null;
+  /** Photo de l'intervenant, quand il en a une. */
+  photoUrl: string | null;
 } | null> {
   const fil = await db.conversation.findFirst({
     where: {
@@ -229,7 +231,9 @@ export async function filDe(
       clientProfile: {
         select: { userId: true, user: { select: { name: true } } },
       },
-      cleaner: { select: { userId: true, displayName: true } },
+      cleaner: {
+        select: { userId: true, displayName: true, photoUrl: true },
+      },
     },
   });
   if (!fil) return null;
@@ -245,6 +249,8 @@ export async function filDe(
     interlocuteur: qui.cleanerProfileId
       ? (fil.clientProfile.user.name?.split(" ")[0] ?? null)
       : (fil.cleaner.displayName.split(" ")[0] ?? null),
+    /* Seul le client voit une photo : l'intervenant n'en a pas du client. */
+    photoUrl: qui.clientProfileId ? fil.cleaner.photoUrl : null,
   };
 }
 
