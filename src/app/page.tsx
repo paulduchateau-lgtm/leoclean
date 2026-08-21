@@ -141,7 +141,7 @@ export default function Home() {
                 comme une adresse. Le chiffre n'est pas perdu — il vit dans le
                 paragraphe d'identité et dans le bloc des communes, aux deux
                 endroits où il sert de preuve plutôt que de restriction. */}
-              <Badge className="mb-5 gap-1.5 bg-pineapple-300 text-ink-900">
+              <Badge className="mb-5 gap-1.5 bg-teal-100 text-ink-900">
                 <MapPinIcon className="size-3.5" aria-hidden />
                 Les pros du ménage au sud de Bordeaux
               </Badge>
@@ -176,7 +176,7 @@ export default function Home() {
               >
                 <Link
                   href="/reserver"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
                 >
                   Réserver un ménage
                 </Link>
@@ -468,7 +468,7 @@ export default function Home() {
               >
                 <Link
                   href="/reserver"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
                 >
                   Réserver
                 </Link>

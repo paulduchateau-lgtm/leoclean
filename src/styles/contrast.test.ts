@@ -58,13 +58,16 @@ const TEXTE = [
   {
     nom: "encre sur ananas plein",
     avant: "ink-900",
-    arriere: "pineapple-400",
+    arriere: "pineapple-300",
   },
   {
     nom: "encre sur ananas au survol",
     avant: "ink-900",
-    arriere: "pineapple-500",
+    arriere: "pineapple-400",
   },
+  // La pastille d'accroche, passée au vert menthe : c'est la teinte du rond de
+  // la carte flottante, pour que les deux signes de la même page se répondent.
+  { nom: "encre sur menthe", avant: "ink-900", arriere: "teal-100" },
   // La mangue reste au système, mais ne porte plus l'action.
   { nom: "encre sur mangue pleine", avant: "ink-900", arriere: "mango-400" },
   // La sélection : sarcelle pleine, texte encre — cases cochées, créneaux.
@@ -104,7 +107,7 @@ describe("contraste des couples employés", () => {
     // Même règle que la mangue qu'il remplace, et pour la même raison : un
     // jaune assez clair pour être solaire est trop clair pour porter du blanc.
     // Le bouton principal écrit donc en encre, partout.
-    for (const jaune of ["pineapple-400", "pineapple-500"]) {
+    for (const jaune of ["pineapple-300", "pineapple-400"]) {
       expect(ratio(token(jaune), token("ink-0"))).toBeLessThan(4.5);
       expect(ratio(token("ink-900"), token(jaune))).toBeGreaterThanOrEqual(4.5);
     }

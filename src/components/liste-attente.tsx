@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
+import { PhoneField } from "@/components/phone-field";
 import { useState, useTransition } from "react";
 
 import { rejoindreLaListe } from "@/app/zones-desservies/actions";
@@ -150,12 +151,11 @@ export function ListeAttente({
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">ou téléphone</span>
-          <input
+          <PhoneField
+            id="liste-attente-phone"
             name="phone"
-            type="tel"
             maxLength={30}
-            autoComplete="tel"
-            className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
+            className="rounded-xl"
           />
         </label>
       </div>

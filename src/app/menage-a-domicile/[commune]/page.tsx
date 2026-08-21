@@ -360,7 +360,7 @@ export default async function CommunePage({
                  deux appels à l'action concurrents demanderaient de choisir
                  lequel compte. */
               data-booking-cta
-              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500 hover:shadow-action"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
             >
               Voir les créneaux à {commune.name}
             </Link>

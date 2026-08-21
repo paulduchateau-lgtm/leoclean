@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
+import { PhoneField } from "@/components/phone-field";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
@@ -351,12 +352,11 @@ export function FunnelCandidature({ className }: { className?: string }) {
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="font-medium">Téléphone</span>
-              <input
+              <PhoneField
+                id="rejoindre-phone"
                 name="phone"
-                type="tel"
                 required
-                autoComplete="tel"
-                className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
+                className="rounded-xl"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">

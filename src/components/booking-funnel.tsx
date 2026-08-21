@@ -42,11 +42,8 @@ import type {
 import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
 import { bookingCalendarFilename } from "@/lib/booking/ics";
 import { canShowTaxCredit } from "@/lib/fiscal";
-import {
-  diagnosticPhone,
-  formatFrenchPhone,
-  formatFrenchPhoneAsTyped,
-} from "@/lib/phone";
+import { PhoneField } from "@/components/phone-field";
+import { diagnosticPhone, formatFrenchPhone } from "@/lib/phone";
 import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import {
@@ -2510,7 +2507,7 @@ function SlotStep({
         </p>
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500 hover:shadow-action"
+          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
         >
           Appeler le {SITE.phone}
         </a>
@@ -2962,15 +2959,6 @@ function ContactStep({
   const set = (key: keyof ContactInput) => (value: string) =>
     onContactChange({ ...contact, [key]: value });
 
-  /*
-   * Le numéro se vérifie à la saisie, mais l'erreur ne s'affiche qu'une fois
-   * le champ quitté — puis à chaque frappe. Reprocher trois chiffres à
-   * quelqu'un qui en a tapé trois est hostile et n'apprend rien ; ne rien dire
-   * avant l'envoi lui fait découvrir la faute après avoir tout rempli.
-   */
-  const [phoneTouche, setPhoneTouche] = useState(false);
-  const phoneErreur = phoneTouche ? diagnosticPhone(contact.phone) : null;
-
   return (
     <form
       className="space-y-5"
@@ -2978,14 +2966,11 @@ function ContactStep({
         event.preventDefault();
         /*
          * Le garde de sortie : `required` ne vérifie que la présence, et un
-         * numéro à neuf chiffres la satisfait. On révèle alors l'erreur plutôt
-         * que de laisser partir une réservation qu'on ne pourra pas confirmer
-         * par téléphone.
+         * numéro à neuf chiffres la satisfait. `PhoneField` affiche déjà
+         * l'erreur ; ce qu'on empêche ici est de partir sur une réservation
+         * qu'on ne pourra pas confirmer par téléphone.
          */
-        if (diagnosticPhone(contact.phone) !== null) {
-          setPhoneTouche(true);
-          return;
-        }
+        if (diagnosticPhone(contact.phone) !== null) return;
         onContinue();
       }}
     >
@@ -3020,51 +3005,14 @@ function ContactStep({
         </div>
         <div>
           <Label htmlFor="phone">Téléphone</Label>
-          <Input
+          <PhoneField
             id="phone"
-            type="tel"
             required
-            autoComplete="tel"
-            inputMode="tel"
             placeholder="06 12 34 56 78"
             value={contact.phone}
-            /*
-             * Les espaces sont posés à la frappe. La fonction est idempotente
-             * — elle est rappelée sur sa propre sortie à chaque touche — et
-             * n'ajoute jamais d'espace en attente du chiffre suivant, ce qui
-             * ferait buter l'effacement sur une touche morte.
-             *
-             * **On ne reformate que si le curseur est en fin de champ.**
-             * Réécrire la valeur d'un champ contrôlé replace le curseur à la
-             * fin : quelqu'un qui corrige le troisième chiffre le verrait
-             * sauter au bout à chaque touche, et ne pourrait plus corriger du
-             * tout. Le cas courant — on tape son numéro d'une traite — est
-             * mis en forme ; la correction au milieu est laissée tranquille,
-             * et le champ se remet en forme au premier ajout en fin de saisie.
-             */
-            onChange={(event) => {
-              const champ = event.target;
-              const enFin =
-                champ.selectionStart === null ||
-                champ.selectionStart === champ.value.length;
-              set("phone")(
-                enFin ? formatFrenchPhoneAsTyped(champ.value) : champ.value,
-              );
-            }}
-            onBlur={() => setPhoneTouche(true)}
-            aria-invalid={phoneErreur !== null}
-            aria-describedby={phoneErreur === null ? undefined : "phone-erreur"}
+            onValueChange={set("phone")}
             className="mt-2 min-h-12"
           />
-          {phoneErreur !== null && (
-            <p
-              id="phone-erreur"
-              role="alert"
-              className="mt-2 text-sm text-destructive"
-            >
-              {phoneErreur}
-            </p>
-          )}
         </div>
         <div>
           <Label htmlFor="email">Email</Label>

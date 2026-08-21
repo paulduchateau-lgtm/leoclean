@@ -231,7 +231,7 @@
    * La mangue pleine ne sert qu'à l'action principale, et porte du texte
    * encre : à 400, elle est trop claire pour du blanc.
    */
-  --primary: var(--pineapple-400);
+  --primary: var(--pineapple-300);
   --primary-foreground: var(--text-on-brand);
   --brand: var(--text-brand);
   /*
@@ -272,7 +272,7 @@
 
   --sidebar: var(--surface-alt);
   --sidebar-foreground: var(--text);
-  --sidebar-primary: var(--pineapple-400);
+  --sidebar-primary: var(--pineapple-300);
   --sidebar-primary-foreground: var(--text-on-brand);
   --sidebar-accent: var(--teal-100);
   --sidebar-accent-foreground: var(--teal-800);
@@ -295,7 +295,7 @@
   --popover: var(--teal-900);
   --popover-foreground: var(--ink-25);
 
-  --primary: var(--pineapple-400);
+  --primary: var(--pineapple-300);
   --primary-foreground: var(--ink-950);
   --brand: var(--teal-300);
   --secondary: var(--teal-800);
@@ -318,7 +318,7 @@
 
   --sidebar: var(--teal-900);
   --sidebar-foreground: var(--ink-50);
-  --sidebar-primary: var(--pineapple-400);
+  --sidebar-primary: var(--pineapple-300);
   --sidebar-primary-foreground: var(--ink-950);
   --sidebar-accent: var(--teal-800);
   --sidebar-accent-foreground: var(--ink-50);

@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2Icon, Loader2Icon, SendIcon } from "lucide-react";
+import { PhoneField } from "@/components/phone-field";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useActionState, useEffect, useRef } from "react";
 
@@ -163,21 +164,13 @@ export function CandidatureForm() {
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="phone">Votre téléphone</Label>
-          <Input
+          <PhoneField
             id="phone"
             name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
             placeholder="06 12 34 56 78"
             required
-            aria-invalid={fieldError("phone") ? true : undefined}
+            serverError={fieldError("phone") ?? null}
           />
-          {fieldError("phone") ? (
-            <p role="alert" className="text-sm text-destructive">
-              {fieldError("phone")}
-            </p>
-          ) : null}
         </div>
 
         <div className="space-y-2">

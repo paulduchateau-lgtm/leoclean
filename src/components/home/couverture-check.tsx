@@ -148,7 +148,7 @@ export function CouvertureCheck({
 
             <Link
               href="/reserver"
-              className="mt-4 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
+              className="mt-4 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
             >
               Voir mes créneaux
             </Link>

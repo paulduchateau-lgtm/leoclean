@@ -1197,6 +1197,17 @@ avec leur montant et leur durée, et la barre basse l'annonce dès le premier
 écran : un écran de plus qui ne ferait que le répéter coûterait un geste sans
 rien apprendre.
 
+**Un seul composant porte le champ téléphone** — `phone-field.tsx`. Six
+formulaires demandent un numéro : rappel, candidature, liste d'attente,
+inscription intervenant, informations du compte, tunnel. Recopier la règle six
+fois, c'est se donner six occasions de la voir diverger, et c'est ce que le
+dépôt refuse déjà pour les prix et les durées. Il fonctionne **contrôlé ou
+non**, parce que les six formulaires ne se ressemblent pas : ceux qui passent
+par une server action sont pilotés par leur attribut `name`, le tunnel garde sa
+valeur dans son propre état pour la porter au récapitulatif. Une `serverError`
+reste affichée tant que le champ n'a pas été retouché — une erreur remontée par
+le serveur ne doit pas disparaître au premier clic, avant même correction.
+
 **Le téléphone se met en forme à la frappe et se vérifie avant d'avancer.**
 `formatFrenchPhoneAsTyped` groupe par paires au fil de la saisie — forme
 partielle comprise, ce que `formatFrenchPhone` ne sait pas faire, elle qui rend
@@ -1990,9 +2001,15 @@ thème.
 **L'action principale est passée de la mangue à l'ananas** le 21 août 2026 :
 l'orange ressemblait trop à celui d'une plateforme nationale, et le bouton
 finissait par ressembler à celui qu'on cherche à ne pas être. `--primary` vaut
-donc `--pineapple-400`, le survol `--pineapple-500`, et la lueur s'appelle
-`--shadow-action` — le nom dit le rôle et non la teinte, pour que la prochaine
-bascule ne laisse pas un token qui ment.
+donc `--pineapple-300` — le jaune clair de la pastille d'accroche, retenu au
+second passage : `400` faisait un bouton plus dense que la joie qu'on cherchait
+— le survol et le pressé `--pineapple-400` et `--pineapple-500`, et la lueur
+s'appelle `--shadow-action`, le nom disant le rôle et non la teinte pour que la
+prochaine bascule ne laisse pas un token qui ment.
+
+**La pastille d'accroche est passée au vert menthe** (`teal-100`), la teinte du
+rond de la carte flottante : les deux signes de la même page se répondent au
+lieu de répéter le jaune du bouton. `contrast.test.ts` la verrouille à 13,2:1.
 
 **Un écran, un seul bouton jaune.** Il porte du texte encre, jamais du blanc :
 11:1 avec l'encre, 1,5:1 avec le blanc — même règle que la mangue qu'il

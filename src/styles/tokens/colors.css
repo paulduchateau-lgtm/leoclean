@@ -111,7 +111,7 @@
    * règle que la menthe d'avant : une couleur claire et saturée ne porte
    * jamais du blanc.
    */
-  --surface-brand: var(--pineapple-400);
+  --surface-brand: var(--pineapple-300);
   --surface-brand-soft: var(--teal-50);
   --text: var(--ink-900);
   --text-secondary: var(--ink-600);

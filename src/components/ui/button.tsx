@@ -19,7 +19,7 @@ const buttonVariants = cva(
       variant: {
         /* Un écran, un seul bouton mangue. */
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:-translate-y-px hover:bg-pineapple-500 hover:shadow-action active:translate-y-0 active:scale-[0.985] active:bg-mango-600 active:shadow-xs",
+          "bg-primary text-primary-foreground shadow-xs hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action active:translate-y-0 active:scale-[0.985] active:bg-pineapple-500 active:shadow-xs",
         secondary:
           "bg-ink-900 text-white hover:-translate-y-px hover:bg-ink-800 hover:shadow-md active:translate-y-0 active:scale-[0.985] active:bg-ink-950 dark:bg-ink-100 dark:text-ink-950 dark:hover:bg-white",
         outline:

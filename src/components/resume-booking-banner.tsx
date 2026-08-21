@@ -132,7 +132,7 @@ export function ResumeBookingBanner() {
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href={`/reserver?commune=${saved.communeSlug}`}
-          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-pineapple-500"
+          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-pineapple-400"
         >
           Reprendre
           <ArrowRightIcon className="size-4" aria-hidden />

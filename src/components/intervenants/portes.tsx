@@ -60,7 +60,7 @@ export function Portes() {
               rappel, qui ne fait que demander qu'on appelle. */}
           <Link
             href="/rejoindre"
-            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500 hover:shadow-action"
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
           >
             Déposer ma candidature
           </Link>

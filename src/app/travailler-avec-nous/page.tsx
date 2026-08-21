@@ -275,7 +275,7 @@ export default function TravaillerAvecNousPage() {
                */}
               <Link
                 href="/rejoindre"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
               >
                 Déposer ma candidature
               </Link>
@@ -494,7 +494,7 @@ export default function TravaillerAvecNousPage() {
 
           <Link
             href="/rejoindre"
-            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500"
+            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
           >
             Commencer ma candidature
           </Link>

@@ -115,7 +115,7 @@ export function Prestations() {
                 href="/reserver"
                 className={
                   card.primary
-                    ? "mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-500 hover:shadow-action"
+                    ? "mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
                     : "mt-6 inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-6 font-bold transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
                 }
               >
