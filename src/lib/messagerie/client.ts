@@ -25,18 +25,24 @@ export async function lireLesFilsDuClient(
   clientProfileId: string,
   userId: string,
 ): Promise<FilVue[]> {
-  const reservations = await db.booking.findMany({
+  const fils = await db.conversation.findMany({
     where: { clientProfileId, messages: { some: {} } },
-    orderBy: { scheduledStart: "desc" },
+    orderBy: { lastMessageAt: "desc" },
     take: 50,
     select: {
       id: true,
-      scheduledStart: true,
-      address: { select: { cityName: true } },
-      assignments: {
-        where: { status: { in: ["ACCEPTED", "COMPLETED"] } },
-        take: 1,
-        select: { cleaner: { select: { displayName: true } } },
+      cleaner: { select: { displayName: true } },
+      clientProfile: {
+        select: {
+          bookings: {
+            orderBy: { scheduledStart: "desc" },
+            take: 1,
+            select: {
+              scheduledStart: true,
+              address: { select: { cityName: true } },
+            },
+          },
+        },
       },
       messages: {
         orderBy: { createdAt: "desc" },
@@ -46,42 +52,35 @@ export async function lireLesFilsDuClient(
     },
   });
 
-  /*
-   * Le compte des non-lus est demandé séparément : le compter dans la
-   * projection ci-dessus obligerait à charger tous les messages de chaque fil
-   * pour n'en garder que le nombre.
-   */
   const nonLus = await db.message.groupBy({
-    by: ["bookingId"],
+    by: ["conversationId"],
     where: {
       recipientUserId: userId,
       readAt: null,
-      bookingId: { in: reservations.map((reservation) => reservation.id) },
+      conversationId: { in: fils.map((fil) => fil.id) },
     },
     _count: { _all: true },
   });
 
-  const parBooking = new Map(
-    nonLus.map((ligne) => [ligne.bookingId, ligne._count._all]),
+  const parFil = new Map(
+    nonLus.map((ligne) => [ligne.conversationId, ligne._count._all]),
   );
 
-  return reservations
-    .map((reservation) => ({
-      bookingId: reservation.id,
-      quand: reservation.scheduledStart.toISOString(),
-      commune: reservation.address.cityName,
-      /*
-       * Le prénom seul, jamais le nom complet : c'est la règle tenue partout
-       * ailleurs pour les intervenants comme pour les clients.
-       */
-      interlocuteur:
-        reservation.assignments[0]?.cleaner.displayName.split(" ")[0] ?? null,
-      dernierMessage: reservation.messages[0]?.body ?? null,
-      dernierLe: reservation.messages[0]?.createdAt.toISOString() ?? null,
-      nonLus: parBooking.get(reservation.id) ?? 0,
-    }))
+  return fils
+    .map((fil) => {
+      const derniere = fil.clientProfile.bookings[0] ?? null;
+      return {
+        conversationId: fil.id,
+        quand: derniere?.scheduledStart.toISOString() ?? null,
+        commune: derniere?.address.cityName ?? null,
+        /* Le prénom seul, jamais le nom complet : règle tenue partout. */
+        interlocuteur: fil.cleaner.displayName.split(" ")[0] ?? null,
+        dernierMessage: fil.messages[0]?.body ?? null,
+        dernierLe: fil.messages[0]?.createdAt.toISOString() ?? null,
+        nonLus: parFil.get(fil.id) ?? 0,
+      };
+    })
     .sort((a, b) => {
-      // Ce qui attend une réponse remonte, puis le plus récent.
       if (a.nonLus > 0 !== b.nonLus > 0) return a.nonLus > 0 ? -1 : 1;
       return (b.dernierLe ?? "").localeCompare(a.dernierLe ?? "");
     });

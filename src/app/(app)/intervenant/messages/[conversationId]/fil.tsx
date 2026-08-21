@@ -28,10 +28,10 @@ const JOUR = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export function Fil({
-  bookingId,
+  conversationId,
   messages: initiaux,
 }: {
-  bookingId: string;
+  conversationId: string;
   messages: MessageVue[];
 }) {
   const [messages, setMessages] = useState(initiaux);
@@ -111,7 +111,7 @@ export function Fil({
           startTransition(async () => {
             setErreur(null);
             const resultat = await repondreAuClient({
-              bookingId,
+              conversationId,
               corps: texte,
             });
             if (!resultat.ok) {

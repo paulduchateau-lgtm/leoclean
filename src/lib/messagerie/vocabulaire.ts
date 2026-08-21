@@ -8,9 +8,17 @@
  */
 
 export interface FilVue {
-  bookingId: string;
-  quand: string;
-  commune: string;
+  /** L'identifiant du fil. Il ne désigne plus une réservation mais un couple. */
+  conversationId: string;
+  /**
+   * La dernière intervention connue de ce couple, pour situer le fil.
+   *
+   * Indicative : le fil dure au-delà d'elle. `null` quand aucune intervention
+   * n'y est rattachée, ce qui arrive à un fil dont les réservations ont été
+   * effacées au titre du RGPD.
+   */
+  quand: string | null;
+  commune: string | null;
   /**
    * Le prénom de l'autre personne du fil.
    *

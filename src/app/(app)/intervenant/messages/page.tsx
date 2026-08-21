@@ -74,9 +74,9 @@ export default async function MessagesPage() {
       ) : (
         <ul className="mt-6 divide-y divide-border border-y border-border">
           {fils.map((fil) => (
-            <li key={fil.bookingId}>
+            <li key={fil.conversationId}>
               <Link
-                href={`/intervenant/messages/${fil.bookingId}`}
+                href={`/intervenant/messages/${fil.conversationId}`}
                 className="flex gap-3 py-4"
               >
                 <span
@@ -90,7 +90,8 @@ export default async function MessagesPage() {
                     <span
                       className={fil.nonLus > 0 ? "font-bold" : "font-medium"}
                     >
-                      {fil.interlocuteur ?? "Client"} · {fil.commune}
+                      {fil.interlocuteur ?? "Client"}
+                      {fil.commune ? ` · ${fil.commune}` : ""}
                     </span>
                     <span className="font-mono text-xs text-muted-foreground">
                       {fil.dernierLe
@@ -101,8 +102,12 @@ export default async function MessagesPage() {
                   <span className="mt-0.5 block truncate text-sm text-muted-foreground">
                     {fil.dernierMessage}
                   </span>
+                  {/* La dernière intervention situe le fil sans prétendre
+                      qu'il s'arrête avec elle : le fil suit la personne. */}
                   <span className="mt-0.5 block text-xs text-muted-foreground">
-                    Intervention du {JOUR.format(new Date(fil.quand))}
+                    {fil.quand
+                      ? `Dernière intervention le ${JOUR.format(new Date(fil.quand))}`
+                      : "Aucune intervention rattachée"}
                     {fil.nonLus > 0
                       ? ` · ${fil.nonLus} non lu${fil.nonLus > 1 ? "s" : ""}`
                       : ""}

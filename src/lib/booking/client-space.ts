@@ -2,6 +2,7 @@ import "server-only";
 
 import { decideCancellation, refusalMessage } from "@/lib/booking/cancel";
 import type { TenantClient } from "@/lib/db";
+import { ouvrirLeFil, poserUnMessage } from "@/lib/messagerie/conversation";
 import { BusinessError } from "@/lib/booking/errors";
 
 /**
@@ -62,9 +63,14 @@ async function assertOwnedBooking(
       grossAmountCents: true,
       scheduledStart: true,
       organizationId: true,
+      clientProfileId: true,
       assignments: {
         where: { status: { in: ["PROPOSED", "ACCEPTED"] } },
-        select: { id: true, cleaner: { select: { userId: true } } },
+        select: {
+          id: true,
+          cleanerProfileId: true,
+          cleaner: { select: { userId: true } },
+        },
       },
     },
   });
@@ -115,10 +121,6 @@ export async function cancelClientBooking(
     throw new CancellationRefusedError(refusalMessage(decision.refusal!));
   }
 
-  const cleanerUserIds = booking.assignments
-    .map((assignment) => assignment.cleaner.userId)
-    .filter((id): id is string => typeof id === "string");
-
   await db.$transaction(async (tx) => {
     await tx.booking.update({
       where: { id: booking.id },
@@ -145,17 +147,28 @@ export async function cancelClientBooking(
       });
     }
 
-    for (const recipientUserId of cleanerUserIds) {
-      await tx.message.create({
-        data: {
-          organizationId: booking.organizationId,
-          bookingId: booking.id,
-          senderUserId: user.id,
-          recipientUserId,
-          body: input.reason?.trim()
-            ? `Intervention annulée par le client. Motif indiqué : ${input.reason.trim()}`
-            : "Intervention annulée par le client.",
-        },
+    /*
+     * L'annulation est un **événement système**, pas un message du client : il
+     * n'a rien écrit, et le lui attribuer ferait lire une phrase de produit
+     * comme une phrase de personne. Elle désigne la réservation concernée, qui
+     * reste la source de vérité — le fil ne fait que le signaler.
+     */
+    for (const affectation of booking.assignments) {
+      const conversationId = await ouvrirLeFil(tx, booking.organizationId, {
+        clientProfileId: booking.clientProfileId,
+        cleanerProfileId: affectation.cleanerProfileId,
+      });
+
+      await poserUnMessage(tx, {
+        organizationId: booking.organizationId,
+        conversationId,
+        senderUserId: null,
+        recipientUserId: affectation.cleaner.userId,
+        bookingId: booking.id,
+        kind: "SYSTEM",
+        body: input.reason?.trim()
+          ? `Intervention annulée par le client. Motif indiqué : ${input.reason.trim()}`
+          : "Intervention annulée par le client.",
       });
     }
   });
@@ -177,21 +190,41 @@ export interface BookingMessageView {
 }
 
 /**
- * Le fil d'une intervention.
+ * Le fil du couple, ouvert depuis une intervention.
  *
- * Les messages sont rattachés à une réservation et pas à un couple de
- * personnes : un intervenant peut changer d'une semaine sur l'autre, et un fil
- * qui suivrait les personnes mélangerait deux interventions sans rapport.
+ * **Il suit la relation, pas la prestation.** Les messages étaient rattachés à
+ * la réservation : un client qui revoyait la même personne chaque semaine
+ * ouvrait un fil par semaine, et retrouver ce qu'on s'était dit supposait de se
+ * rappeler à quelle réservation. Le panneau d'une intervention montre donc
+ * désormais toute la conversation avec l'intervenant qui la tient.
+ *
+ * Sans intervenant retenu, il n'y a pas de couple, donc pas de fil : la liste
+ * est vide, et c'est la même situation qui refuse l'envoi.
  */
 export async function readBookingMessages(
   db: TenantClient,
   user: { id: string },
   bookingId: string,
 ): Promise<BookingMessageView[]> {
-  await assertOwnedBooking(db, user, bookingId);
+  const { booking } = await assertOwnedBooking(db, user, bookingId);
+
+  const cleanerProfileId = booking.assignments[0]?.cleanerProfileId;
+  if (!cleanerProfileId) return [];
+
+  const fil = await db.conversation.findUnique({
+    where: {
+      organizationId_clientProfileId_cleanerProfileId: {
+        organizationId: booking.organizationId,
+        clientProfileId: booking.clientProfileId,
+        cleanerProfileId,
+      },
+    },
+    select: { id: true },
+  });
+  if (!fil) return [];
 
   const messages = await db.message.findMany({
-    where: { bookingId },
+    where: { conversationId: fil.id },
     orderBy: { createdAt: "asc" },
     take: 200,
     select: {
@@ -225,27 +258,31 @@ export async function sendBookingMessage(
 ): Promise<BookingMessageView> {
   const { booking } = await assertOwnedBooking(db, user, input.bookingId);
 
-  const recipientUserId = booking.assignments[0]?.cleaner.userId;
-  if (!recipientUserId) {
+  const affectation = booking.assignments[0];
+  if (!affectation) {
     throw new CancellationRefusedError(
       "Aucun intervenant n'est encore désigné pour cette intervention. Appelez-nous, nous vous répondons tout de suite.",
     );
   }
 
-  const created = await db.message.create({
-    data: {
-      organizationId: booking.organizationId,
-      bookingId: booking.id,
-      senderUserId: user.id,
-      recipientUserId,
-      body: input.body.trim(),
-    },
-    select: { id: true, body: true, createdAt: true },
+  const conversationId = await ouvrirLeFil(db, booking.organizationId, {
+    clientProfileId: booking.clientProfileId,
+    cleanerProfileId: affectation.cleanerProfileId,
+  });
+
+  const created = await poserUnMessage(db, {
+    organizationId: booking.organizationId,
+    conversationId,
+    senderUserId: user.id,
+    recipientUserId: affectation.cleaner.userId,
+    // La réservation depuis laquelle on écrit, comme contexte du message.
+    bookingId: booking.id,
+    body: input.body.trim(),
   });
 
   return {
     id: created.id,
-    body: created.body,
+    body: input.body.trim(),
     createdAt: created.createdAt.toISOString(),
     fromMe: true,
   };

@@ -146,6 +146,7 @@ model Organization {
   invoiceSequences       InvoiceSequence[]
   taxCertificates        TaxCertificate[]
   messages               Message[]
+  conversations          Conversation[]
   cleanerDocuments       CleanerDocument[]
   leads                  Lead[]
   auditLogs              AuditLog[]
@@ -315,6 +316,7 @@ model ClientProfile {
   reviews         Review[]
   reclamations    Reclamation[]
   taxCertificates TaxCertificate[]
+  conversations   Conversation[]
 
   @@unique([organizationId, userId])
   @@index([organizationId])
@@ -406,6 +408,7 @@ model CleanerProfile {
   slotProposals             SlotProposal[]
   payouts                   Payout[]
   reviews                   Review[]
+  conversations             Conversation[]
   issuedInvoices            Invoice[]
   issuedTaxCertificates     TaxCertificate[]
   preferredForSubscriptions Subscription[]          @relation("PreferredCleaner")
@@ -1573,25 +1576,76 @@ model TaxCertificate {
   @@index([clientProfileId, annee])
 }
 
+/// Un fil entre un client et un intervenant.
+///
+/// **Le couple, et non l'intervention.** Le fil suivait la réservation : un
+/// client qui revoyait la même personne toutes les semaines ouvrait un fil par
+/// semaine, et retrouver ce qu'on s'était dit supposait de se rappeler à quelle
+/// réservation. La promesse du service étant « la même personne chaque
+/// semaine », c'est la relation qui dure — pas la prestation.
+///
+/// **Changer d'intervenant ouvre un fil neuf**, et c'est gratuit : le couple
+/// change, donc la clé change. Le remplaçant n'hérite d'aucun historique, ce
+/// qui protège la vie privée du client comme celle de l'intervenant précédent.
+model Conversation {
+  id               String @id @default(cuid())
+  organizationId   String
+  clientProfileId  String
+  cleanerProfileId String
+
+  createdAt     DateTime  @default(now())
+  /// Date du dernier message, pour ordonner la liste sans la parcourir.
+  lastMessageAt DateTime?
+
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  cleaner       CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+  messages      Message[]
+
+  /// Un seul fil par couple : c'est cette contrainte qui fait la relation.
+  @@unique([organizationId, clientProfileId, cleanerProfileId])
+  @@index([organizationId, lastMessageAt])
+}
+
+enum MessageKind {
+  /// Écrit par une personne.
+  TEXT
+  /// Posé par le produit : horaire déplacé, consignes mises à jour.
+  ///
+  /// **Une notification, jamais la source de vérité.** Elle pointe vers l'objet
+  /// qui a changé ; si « l'horaire a changé » vivait ici, quelqu'un finirait par
+  /// le lire dans le fil plutôt que sur la réservation.
+  SYSTEM
+}
+
 model Message {
   id              String  @id @default(cuid())
   organizationId  String
+  conversationId  String
+  /// L'intervention concernée, quand le message en désigne une.
+  ///
+  /// Facultative et devenue un simple **pointeur** : elle situait le fil, elle
+  /// ne fait plus que donner son contexte à un message. Un événement système
+  /// la porte toujours — c'est ce qui permet d'ouvrir l'objet depuis le fil.
   bookingId       String?
-  senderUserId    String
+  senderUserId    String?
   recipientUserId String
 
+  kind   MessageKind @default(TEXT)
   body   String
   readAt DateTime?
 
   createdAt DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  booking      Booking?     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  sender       User         @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  booking      Booking?     @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  /// `null` pour un événement système : il n'a pas d'auteur humain.
+  sender       User?        @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Cascade)
   recipient    User         @relation("MessageRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, recipientUserId, readAt])
-  @@index([bookingId, createdAt])
+  @@index([conversationId, createdAt])
 }
 
 enum LeadStatus {

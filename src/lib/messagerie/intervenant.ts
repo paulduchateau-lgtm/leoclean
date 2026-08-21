@@ -2,6 +2,11 @@ import "server-only";
 
 import { BusinessError } from "@/lib/booking/errors";
 import type { TenantClient } from "@/lib/db";
+import {
+  filDe,
+  lireEtMarquer,
+  poserUnMessage,
+} from "@/lib/messagerie/conversation";
 import type { FilVue, MessageVue } from "@/lib/messagerie/vocabulaire";
 
 /**
@@ -19,34 +24,6 @@ import type { FilVue, MessageVue } from "@/lib/messagerie/vocabulaire";
 
 export class MessageRefuseError extends BusinessError {}
 
-async function affectationDe(
-  db: TenantClient,
-  cleanerProfileId: string,
-  bookingId: string,
-) {
-  const affectation = await db.assignment.findFirst({
-    where: {
-      bookingId,
-      cleanerProfileId,
-      status: { in: ["ACCEPTED", "COMPLETED"] },
-    },
-    select: {
-      booking: {
-        select: {
-          id: true,
-          organizationId: true,
-          clientProfile: { select: { userId: true } },
-        },
-      },
-    },
-  });
-
-  if (!affectation) {
-    throw new MessageRefuseError("Cette intervention est introuvable.");
-  }
-  return affectation.booking;
-}
-
 /**
  * Les fils ouverts d'un intervenant.
  *
@@ -54,32 +31,44 @@ async function affectationDe(
  * Une intervention sans message n'apparaît pas : la liste sert à répondre, pas
  * à recenser.
  */
+/**
+ * Les fils d'une personne, du plus urgent au plus récent.
+ *
+ * Un fil par couple : la liste ne grandit donc plus d'une ligne par
+ * intervention, mais d'une ligne par personne avec qui on parle. C'est
+ * exactement ce qu'on attend d'une messagerie.
+ *
+ * La dernière intervention rattachée sert à situer le fil — « Léognan, lundi
+ * dernier » — sans faire croire que le fil s'arrête avec elle.
+ */
 export async function lireLesFils(
   db: TenantClient,
   cleanerProfileId: string,
   userId: string,
 ): Promise<FilVue[]> {
-  const affectations = await db.assignment.findMany({
-    where: {
-      cleanerProfileId,
-      status: { in: ["ACCEPTED", "COMPLETED"] },
-      booking: { messages: { some: {} } },
-    },
-    orderBy: { startAt: "desc" },
+  const fils = await db.conversation.findMany({
+    where: { cleanerProfileId, messages: { some: {} } },
+    orderBy: { lastMessageAt: "desc" },
     take: 50,
     select: {
-      bookingId: true,
-      startAt: true,
-      booking: {
+      id: true,
+      clientProfile: {
         select: {
-          address: { select: { cityName: true } },
-          clientProfile: { select: { user: { select: { name: true } } } },
-          messages: {
-            orderBy: { createdAt: "desc" },
+          user: { select: { name: true } },
+          bookings: {
+            orderBy: { scheduledStart: "desc" },
             take: 1,
-            select: { body: true, createdAt: true },
+            select: {
+              scheduledStart: true,
+              address: { select: { cityName: true } },
+            },
           },
         },
+      },
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { body: true, createdAt: true },
       },
     },
   });
@@ -90,34 +79,34 @@ export async function lireLesFils(
    * pour n'en garder que le nombre.
    */
   const nonLus = await db.message.groupBy({
-    by: ["bookingId"],
+    by: ["conversationId"],
     where: {
       recipientUserId: userId,
       readAt: null,
-      bookingId: {
-        in: affectations.map((affectation) => affectation.bookingId),
-      },
+      conversationId: { in: fils.map((fil) => fil.id) },
     },
     _count: { _all: true },
   });
 
-  const parBooking = new Map(
-    nonLus.map((ligne) => [ligne.bookingId, ligne._count._all]),
+  const parFil = new Map(
+    nonLus.map((ligne) => [ligne.conversationId, ligne._count._all]),
   );
 
-  return affectations
-    .map((affectation) => ({
-      bookingId: affectation.bookingId,
-      quand: affectation.startAt.toISOString(),
-      commune: affectation.booking.address.cityName,
-      interlocuteur:
-        affectation.booking.clientProfile.user.name?.split(" ")[0] ?? null,
-      dernierMessage: affectation.booking.messages[0]?.body ?? null,
-      dernierLe:
-        affectation.booking.messages[0]?.createdAt.toISOString() ?? null,
-      nonLus: parBooking.get(affectation.bookingId) ?? 0,
-    }))
+  return fils
+    .map((fil) => {
+      const derniere = fil.clientProfile.bookings[0] ?? null;
+      return {
+        conversationId: fil.id,
+        quand: derniere?.scheduledStart.toISOString() ?? null,
+        commune: derniere?.address.cityName ?? null,
+        interlocuteur: fil.clientProfile.user.name?.split(" ")[0] ?? null,
+        dernierMessage: fil.messages[0]?.body ?? null,
+        dernierLe: fil.messages[0]?.createdAt.toISOString() ?? null,
+        nonLus: parFil.get(fil.id) ?? 0,
+      };
+    })
     .sort((a, b) => {
+      // Ce qui attend une réponse remonte, puis le plus récent.
       if (a.nonLus > 0 !== b.nonLus > 0) return a.nonLus > 0 ? -1 : 1;
       return (b.dernierLe ?? "").localeCompare(a.dernierLe ?? "");
     });
@@ -135,21 +124,14 @@ export async function lireLeFil(
   db: TenantClient,
   cleanerProfileId: string,
   userId: string,
-  bookingId: string,
+  conversationId: string,
 ): Promise<MessageVue[]> {
-  await affectationDe(db, cleanerProfileId, bookingId);
+  const fil = await filDe(db, conversationId, { cleanerProfileId });
+  if (!fil) {
+    throw new MessageRefuseError("Ce fil est introuvable.");
+  }
 
-  const messages = await db.message.findMany({
-    where: { bookingId },
-    orderBy: { createdAt: "asc" },
-    take: 200,
-    select: { id: true, body: true, createdAt: true, senderUserId: true },
-  });
-
-  await db.message.updateMany({
-    where: { bookingId, recipientUserId: userId, readAt: null },
-    data: { readAt: new Date() },
-  });
+  const messages = await lireEtMarquer(db, fil.id, userId);
 
   return messages.map((message) => ({
     id: message.id,
@@ -163,30 +145,30 @@ export async function repondre(
   db: TenantClient,
   cleanerProfileId: string,
   userId: string,
-  bookingId: string,
+  conversationId: string,
   corps: string,
 ): Promise<MessageVue> {
-  const reservation = await affectationDe(db, cleanerProfileId, bookingId);
+  const fil = await filDe(db, conversationId, { cleanerProfileId });
+  if (!fil) {
+    throw new MessageRefuseError("Ce fil est introuvable.");
+  }
 
   const texte = corps.trim();
   if (texte.length === 0) {
     throw new MessageRefuseError("Un message vide ne s'envoie pas.");
   }
 
-  const cree = await db.message.create({
-    data: {
-      organizationId: reservation.organizationId,
-      bookingId: reservation.id,
-      senderUserId: userId,
-      recipientUserId: reservation.clientProfile.userId,
-      body: texte,
-    },
-    select: { id: true, body: true, createdAt: true },
+  const cree = await poserUnMessage(db, {
+    organizationId: fil.organizationId,
+    conversationId: fil.id,
+    senderUserId: userId,
+    recipientUserId: fil.clientUserId,
+    body: texte,
   });
 
   return {
     id: cree.id,
-    body: cree.body,
+    body: texte,
     createdAt: cree.createdAt.toISOString(),
     deMoi: true,
   };

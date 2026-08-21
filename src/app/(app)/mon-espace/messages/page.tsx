@@ -70,9 +70,9 @@ export default async function MessagesClientPage() {
         ) : (
           <ul className="mt-6 divide-y divide-border">
             {fils.map((fil) => (
-              <li key={fil.bookingId}>
+              <li key={fil.conversationId}>
                 <Link
-                  href={`/mon-espace#intervention-${fil.bookingId}`}
+                  href={`/mon-espace/messages/${fil.conversationId}`}
                   className="flex gap-3 py-4"
                 >
                   {/* La pastille des non-lus : l'ananas est ici une pastille,
@@ -88,8 +88,8 @@ export default async function MessagesClientPage() {
                       <span
                         className={fil.nonLus > 0 ? "font-bold" : "font-medium"}
                       >
-                        {fil.interlocuteur ?? "Votre intervenant"} ·{" "}
-                        {fil.commune}
+                        {fil.interlocuteur ?? "Votre intervenant"}
+                        {fil.commune ? ` · ${fil.commune}` : ""}
                       </span>
                       <span className="font-mono text-xs text-muted-foreground">
                         {fil.dernierLe
