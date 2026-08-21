@@ -20,7 +20,7 @@ import { formatEuros, formatHourlyRate } from "@/lib/pricing";
 import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
-  STANDARD_SQM_PER_HOUR,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
   TAX_CREDIT_RATE_BP,
 } from "@/lib/pricing/public-grid";
 import {
@@ -332,8 +332,8 @@ export default async function CommunePage({
               {formatEuros(
                 Math.round((PUBLIC_RATES[0]!.hourlyRateCents * 210) / 60),
               )}{" "}
-              en formule régulière. Nous estimons {STANDARD_SQM_PER_HOUR} m²
-              traités par heure.
+              en formule régulière. Nous estimons{" "}
+              {STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure.
             </p>
           </div>
         </section>
@@ -360,7 +360,7 @@ export default async function CommunePage({
                  deux appels à l'action concurrents demanderaient de choisir
                  lequel compte. */
               data-booking-cta
-              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
             >
               Voir les créneaux à {commune.name}
             </Link>

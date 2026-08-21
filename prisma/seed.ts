@@ -25,6 +25,7 @@ import {
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { quote } from "../src/lib/pricing";
+import { STANDARD_SQM_PER_HOUR } from "../src/lib/pricing/public-grid";
 import { STREETS_BY_INSEE, type SeedStreet } from "./fixtures/streets";
 import { RATES } from "./socle";
 import { COMMUNES, type Commune } from "../src/lib/territory";
@@ -189,7 +190,7 @@ const CATALOGUE: ServiceSeed[] = [
     kind: "MENAGE_REGULIER",
     description:
       "Entretien complet du logement : sols, sanitaires, cuisine, poussière et rangement léger.",
-    sqmPerHour: 25,
+    sqmPerHour: STANDARD_SQM_PER_HOUR,
     minDurationMinutes: 120,
     options: [
       {

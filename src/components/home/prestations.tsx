@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
-  STANDARD_SQM_PER_HOUR,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
 } from "@/lib/pricing/public-grid";
 
 /**
@@ -45,7 +45,7 @@ const RATE_CARDS = [
     details: [
       `Minimum ${MINIMUM_HOURS} h, jusqu'à 6 h en une fois`,
       "Repassage, vitres ou four : 30 min de plus par option",
-      `Estimation : environ ${STANDARD_SQM_PER_HOUR} m² à l'heure`,
+      `Estimation : environ ${STANDARD_SQM_PER_HOUR_AFFICHE} m² à l'heure`,
     ],
     icon: SprayCanIcon,
     bubble: "bg-papaya-100 text-papaya-700",
@@ -115,7 +115,7 @@ export function Prestations() {
                 href="/reserver"
                 className={
                   card.primary
-                    ? "mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+                    ? "mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
                     : "mt-6 inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-6 font-bold transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
                 }
               >

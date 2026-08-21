@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2Icon, Loader2Icon, SendIcon } from "lucide-react";
+import { PhoneField } from "@/components/phone-field";
 import { useActionState, useEffect, useRef } from "react";
 
 import { submitLead } from "@/app/etre-rappele/actions";
@@ -122,26 +123,13 @@ export function LeadForm({
 
         <div className="space-y-2">
           <Label htmlFor="phone">Votre téléphone</Label>
-          <Input
+          <PhoneField
             id="phone"
             name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
             placeholder="06 12 34 56 78"
             required
-            aria-invalid={fieldError("phone") ? true : undefined}
-            aria-describedby={fieldError("phone") ? "phone-error" : undefined}
+            serverError={fieldError("phone") ?? null}
           />
-          {fieldError("phone") ? (
-            <p
-              id="phone-error"
-              role="alert"
-              className="text-sm text-destructive"
-            >
-              {fieldError("phone")}
-            </p>
-          ) : null}
         </div>
       </div>
 

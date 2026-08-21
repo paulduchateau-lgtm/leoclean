@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 
 import { AppTabBar } from "@/components/app-tab-bar";
@@ -20,11 +20,6 @@ import "./globals.css";
  * rendu, ce qui est rédhibitoire sur des pages dont le référencement est le
  * canal d'acquisition principal.
  */
-const sans = Figtree({
-  variable: "--font-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 /**
  * Police de titrage : Alan Sans porte tous les titres et les grands chiffres.
@@ -34,9 +29,15 @@ const sans = Figtree({
  */
 const display = localFont({
   src: "./fonts/alansans-variable.woff2",
+  /*
+   * Une seule fonte pour deux variables : Alan Sans porte désormais le texte
+   * courant comme les titres. Les déclarer séparément aurait chargé le même
+   * fichier deux fois sous deux noms.
+   */
   variable: "--font-display",
   display: "swap",
   weight: "300 900",
+  preload: true,
 });
 
 /**
@@ -120,7 +121,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
+      className={`${display.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         {/* Un seul bandeau à la fois : la vitrine statique dit déjà tout ce

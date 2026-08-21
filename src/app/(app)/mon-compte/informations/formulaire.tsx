@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
+import { PhoneField } from "@/components/phone-field";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -53,14 +54,11 @@ export function Formulaire({
 
         <div className="space-y-2">
           <Label htmlFor="telephone">Téléphone</Label>
-          <Input
+          <PhoneField
             id="telephone"
-            type="tel"
-            autoComplete="tel"
-            inputMode="tel"
             value={telephone}
-            onChange={(event) => {
-              setTelephone(event.target.value);
+            onValueChange={(valeur) => {
+              setTelephone(valeur);
               setSucces(false);
             }}
           />

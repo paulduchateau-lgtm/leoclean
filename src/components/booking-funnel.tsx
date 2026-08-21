@@ -42,7 +42,8 @@ import type {
 import { BOOKING_HORIZON_DAYS } from "@/lib/booking/horizon";
 import { bookingCalendarFilename } from "@/lib/booking/ics";
 import { canShowTaxCredit } from "@/lib/fiscal";
-import { formatFrenchPhone } from "@/lib/phone";
+import { PhoneField } from "@/components/phone-field";
+import { diagnosticPhone, formatFrenchPhone } from "@/lib/phone";
 import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import {
@@ -57,6 +58,7 @@ import {
   MINIMUM_BILLABLE_MINUTES,
   PUBLIC_RATES,
   STANDARD_SQM_PER_HOUR,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
 } from "@/lib/pricing/public-grid";
 import { SITE } from "@/lib/site";
 import { useTracageTunnel } from "@/components/tunnel-tracage";
@@ -2231,9 +2233,9 @@ function HousingStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        À titre indicatif, un intervenant traite environ {STANDARD_SQM_PER_HOUR}{" "}
-        m² à l&apos;heure. Choisissez une durée : elle reste ajustable avec
-        l&apos;intervenant.
+        À titre indicatif, un intervenant traite environ{" "}
+        {STANDARD_SQM_PER_HOUR_AFFICHE} m² à l&apos;heure. Choisissez une durée
+        : elle reste ajustable avec l&apos;intervenant.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -2505,7 +2507,7 @@ function SlotStep({
         </p>
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
         >
           Appeler le {SITE.phone}
         </a>
@@ -2962,6 +2964,13 @@ function ContactStep({
       className="space-y-5"
       onSubmit={(event) => {
         event.preventDefault();
+        /*
+         * Le garde de sortie : `required` ne vérifie que la présence, et un
+         * numéro à neuf chiffres la satisfait. `PhoneField` affiche déjà
+         * l'erreur ; ce qu'on empêche ici est de partir sur une réservation
+         * qu'on ne pourra pas confirmer par téléphone.
+         */
+        if (diagnosticPhone(contact.phone) !== null) return;
         onContinue();
       }}
     >
@@ -2996,15 +3005,12 @@ function ContactStep({
         </div>
         <div>
           <Label htmlFor="phone">Téléphone</Label>
-          <Input
+          <PhoneField
             id="phone"
-            type="tel"
             required
-            autoComplete="tel"
-            inputMode="tel"
             placeholder="06 12 34 56 78"
             value={contact.phone}
-            onChange={(event) => set("phone")(event.target.value)}
+            onValueChange={set("phone")}
             className="mt-2 min-h-12"
           />
         </div>

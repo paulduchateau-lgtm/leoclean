@@ -61,12 +61,20 @@ export function KeyFigures() {
       {/* `flex-col-reverse` place le nombre au-dessus de son libellé sans
           inverser le document : une liste de définitions veut le terme avant
           sa valeur, et répéter le libellé en `sr-only` le ferait entendre deux
-          fois. */}
+          fois.
+
+          **`justify-end` n'est pas cosmétique.** En `column-reverse`, l'axe
+          principal descend du bas vers le haut : `flex-start` — la valeur par
+          défaut — tasse donc le contenu **au bas** de la tuile. Les quatre
+          tuiles étant étirées à la même hauteur par la grille, celle dont le
+          libellé tient sur une seule ligne voyait son nombre descendre d'un
+          cran sous les trois autres. `justify-end` désigne le haut de cet axe,
+          et les quatre nombres retrouvent la même ligne. */}
       <dl className="mx-auto grid w-full max-w-4xl grid-cols-2 gap-3 px-6 py-8 sm:grid-cols-4">
         {FIGURES.map((figure) => (
           <div
             key={figure.label}
-            className={`flex flex-col-reverse rounded-[var(--r-l)] px-5 py-6 text-center ${figure.tone}`}
+            className={`flex flex-col-reverse justify-end rounded-[var(--r-l)] px-5 py-6 text-center ${figure.tone}`}
           >
             <dt className="mt-1 text-sm text-pretty text-muted-foreground">
               {figure.label}

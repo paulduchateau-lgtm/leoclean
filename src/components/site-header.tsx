@@ -121,7 +121,7 @@ export function SiteHeader({
               )}
               <Link
                 href="/reserver"
-                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
               >
                 Réserver
               </Link>
@@ -143,7 +143,7 @@ export function SiteHeader({
                   formulaire de candidature. */}
               <Link
                 href="#espace-professionnel"
-                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
               >
                 Espace pro
               </Link>

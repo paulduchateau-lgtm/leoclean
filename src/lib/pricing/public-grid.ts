@@ -59,8 +59,32 @@ export const PUBLIC_RATES: readonly PublicRate[] = [
 /** Durée minimale facturée, en minutes. */
 export const MINIMUM_BILLABLE_MINUTES = 120;
 
-/** Surface traitée en une heure pour un entretien courant. */
-export const STANDARD_SQM_PER_HOUR = 25;
+/**
+ * Surface traitée en une heure pour un entretien courant.
+ *
+ * **Écrite comme le rapport qu'elle sert, pas comme sa décimale.** La grille
+ * voulue est 50 m² en 1 h 30, 100 m² en 3 h, 150 m² en 4 h 30 — soit cent
+ * mètres carrés pour trois heures. `33.3` casserait l'aller-retour que
+ * `surfaceForDuration` doit tenir : trois heures y rendraient 99 m², qui
+ * réestimés donnent bien trois heures, mais affichent un mètre carré de moins
+ * que ce qu'on a promis. `100 / 3` retombe juste, et un test le vérifie sur
+ * tous les pas de la grille.
+ *
+ * Le rendement précédent était de 25 m²/h. Le relever raccourcit les durées
+ * estimées d'un quart, donc les prix : c'est un arbitrage commercial du
+ * porteur du projet (21 août 2026), pas un ajustement technique.
+ */
+export const STANDARD_SQM_PER_HOUR = 100 / 3;
+
+/**
+ * Le même rendement, tel qu'une phrase l'écrit.
+ *
+ * Les pages publiques impriment ce nombre en toutes lettres ; y verser
+ * `33.33333333333333` serait illisible. Arrondi une fois ici plutôt que dans
+ * chaque page, pour que les quatre surfaces qui le citent disent le même
+ * chiffre.
+ */
+export const STANDARD_SQM_PER_HOUR_AFFICHE = Math.round(STANDARD_SQM_PER_HOUR);
 
 /** Taux du crédit d'impôt services à la personne, en points de base. */
 export const TAX_CREDIT_RATE_BP = 5000;

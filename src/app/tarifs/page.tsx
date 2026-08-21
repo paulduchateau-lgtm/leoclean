@@ -8,8 +8,12 @@ import {
   canShowTaxCredit,
   creditImpotConditions,
 } from "@/lib/fiscal";
-import { formatDuration, formatEuros, formatHourlyRate } from "@/lib/pricing";
-import { estimateDuration } from "@/lib/pricing";
+import {
+  formatDuration,
+  formatEuros,
+  formatHourlyRate,
+  estimateDuration,
+} from "@/lib/pricing";
 import {
   COURT_DELAI_HEURES,
   MINIMUM_BILLABLE_MINUTES,
@@ -21,6 +25,7 @@ import {
   TARIF_REGULIER_HEURE,
   totalRegulier,
   STANDARD_SQM_PER_HOUR,
+  STANDARD_SQM_PER_HOUR_AFFICHE,
 } from "@/lib/pricing/public-grid";
 import { CANCELLATION_TIERS } from "@/lib/pricing/cancellation";
 import {
@@ -50,10 +55,25 @@ const EXAMPLES = [
   { label: "Grande maison", surfaceSqm: 140 },
 ];
 
+/*
+ * L'exemple de la FAQ était écrit à la main — « 80 m² demande environ 3 h 30 » —
+ * et le relèvement du rendement l'a rendu faux d'un coup : le tunnel en chiffre
+ * désormais 2 h 30. Un exemple recopié est un exemple qui finit par contredire
+ * ce qu'on facture, exactement comme un tarif recopié.
+ */
+const MINUTES_80 = estimateDuration({
+  surfaceSqm: 80,
+  service: {
+    sqmPerHour: STANDARD_SQM_PER_HOUR,
+    minDurationMinutes: MINIMUM_BILLABLE_MINUTES,
+  },
+}).durationMinutes;
+const DUREE_80 = formatDuration(MINUTES_80);
+
 const FAQ = [
   {
     question: "Combien coûte une femme de ménage à Léognan ?",
-    answer: `Chez Léo Clean, le ménage à domicile coûte ${TARIF_REGULIER} de l'heure en formule régulière et ${TARIF_PONCTUEL} de l'heure pour une intervention ponctuelle, avec un minimum de deux heures. Un logement de 80 m² demande environ 3 h 30, soit ${totalRegulier(3.5)} en formule régulière.`,
+    answer: `Chez Léo Clean, le ménage à domicile coûte ${TARIF_REGULIER} de l'heure en formule régulière et ${TARIF_PONCTUEL} de l'heure pour une intervention ponctuelle, avec un minimum de deux heures. Un logement de 80 m² demande environ ${DUREE_80} , soit ${totalRegulier(MINUTES_80 / 60)} en formule régulière.`,
   },
   {
     question: "Y a-t-il des frais d'abonnement ou de dossier ?",
@@ -184,8 +204,8 @@ export default function TarifsPage() {
           Combien de temps pour mon logement ?
         </h2>
         <p className="mt-2 text-muted-foreground">
-          Nous estimons {STANDARD_SQM_PER_HOUR} m² traités par heure pour un
-          entretien courant. La durée proposée reste ajustable.
+          Nous estimons {STANDARD_SQM_PER_HOUR_AFFICHE} m² traités par heure
+          pour un entretien courant. La durée proposée reste ajustable.
         </p>
 
         <div className="mt-6 overflow-x-auto">

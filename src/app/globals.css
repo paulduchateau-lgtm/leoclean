@@ -27,16 +27,35 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* Une seule famille de lecture : Alan Sans. Voir plus bas. */
+  --font-sans: var(--font-display);
   /* JetBrains Mono : prix, codes postaux, horaires — des chiffres posés. */
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
   /*
-   * Alan Sans porte les titres et les grands chiffres ; Figtree reste la
-   * famille de lecture. La hiérarchie vient des deux : la famille pour
-   * trancher, la graisse pour graduer.
+   * **Alan Sans porte tout le site depuis le 21 août 2026** — titres, texte
+   * courant, grands chiffres — à la demande du porteur du projet. Figtree a
+   * donc disparu : la hiérarchie ne vient plus de deux familles qui tranchent
+   * l'une sur l'autre, mais de la taille et de la graisse seules. Une famille
+   * de moins, c'est aussi une requête réseau de moins sur le premier écran.
+   *
+   * JetBrains Mono reste pour les chiffres posés : elle dit autre chose qu'une
+   * graisse, elle aligne.
    */
   --font-heading: var(--font-display);
   --font-display: var(--font-display);
+
+  /*
+   * L'échelle de Tailwind est câblée sur nos tokens plutôt que laissée à ses
+   * valeurs par défaut. Sans cela, `font-black` rendrait 900 quoi que le
+   * système décide, et les deux vérités diveraient — celle des titres
+   * balisés, qui lisent `--fw-*`, et celle des deux cent douze classes
+   * utilitaires du dépôt.
+   */
+  --font-weight-medium: var(--fw-medium);
+  --font-weight-semibold: var(--fw-semibold);
+  --font-weight-bold: var(--fw-bold);
+  --font-weight-extrabold: var(--fw-extrabold);
+  --font-weight-black: var(--fw-black);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -170,7 +189,7 @@
   --shadow-md: var(--sh-m);
   --shadow-lg: var(--sh-l);
   --shadow-xl: var(--sh-xl);
-  --shadow-mango: var(--sh-mango);
+  --shadow-action: var(--sh-action);
 
   --ease-brand: var(--ease);
   --ease-bounce: var(--ease-bounce);
@@ -212,7 +231,7 @@
    * La mangue pleine ne sert qu'à l'action principale, et porte du texte
    * encre : à 400, elle est trop claire pour du blanc.
    */
-  --primary: var(--mango-400);
+  --primary: var(--pineapple-300);
   --primary-foreground: var(--text-on-brand);
   --brand: var(--text-brand);
   /*
@@ -253,7 +272,7 @@
 
   --sidebar: var(--surface-alt);
   --sidebar-foreground: var(--text);
-  --sidebar-primary: var(--mango-400);
+  --sidebar-primary: var(--pineapple-300);
   --sidebar-primary-foreground: var(--text-on-brand);
   --sidebar-accent: var(--teal-100);
   --sidebar-accent-foreground: var(--teal-800);
@@ -276,7 +295,7 @@
   --popover: var(--teal-900);
   --popover-foreground: var(--ink-25);
 
-  --primary: var(--mango-400);
+  --primary: var(--pineapple-300);
   --primary-foreground: var(--ink-950);
   --brand: var(--teal-300);
   --secondary: var(--teal-800);
@@ -299,7 +318,7 @@
 
   --sidebar: var(--teal-900);
   --sidebar-foreground: var(--ink-50);
-  --sidebar-primary: var(--mango-400);
+  --sidebar-primary: var(--pineapple-300);
   --sidebar-primary-foreground: var(--ink-950);
   --sidebar-accent: var(--teal-800);
   --sidebar-accent-foreground: var(--ink-50);

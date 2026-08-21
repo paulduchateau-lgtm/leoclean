@@ -52,7 +52,23 @@ function ratio(a: string, b: string): number {
 const TEXTE = [
   { nom: "encre sur blanc", avant: "ink-900", arriere: "ink-0" },
   { nom: "texte secondaire sur blanc", avant: "ink-600", arriere: "ink-0" },
-  // L'action : mangue pleine, texte encre — le bouton du tropical punch.
+  // L'action : ananas plein, texte encre. La mangue a cédé la place le
+  // 21 août 2026 — trop proche de l'orange d'une plateforme nationale, ce qui
+  // faisait ressembler le bouton à celui qu'on cherche à ne pas être.
+  {
+    nom: "encre sur ananas plein",
+    avant: "ink-900",
+    arriere: "pineapple-300",
+  },
+  {
+    nom: "encre sur ananas au survol",
+    avant: "ink-900",
+    arriere: "pineapple-400",
+  },
+  // La pastille d'accroche, passée au vert menthe : c'est la teinte du rond de
+  // la carte flottante, pour que les deux signes de la même page se répondent.
+  { nom: "encre sur menthe", avant: "ink-900", arriere: "teal-100" },
+  // La mangue reste au système, mais ne porte plus l'action.
   { nom: "encre sur mangue pleine", avant: "ink-900", arriere: "mango-400" },
   // La sélection : sarcelle pleine, texte encre — cases cochées, créneaux.
   { nom: "encre sur sarcelle pleine", avant: "ink-900", arriere: "teal-400" },
@@ -86,6 +102,16 @@ describe("contraste des couples employés", () => {
       expect(ratio(token(avant), token(arriere))).toBeGreaterThanOrEqual(4.5);
     },
   );
+
+  it("l'ananas plein ne porte jamais de blanc", () => {
+    // Même règle que la mangue qu'il remplace, et pour la même raison : un
+    // jaune assez clair pour être solaire est trop clair pour porter du blanc.
+    // Le bouton principal écrit donc en encre, partout.
+    for (const jaune of ["pineapple-300", "pineapple-400"]) {
+      expect(ratio(token(jaune), token("ink-0"))).toBeLessThan(4.5);
+      expect(ratio(token("ink-900"), token(jaune))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 
   it("la mangue pleine ne porte jamais de blanc", () => {
     // Règle du système, ici rendue vérifiable : à 400 la mangue est trop

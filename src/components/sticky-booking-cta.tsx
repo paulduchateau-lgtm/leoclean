@@ -115,7 +115,7 @@ export function StickyBookingCta({
               communeSlug ? `/reserver?commune=${communeSlug}` : "/reserver"
             }
             tabIndex={shown ? undefined : -1}
-            className="inline-flex h-12 shrink-0 items-center rounded-full bg-primary px-6 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-mango-500"
+            className="inline-flex h-12 shrink-0 items-center rounded-full bg-primary px-6 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-pineapple-400"
           >
             Réserver
           </Link>
