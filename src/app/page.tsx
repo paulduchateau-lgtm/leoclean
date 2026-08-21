@@ -289,15 +289,18 @@ export default function Home() {
             n'y apparaît qu'une fois. Il porte aussi la mention fiscale — le
             statut du dossier, rien de plus. */}
         <section className="mx-auto w-full max-w-4xl px-6 pt-16">
+          {/* La phrase sur le rayon de vingt-et-une minutes a été retirée le
+              21 août 2026, sur arbitrage du porteur du projet. Le chiffre n'a
+              pas disparu du site pour autant : chaque pastille de commune, en
+              bas de page, porte son propre temps de trajet — ce qui le rend
+              concret là où la phrase le rendait abstrait. */}
           <p className="max-w-prose text-pretty">
-            {SITE.description} Nos intervenants se déplacent à{" "}
-            <strong>{FACTS.maxDriveMinutes} minutes de route au maximum</strong>{" "}
-            depuis {SITE.address.city}, à partir de{" "}
+            {SITE.description} Nos prestations démarrent à{" "}
             <strong>
               {formatHourlyRate(FACTS.lowestHourlyRateCents)}, minimum{" "}
               {FACTS.minimumBillableMinutes / 60} heures
             </strong>
-            . Les prestations relèvent des services à la personne :{" "}
+            . Elles relèvent des services à la personne :{" "}
             <strong>{FISCAL.sap.label}</strong>.
           </p>
         </section>

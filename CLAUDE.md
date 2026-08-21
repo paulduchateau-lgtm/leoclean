@@ -564,6 +564,14 @@ d'un code postal partagé (33650 en couvre sept) et ne transmet aucune commune
 au tunnel, qui demande désormais l'adresse. Un refus donne le numéro plutôt
 qu'un champ qui ne rend rien.
 
+**Le bandeau aligne ses quatre nombres par `justify-end`, pas par hasard.**
+Les tuiles sont en `flex-col-reverse` — le nombre au-dessus du libellé sans
+inverser le document, une liste de définitions voulant le terme avant sa
+valeur. Mais en `column-reverse` l'axe principal descend du bas vers le haut :
+la valeur par défaut tasse le contenu **au bas** de la tuile, et celle dont le
+libellé tient sur une seule ligne voyait son nombre descendre d'un cran sous
+les trois autres.
+
 **`src/lib/facts.ts` n'est pas une source de vérité, c'est un agrégateur.** Un
 bandeau de crédibilité rassemble en quatre nombres ce que quatre modules
 détiennent séparément ; sans point de rassemblement ils seraient écrits en dur
@@ -577,6 +585,14 @@ la plus éloignée. La prose garde « une vingtaine de minutes », qui reste vra
 mais un chiffre présenté comme un maximum doit en être un : il est calculé
 depuis `communes-content.ts`, jamais écrit, et un test vérifie que les deux
 formulations peuvent coexister.
+
+**Le paragraphe d'identité ne l'annonce plus** depuis le 21 août 2026, sur
+arbitrage du porteur du projet : « nos intervenants se déplacent à 21 minutes
+de route au maximum » a été retirée. Le chiffre n'a pas quitté la page pour
+autant — chaque pastille de commune porte son propre temps de trajet, ce qui le
+rend concret là où la phrase le rendait abstrait. Le test qui exige le trajet
+maximal sur le HTML rendu continue donc de passer, et c'est lui qui prouve que
+l'information n'a pas été perdue avec la phrase.
 
 **Il n'y a aucun avis client, et rien ne le maquille.** Fabriquer un
 témoignage est une pratique commerciale trompeuse au sens de l'article L121-2
