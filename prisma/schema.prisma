@@ -520,6 +520,14 @@ model Address {
   /// Tâches habituelles par pièce, reprises à chaque passage.
   defaultChecklist Json?
 
+  /// Consignes écrites en répondant à des questions guidées.
+  ///
+  /// `{ actif, reponses, majAt }` — la forme est validée à la lecture par
+  /// `logement/consignes.ts`, jamais supposée. Le drapeau `actif` est distinct
+  /// des réponses à dessein : couper l'aide ne doit rien effacer, sans quoi
+  /// personne ne la rallumerait.
+  consignes Json?
+
   /// Consigne d'accès sensible — digicode, emplacement d'une clé.
   ///
   /// Chiffrée en AES-256-GCM, jamais lisible par une requête ordinaire, jamais

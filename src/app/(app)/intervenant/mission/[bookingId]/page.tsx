@@ -4,6 +4,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { EcranDeTravail } from "@/app/(app)/intervenant/mission/[bookingId]/ecran-de-travail";
 import { PhotosDeMission } from "@/app/(app)/intervenant/mission/[bookingId]/photos";
+import { consignesLisibles } from "@/lib/logement/consignes";
+import { consignesDeLAdresse } from "@/lib/logement/instructions";
 import { lireLesPhotos } from "@/lib/mission/photos";
 import { SITE } from "@/lib/site";
 import { stockageConfigure } from "@/lib/stockage/resolution";
@@ -88,6 +90,7 @@ export default async function MissionPage({
           accessNotes: true,
           forbiddenZones: true,
           allergies: true,
+          consignes: true,
           accessSecretSetAt: true,
         },
       },
@@ -156,6 +159,16 @@ export default async function MissionPage({
           zonesInterdites: booking.address.forbiddenZones,
           allergies: booking.address.allergies,
           consignesClient: booking.clientNotes,
+          /*
+           * Les consignes guidées, relues par le module pur : celui qui les a
+           * écrites et celui qui les lit voient les mêmes libellés, ce qui est
+           * toute la valeur de la fonctionnalité. Une liste vide quand le
+           * client a mis l'aide en pause.
+           */
+          consignesGuidees: consignesLisibles(
+            consignesDeLAdresse(booking.address.consignes),
+          ),
+          consignesMajAt: consignesDeLAdresse(booking.address.consignes).majAt,
           consigneSecreteExiste: Boolean(booking.address.accessSecretSetAt),
           arriveeA: arrivee
             ? (arrivee.deviceAt ?? arrivee.at).toISOString()

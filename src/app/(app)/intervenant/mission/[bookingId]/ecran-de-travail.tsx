@@ -46,6 +46,10 @@ interface Mission {
   zonesInterdites: string | null;
   allergies: string | null;
   consignesClient: string | null;
+  /** Consignes guidées du logement, déjà mises en forme par le module pur. */
+  consignesGuidees: { rubrique: string; sujet: string; reponse: string }[];
+  /** ISO 8601 de leur dernière mise à jour, ou `null`. */
+  consignesMajAt: string | null;
   consigneSecreteExiste: boolean;
   arriveeA: string | null;
   departA: string | null;
@@ -277,6 +281,47 @@ export function EcranDeTravail({
               </li>
             ) : null}
           </ul>
+        </section>
+      ) : null}
+
+      {/*
+        Les consignes du logement, dans leur propre bloc et **après** « À
+        savoir ». L'ordre est celui de l'urgence : les allergies et les zones
+        interdites disent ce qui peut mal tourner, les consignes disent comment
+        bien faire. Les fondre en une seule liste noierait les premières dans
+        les secondes, qui sont plus nombreuses.
+
+        La date est affichée parce qu'une consigne de l'an dernier ne se lit pas
+        comme une consigne d'hier — et qu'on n'a rien d'autre pour en juger.
+      */}
+      {mission.consignesGuidees.length > 0 ? (
+        <section className="mt-4 rounded-xl border border-border bg-card p-5">
+          <h2 className="font-heading text-lg font-semibold">
+            Les consignes du logement
+          </h2>
+          {mission.consignesMajAt ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Mises à jour par le client le{" "}
+              {new Intl.DateTimeFormat("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                timeZone: "Europe/Paris",
+              }).format(new Date(mission.consignesMajAt))}
+            </p>
+          ) : null}
+
+          <dl className="mt-3 space-y-2 text-sm">
+            {mission.consignesGuidees.map((consigne) => (
+              <div
+                key={`${consigne.rubrique}-${consigne.sujet}`}
+                className="flex flex-wrap gap-x-2"
+              >
+                <dt className="font-medium">{consigne.sujet} :</dt>
+                <dd className="text-muted-foreground">{consigne.reponse}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       ) : null}
 

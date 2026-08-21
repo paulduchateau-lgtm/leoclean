@@ -1430,6 +1430,55 @@ texte qui ne correspond plus à son point géographique — le moteur calculerai
 des trajets vers un endroit où personne n'habite. Celles qui n'ont jamais servi
 se retirent ; les autres restent, leurs factures y étant rattachées.
 
+_Les consignes du logement._ **Le modèle existait, la donnée n'avait pas de
+porte d'entrée** : `Address` portait déjà zones interdites, animaux, matériel et
+checklist, et seul l'écran de mission les lisait. `/mon-espace/consignes` est
+cette porte, et elle passe par des **questions** plutôt qu'un champ libre — le
+champ libre existait et ne donnait que « merci de bien nettoyer ». Personne ne
+pense à préciser le produit des façades de cuisine avant le jour où elles sont
+abîmées : une question posée est une consigne qu'on n'aurait pas écrite.
+
+`logement/consignes.ts` est **pur** et porte le catalogue, la validation et le
+rendu — celui qui écrit et celui qui lit voient donc les mêmes libellés, ce qui
+est toute la valeur de la chose. Cinq arbitrages :
+
+- **Le questionnaire est court par contrainte**, et un test le plafonne.
+  Quarante questions ne sont pas une aide mais un formulaire : abandonné au
+  quart, et une consigne à moitié remplie vaut moins qu'un champ libre honnête.
+  Chaque question retenue passe le même test — un intervenant peut-il mal faire,
+  faute de la réponse ?
+- **La question posée n'est pas le sujet lu.** « Faut-il laver le four ? »
+  s'adresse au client ; l'intervenant lit « Four ». Lui servir la question
+  l'obligerait à la relire pour en extraire la consigne.
+- **Un rythme est déclaré, jamais calculé.** « Vitres : une fois par mois »
+  s'affiche tel quel. Rien ne trace l'exécution tâche par tâche : afficher
+  « aujourd'hui : vitres » serait une déduction que rien ne soutient, et
+  l'intervenant s'en apercevrait au deuxième passage.
+- **« Jamais » est une consigne, pas une absence de réponse.** Sans elle,
+  quelqu'un de consciencieux ferait les vitres, prendrait le temps qu'il n'a
+  pas, et s'entendrait dire qu'on ne lui demandait rien.
+- **Couper l'aide n'efface rien.** Le drapeau `actif` est distinct des
+  réponses : sans quoi personne ne la rallumerait. Désactivée, `consignesLisibles`
+  rend une liste vide — la montrer quand même retirerait l'interrupteur qu'on
+  vient de donner.
+
+**Les réponses vivent sur le logement, pas sur la réservation** : le four et les
+vitres ne changent pas d'un passage à l'autre, et les rattacher à une
+réservation obligerait à tout redire à chaque fois. Une colonne `Json` et non
+une table — le catalogue doit pouvoir bouger sans migration — dont la forme est
+**validée à la lecture** : une réponse dont la question a disparu est ignorée
+plutôt que de faire échouer la lecture, sans quoi retirer une question rendrait
+inaccessibles les logements qui y avaient répondu.
+
+**L'intervenant les voit deux fois** : dans la liste de ses missions, à la
+préparation — quelqu'un qui découvre en ouvrant la porte qu'il fallait un
+produit particulier ne l'a pas dans son sac — et sur l'écran de travail, à
+l'arrivée. Dans leur propre bloc, **après** « À savoir » : les allergies et les
+zones interdites disent ce qui peut mal tourner, les consignes disent comment
+bien faire, et les fondre noierait les premières dans les secondes. La date de
+mise à jour est affichée, parce qu'une consigne de l'an dernier ne se lit pas
+comme une consigne d'hier.
+
 **La replanification à l'initiative du client n'y est toujours pas** : elle
 suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
 entier. Annuler puis reprendre reste le chemin.
