@@ -1,10 +1,9 @@
-import { PhoneIcon } from "lucide-react";
+import { ArrowLeftIcon, PhoneIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 
 import { clientEnv } from "@/lib/env";
-import { INTERVENANT_PAGE_READY } from "@/lib/facts";
 import { SITE } from "@/lib/site";
 
 /**
@@ -24,14 +23,47 @@ import { SITE } from "@/lib/site";
  * contenu et le bouton « Réserver » ne servent qu'à sortir du parcours en
  * cours. Le téléphone reste, parce qu'il n'en fait pas sortir — c'est l'autre
  * façon de réserver.
+ *
+ * **Deux portes de connexion, jamais trois.** L'en-tête portait « Espace
+ * client » et « Espace cleaner » côte à côte, ce qui demandait au visiteur de
+ * savoir de quel côté du produit il se trouve avant de pouvoir se connecter.
+ * Le site public n'a qu'un public : « Se connecter » y mène l'espace client, et
+ * « Devenir pro » ouvre la face offre, qui porte sa propre porte
+ * professionnelle. L'espace intervenant ne se désigne donc plus depuis la
+ * vitrine client — il se rejoint par la section qui explique d'abord le métier.
+ *
+ * **La variante `pro` est cette face offre.** Elle remplace les liens de
+ * contenu client par le retour vers la vitrine, posé tout en haut et en
+ * secondaire, et par l'entrée de l'espace professionnel. Personne n'y arrive
+ * par hasard : la ramener de force vers « Réserver » lui ferait quitter la
+ * seule page qui lui parle.
  */
 export function SiteHeader({
   variant = "site",
 }: {
-  variant?: "site" | "tunnel";
+  variant?: "site" | "tunnel" | "pro";
 }) {
   return (
     <header className="border-b border-border-subtle bg-background/90 backdrop-blur">
+      {/* Le retour vers la vitrine client, tout en haut et en secondaire.
+          Il est posé au-dessus de la barre plutôt que dedans : quelqu'un qui
+          est arrivé là en cherchant un ménage chez lui doit pouvoir repartir
+          au premier regard, sans que ce geste concurrence l'espace
+          professionnel, qui est la raison d'être de la page. */}
+      {variant === "pro" && !clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
+        <div className="border-b border-border-subtle bg-cream-50">
+          <div className="mx-auto flex w-full max-w-4xl items-center justify-end px-6 py-1.5">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800"
+            >
+              <ArrowLeftIcon className="size-3.5" aria-hidden />
+              Vous cherchez un ménage chez vous ? Site client
+            </Link>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-6 py-4">
         <Logo className="shrink-0" />
 
@@ -51,43 +83,39 @@ export function SiteHeader({
               </Link>
               <Link
                 href="/blog"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
               >
                 Conseils
               </Link>
               <Link
                 href="/a-propos"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
               >
                 À propos
               </Link>
-              {/* La porte côté offre, en desktop seulement : la barre
-                  d'onglets mobile reste réservée au parcours client, et un
-                  cinquième lien y prendrait la place de ce qui convertit. */}
-              {INTERVENANT_PAGE_READY && (
-                <Link
-                  href="/travailler-avec-nous"
-                  className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
-                >
-                  Devenir intervenant
-                </Link>
-              )}
-              {/* Les deux espaces connectés, en desktop seulement — le mobile
-                  garde ce qui convertit. La vitrine statique ne les embarque
-                  pas : les liens y pointeraient vers des pages absentes. */}
+              {/* La vitrine statique n'embarque ni les espaces connectés ni la
+                  face offre : les liens y pointeraient vers des pages
+                  absentes. */}
               {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
                 <>
+                  {/* Le CTA de connexion principal. Il désigne l'espace
+                      client, qui redirige lui-même vers la connexion quand la
+                      session manque : une seule adresse à retenir, qu'on soit
+                      déjà connecté ou non. */}
                   <Link
                     href="/mon-espace"
-                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
+                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
                   >
-                    Espace client
+                    Se connecter
                   </Link>
+                  {/* Le CTA secondaire : la face offre, avec sa propre porte
+                      professionnelle. L'espace intervenant n'est plus désigné
+                      d'ici — on n'y entre qu'après la page qui dit le métier. */}
                   <Link
-                    href="/intervenant"
-                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
+                    href="/travailler-avec-nous"
+                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
                   >
-                    Espace cleaner
+                    Devenir pro
                   </Link>
                 </>
               )}
@@ -96,6 +124,28 @@ export function SiteHeader({
                 className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
               >
                 Réserver
+              </Link>
+            </>
+          ) : null}
+          {variant === "pro" ? (
+            <>
+              <Link
+                href="#candidature"
+                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
+              >
+                Devenir cleaner
+              </Link>
+              {/* La porte professionnelle : un seul bouton, qui mène au bloc
+                  où les deux entrées — se connecter, ou créer son compte —
+                  sont posées côte à côte. Envoyer directement sur la connexion
+                  fermerait la porte à qui n'a pas encore de compte, et
+                  l'inverse renverrait un intervenant déjà inscrit vers un
+                  formulaire de candidature. */}
+              <Link
+                href="#espace-professionnel"
+                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
+              >
+                Espace pro
               </Link>
             </>
           ) : null}

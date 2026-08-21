@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 
 import { publishedCommunes } from "@/lib/communes-content";
-import { INTERVENANT_PAGE_READY } from "@/lib/facts";
+import { clientEnv } from "@/lib/env";
 import { SITE } from "@/lib/site";
 import {
   COMMUNES,
@@ -104,14 +104,18 @@ export function SiteFooter() {
                 Être rappelé
               </Link>
             </li>
-            {/* La seconde porte du site, côté offre. Elle n'est annoncée
-                qu'une fois ses conditions arbitrées : amener un intervenant
-                sur une page qui ne sait pas encore dire ce qu'elle paie
-                coûterait la candidature et la confiance. */}
-            {INTERVENANT_PAGE_READY && (
+            {/* La seconde porte du site, côté offre, sous le même libellé
+                que l'en-tête et l'accueil. `INTERVENANT_PAGE_READY` ne la garde
+                plus : le drapeau tenait à la fois l'indexation de la page et sa
+                désignation depuis la vitrine, et seule la première reste une
+                règle — `/travailler-avec-nous` demeure en `noindex` et hors du
+                sitemap tant que ses garanties ne sont pas arbitrées. */}
+            {/* La vitrine statique retire la face offre de son arbre : le
+                lien y pointerait vers une page absente. */}
+            {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
               <li>
                 <Link href="/travailler-avec-nous" className="hover:text-white">
-                  Devenir intervenant
+                  Devenir pro
                 </Link>
               </li>
             )}

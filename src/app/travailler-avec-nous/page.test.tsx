@@ -177,3 +177,40 @@ describe("landing intervenants — ce qu'elle doit dire", () => {
     expect(metadata.robots).toEqual({ index: false, follow: true });
   });
 });
+
+describe("landing intervenants — les deux portes de l'espace professionnel", () => {
+  const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]!);
+
+  it("rend le retour vers le site client avant tout le reste", () => {
+    // Quelqu'un qui cherchait un ménage chez lui doit repartir au premier
+    // regard. Le critère vérifiable est l'ordre : le retour précède le titre,
+    // donc il est lisible sans défilement.
+    const retour = html.indexOf("Site client");
+    const h1 = html.indexOf("<h1");
+
+    expect(retour).toBeGreaterThan(-1);
+    expect(retour).toBeLessThan(h1);
+    expect(hrefs).toContain("/");
+  });
+
+  it("propose les deux entrées, jamais une seule", () => {
+    // Les deux personnes qui pressent « Espace pro » ne cherchent pas la même
+    // chose : l'une veut son planning, l'autre veut savoir comment commencer.
+    // N'en servir qu'une en perdrait l'autre.
+    expect(hrefs).toContain("/connexion?callbackUrl=/intervenant");
+    expect(hrefs).toContain("/rejoindre");
+  });
+
+  it("vise la connexion, jamais l'espace intervenant en direct", () => {
+    // `/intervenant` sait afficher son propre refus quand la session existe
+    // sans porter le droit ; y envoyer un visiteur non connecté depuis une
+    // page publique ferait un aller-retour de plus pour le même écran.
+    expect(hrefs.filter((href) => href.startsWith("/intervenant"))).toEqual([]);
+  });
+
+  it("n'annonce aucun accès que le dossier ne donne pas encore", () => {
+    // Se connecter ne donne l'espace qu'à un dossier activé. Annoncer un
+    // tableau de bord serait démenti à l'écran suivant.
+    expect(text.toLowerCase()).not.toContain("tableau de bord");
+  });
+});

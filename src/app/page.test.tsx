@@ -136,3 +136,29 @@ describe("accueil — frontière fiscale", () => {
     expect(text.toLowerCase()).not.toContain("agréé");
   });
 });
+
+describe("accueil — les deux CTA de connexion", () => {
+  it("mène « Se connecter » à l'espace client", () => {
+    // L'espace client redirige lui-même vers la connexion quand la session
+    // manque : viser `/connexion` d'ici renverrait vers un formulaire
+    // quelqu'un qui est déjà connecté.
+    expect(text).toContain("Se connecter");
+    expect(hrefs).toContain("/mon-espace");
+  });
+
+  it("mène « Devenir pro » à la face offre, jamais au tunnel d'inscription", () => {
+    // La page d'offre dit le métier, la rémunération et les prérequis avant
+    // qu'on demande un SIRET. Court-circuiter vers `/rejoindre` ferait
+    // commencer un dossier à quelqu'un qui n'a encore reçu aucun argument.
+    expect(text).toContain("Devenir pro");
+    expect(hrefs).toContain("/travailler-avec-nous");
+    expect(hrefs).not.toContain("/rejoindre");
+  });
+
+  it("ne désigne plus l'espace intervenant depuis la vitrine client", () => {
+    // Un visiteur de l'accueil n'a pas à savoir de quel côté du produit il se
+    // trouve pour se connecter : la porte professionnelle vit sur la page qui
+    // s'adresse aux professionnels, et nulle part ailleurs.
+    expect(hrefs.filter((href) => href.startsWith("/intervenant"))).toEqual([]);
+  });
+});

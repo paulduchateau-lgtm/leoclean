@@ -627,14 +627,22 @@ non payé et les trous de planning : un périmètre court concentre là où une
 plateforme nationale disperse. On parle donc de kilomètres, d'heures et de
 délais de paiement, jamais de « rejoindre une aventure ».
 
-**La page n'est ni indexée ni annoncée tant qu'elle est incomplète.**
-`PENDING_INTERVENANT_FIELDS` suit la convention de `PENDING_IDENTITY_FIELDS` :
-tant qu'il manque une valeur — la rémunération nette au premier chef — la
-page porte `noindex`, reste hors du sitemap et de `llms.txt`, et aucun lien ne
-la désigne depuis l'en-tête, le pied de page ou l'accueil. Elle reste
-atteignable par son URL, pour être relue. Se classer sur « missions ménage
-Gironde » sans pouvoir dire ce qu'on paie ferait venir exactement les gens
-qu'on décevrait.
+**La page n'est pas indexée tant qu'elle est incomplète, mais elle est
+annoncée.** `PENDING_INTERVENANT_FIELDS` suit la convention de
+`PENDING_IDENTITY_FIELDS` : tant qu'il manque une valeur, la page porte
+`noindex` et reste hors du sitemap et de `llms.txt`. Se classer sur « missions
+ménage Gironde » sans pouvoir dire ce qu'on paie ferait venir exactement les
+gens qu'on décevrait.
+
+Le drapeau **ne gouverne plus le maillage interne**, et c'est une décision du
+porteur du projet (21 août 2026) : l'en-tête, l'accueil et le pied de page
+désignent « Devenir pro » sans condition. Il tenait deux choses à la fois — ce
+que les moteurs ont le droit d'indexer, et ce que le site a le droit
+d'annoncer — et les deux ne se décident pas de la même façon. La page dit déjà
+23 €/h et « versé sous 5 jours ouvrés » : elle ne fait venir personne à
+l'aveugle. Ce qui manque encore, ce sont les trois garanties, et c'est
+l'indexation qu'elles conditionnent. **Des liens pour les humains, pas pour
+les moteurs.**
 
 **Le mot « garanti » est dérivé, pas écrit.** Il n'engage à rien tant qu'on
 n'a pas dit _contre quoi_ il garantit : `canSayGuaranteed()` n'est vrai que si
@@ -802,6 +810,27 @@ que deux appels à l'action à l'écran demandent de choisir lequel compte. Aucu
 principal que sur franchissement. Elle n'est jamais démontée non plus : elle
 glisse hors de l'écran, `inert`, ce qui évite un saut de mise en page à chaque
 franchissement.
+
+**Deux portes de connexion sur la vitrine, jamais trois.** L'en-tête portait
+« Espace client » et « Espace cleaner » côte à côte, ce qui demandait au
+visiteur de savoir de quel côté du produit il se trouve avant de pouvoir se
+connecter. Le site public n'a qu'un public : **« Se connecter »** y mène
+l'espace client — l'espace, et non `/connexion`, parce qu'il redirige lui-même
+quand la session manque et qu'une seule adresse sert donc les deux cas — et
+**« Devenir pro »** ouvre la face offre. La vitrine client ne désigne plus
+l'espace intervenant, et un test de l'accueil l'interdit : on n'y entre
+qu'après la page qui dit le métier.
+
+**Cette page porte sa propre porte professionnelle.** `/travailler-avec-nous`
+prend la variante `pro` de l'en-tête — le retour vers la vitrine client posé
+tout en haut et en secondaire, un bouton « Espace pro » à la place de
+« Réserver ». Ce bouton vise un bloc à deux entrées de même poids —
+se connecter, ou créer son compte — plutôt que la connexion directement : les
+deux personnes qui le pressent ne cherchent pas la même chose, l'une veut son
+planning et l'autre veut savoir comment commencer, et n'en servir qu'une en
+perdrait l'autre. La connexion y passe par `/connexion?callbackUrl=/intervenant`
+et non par `/intervenant`, qui sait afficher son propre refus quand la session
+existe sans porter le droit.
 
 **L'aide est un panneau, pas une page.** Ajouter un écran entre la question et
 la réponse quand la réponse tient en trois liens ne se justifie pas.

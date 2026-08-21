@@ -35,7 +35,7 @@ import { SiteHeader } from "@/components/site-header";
 import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { Badge } from "@/components/ui/badge";
 import { clientEnv } from "@/lib/env";
-import { FACTS, INTERVENANT_PAGE_READY } from "@/lib/facts";
+import { FACTS } from "@/lib/facts";
 import { FISCAL } from "@/lib/fiscal";
 import { formatHourlyRate } from "@/lib/pricing";
 import {
@@ -215,13 +215,32 @@ export default function Home() {
                 </li>
               </ul>
 
-              {/* La vitrine statique n'embarque pas les espaces connectés : le
-                lien y pointerait vers une page qui n'existe pas. */}
+              {/* Les deux CTA de connexion, sous le geste de réservation et
+                jamais à sa place : « Réserver » reste l'action de la page.
+                Principal, « Se connecter » désigne l'espace client — qui
+                redirige lui-même vers la connexion quand la session manque, si
+                bien qu'une seule adresse sert les deux cas. Secondaire,
+                « Devenir pro » ouvre la face offre, qui porte sa propre porte
+                professionnelle : la vitrine client ne désigne pas l'espace
+                intervenant, on n'y entre qu'après la page qui dit le métier.
+
+                La vitrine statique n'embarque ni les espaces connectés ni la
+                face offre : les liens y pointeraient vers des pages
+                absentes. */}
               {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
-                <p className="mt-5 text-sm text-muted-foreground">
-                  Déjà client ?{" "}
-                  <Link href="/mon-espace" className="text-brand underline">
-                    Accéder à mes interventions
+                <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                  <Link
+                    href="/mon-espace"
+                    className="font-semibold text-brand underline"
+                  >
+                    Se connecter
+                  </Link>
+                  <span aria-hidden>·</span>
+                  <Link
+                    href="/travailler-avec-nous"
+                    className="text-brand underline"
+                  >
+                    Devenir pro
                   </Link>
                 </p>
               )}
@@ -462,17 +481,24 @@ export default function Home() {
               </div>
             </div>
 
-            {/* La porte côté offre, discrète et tout en bas : quelqu'un qui
-                cherche du travail lit la page jusqu'au bout, un client non.
-                Elle n'apparaît qu'une fois les conditions arbitrées. */}
-            {INTERVENANT_PAGE_READY && (
+            {/* La porte côté offre, redite tout en bas : quelqu'un qui cherche
+                du travail lit la page jusqu'au bout, un client non.
+
+                Elle n'est plus gardée par `INTERVENANT_PAGE_READY`. Ce drapeau
+                tenait deux choses à la fois — l'indexation de la page, et sa
+                désignation depuis la vitrine — et la seconde est désormais une
+                décision produit : la face offre est annoncée. La première
+                tient toujours, `/travailler-avec-nous` restant en `noindex` et
+                hors du sitemap tant que ses trois garanties ne sont pas
+                arbitrées. Un lien pour les humains, pas pour les moteurs. */}
+            {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
               <p className="mt-8 text-sm text-muted-foreground">
                 Vous êtes professionnel du ménage ?{" "}
                 <Link
                   href="/travailler-avec-nous"
                   className="text-brand underline"
                 >
-                  Travaillez avec nous
+                  Devenir pro
                 </Link>
                 .
               </p>

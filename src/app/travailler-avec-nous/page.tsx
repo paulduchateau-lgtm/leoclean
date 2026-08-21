@@ -6,6 +6,7 @@ import { ContactChannels } from "@/components/contact-channels";
 import { CadreIntervenants } from "@/components/intervenants/cadre";
 import { CandidatureForm } from "@/components/intervenants/candidature-form";
 import { ChiffresIntervenants } from "@/components/intervenants/chiffres";
+import { EspaceProfessionnel } from "@/components/intervenants/espace-professionnel";
 import { JourneeRangee } from "@/components/intervenants/journee-rangee";
 import { Parrainage } from "@/components/intervenants/parrainage";
 import { Perimetre } from "@/components/intervenants/perimetre";
@@ -230,7 +231,7 @@ export default function TravaillerAvecNousPage() {
         }}
       />
 
-      <SiteHeader />
+      <SiteHeader variant="pro" />
 
       <main className="flex flex-1 flex-col">
         {/* Bloc 1 — la thèse, et la double porte dès le premier écran.
@@ -543,6 +544,11 @@ export default function TravaillerAvecNousPage() {
             l&apos;autre.
           </p>
         </section>
+
+        {/* Bloc 17 — la porte de l'espace professionnel, en fin de page et
+            visée depuis l'en-tête. Elle ferme la page sur les deux gestes qui
+            restent à faire : entrer, ou commencer. */}
+        <EspaceProfessionnel />
       </main>
 
       <SiteFooter />
