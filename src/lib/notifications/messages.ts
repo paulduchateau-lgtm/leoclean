@@ -117,6 +117,43 @@ export type Evenement =
       prenom: string;
       intervention: Intervention;
       lienMission: string;
+    }
+
+  /**
+   * Au client, à la clôture de l'intervention — **avant le prélèvement**.
+   *
+   * L'ordre n'est pas indifférent : le débit part à H+24, si bien qu'un mail
+   * envoyé à la clôture annonce une somme qui n'a pas encore bougé. Il écrit
+   * donc « nous prélèverons », au futur, et jamais « nous avons prélevé ».
+   * Annoncer un débit déjà fait quand il ne l'est pas ferait chercher sur un
+   * relevé une ligne qui n'y est pas — et douter du reste du message.
+   *
+   * **Le crédit d'impôt n'est pas décidé ici.** `creditImpotCents` vaut `null`
+   * tant que `canShowTaxCredit()` l'interdit, et le composeur n'écrit alors pas
+   * même le mot. La règle vit dans `fiscal.ts`, seul endroit où cette frontière
+   * se tranche ; ce module compose ce qu'on lui donne.
+   *
+   * **La durée réelle est dite, jamais facturée.** Le dépôt a tranché que le
+   * montant reste celui qui a été annoncé. L'écrire ici sans le montant qui va
+   * avec évite la question « alors je paie combien ? » — c'est une information
+   * de transparence, pas une ligne de facture.
+   */
+  | {
+      type: "intervention-terminee";
+      prenom: string;
+      intervention: Intervention;
+      /** Pointée à l'arrivée et au départ. Dite, jamais refacturée. */
+      dureeReelleMinutes: number;
+      /** Le rapport photo existe-t-il ? Il n'est jamais bloquant. */
+      rapportDisponible: boolean;
+      /** Jour du prélèvement, déjà formaté en heure locale par l'appelant. */
+      prelevementLe: string;
+      /** `null` tant que la déclaration SAP n'est pas obtenue. */
+      creditImpotCents: number | null;
+      /** Prochain passage d'un abonné, `null` sinon. */
+      prochaineIntervention: string | null;
+      lienEspace: string;
+      lienNotation: string;
     };
 
 export interface Message {
@@ -349,5 +386,52 @@ export function composer(evenement: Evenement): Message {
         ],
         action: { libelle: "Voir la mission", url: evenement.lienMission },
       };
+
+    case "intervention-terminee": {
+      const montant = formatEuros(evenement.intervention.grossAmountCents);
+
+      return {
+        objet: "Votre ménage est terminé",
+        apercu: `Prélèvement de ${montant} le ${evenement.prelevementLe}.`,
+        paragraphes: [
+          `Bonjour ${evenement.prenom},`,
+          /*
+           * Ce qui vient de se passer, d'abord. La durée réelle est donnée
+           * pour ce qu'elle est — une information — et jamais suivie d'un
+           * montant recalculé : le prix reste celui qui a été annoncé.
+           */
+          `Votre ménage ${evenement.intervention.adresse} est terminé. L'intervention a duré ${formatDuration(evenement.dureeReelleMinutes)} ; le montant convenu ne change pas.`,
+          ...(evenement.rapportDisponible
+            ? [
+                "Les photos avant et après sont dans votre espace : vous pouvez voir ce qui a été fait sans avoir à le demander.",
+              ]
+            : []),
+          /*
+           * Le prélèvement, au futur. Il part à H+24 — écrire « nous avons
+           * prélevé » ferait chercher sur un relevé une ligne qui n'y est pas.
+           */
+          `Nous prélèverons ${montant} le ${evenement.prelevementLe}. Rien à faire de votre côté.`,
+          /*
+           * Le crédit d'impôt n'apparaît que si `fiscal.ts` l'autorise. Tant
+           * que la déclaration n'est pas obtenue, pas même le mot.
+           */
+          ...(evenement.creditImpotCents === null
+            ? []
+            : [
+                `Après crédit d'impôt, cette intervention vous revient à ${formatEuros(evenement.creditImpotCents)}.`,
+              ]),
+          /*
+           * La notation en dernier, et formulée comme un service rendu à
+           * l'intervenant plutôt qu'à nous : c'est vrai, et c'est ce qui fait
+           * répondre.
+           */
+          "Deux secondes pour noter le passage ? C'est ce qui permet de vous renvoyer la même personne.",
+          ...(evenement.prochaineIntervention === null
+            ? []
+            : [`Prochain passage prévu ${evenement.prochaineIntervention}.`]),
+        ],
+        action: { libelle: "Noter le passage", url: evenement.lienNotation },
+      };
+    }
   }
 }

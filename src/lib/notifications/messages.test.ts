@@ -157,3 +157,78 @@ describe("messages transactionnels", () => {
     }
   });
 });
+
+describe("fin d'intervention — ce que le mail dit et ne dit pas", () => {
+  const BASE = {
+    type: "intervention-terminee" as const,
+    prenom: "Camille",
+    intervention: INTERVENTION,
+    dureeReelleMinutes: 165,
+    rapportDisponible: true,
+    prelevementLe: "vendredi 22 août",
+    creditImpotCents: null,
+    prochaineIntervention: null,
+    lienEspace: "https://leoclean.fr/mon-espace",
+    lienNotation: "https://leoclean.fr/mon-espace/noter?booking=b1",
+  };
+
+  it("annonce le prélèvement au futur, jamais comme un débit déjà fait", () => {
+    // Le débit part à H+24 et le message à la clôture : écrire « nous avons
+    // prélevé » ferait chercher sur un relevé une ligne qui n'y est pas — et
+    // douter du reste du message.
+    const texte = texteDe(BASE);
+
+    expect(texte).toContain("Nous prélèverons");
+    expect(texte).not.toMatch(/avons prélevé|a été prélevé|débité/i);
+  });
+
+  it("n'écrit pas un mot du crédit d'impôt tant qu'il est interdit", () => {
+    // Même frontière que partout : tant que la déclaration SAP n'est pas
+    // obtenue, rien de l'avantage fiscal ne s'affiche, pas même le mot.
+    const texte = texteDe(BASE).toLowerCase();
+
+    expect(texte).not.toContain("crédit d'impôt");
+    expect(texte).not.toContain("après réduction");
+  });
+
+  it("l'écrit dès que l'appelant l'y autorise", () => {
+    // Le composeur ne décide de rien : `fiscal.ts` tranche, il compose. Le
+    // jour de la déclaration, ce mail change sans qu'on y retouche.
+    const texte = texteDe({ ...BASE, creditImpotCents: 4200 });
+
+    expect(texte).toContain("crédit d'impôt");
+    // Espace fine insécable avant l'euro : `formatEuros` suit la typographie
+    // française, une comparaison littérale échouerait sur l'espace.
+    expect(texte).toMatch(/42,00\s?€/);
+  });
+
+  it("dit la durée réelle sans en tirer un autre montant", () => {
+    // Le dépôt a tranché : la durée réelle ne refacture rien. Un second
+    // montant dans ce mail se lirait comme un ajustement.
+    const message = composer(BASE);
+    const texte = texteDe(BASE);
+    const montants = texte.match(/\d+,\d{2}\s?€/g) ?? [];
+
+    expect(texte).toContain("2 h 45");
+    expect(texte).toContain("ne change pas");
+    // Un seul montant, répété : celui qui a été annoncé.
+    expect(new Set(montants).size).toBe(1);
+    expect(message.action?.url).toBe(BASE.lienNotation);
+  });
+
+  it("ne parle du rapport photo que s'il existe", () => {
+    // Le rapport n'est jamais bloquant : l'annoncer quand il est vide enverrait
+    // le client chercher des photos qui n'ont pas été prises.
+    expect(texteDe(BASE)).toContain("photos");
+    expect(texteDe({ ...BASE, rapportDisponible: false })).not.toContain(
+      "photos",
+    );
+  });
+
+  it("n'annonce un prochain passage que s'il est réellement pris", () => {
+    expect(texteDe(BASE)).not.toContain("Prochain passage");
+    expect(
+      texteDe({ ...BASE, prochaineIntervention: "mardi 2 septembre à 09:00" }),
+    ).toContain("Prochain passage");
+  });
+});

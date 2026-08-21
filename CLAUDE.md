@@ -2024,6 +2024,39 @@ Le produit est complet du référencement jusqu'au rendez-vous confirmé. Ce qui
 suit est ce qui manque **après** la confirmation, écrit ici pour qu'aucune de ces
 absences ne soit redécouverte en production.
 
+**Le produit prend la parole à douze moments.** Le douzième est la **fin
+d'intervention**, et il comblait le trou le plus visible de la chaîne : le
+ménage se terminait et le client n'entendait plus rien jusqu'au débit, alors que
+le rapport photo, la notation et les factures existaient tous sans que rien ne
+les annonce.
+
+**Il part à la clôture, donc avant le prélèvement**, qui court à H+24
+(arbitrage du porteur du projet, 21 août 2026). Il écrit donc « nous
+prélèverons », au futur, et un test interdit « avons prélevé » : annoncer un
+débit déjà fait quand il ne l'est pas ferait chercher sur un relevé une ligne
+qui n'y est pas, et douter du reste du message. La date vient
+d'`instantDePrelevement`, jamais écrite — allonger le délai dans le calendrier
+change alors le mail tout seul plutôt que de le laisser mentir.
+
+**La durée réelle y est dite, et aucun second montant ne l'accompagne.** Le
+dépôt a tranché qu'elle ne refacture rien ; un deuxième chiffre dans ce mail se
+lirait comme un ajustement. Un test vérifie qu'il ne s'y trouve qu'un seul
+montant. Le rapport photo n'est mentionné que s'il existe, et le prochain
+passage que s'il est réellement pris — annoncer l'un ou l'autre à vide enverrait
+chercher des photos qui n'ont pas été prises, ou attendre un jour où personne ne
+vient.
+
+**Le crédit d'impôt n'est pas décidé par le composeur.** `creditImpotCents`
+vaut `null` tant que `canShowTaxCredit()` l'interdit, et le message n'écrit
+alors pas même le mot. Le jour de la déclaration, ce mail change sans qu'on y
+retouche — deux tests tiennent les deux directions.
+
+**Le lancement est conditionné à l'obtention de la déclaration SAP** (porteur
+du projet, 21 août 2026) : aucun client réel avant elle. Cela ne change rien à
+la règle — le drapeau reste la seule vérité, et rien n'est écrit en dur — mais
+cela déplace le chemin critique. **La réserve sur le code APE 70.22Z n'est plus
+une réserve, c'est le préalable au lancement.**
+
 **Le produit prend la parole à huit moments.** Demande reçue, mission proposée,
 intervenant trouvé, mission prise de vitesse, recherche élargie, horaires
 alternatifs disponibles, recherche interrompue, rappel de la veille — client et

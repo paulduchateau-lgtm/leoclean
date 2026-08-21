@@ -2,6 +2,7 @@ import "server-only";
 
 import { BusinessError } from "@/lib/booking/errors";
 import type { TenantClient } from "@/lib/db";
+import { annoncerLaFinDIntervention } from "@/lib/notifications/evenements";
 
 import {
   type SensPointage,
@@ -207,6 +208,18 @@ export async function pointer(
       },
     });
   });
+
+  /*
+   * Le client n'entendait plus rien entre la fin du ménage et le débit : ni le
+   * rapport photo, ni l'invitation à noter, ni le montant à venir. L'annonce
+   * part ici — après la transaction, hors d'elle, et sans être attendue, comme
+   * toutes les autres : une messagerie en panne ne doit pas défaire une mission
+   * close, ni empêcher l'intervenant de finir sa journée.
+   *
+   * Elle part **avant** le prélèvement, qui court à H+24. Le message écrit donc
+   * « nous prélèverons », au futur.
+   */
+  void annoncerLaFinDIntervention(db, input.bookingId);
 
   return { dureeReelleMinutes: duree, rapportComplet: complet };
 }
