@@ -36,8 +36,6 @@ export interface ContexteCompte {
   attestationsFiscales: boolean;
   /** La personne a-t-elle au moins un abonnement, actif ou en pause ? */
   abonnement: boolean;
-  /** Un compte de gestion voit l'entrée d'administration. */
-  administrateurPlateforme: boolean;
   /** Un intervenant a son propre espace, et il n'est pas client. */
   intervenant: boolean;
 }
@@ -148,18 +146,16 @@ export function composerLeMenu(contexte: ContexteCompte): GroupeCompte[] {
     { titre: "Assistance", entrees: assistance },
   ];
 
-  if (contexte.administrateurPlateforme) {
-    groupes.push({
-      titre: "Plateforme",
-      entrees: [
-        {
-          id: "administration",
-          libelle: "Le travail du jour",
-          href: "/administration",
-        },
-      ],
-    });
-  }
+  /*
+   * **La console d'administration ne figure plus ici.** « Mon compte » est un
+   * écran client : il porte ce qu'une personne fait de son propre service —
+   * ses factures, son logement, sa carte. Y poser la console de la plateforme
+   * mélangeait deux métiers dans le même menu, et l'affichait au premier
+   * regard de quiconque se penche sur l'écran d'un administrateur.
+   *
+   * Elle reste atteignable par son adresse, et c'est `asPlatformAdmin()` qui
+   * la garde — le menu n'a jamais été ce qui protégeait quoi que ce soit.
+   */
 
   return groupes;
 }
