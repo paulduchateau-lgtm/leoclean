@@ -149,6 +149,23 @@ const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().optional(),
 
   /**
+   * Origine de la face professionnelle, une fois `pro.leoclean.fr` vivant.
+   *
+   * Même précaution que pour `NEXT_PUBLIC_APP_URL`, et pour la même raison :
+   * le proxy renvoie les chemins de la face pro vers l'hôte déclaré sans
+   * pouvoir vérifier qu'il résout. Déclarée avant que le sous-domaine
+   * réponde, elle redirige `/travailler-avec-nous`, `/rejoindre` et
+   * `/intervenant` en 308 vers un domaine introuvable — sans qu'aucune erreur
+   * ne remonte, puisque le serveur fait ce qu'on lui a demandé. L'ordre est
+   * donc : créer le sous-domaine, l'attacher au projet, vérifier qu'il
+   * répond, puis seulement renseigner la variable.
+   *
+   * Absente, la face pro reste répartie comme avant : la vitrine offre sur la
+   * vitrine, l'espace intervenant sur l'application.
+   */
+  NEXT_PUBLIC_PRO_URL: z.url().optional(),
+
+  /**
    * Déclaration Services à la personne (SAP) obtenue auprès de la DDETS.
    *
    * Tant qu'elle vaut `false`, aucune mention du crédit d'impôt de 50 % n'est
@@ -259,6 +276,7 @@ function parse<T extends z.ZodType>(schema: T, source: unknown, scope: string) {
 const rawClientEnv = {
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_PRO_URL: process.env.NEXT_PUBLIC_PRO_URL,
   NEXT_PUBLIC_SAP_DECLARED: process.env.NEXT_PUBLIC_SAP_DECLARED,
   NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:

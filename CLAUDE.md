@@ -800,6 +800,58 @@ le serveur fait précisément ce qu'on lui a demandé. L'ordre est donc : créer
 sous-domaine, l'attacher au projet, vérifier qu'il répond, puis seulement
 renseigner la variable. Le cas s'est produit en production.
 
+### Trois domaines, et une connexion qui n'appartient à aucun
+
+`leoclean.fr` porte la vitrine client, `app.leoclean.fr` ce que le client fait
+une fois décidé, et **`pro.leoclean.fr` toute la face offre** — la page qui
+explique le métier, le tunnel de candidature et l'espace intervenant.
+`NEXT_PUBLIC_PRO_URL` la déclare, sous la même précaution que
+`NEXT_PUBLIC_APP_URL` et pour la même raison. **Absente, rien ne bouge** : la
+vitrine offre reste sur la vitrine, l'espace intervenant sur l'application,
+exactement comme la veille. Un test l'impose, parce que c'est le repli qui
+évite de rejouer la panne.
+
+**La connexion est servie par l'hôte qui la reçoit, jamais redirigée.**
+`/connexion` et `/api/auth` sont neutres. C'est ce qui rend le cloisonnement
+réel : Auth.js tourne en `trustHost` et construit ses URL depuis la requête,
+si bien qu'une session ouverte sur `pro.` y dépose un cookie qui **n'est pas**
+envoyé à `app.` — deux faces, deux sessions, deux périmètres. L'alternative
+était d'élargir le cookie à `.leoclean.fr`, c'est-à-dire de faire l'inverse de
+ce que « cloisonner » veut dire. Conséquence de configuration : chez Google,
+l'URI de redirection OAuth doit être enregistrée **pour chaque hôte** qui sert
+une connexion.
+
+**Un sous-domaine est un site distinct pour un moteur**, et trois pièces en
+découlent, toutes vérifiées :
+
+- **Le canonical est devenu absolu.** Il était relatif, résolu par
+  `metadataBase` — juste tant qu'un seul domaine portait du contenu indexable.
+  Une page servie par `pro.` déclarerait sinon un canonical sur `leoclean.fr`,
+  c'est-à-dire une autre page que celle qu'on lit : la façon la plus directe de
+  se désindexer soi-même. `canonicalUrl()` choisit l'origine d'après le chemin,
+  et `og:url` la même.
+- **Chaque hôte a son sitemap et son `robots.txt`.** Les deux routes lisent
+  l'en-tête `host`, ce qui les rend dynamiques — un `sitemap.ts` est mis en
+  cache par défaut. Le coût est nul : ces fichiers ne sont lus que par des
+  robots. Déclarer dans le sitemap d'un domaine une URL d'un autre est ignoré
+  au mieux, tenu pour une manipulation au pire.
+- **La page d'offre change de sitemap, pas de statut.** Tant que la face pro
+  n'a pas d'hôte, elle reste dans celui de la vitrine ; dès qu'elle en a un,
+  elle passe dans le sien et disparaît de l'autre.
+
+**Le prix à payer est connu et assumé** : `/travailler-avec-nous` vient d'être
+ouverte à l'indexation et repart de zéro en autorité sur le nouveau domaine,
+coupée du maillage interne de `leoclean.fr`. C'est un arbitrage du porteur du
+projet (21 août 2026), pris en connaissance de l'alternative — ne cloisonner
+que l'espace connecté, qui aurait laissé la vitrine offre sur le domaine
+principal.
+
+**La vitrine statique ne voit rien de tout cela** : `sitemap.ts` est écarté de
+son arbre et `robots.ts` remplacé par l'overlay, si bien qu'`output: export`
+ne rencontre jamais les deux routes dynamiques. C'est ce qu'il faut revérifier
+au prochain passage — la règle du dépôt reste qu'une route ajoutée est une
+exclusion à envisager.
+
 **`/pro/[slug]` dit autre chose qu'une page commune.** Léo Clean opère en mise
 en relation ; une société cliente du SaaS est prestataire et emploie ses propres
 agents. Sa page présente donc une entreprise, ses prestations et **ses** tarifs,

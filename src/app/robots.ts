@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
 
 import { clientEnv } from "@/lib/env";
-import { absoluteUrl } from "@/lib/site";
+import { hostOf } from "@/lib/hosting";
+import { PRO_ORIGIN, SITE, absoluteUrl } from "@/lib/site";
 
 /**
  * Autorisations d'exploration.
@@ -21,6 +23,7 @@ const PRIVATE_PATHS = [
   "/mon-compte",
   "/mon-espace",
   "/intervenant",
+  "/rejoindre",
   "/gestion",
   "/administration",
 ];
@@ -44,7 +47,7 @@ const LLM_CRAWLERS = [
   "Bingbot",
 ];
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
   /*
    * Hors production, on refuse tout. L'en-tête `X-Robots-Tag` posé par le
    * proxy suffirait — il couvre ce fichier comme le reste — mais c'est ici
@@ -56,6 +59,22 @@ export default function robots(): MetadataRoute.Robots {
     return { rules: [{ userAgent: "*", disallow: "/" }] };
   }
 
+  /*
+   * Chaque hôte annonce **son** sitemap et **son** origine canonique. Un
+   * `robots.txt` servi par `pro.leoclean.fr` qui désignerait le sitemap de
+   * `leoclean.fr` enverrait Google explorer un site dont aucune URL n'est la
+   * sienne — et la directive `host` désignerait un domaine qui ne sert pas
+   * cette page.
+   *
+   * Tant que `NEXT_PUBLIC_PRO_URL` est absente, `PRO_ORIGIN` vaut l'origine de
+   * la vitrine : les deux branches se rejoignent, et rien ne change.
+   */
+  const requestHost = (await headers()).get("host");
+  const proHost = hostOf(PRO_ORIGIN);
+  const surLaFacePro =
+    proHost !== null && proHost !== hostOf(SITE.url) && requestHost === proHost;
+  const origine = surLaFacePro ? `${PRO_ORIGIN}/` : absoluteUrl("/");
+
   return {
     rules: [
       { userAgent: "*", allow: "/", disallow: PRIVATE_PATHS },
@@ -65,7 +84,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: PRIVATE_PATHS,
       })),
     ],
-    sitemap: absoluteUrl("/sitemap.xml"),
-    host: absoluteUrl("/"),
+    sitemap: `${origine}sitemap.xml`,
+    host: origine,
   };
 }

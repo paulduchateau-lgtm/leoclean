@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { pageMetadata } from "@/lib/seo/metadata";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, canonicalUrl } from "@/lib/site";
 
 /**
  * Ce qui est vérifié ici tient en une phrase : `canonical` et `og:url` ne
@@ -16,8 +16,23 @@ describe("métadonnées d'une page publique", () => {
   it("fait pointer canonical et og:url sur la même page", () => {
     const metadata = pageMetadata({ path: "/tarifs" });
 
-    expect(metadata.alternates?.canonical).toBe("/tarifs");
+    // Les deux sont absolus et identiques. Le canonical était relatif, résolu
+    // par `metadataBase` — juste tant qu'un seul domaine portait du contenu
+    // indexable, faux depuis que la face pro a le sien.
+    expect(metadata.alternates?.canonical).toBe(absoluteUrl("/tarifs"));
     expect(metadata.openGraph?.url).toBe(absoluteUrl("/tarifs"));
+  });
+
+  it("fait porter à une page pro l'origine qui la sert", () => {
+    // Sans `NEXT_PUBLIC_PRO_URL`, la face pro est servie par la vitrine : son
+    // canonical doit donc désigner la vitrine. Le jour où le sous-domaine
+    // existe, c'est lui qui apparaît — sans qu'aucune page ne change.
+    const metadata = pageMetadata({ path: "/travailler-avec-nous" });
+
+    expect(metadata.alternates?.canonical).toBe(
+      canonicalUrl("/travailler-avec-nous"),
+    );
+    expect(metadata.openGraph?.url).toBe(metadata.alternates?.canonical);
   });
 
   it("rend og:url absolu — les moteurs de prévisualisation ne relisent pas la page", () => {
