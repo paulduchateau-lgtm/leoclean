@@ -58,7 +58,7 @@ export default async function FacturePage({
       <p className="text-sm print:hidden">
         <Link
           href="/mon-compte/factures"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           ← Mes factures
         </Link>

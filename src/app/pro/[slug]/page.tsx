@@ -125,7 +125,7 @@ export default async function SocietePage({
           aria-label="Fil d'Ariane"
           className="text-sm text-muted-foreground"
         >
-          <Link href="/" className="hover:text-primary">
+          <Link href="/" className="hover:text-brand">
             Accueil
           </Link>
           <span aria-hidden> / </span>
@@ -212,7 +212,7 @@ export default async function SocietePage({
                 <li>
                   <a
                     href={`tel:${societe.telephone.replace(/\s/g, "")}`}
-                    className="font-medium text-primary"
+                    className="font-medium text-brand"
                   >
                     {societe.telephone}
                   </a>
@@ -222,7 +222,7 @@ export default async function SocietePage({
                 <li>
                   <a
                     href={`mailto:${societe.email}`}
-                    className="font-medium text-primary"
+                    className="font-medium text-brand"
                   >
                     {societe.email}
                   </a>

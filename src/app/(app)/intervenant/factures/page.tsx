@@ -57,7 +57,7 @@ export default async function FacturesIntervenantPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
       <p className="text-sm">
-        <Link href="/intervenant" className="text-primary hover:underline">
+        <Link href="/intervenant" className="text-brand hover:underline">
           ← Mes missions
         </Link>
       </p>
@@ -114,7 +114,7 @@ export default async function FacturesIntervenantPage() {
                   {facture.imprimable ? (
                     <Link
                       href={`/intervenant/factures/${facture.id}`}
-                      className="text-sm text-primary underline"
+                      className="text-sm text-brand underline"
                     >
                       Voir
                     </Link>

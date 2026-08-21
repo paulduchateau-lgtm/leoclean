@@ -75,7 +75,7 @@ export default async function RadarPage() {
           Radar
         </h1>
         <p className="text-sm">
-          <Link href="/administration" className="text-primary hover:underline">
+          <Link href="/administration" className="text-brand hover:underline">
             Les quatre listes →
           </Link>
         </p>

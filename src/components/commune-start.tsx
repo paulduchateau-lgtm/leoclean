@@ -46,7 +46,7 @@ export function CommuneStart({ className = "" }: { className?: string }) {
           <li key={commune.slug}>
             <Link
               href={`/reserver?commune=${commune.slug}`}
-              className="inline-flex min-h-11 items-center rounded-full bg-ink-0/70 px-4 text-sm font-semibold ring-1 ring-ink-0 transition-colors hover:bg-ink-900 hover:text-primary"
+              className="inline-flex min-h-11 items-center rounded-full bg-ink-0/70 px-4 text-sm font-semibold ring-1 ring-ink-0 transition-colors hover:bg-ink-900 hover:text-brand"
             >
               {commune.name}
             </Link>

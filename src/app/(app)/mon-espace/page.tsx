@@ -13,6 +13,7 @@ import { decideCancellation, refusalMessage } from "@/lib/booking/cancel";
 import type { ClientBookingView } from "@/lib/booking/client-bookings";
 import { loadClientBookings } from "@/lib/booking/client-bookings-session";
 import { loadClientProposals } from "@/lib/booking/slot-proposal-session";
+import { chargerLesInterventionsANoter } from "@/lib/mission/avis-session";
 import type { ClientProposalView } from "@/lib/booking/slot-proposal-store";
 import { bookingCalendarFilename } from "@/lib/booking/ics";
 import { formatDuration, formatEuros } from "@/lib/pricing";
@@ -166,9 +167,10 @@ export default async function MonEspacePage() {
     redirect("/connexion?callbackUrl=/mon-espace");
   }
 
-  const [bookings, proposals] = await Promise.all([
+  const [bookings, proposals, aNoter] = await Promise.all([
     loadClientBookings(),
     loadClientProposals(),
+    chargerLesInterventionsANoter(),
   ]);
   const upcoming = bookings?.upcoming ?? [];
   const past = bookings?.past ?? [];
@@ -182,49 +184,68 @@ export default async function MonEspacePage() {
       <SiteHeader variant="tunnel" />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-        <h1 className="text-3xl font-black tracking-tight">Mes réservations</h1>
-        <p className="mt-2 text-muted-foreground">{session.user.email}</p>
+        <h1 className="font-heading text-3xl font-black tracking-tight">
+          Mes sessions
+        </h1>
 
-        <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <Link
-            href="/mon-espace/abonnement"
-            className="text-primary hover:underline"
-          >
-            Mon abonnement →
-          </Link>
-          <Link
-            href="/mon-espace/noter"
-            className="text-primary hover:underline"
-          >
-            Noter une intervention →
-          </Link>
-          <Link
-            href="/mon-espace/paiement"
-            className="text-primary hover:underline"
-          >
-            Moyen de paiement →
-          </Link>
-          <Link
-            href="/mon-espace/parrainage"
-            className="text-primary hover:underline"
-          >
-            Parrainage →
-          </Link>
-        </p>
+        {/*
+          La rangée de liens qui tenait ici — abonnement, notation, paiement,
+          parrainage — est partie dans « Mon compte », accessible par la barre
+          d'onglets. Quatre destinations administratives posées avant la
+          première intervention faisaient lire un menu à quelqu'un qui venait
+          voir une date.
+        */}
 
-        <h2 className="mt-10 text-lg font-extrabold">Prochaines</h2>
+        {/*
+          Ce qu'on attend de la personne, avant ce qu'elle vient voir. Une note
+          se donne dans les jours qui suivent ou jamais : la demander au moment
+          où elle ouvre son espace est le seul moment où elle y pense encore.
+
+          L'encart ne paraît que s'il reste quelque chose à noter, et il dit
+          combien : « une intervention » se traite, « vos interventions » se
+          remet à plus tard.
+        */}
+        {aNoter.length > 0 ? (
+          <section className="mt-6 rounded-[var(--r-l)] border border-border bg-cream-50 p-5">
+            <h2 className="font-extrabold">
+              {aNoter.length === 1
+                ? "Une intervention attend votre note"
+                : `${aNoter.length} interventions attendent votre note`}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Deux gestes. C&apos;est ce qui permet de vous renvoyer la même
+              personne.
+            </p>
+            <Link
+              href="/mon-espace/noter"
+              className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-teal-300 hover:bg-teal-50"
+            >
+              Noter{" "}
+              {aNoter.length === 1 ? "l'intervention" : "mes interventions"}
+            </Link>
+          </section>
+        ) : null}
+
+        <h2 className="mt-8 text-lg font-extrabold">Prochaines</h2>
         {upcoming.length === 0 ? (
-          /* Un état vide sans issue est un bug : celui-ci dit ce qui manque et
-             donne le geste qui le comble. */
-          <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-5">
-            <p className="text-sm text-muted-foreground">
-              Aucune intervention prévue pour le moment.
+          /*
+           * Un état vide sans issue est un bug. Celui-ci porte le geste, en
+           * grand : c'est le seul écran de l'espace où la réservation est
+           * l'action principale, puisqu'il n'y a rien d'autre à y faire.
+           */
+          <div className="mt-3 rounded-[var(--r-2xl)] bg-papaya-200 p-6 sm:p-8">
+            <p className="font-heading text-xl font-extrabold text-balance">
+              Aucune session prévue
+            </p>
+            <p className="mt-2 max-w-prose text-ink-800">
+              Deux minutes suffisent, et vous retrouvez la même personne si elle
+              est disponible.
             </p>
             <Link
               href="/reserver"
-              className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-action transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
             >
-              Réserver un ménage
+              Réserver une session
             </Link>
           </div>
         ) : (

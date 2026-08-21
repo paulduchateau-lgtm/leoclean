@@ -936,6 +936,35 @@ Le site se consulte debout, dans la rue, à une main : c'est là que la décisio
 de faire venir quelqu'un chez soi se prend. Trois éléments, tous mobiles, tous
 absents en desktop où la navigation de l'en-tête reste seule maîtresse.
 
+**L'en-tête ne porte plus que trois choses.** Il en portait sept — tarifs,
+conseils, à propos, deux accès, bouton de réservation, numéro — et **débordait à
+360 pixels**, ce qui pousse la marque hors du champ ; aucun réglage de palier ne
+répare une barre qui a simplement trop à dire. Ne restent à découvert que
+« Espace pro », l'icône de personnage vers l'espace client, et le menu.
+**Les deux accès priment sur la réservation** (arbitrage du porteur du projet,
+21 août 2026) : quelqu'un qui revient cherche son espace, pas un nouveau
+parcours — il a déjà réservé. Le numéro quitte la vitrine et vit dans le
+panneau ; il reste dans l'en-tête du tunnel et de la face pro, où il est le
+recours quand le parcours coince. « Réserver » reste sous le pouce dans la barre
+d'onglets, plus près de la main que le haut de l'écran ne l'a jamais été.
+
+**L'espace client a sa propre barre d'onglets.** `AppTabBar` s'en retire —
+`isAppPath` l'exclut à juste titre, elle mène à la vitrine — si bien que
+l'espace se consultait comme une page : une pile de liens en haut, rien sous le
+pouce, et le geste le plus fréquent demandait de remonter. `EspaceClientTabBar`
+porte messages, sessions, réservation et compte. La réservation est au milieu et
+en pastille pleine : c'est la seule des quatre qui ne consulte rien — les trois
+autres regardent ce qui existe, celle-là crée. Les deux barres sont mutuellement
+exclusives par construction, chacune ne connaissant que son espace.
+
+**`text-primary` est interdit par un test.** La règle existait dans le système
+— « pour écrire, employer `text-brand`, jamais `text-primary` » — et cinquante-six
+occurrences la violaient déjà du temps de la mangue, où le défaut était seulement
+moins spectaculaire. Le passage au jaune l'a rendu criant : 1,2:1 sur blanc,
+c'est-à-dire invisible, et c'est l'espace client qui l'a révélé. Le test lit les
+sources et non le rendu, parce que c'est la classe qu'on interdit, y compris
+dans une page qui ne l'emploie pas encore.
+
 **La barre d'onglets est posée dans le gabarit racine et décide seule où elle
 n'a rien à faire.** Le critère est `isAppPath` — le même que celui qui répartit
 les chemins entre les deux domaines : pendant une réservation ou dans un espace

@@ -130,7 +130,7 @@ export default async function MissionPage({
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-6 pb-28">
       <p className="text-sm">
-        <Link href="/intervenant" className="text-primary hover:underline">
+        <Link href="/intervenant" className="text-brand hover:underline">
           ← Mes missions
         </Link>
       </p>

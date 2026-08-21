@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 /**
@@ -159,3 +162,47 @@ describe("écart connu, non corrigé", () => {
     expect(ratio(token("ink-600"), token("ink-0"))).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe("le jaune ne s'écrit jamais", () => {
+  it("interdit `text-primary` dans tout le dépôt", () => {
+    // `--primary` est l'ananas : 1,2:1 sur blanc, c'est-à-dire invisible.
+    // La règle existait dans le système — « pour écrire, employer text-brand,
+    // jamais text-primary » — et cinquante-six occurrences la violaient déjà du
+    // temps de la mangue, où le défaut était seulement moins spectaculaire.
+    // Le passage au jaune l'a rendu criant dans l'espace client.
+    //
+    // On lit les sources plutôt que le rendu : c'est la classe qu'on veut
+    // interdire, et elle ne se voit pas dans une page qui ne l'emploie pas
+    // aujourd'hui mais l'emploiera demain.
+    const fautifs = fichiersContenant(/\btext-primary\b(?!-foreground)/);
+
+    expect(
+      fautifs,
+      `text-primary employé comme couleur de texte dans : ${fautifs.join(", ")}`,
+    ).toEqual([]);
+  });
+});
+
+/** Les fichiers de `src/` dont le contenu correspond au motif. */
+function fichiersContenant(motif: RegExp): string[] {
+  const racine = new URL("../", import.meta.url).pathname;
+  const trouves: string[] = [];
+
+  const parcourir = (dossier: string) => {
+    for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+      const chemin = join(dossier, entree.name);
+      if (entree.isDirectory()) {
+        parcourir(chemin);
+        continue;
+      }
+      if (!/\.(tsx?|css)$/.test(entree.name)) continue;
+      if (entree.name.endsWith(".test.ts")) continue;
+      if (motif.test(readFileSync(chemin, "utf8"))) {
+        trouves.push(chemin.slice(racine.length));
+      }
+    }
+  };
+
+  parcourir(racine);
+  return trouves;
+}

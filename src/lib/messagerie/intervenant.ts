@@ -110,7 +110,7 @@ export async function lireLesFils(
       bookingId: affectation.bookingId,
       quand: affectation.startAt.toISOString(),
       commune: affectation.booking.address.cityName,
-      clientPrenom:
+      interlocuteur:
         affectation.booking.clientProfile.user.name?.split(" ")[0] ?? null,
       dernierMessage: affectation.booking.messages[0]?.body ?? null,
       dernierLe:

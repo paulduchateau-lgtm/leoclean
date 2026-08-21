@@ -1,7 +1,8 @@
-import { ArrowLeftIcon, PhoneIcon } from "lucide-react";
+import { ArrowLeftIcon, CircleUserRoundIcon, PhoneIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+import { SiteMenu } from "@/components/site-menu";
 
 import { clientEnv } from "@/lib/env";
 import { SITE } from "@/lib/site";
@@ -73,60 +74,47 @@ export function SiteHeader({
         >
           {variant === "site" ? (
             <>
-              {/* Les liens de contenu se survolent en pastille sarcelle : c'est
-                  la même grammaire que les listes du reste du système. */}
-              <Link
-                href="/tarifs"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
-              >
-                Tarifs
-              </Link>
-              <Link
-                href="/blog"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
-              >
-                Conseils
-              </Link>
-              <Link
-                href="/a-propos"
-                className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 lg:inline-block"
-              >
-                À propos
-              </Link>
-              {/* La vitrine statique n'embarque ni les espaces connectés ni la
+              {/* **Trois choses à découvert, et rien de plus.** L'en-tête en
+                  portait sept — tarifs, conseils, à propos, deux accès, bouton
+                  de réservation, numéro — et débordait à 360 pixels, poussant la
+                  marque hors du champ. Aucun réglage de palier ne répare une
+                  barre qui a simplement trop à dire.
+
+                  Ne restent que ce qu'on vient chercher : l'espace
+                  professionnel, le sien, et le menu. La réservation et le
+                  numéro sont dans le panneau, et « Réserver » reste sous le
+                  pouce dans la barre d'onglets — plus près de la main que le
+                  haut de l'écran ne l'a jamais été.
+
+                  La vitrine statique n'embarque ni les espaces connectés ni la
                   face offre : les liens y pointeraient vers des pages
                   absentes. */}
               {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
                 <>
-                  {/* Le CTA de connexion principal. Il désigne l'espace
-                      client, qui redirige lui-même vers la connexion quand la
-                      session manque : une seule adresse à retenir, qu'on soit
-                      déjà connecté ou non. */}
+                  <Link
+                    href="/travailler-avec-nous#espace-professionnel"
+                    className="rounded-full px-3 py-2.5 font-semibold whitespace-nowrap text-ink-700 underline-offset-4 transition-colors hover:bg-teal-50 hover:text-teal-800 hover:underline"
+                  >
+                    Espace pro
+                  </Link>
+                  {/* L'icône de personnage plutôt que deux mots : c'est le
+                      pictogramme que tout le monde cherche pour « chez moi », et
+                      il tient là où « Se connecter » faisait déborder la barre.
+                      L'intitulé accessible reste écrit en toutes lettres. */}
                   <Link
                     href="/mon-espace"
-                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
+                    aria-label="Mon espace client"
+                    title="Mon espace client"
+                    className="inline-flex size-11 items-center justify-center rounded-full text-ink-800 transition-colors hover:bg-teal-50 hover:text-teal-800"
                   >
-                    Se connecter
-                  </Link>
-                  {/* Le CTA secondaire : la face offre, avec sa propre porte
-                      professionnelle. L'espace intervenant n'est plus désigné
-                      d'ici — on n'y entre qu'après la page qui dit le métier. */}
-                  <Link
-                    href="/travailler-avec-nous"
-                    className="hidden rounded-full px-3.5 py-2.5 font-semibold text-ink-700 transition-colors hover:bg-teal-50 hover:text-teal-800 sm:inline-block"
-                  >
-                    Devenir pro
+                    <CircleUserRoundIcon className="size-6" aria-hidden />
                   </Link>
                 </>
               )}
-              <Link
-                href="/reserver"
-                className="ml-1.5 inline-flex h-10 items-center rounded-full bg-primary px-5 font-bold whitespace-nowrap text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400 hover:shadow-action"
-              >
-                Réserver
-              </Link>
+              <SiteMenu />
             </>
           ) : null}
+
           {variant === "pro" ? (
             <>
               <Link
@@ -149,14 +137,20 @@ export function SiteHeader({
               </Link>
             </>
           ) : null}
-          <a
-            href={`tel:${SITE.phoneE164}`}
-            className="inline-flex h-10 items-center rounded-full px-3 font-bold whitespace-nowrap text-brand transition-colors hover:bg-teal-50"
-            aria-label={`Appeler ${SITE.name} au ${SITE.phone}`}
-          >
-            <PhoneIcon className="size-5 sm:hidden" aria-hidden />
-            <span className="hidden sm:inline">{SITE.phone}</span>
-          </a>
+          {/* Le numéro reste sur le tunnel et sur la face professionnelle, où
+              il est le recours quand le parcours coince. Il quitte la vitrine :
+              il y prenait la place des accès, et le panneau le porte à un
+              geste. */}
+          {variant !== "site" && (
+            <a
+              href={`tel:${SITE.phoneE164}`}
+              className="inline-flex h-10 items-center rounded-full px-3 font-bold whitespace-nowrap text-brand transition-colors hover:bg-teal-50"
+              aria-label={`Appeler ${SITE.name} au ${SITE.phone}`}
+            >
+              <PhoneIcon className="size-5 sm:hidden" aria-hidden />
+              <span className="hidden sm:inline">{SITE.phone}</span>
+            </a>
+          )}
         </nav>
       </div>
     </header>

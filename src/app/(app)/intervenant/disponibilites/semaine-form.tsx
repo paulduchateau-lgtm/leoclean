@@ -197,7 +197,7 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
           </p>
         ) : null}
         {message ? (
-          <p role="status" className="mt-2 text-sm text-primary">
+          <p role="status" className="mt-2 text-sm text-brand">
             {message}
           </p>
         ) : null}

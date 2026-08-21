@@ -74,43 +74,43 @@ export default async function MissionsPage() {
       <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <Link
           href="/intervenant/aujourdhui"
-          className="font-semibold text-primary hover:underline"
+          className="font-semibold text-brand hover:underline"
         >
           Aujourd&apos;hui →
         </Link>
         <Link
           href="/intervenant/disponibilites"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Mes disponibilités →
         </Link>
         <Link
           href="/intervenant/absences"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Mes absences →
         </Link>
         <Link
           href="/intervenant/messages"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Mes messages →
         </Link>
         <Link
           href="/intervenant/revenus"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Mes revenus →
         </Link>
         <Link
           href="/intervenant/factures"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Mes factures →
         </Link>
         <Link
           href="/intervenant/cooptation"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Coopter →
         </Link>
@@ -197,7 +197,7 @@ export default async function MissionsPage() {
                 <p className="mt-3">
                   <Link
                     href={`/intervenant/mission/${mission.bookingId}`}
-                    className="font-semibold text-primary hover:underline"
+                    className="font-semibold text-brand hover:underline"
                   >
                     Ouvrir la mission →
                   </Link>

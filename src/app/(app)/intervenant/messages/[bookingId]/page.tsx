@@ -72,7 +72,7 @@ export default async function FilPage({
       <p className="text-sm">
         <Link
           href="/intervenant/messages"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           ← Mes messages
         </Link>

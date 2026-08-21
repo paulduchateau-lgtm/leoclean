@@ -11,7 +11,14 @@ export interface FilVue {
   bookingId: string;
   quand: string;
   commune: string;
-  clientPrenom: string | null;
+  /**
+   * Le prénom de l'autre personne du fil.
+   *
+   * Côté intervenant c'est le client, côté client c'est l'intervenant : le fil
+   * est le même objet vu des deux bords, et le nommer « clientPrenom » aurait
+   * obligé le second à lire un champ qui dit le contraire de ce qu'il porte.
+   */
+  interlocuteur: string | null;
   dernierMessage: string | null;
   dernierLe: string | null;
   nonLus: number;

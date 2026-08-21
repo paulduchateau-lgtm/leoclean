@@ -31,7 +31,7 @@ export default async function ReclamationsPage() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-10">
       <p className="text-sm">
-        <Link href="/administration" className="text-primary hover:underline">
+        <Link href="/administration" className="text-brand hover:underline">
           ← Le travail du jour
         </Link>
       </p>

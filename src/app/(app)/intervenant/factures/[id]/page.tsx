@@ -43,7 +43,7 @@ export default async function FactureIntervenantPage({
       <p className="text-sm print:hidden">
         <Link
           href="/intervenant/factures"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           ← Mes factures
         </Link>
