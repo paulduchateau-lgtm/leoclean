@@ -30,7 +30,7 @@ export function Parrainage() {
   const rate = PARRAINAGE.rateBp / 100;
 
   return (
-    <section className="border-y border-border-subtle bg-lemon-100">
+    <section className="border-y border-border-subtle bg-pineapple-100">
       <div className="mx-auto w-full max-w-4xl px-6 py-16">
         <h2 className="text-2xl font-black tracking-tight">
           Vous en faites venir un, vous touchez {rate} %

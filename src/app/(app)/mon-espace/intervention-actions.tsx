@@ -127,7 +127,7 @@ export function InterventionActions({
           <button
             type="button"
             onClick={() => void openChat()}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-mint-400 hover:bg-mint-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-teal-300 hover:bg-teal-50"
           >
             <MessageCircleIcon className="size-4" aria-hidden />
             Écrire à mon intervenant

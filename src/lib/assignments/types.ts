@@ -73,6 +73,15 @@ export interface MissionAcceptee extends MissionCommune {
   accessNotes: string | null;
   clientNotes: string | null;
   clientPrenom: string | null;
+  /**
+   * Le paiement du client n'est pas régularisé : ne pas s'y rendre.
+   *
+   * Dérivé à la lecture depuis `ClientProfile.recouvrementDepuis`, jamais
+   * stocké sur l'affectation. C'est ce qui garantit qu'une régularisation
+   * dégèle tout sans qu'on ait à repasser sur les missions une à une — et donc
+   * qu'aucun oubli ne peut laisser gelée la mission d'un client qui a payé.
+   */
+  gelee: boolean;
 }
 
 export interface MissionsIntervenant {

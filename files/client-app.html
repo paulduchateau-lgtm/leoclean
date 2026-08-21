@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Léo Clean — Maquettes espace client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper-000:#FFFFFF;--paper-050:#FAF8F4;--paper-100:#F2EFE7;--paper-200:#E6E1D6;--paper-300:#D3CDBF;
+  --ink-900:#14150F;--ink-700:#3A3B33;--ink-500:#6B6C61;--ink-400:#8E8F84;
+  --signal:#A5D900;--signal-600:#8FBE00;--signal-050:#F2FADB;
+  --ok:#0F7A4A;--ok-050:#E8F5EE;--warn:#B4740A;--warn-050:#FDF3E1;--risk:#C0392B;--risk-050:#FBEAE7;--info:#2C5AA0;--info-050:#EAF0FA;
+  --sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --r:12px;--rb:10px;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--paper-100);font-family:var(--sans);color:var(--ink-900);padding:48px 24px 96px}
+
+/* ---------- chrome de la planche ---------- */
+.sheet{max-width:1580px;margin:0 auto}
+.sheet-head{border-bottom:2px solid var(--ink-900);padding-bottom:20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.sheet-head h1{font-size:30px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+.sheet-head p{margin:0;color:var(--ink-500);font-size:14px;max-width:56ch}
+.stamp{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-500);text-align:right;line-height:1.9}
+.stamp b{color:var(--ink-900);font-weight:500}
+.legend{display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);margin-bottom:44px;padding-top:10px}
+.legend i{width:9px;height:9px;display:inline-block;margin-right:6px;vertical-align:1px;border-radius:2px}
+.gallery{display:flex;flex-wrap:wrap;gap:52px 34px}
+figure.screen{margin:0;width:390px}
+figcaption{display:flex;align-items:baseline;gap:9px;margin-bottom:11px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--ink-400)}
+figcaption b{color:var(--ink-900);font-weight:500;text-transform:uppercase;letter-spacing:.07em;font-size:10.5px}
+figcaption span{margin-left:auto;color:var(--ink-400)}
+
+/* ---------- appareil ---------- */
+.phone{width:390px;height:844px;background:var(--paper-050);border:1px solid var(--paper-300);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 34px rgba(20,21,15,.09)}
+.sb{flex:0 0 36px;display:flex;justify-content:space-between;align-items:center;padding:0 22px 0 24px;font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-900);background:var(--paper-050)}
+.sb .dots{letter-spacing:1px;color:var(--ink-500)}
+.app{flex:1;overflow:hidden;position:relative}
+.scroll{height:100%;overflow:hidden;padding:0 20px 16px}
+.tabbar{flex:0 0 68px;border-top:1px solid var(--paper-200);background:var(--paper-000);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:8px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-decoration:none;color:var(--ink-400);font-size:10.5px;font-weight:500;position:relative}
+.tabbar a.on{color:var(--ink-900)}
+.tabbar .ic{width:22px;height:22px;border:1.6px solid currentColor;border-radius:6px}
+.tabbar a.on .ic{background:var(--signal);border-color:var(--ink-900)}
+.tabbar .bdg{position:absolute;top:8px;right:26px;background:var(--risk);color:#fff;font-family:var(--mono);font-size:9px;width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font-weight:700}
+
+/* ---------- barre d'entête d'app ---------- */
+.topbar{display:flex;align-items:center;gap:12px;padding:6px 0 16px}
+.topbar h2{font-size:22px;font-weight:600;letter-spacing:-.02em;margin:0}
+.back{width:34px;height:34px;border:1px solid var(--paper-300);border-radius:var(--rb);display:grid;place-items:center;font-size:15px;color:var(--ink-700);background:var(--paper-000);flex:0 0 auto}
+.prog{height:3px;background:var(--paper-200);border-radius:2px;margin:2px 0 20px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--signal)}
+.step{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-400);margin-bottom:6px}
+
+/* ---------- primitives ---------- */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-400);margin:22px 0 9px}
+.card{background:var(--paper-000);border:1px solid var(--paper-200);border-radius:var(--r);padding:16px}
+.card+.card{margin-top:10px}
+h3.q{font-size:24px;font-weight:600;letter-spacing:-.025em;line-height:1.2;margin:0 0 6px}
+p.sub{color:var(--ink-500);font-size:14px;line-height:1.5;margin:0 0 18px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:var(--rb);background:var(--ink-900);color:var(--paper-050);font-family:var(--sans);font-size:16px;font-weight:600;border:none;width:100%;letter-spacing:-.01em}
+.btn.ghost{background:transparent;color:var(--ink-900);border:1.5px solid var(--paper-300)}
+.btn.sm{height:42px;font-size:14px}
+.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 20px 18px;background:linear-gradient(to top,var(--paper-050) 72%,rgba(250,248,244,0));}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:500;border:1px solid var(--paper-300);background:var(--paper-000);color:var(--ink-700)}
+.pill.on{background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-block;padding:4px 9px;border-radius:999px;background:var(--paper-100);color:var(--ink-700);font-size:11.5px;font-weight:500}
+.status{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:999px}
+.status.ok{background:var(--ok-050);color:var(--ok)}
+.status.warn{background:var(--warn-050);color:var(--warn)}
+.status.live{background:var(--signal-050);color:#4A6100}
+.status.risk{background:var(--risk-050);color:var(--risk)}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--paper-200);display:grid;place-items:center;font-family:var(--mono);font-size:14px;font-weight:500;color:var(--ink-700);flex:0 0 auto}
+.avatar.lg{width:58px;height:58px;font-size:17px}
+.row{display:flex;align-items:center;gap:12px}
+.hr{height:1px;background:var(--paper-200);margin:14px 0}
+
+/* jauge d'isochrone — élément signature */
+.iso{display:flex;align-items:center;gap:9px}
+.iso svg{flex:0 0 auto}
+.iso .v{font-family:var(--mono);font-size:13px;font-weight:500;line-height:1.1}
+.iso .l{font-size:10.5px;color:var(--ink-400);line-height:1.1}
+
+/* ligne de prix à conducteurs */
+.pline{display:flex;align-items:baseline;gap:8px;font-size:13.5px;padding:5px 0}
+.pline .lab{color:var(--ink-700)}
+.pline .dot{flex:1;border-bottom:1px dotted var(--paper-300);transform:translateY(-3px)}
+.pline .val{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px}
+.pline.tot{font-weight:600;font-size:15px;padding-top:10px}
+.pline.tot .val{font-size:16px;font-weight:700}
+.pline.cred .lab,.pline.cred .val{color:var(--ok)}
+
+/* rail temporel */
+.rail{position:relative;padding-left:26px}
+.rail:before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--paper-200)}
+.rail .ev{position:relative;padding:0 0 18px}
+.rail .ev:before{content:"";position:absolute;left:-24px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--paper-000);border:2px solid var(--paper-300)}
+.rail .ev.done:before{background:var(--ink-900);border-color:var(--ink-900)}
+.rail .ev.now:before{background:var(--signal);border-color:var(--ink-900);box-shadow:0 0 0 4px var(--signal-050)}
+.rail .t{font-family:var(--mono);font-size:11px;color:var(--ink-400);letter-spacing:.03em}
+.rail .d{font-size:14px;font-weight:500;margin-top:1px}
+
+.photo{aspect-ratio:4/3;border-radius:8px;background:repeating-linear-gradient(135deg,var(--paper-100),var(--paper-100) 7px,var(--paper-200) 7px,var(--paper-200) 14px);border:1px solid var(--paper-300);position:relative;overflow:hidden}
+.photo b{position:absolute;left:6px;bottom:6px;font-family:var(--mono);font-size:9px;letter-spacing:.08em;background:var(--ink-900);color:var(--paper-050);padding:2px 6px;border-radius:3px;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+.banner{border-radius:var(--r);padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.banner .txt{flex:1}
+.banner b{display:block;font-size:14.5px;margin-bottom:2px}
+.banner p{margin:0;font-size:13px;line-height:1.45;color:var(--ink-700)}
+.banner.warn{background:var(--warn-050);border:1px solid #F0DDB4}
+.banner.act{background:var(--ink-900);color:var(--paper-050)}
+.banner.act p{color:#C9CABF}
+.banner.act .mini{background:var(--signal);color:var(--ink-900);border:none;border-radius:8px;height:34px;padding:0 14px;font-weight:600;font-size:13px;font-family:var(--sans);margin-top:10px}
+
+.gauge{height:8px;border-radius:999px;background:var(--paper-200);overflow:hidden}
+.gauge i{display:block;height:100%;background:var(--signal)}
+
+.msg{max-width:78%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.45;margin-bottom:8px}
+.msg.them{background:var(--paper-000);border:1px solid var(--paper-200);border-bottom-left-radius:4px}
+.msg.me{background:var(--ink-900);color:var(--paper-050);margin-left:auto;border-bottom-right-radius:4px}
+.msg .tm{display:block;font-family:var(--mono);font-size:9.5px;opacity:.55;margin-top:4px}
+
+.stars{display:flex;gap:6px}
+.stars s{width:32px;height:32px;display:grid;place-items:center;font-size:24px;color:var(--paper-300);text-decoration:none}
+.stars s.on{color:var(--signal-600)}
+.note{font-size:11.5px;color:var(--ink-400);line-height:1.5}
+.kv{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--paper-200);font-size:14px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--ink-500)}
+.kv .v{font-weight:500}
+.slotgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slot{border:1px solid var(--paper-300);border-radius:8px;background:var(--paper-000);padding:8px 0;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ink-700)}
+.slot.on{background:var(--ink-900);color:var(--paper-050);border-color:var(--ink-900)}
+.slot.off{opacity:.32;text-decoration:line-through}
+.daycol{text-align:center;font-family:var(--mono);font-size:10px;color:var(--ink-400);text-transform:uppercase;letter-spacing:.05em;padding-bottom:6px}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="sheet-head">
+    <div>
+      <h1>Espace client — planche de maquettes</h1>
+      <p>Thème <b>consumer</b> : tons papier, DM Sans, Signal Green réservée aux états actifs et aux jauges, JetBrains Mono sur toute donnée chiffrée. Rayon 12 px, cible tactile 44 px, action primaire toujours dans le tiers bas.</p>
+    </div>
+    <div class="stamp">Léo Clean · <b>leoclean.fr</b><br>v1.0 — 18.08.2026<br>390 × 844 · iPhone 15</div>
+  </header>
+  <div class="legend">
+    <span><i style="background:var(--signal)"></i>Signal Green — état actif</span>
+    <span><i style="background:var(--ink-900)"></i>Encre — action primaire</span>
+    <span><i style="background:var(--ok)"></i>Crédit d'impôt</span>
+    <span><i style="background:var(--warn)"></i>Attention</span>
+    <span><i style="background:var(--risk)"></i>Critique</span>
+  </div>
+
+  <div class="gallery">
+
+  <!-- 1 — RESERVER / LOGEMENT -->
+  <figure class="screen">
+    <figcaption><b>Réserver — logement</b> /reserver <span>2 / 6</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:41</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div style="flex:1"><div class="step">Étape 2 sur 6</div></div></div>
+          <div class="prog"><i style="width:33%"></i></div>
+          <h3 class="q">Parlez-nous de votre logement</h3>
+          <p class="sub">On s'en sert pour estimer la durée. Vous pourrez tout ajuster plus tard.</p>
+
+          <div class="pills" style="margin-bottom:18px">
+            <span class="pill on">🏡 Maison</span><span class="pill">🏢 Appartement</span>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span style="font-size:14px;font-weight:500">Surface habitable</span>
+              <span class="mono" style="font-size:20px;font-weight:700">120 m²</span>
+            </div>
+            <div style="margin:14px 0 6px;height:4px;background:var(--paper-200);border-radius:2px;position:relative">
+              <i style="display:block;height:100%;width:58%;background:var(--signal);border-radius:2px"></i>
+              <span style="position:absolute;left:58%;top:50%;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--paper-000);border:2px solid var(--ink-900)"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between" class="mono note">
+              <span>20 m²</span><span>250 m²</span>
+            </div>
+          </div>
+
+          <div class="card" style="display:flex;gap:0;padding:0">
+            <div style="flex:1;padding:14px 12px;text-align:center;border-right:1px solid var(--paper-200)">
+              <div class="note" style="margin-bottom:4px">Chambres</div>
+              <div class="mono" style="font-size:19px;font-weight:600">4</div>
+            </div>
+            <div style="flex:1;padding:14px 12px;text-align:center;border-right:1px solid var(--paper-200)">
+              <div class="note" style="margin-bottom:4px">Salles de bain</div>
+              <div class="mono" style="font-size:19px;font-weight:600">2</div>
+            </div>
+            <div style="flex:1;padding:14px 12px;text-align:center">
+              <div class="note" style="margin-bottom:4px">WC</div>
+              <div class="mono" style="font-size:19px;font-weight:600">2</div>
+            </div>
+          </div>
+
+          <div class="card" style="background:var(--signal-050);border-color:#DCEDA8;display:flex;align-items:center;gap:14px;margin-top:14px">
+            <div class="iso">
+              <svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="19" fill="none" stroke="#DCEDA8" stroke-width="4"/><circle cx="23" cy="23" r="19" fill="none" stroke="#8FBE00" stroke-width="4" stroke-linecap="round" stroke-dasharray="119.4" stroke-dashoffset="34" transform="rotate(-90 23 23)"/></svg>
+            </div>
+            <div>
+              <div class="mono" style="font-size:20px;font-weight:700;line-height:1.1">2 h 30</div>
+              <div class="note" style="color:#5B7300">durée estimée du ménage</div>
+            </div>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Continuer</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 2 — FREQUENCE -->
+  <figure class="screen">
+    <figcaption><b>Réserver — fréquence</b> /reserver <span>3 / 6</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:42</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div style="flex:1"><div class="step">Étape 3 sur 6</div></div></div>
+          <div class="prog"><i style="width:50%"></i></div>
+          <h3 class="q">À quelle fréquence ?</h3>
+          <p class="sub">Vous pouvez changer, mettre en pause ou arrêter à tout moment.</p>
+
+          <div class="card" style="border:2px solid var(--ink-900);position:relative">
+            <span style="position:absolute;top:-9px;left:14px;background:var(--signal);font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;font-weight:500">Le plus choisi</span>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div>
+                <div style="font-size:17px;font-weight:600">Chaque semaine</div>
+                <div class="note" style="margin-top:3px">Le logement ne redescend jamais</div>
+              </div>
+              <div style="text-align:right">
+                <div class="mono" style="font-size:19px;font-weight:700">67,50 €</div>
+                <div class="mono" style="font-size:11px;color:var(--ok);font-weight:500;white-space:nowrap">33,75 € après crédit</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div><div style="font-size:17px;font-weight:600">Toutes les 2 semaines</div><div class="note" style="margin-top:3px">Le rythme le plus courant</div></div>
+              <div style="text-align:right"><div class="mono" style="font-size:19px;font-weight:700">71,25 €</div><div class="mono" style="font-size:11px;color:var(--ok);font-weight:500;white-space:nowrap">35,62 € après crédit</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div><div style="font-size:17px;font-weight:600">Une fois par mois</div><div class="note" style="margin-top:3px">Pour un entretien de fond</div></div>
+              <div style="text-align:right"><div class="mono" style="font-size:19px;font-weight:700">75,00 €</div><div class="mono" style="font-size:11px;color:var(--ok);font-weight:500;white-space:nowrap">37,50 € après crédit</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div><div style="font-size:17px;font-weight:600">Une seule fois</div><div class="note" style="margin-top:3px">Sans engagement</div></div>
+              <div style="text-align:right"><div class="mono" style="font-size:19px;font-weight:700">86,25 €</div><div class="mono" style="font-size:11px;color:var(--ok);font-weight:500;white-space:nowrap">43,12 € après crédit</div></div>
+            </div>
+          </div>
+
+          <p class="note" style="margin-top:14px">Le crédit d'impôt de 50 % s'applique aux services à la personne déclarés. Estimation sous réserve d'éligibilité.</p>
+        </div>
+        <div class="dock"><button class="btn">Choisir mon créneau</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 3 — CRENEAU -->
+  <figure class="screen">
+    <figcaption><b>Réserver — créneau</b> /reserver <span>4 / 6</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:43</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div style="flex:1"><div class="step">Étape 4 sur 6</div></div></div>
+          <div class="prog"><i style="width:66%"></i></div>
+          <h3 class="q">Quand vous arrange-t-il ?</h3>
+          <p class="sub">On confirme l'heure exacte la veille. C'est ce qui nous permet de garder des trajets courts.</p>
+
+          <div class="eyebrow">Semaine du 24 août</div>
+          <div class="slotgrid" style="grid-template-columns:repeat(5,1fr);margin-bottom:4px">
+            <div class="daycol">Lun<br><b style="font-size:13px;color:var(--ink-900)">25</b></div>
+            <div class="daycol">Mar<br><b style="font-size:13px;color:var(--ink-900)">26</b></div>
+            <div class="daycol">Mer<br><b style="font-size:13px;color:var(--ink-900)">27</b></div>
+            <div class="daycol">Jeu<br><b style="font-size:13px;color:var(--ink-900)">28</b></div>
+            <div class="daycol">Ven<br><b style="font-size:13px;color:var(--ink-900)">29</b></div>
+          </div>
+          <div class="slotgrid" style="grid-template-columns:repeat(5,1fr);gap:6px">
+            <div class="slot">8-11</div><div class="slot on">8-11</div><div class="slot off">8-11</div><div class="slot">8-11</div><div class="slot">8-11</div>
+            <div class="slot off">11-14</div><div class="slot">11-14</div><div class="slot">11-14</div><div class="slot off">11-14</div><div class="slot">11-14</div>
+            <div class="slot">14-17</div><div class="slot">14-17</div><div class="slot off">14-17</div><div class="slot">14-17</div><div class="slot off">14-17</div>
+            <div class="slot off">17-20</div><div class="slot off">17-20</div><div class="slot">17-20</div><div class="slot off">17-20</div><div class="slot off">17-20</div>
+          </div>
+          <p class="note" style="margin-top:10px">Les créneaux barrés n'ont plus d'intervenant disponible à moins de 20 minutes de chez vous.</p>
+
+          <div class="eyebrow">Ajouter à ce passage</div>
+          <div class="pills">
+            <span class="pill on">Vitres <b class="mono" style="font-weight:500">+30 min</b></span>
+            <span class="pill">Four <b class="mono" style="font-weight:500">+30 min</b></span>
+            <span class="pill">Réfrigérateur <b class="mono" style="font-weight:500">+20 min</b></span>
+            <span class="pill">Repassage <b class="mono" style="font-weight:500">+1 h</b></span>
+          </div>
+
+          <div class="card" style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:14px;font-weight:500">Produits d'entretien</div><div class="note">Qui les fournit&nbsp;?</div></div>
+            <div class="pills"><span class="pill on" style="font-size:12px">Moi</span><span class="pill" style="font-size:12px">L'intervenant</span></div>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Voir qui peut venir</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 4 — CHOIX INTERVENANT -->
+  <figure class="screen">
+    <figcaption><b>Réserver — intervenant</b> /reserver <span>5 / 6</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:45</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div style="flex:1"><div class="step">Étape 5 sur 6</div></div></div>
+          <div class="prog"><i style="width:83%"></i></div>
+          <h3 class="q">Trois personnes peuvent venir mardi</h3>
+          <p class="sub">Toutes habitent à moins de 20 minutes de Léognan.</p>
+
+          <div class="card" style="border:2px solid var(--ink-900)">
+            <div class="row" style="align-items:flex-start">
+              <div class="avatar lg">SM</div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                  <div style="font-size:17px;font-weight:600">Sonia M.</div>
+                  <div class="mono" style="font-size:13px;font-weight:500">★ 4,9</div>
+                </div>
+                <div class="note" style="margin-top:2px">Cadaujac · 3 ans d'expérience · 214 missions</div>
+              </div>
+            </div>
+            <div class="hr"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="iso">
+                <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" fill="none" stroke="var(--paper-200)" stroke-width="3.5"/><circle cx="17" cy="17" r="14" fill="none" stroke="var(--signal-600)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="35" transform="rotate(-90 17 17)"/></svg>
+                <div><div class="v">12 min</div><div class="l">de trajet</div></div>
+              </div>
+              <div class="pills"><span class="tag">ponctuelle</span><span class="tag">très soigneuse</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="align-items:flex-start">
+              <div class="avatar lg">KB</div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;align-items:baseline">
+                  <div style="font-size:17px;font-weight:600">Karine B.</div>
+                  <div class="mono" style="font-size:13px;font-weight:500">★ 4,8</div>
+                </div>
+                <div class="note" style="margin-top:2px">Léognan · 6 ans d'expérience · 512 missions</div>
+              </div>
+            </div>
+            <div class="hr"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="iso">
+                <svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" fill="none" stroke="var(--paper-200)" stroke-width="3.5"/><circle cx="17" cy="17" r="14" fill="none" stroke="var(--signal-600)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="88" stroke-dashoffset="66" transform="rotate(-90 17 17)"/></svg>
+                <div><div class="v">5 min</div><div class="l">de trajet</div></div>
+              </div>
+              <div class="pills"><span class="tag">discrète</span><span class="tag">aime les chats</span></div>
+            </div>
+          </div>
+
+          <div class="card" style="background:var(--paper-100);border-style:dashed">
+            <div class="row">
+              <div class="avatar" style="background:var(--paper-000);border:1px dashed var(--paper-300)">?</div>
+              <div style="flex:1">
+                <div style="font-size:15px;font-weight:600">Peu importe, choisissez pour moi</div>
+                <div class="note" style="margin-top:2px">On prend la personne la plus proche et la plus disponible.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Continuer avec Sonia</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 5 — RECAP PAIEMENT -->
+  <figure class="screen">
+    <figcaption><b>Réserver — récapitulatif</b> /reserver <span>6 / 6</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:47</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><div style="flex:1"><div class="step">Étape 6 sur 6</div></div></div>
+          <div class="prog"><i style="width:100%"></i></div>
+          <h3 class="q">On récapitule</h3>
+
+          <div class="card">
+            <div class="kv"><span class="k">Quand</span><span class="v">Mar. 26 août, 8 h – 11 h</span></div>
+            <div class="kv"><span class="k">Où</span><span class="v">12 rue des Vignes, Léognan</span></div>
+            <div class="kv"><span class="k">Qui</span><span class="v">Sonia M.</span></div>
+            <div class="kv"><span class="k">Rythme</span><span class="v">Toutes les 2 semaines</span></div>
+          </div>
+
+          <div class="eyebrow">Détail du prix</div>
+          <div class="card">
+            <div class="pline"><span class="lab">Ménage 2 h 30</span><span class="dot"></span><span class="val">62,50 €</span></div>
+            <div class="pline"><span class="lab">Vitres</span><span class="dot"></span><span class="val">12,50 €</span></div>
+            <div class="pline"><span class="lab">Remise première mission −20 %</span><span class="dot"></span><span class="val">−15,00 €</span></div>
+            <div class="pline tot"><span class="lab">Total à régler</span><span class="dot"></span><span class="val">60,00 €</span></div>
+            <div class="hr"></div>
+            <div class="pline cred"><span class="lab">Crédit d'impôt estimé</span><span class="dot"></span><span class="val">−30,00 €</span></div>
+            <div class="pline cred tot"><span class="lab">Coût réel estimé</span><span class="dot"></span><span class="val">30,00 €</span></div>
+          </div>
+
+          <div class="banner warn" style="margin-top:14px">
+            <span style="font-size:16px">🔒</span>
+            <div class="txt"><b>Vous payez après le passage</b><p>On enregistre votre carte maintenant, le débit a lieu le lendemain de l'intervention.</p></div>
+          </div>
+
+          <div class="card" style="margin-top:12px;display:flex;gap:10px;align-items:flex-start">
+            <span style="width:20px;height:20px;border:1.5px solid var(--ink-900);border-radius:5px;background:var(--ink-900);color:var(--signal);display:grid;place-items:center;font-size:13px;flex:0 0 auto">✓</span>
+            <p class="note" style="color:var(--ink-700);font-size:12.5px">J'accepte les conditions générales. Annulation gratuite jusqu'à 24 h avant. Ensuite, 50 % du montant reste dû.</p>
+          </div>
+        </div>
+        <div class="dock"><button class="btn">Confirmer ma réservation</button></div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 6 — ACCUEIL -->
+  <figure class="screen">
+    <figcaption><b>Accueil</b> /mon-espace <span>onglet 1</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">8:02</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div style="padding:10px 0 18px"><h2 style="font-size:26px;font-weight:600;letter-spacing:-.025em;margin:0">Bonjour Camille</h2></div>
+
+          <div class="banner act">
+            <div class="txt">
+              <b>Comment s'est passé le passage de Sonia ?</b>
+              <p>Votre avis nous aide à garder le même niveau à chaque fois.</p>
+              <button class="mini">Laisser un avis</button>
+            </div>
+          </div>
+
+          <div class="eyebrow">Prochaine intervention</div>
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="padding:16px 16px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+                <div>
+                  <div class="mono" style="font-size:11px;letter-spacing:.08em;color:var(--ink-400);text-transform:uppercase">Mardi 26 août</div>
+                  <div style="font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.2">8 h – 11 h</div>
+                </div>
+                <span class="status ok">Confirmée</span>
+              </div>
+              <div class="row">
+                <div class="avatar">SM</div>
+                <div style="flex:1"><div style="font-weight:500;font-size:15px">Sonia M.</div><div class="note">Votre intervenante depuis mars</div></div>
+                <div style="width:38px;height:38px;border:1px solid var(--paper-300);border-radius:var(--rb);display:grid;place-items:center;font-size:15px">💬</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--paper-200)">
+              <div style="padding:13px;text-align:center;font-size:13.5px;font-weight:500;border-right:1px solid var(--paper-200)">Modifier</div>
+              <div style="padding:13px;text-align:center;font-size:13.5px;font-weight:500">Ajouter une consigne</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:14.5px;font-weight:500">Toutes les 2 semaines</div><div class="note">Le mardi matin · prochaine le 9 sept.</div></div>
+            <span style="font-size:18px;color:var(--ink-400)">›</span>
+          </div>
+
+          <div class="eyebrow">Crédit d'impôt 2026</div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+              <span class="mono" style="font-size:24px;font-weight:700">342 €</span>
+              <span class="note">sur 6 000 € de plafond</span>
+            </div>
+            <div class="gauge"><i style="width:6%"></i></div>
+            <p class="note" style="margin-top:9px">Votre attestation fiscale sera disponible en janvier.</p>
+          </div>
+
+          <div class="card" style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:14.5px;font-weight:500">Parrainer un proche</div><div class="note">20 € pour vous, 20 € pour lui</div></div>
+            <span style="font-size:18px;color:var(--ink-400)">›</span>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <a class="on"><span class="ic"></span>Accueil</a>
+        <a><span class="ic"></span>Interventions</a>
+        <a><span class="bdg">1</span><span class="ic"></span>Messages</a>
+        <a><span class="ic"></span>Compte</a>
+      </nav>
+    </div>
+  </figure>
+
+  <!-- 7 — JOUR J -->
+  <figure class="screen">
+    <figcaption><b>Accueil — jour J</b> /mon-espace <span>suivi</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">9:06</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div style="padding:10px 0 18px"><h2 style="font-size:26px;font-weight:600;letter-spacing:-.025em;margin:0">Aujourd'hui</h2></div>
+
+          <div class="card" style="border:2px solid var(--ink-900)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <span class="status live">● En route</span>
+              <span class="mono" style="font-size:12px;color:var(--ink-500)">arrivée vers 9 h 15</span>
+            </div>
+            <div class="row" style="margin-bottom:18px">
+              <div class="avatar lg">SM</div>
+              <div style="flex:1">
+                <div style="font-size:18px;font-weight:600">Sonia est en route</div>
+                <div class="note" style="margin-top:2px">Elle a terminé sa mission précédente à Cadaujac</div>
+              </div>
+            </div>
+            <div class="rail">
+              <div class="ev done"><div class="t">08 h 58</div><div class="d">Mission précédente terminée</div></div>
+              <div class="ev now"><div class="t">09 h 06</div><div class="d">En route vers chez vous · 9 min</div></div>
+              <div class="ev"><div class="t">09 h 15</div><div class="d">Arrivée estimée</div></div>
+              <div class="ev" style="padding-bottom:0"><div class="t">11 h 45</div><div class="d">Fin estimée</div></div>
+            </div>
+            <div class="hr"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn ghost sm">💬 Message</button>
+              <button class="btn ghost sm">📞 Appeler</button>
+            </div>
+          </div>
+
+          <div class="eyebrow">Ce qui est prévu</div>
+          <div class="card">
+            <div class="kv"><span class="k">Cuisine</span><span class="v mono" style="font-size:12px">6 tâches</span></div>
+            <div class="kv"><span class="k">Salon &amp; séjour</span><span class="v mono" style="font-size:12px">4 tâches</span></div>
+            <div class="kv"><span class="k">Salles de bain ×2</span><span class="v mono" style="font-size:12px">7 tâches</span></div>
+            <div class="kv"><span class="k">Chambres ×4</span><span class="v mono" style="font-size:12px">3 tâches</span></div>
+            <div class="kv"><span class="k">Vitres <span class="tag" style="margin-left:4px">ajouté</span></span><span class="v mono" style="font-size:12px">+30 min</span></div>
+          </div>
+
+          <div class="banner warn" style="margin-top:12px">
+            <span style="font-size:16px">🔑</span>
+            <div class="txt"><b>Sonia utilisera la boîte à clés</b><p>Le code enregistré lui est communiqué uniquement aujourd'hui.</p></div>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <a class="on"><span class="ic"></span>Accueil</a><a><span class="ic"></span>Interventions</a><a><span class="ic"></span>Messages</a><a><span class="ic"></span>Compte</a>
+      </nav>
+    </div>
+  </figure>
+
+  <!-- 8 — RAPPORT -->
+  <figure class="screen">
+    <figcaption><b>Rapport de mission</b> /missions/:id <span>après passage</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">12:10</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><h2>Mardi 26 août</h2></div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px">
+            <span class="status ok">Terminée</span>
+            <span class="mono note">9 h 12 → 11 h 52 · 2 h 40</span>
+          </div>
+
+          <div class="eyebrow">Cuisine</div>
+          <div class="grid2">
+            <div class="photo"><b>AVANT</b></div><div class="photo"><b>APRÈS</b></div>
+          </div>
+          <div class="eyebrow">Salle de bain</div>
+          <div class="grid2">
+            <div class="photo"><b>AVANT</b></div><div class="photo"><b>APRÈS</b></div>
+          </div>
+
+          <div class="banner warn" style="margin-top:16px">
+            <span style="font-size:16px">⚠</span>
+            <div class="txt"><b>Sonia a signalé un point</b><p>Le joint de la douche du haut est encrassé en profondeur. Un produit anticalcaire spécifique serait nécessaire.</p></div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <div class="kv"><span class="k">Tâches réalisées</span><span class="v mono" style="font-size:12px">20 / 20</span></div>
+            <div class="kv"><span class="k">Durée facturée</span><span class="v mono" style="font-size:12px">2 h 30</span></div>
+            <div class="kv"><span class="k">Montant</span><span class="v mono" style="font-size:12px">75,00 €</span></div>
+          </div>
+        </div>
+        <div class="dock" style="display:grid;grid-template-columns:1fr auto;gap:8px">
+          <button class="btn">Noter le passage</button>
+          <button class="btn ghost" style="width:auto;padding:0 16px;font-size:13px">Signaler</button>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 9 — NOTATION -->
+  <figure class="screen">
+    <figcaption><b>Noter le passage</b> /missions/:id/avis <span>feuille modale</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">12:12</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app" style="background:rgba(20,21,15,.35)">
+        <div style="position:absolute;left:0;right:0;bottom:0;background:var(--paper-050);border-radius:22px 22px 0 0;padding:20px;min-height:620px">
+          <div style="width:38px;height:4px;background:var(--paper-300);border-radius:2px;margin:0 auto 22px"></div>
+          <div style="text-align:center">
+            <div class="avatar lg" style="margin:0 auto 12px">SM</div>
+            <h3 class="q" style="font-size:21px">Comment s'est passé le<br>passage de Sonia ?</h3>
+          </div>
+          <div class="stars" style="justify-content:center;margin:18px 0 26px">
+            <s class="on">★</s><s class="on">★</s><s class="on">★</s><s class="on">★</s><s class="on">★</s>
+          </div>
+          <div class="eyebrow" style="margin-top:0">Ce qui vous a marqué</div>
+          <div class="pills">
+            <span class="pill on">Ponctuelle</span><span class="pill on">Très soigneuse</span><span class="pill">Discrète</span>
+            <span class="pill">De bonne initiative</span><span class="pill">Agréable</span><span class="pill">Adorable avec le chat</span>
+          </div>
+          <div class="card" style="margin-top:18px;background:var(--paper-000);min-height:88px">
+            <div class="note">Un mot pour Sonia (facultatif)</div>
+          </div>
+          <div class="banner warn" style="margin-top:16px;background:var(--signal-050);border-color:#DCEDA8">
+            <span style="font-size:16px">🎁</span>
+            <div class="txt"><b>Vous êtes satisfaite ?</b><p>Parrainez un proche : 20 € pour lui, 20 € pour vous.</p></div>
+          </div>
+          <button class="btn" style="margin-top:18px">Envoyer mon avis</button>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <!-- 10 — ABONNEMENT -->
+  <figure class="screen">
+    <figcaption><b>Mon abonnement</b> /mon-espace/abonnement <span>rétention</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">18:30</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div class="topbar"><div class="back">←</div><h2>Mon abonnement</h2></div>
+
+          <div class="card">
+            <div class="kv"><span class="k">Rythme</span><span class="v">Toutes les 2 semaines</span></div>
+            <div class="kv"><span class="k">Jour</span><span class="v">Mardi matin</span></div>
+            <div class="kv"><span class="k">Intervenante</span><span class="v">Sonia M.</span></div>
+            <div class="kv"><span class="k">Depuis</span><span class="v">Mars 2026 · 11 passages</span></div>
+            <div class="kv"><span class="k">Prix par passage</span><span class="v mono">71,25 €</span></div>
+          </div>
+
+          <div class="eyebrow">Ajuster</div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:15px;font-weight:500">Changer de rythme</div><div class="note">Chaque semaine, mensuel…</div></div>
+            <span style="font-size:18px;color:var(--ink-400)">›</span>
+          </div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:15px;font-weight:500">Changer de créneau</div><div class="note">Selon les disponibilités</div></div>
+            <span style="font-size:18px;color:var(--ink-400)">›</span>
+          </div>
+
+          <div class="card" style="margin-top:16px;border:2px solid var(--ink-900)">
+            <div class="row" style="align-items:flex-start;margin-bottom:12px">
+              <span style="font-size:20px">🏖️</span>
+              <div style="flex:1">
+                <div style="font-size:16px;font-weight:600">Vous partez en vacances ?</div>
+                <p class="note" style="margin-top:3px;font-size:12.5px">Mettez en pause de 1 à 8 semaines plutôt que d'arrêter. On fait au mieux pour vous retrouver Sonia au retour.</p>
+              </div>
+            </div>
+            <button class="btn sm">Mettre en pause</button>
+          </div>
+
+          <div class="hr" style="margin:20px 0"></div>
+          <div style="text-align:center;padding-bottom:8px">
+            <a style="font-size:13.5px;color:var(--ink-500);text-decoration:underline">Résilier mon abonnement</a>
+            <p class="note" style="margin-top:6px">Sans frais, sans préavis, en trois écrans.</p>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <a><span class="ic"></span>Accueil</a><a class="on"><span class="ic"></span>Interventions</a><a><span class="ic"></span>Messages</a><a><span class="ic"></span>Compte</a>
+      </nav>
+    </div>
+  </figure>
+
+  <!-- 11 — MESSAGES -->
+  <figure class="screen">
+    <figcaption><b>Messages</b> /mon-espace/messages <span>onglet 3</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">14:20</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll" style="display:flex;flex-direction:column;padding-bottom:0">
+          <div class="topbar" style="padding-bottom:12px;border-bottom:1px solid var(--paper-200);margin:0 -20px 16px;padding-left:20px;padding-right:20px">
+            <div class="back">←</div>
+            <div class="avatar" style="width:36px;height:36px;font-size:12px">SM</div>
+            <div style="flex:1"><div style="font-size:16px;font-weight:600">Sonia M.</div><div class="note">Répond en général avant 20 h</div></div>
+          </div>
+
+          <div style="flex:1">
+            <div style="text-align:center;margin-bottom:14px"><span class="mono note">Mardi 26 août</span></div>
+            <div class="msg them">Bonjour Camille, je suis bien arrivée. Le portail était ouvert, j'ai refermé derrière moi.<span class="tm">09:14</span></div>
+            <div class="msg me">Parfait merci ! Les draps sont sur le lit de la chambre du fond si vous avez le temps.<span class="tm">09:31 · Lu</span></div>
+            <div class="msg them">C'est noté, je m'en occupe. Par contre il ne me reste presque plus de produit vitres, je le signale dans le rapport.<span class="tm">10:02</span></div>
+            <div class="msg me">Ah merci, j'en rachète cette semaine.<span class="tm">10:20 · Lu</span></div>
+            <div class="msg them">Tout est terminé, bonne journée à vous 🌿<span class="tm">11:52</span></div>
+          </div>
+
+          <div style="margin:0 -20px;padding:12px 20px 8px;border-top:1px solid var(--paper-200);background:var(--paper-000)">
+            <div class="pills" style="margin-bottom:10px;flex-wrap:nowrap;overflow:hidden">
+              <span class="pill" style="font-size:12px;white-space:nowrap">Je serai absente</span>
+              <span class="pill" style="font-size:12px;white-space:nowrap">Insistez sur la salle de bain</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div style="flex:1;height:42px;border:1px solid var(--paper-300);border-radius:999px;display:flex;align-items:center;padding:0 16px;color:var(--ink-400);font-size:14px">Écrire un message…</div>
+              <div style="width:42px;height:42px;border-radius:50%;background:var(--ink-900);color:var(--signal);display:grid;place-items:center;font-size:16px">↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <a><span class="ic"></span>Accueil</a><a><span class="ic"></span>Interventions</a><a class="on"><span class="ic"></span>Messages</a><a><span class="ic"></span>Compte</a>
+      </nav>
+    </div>
+  </figure>
+
+  <!-- 12 — ETAT DEGRADE -->
+  <figure class="screen">
+    <figcaption><b>Incident — intervenant indisponible</b> /mon-espace <span>état dégradé</span></figcaption>
+    <div class="phone">
+      <div class="sb"><span class="mono">17:40</span><span class="dots">▪▪▪ ▪▪ ▮</span></div>
+      <div class="app">
+        <div class="scroll">
+          <div style="padding:10px 0 18px"><h2 style="font-size:26px;font-weight:600;letter-spacing:-.025em;margin:0">Bonjour Camille</h2></div>
+
+          <div class="card" style="border:2px solid var(--risk);background:var(--risk-050)">
+            <span class="status risk" style="margin-bottom:10px">Changement de dernière minute</span>
+            <div style="font-size:17px;font-weight:600;line-height:1.3;margin-bottom:6px">Sonia ne pourra pas venir mardi</div>
+            <p style="margin:0 0 14px;font-size:13.5px;line-height:1.5;color:var(--ink-700)">On cherche quelqu'un d'autre à moins de 20 minutes de chez vous. Réponse sous 2 h. Si on ne trouve personne, le passage vous est offert au prochain rendez-vous.</p>
+            <button class="btn sm">Voir les créneaux de secours</button>
+            <button class="btn ghost sm" style="margin-top:8px">Attendre qu'on vous rappelle</button>
+          </div>
+
+          <div class="eyebrow">Créneaux disponibles cette semaine</div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:15px;font-weight:500">Mercredi 27, 8 h – 11 h</div>
+              <div class="row" style="gap:6px;margin-top:5px"><div class="avatar" style="width:22px;height:22px;font-size:9px">KB</div><span class="note">Karine B. · 5 min de trajet</span></div>
+            </div>
+            <span class="pill" style="font-size:12px">Choisir</span>
+          </div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:15px;font-weight:500">Jeudi 28, 14 h – 17 h</div>
+              <div class="row" style="gap:6px;margin-top:5px"><div class="avatar" style="width:22px;height:22px;font-size:9px">AL</div><span class="note">Amélie L. · 14 min de trajet</span></div>
+            </div>
+            <span class="pill" style="font-size:12px">Choisir</span>
+          </div>
+
+          <p class="note" style="margin-top:16px">On vous prévient toujours par SMS en cas de changement, même la nuit.</p>
+        </div>
+      </div>
+      <nav class="tabbar">
+        <a class="on"><span class="ic"></span>Accueil</a><a><span class="ic"></span>Interventions</a><a><span class="ic"></span>Messages</a><a><span class="ic"></span>Compte</a>
+      </nav>
+    </div>
+  </figure>
+
+  </div>
+</div>
+</body>
+</html>

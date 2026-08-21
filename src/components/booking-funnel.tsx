@@ -8,6 +8,7 @@ import {
   Loader2Icon,
   MapPinIcon,
   PencilIcon,
+  ReceiptTextIcon,
   RotateCcwIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -58,6 +59,7 @@ import {
   STANDARD_SQM_PER_HOUR,
 } from "@/lib/pricing/public-grid";
 import { SITE } from "@/lib/site";
+import { useTracageTunnel } from "@/components/tunnel-tracage";
 
 /**
  * Tunnel de réservation.
@@ -70,10 +72,11 @@ import { SITE } from "@/lib/site";
  *
  * Trois principes gouvernent le reste :
  *
- * - **Le prix est visible en permanence**, dans une barre basse qui ne quitte
- *   jamais l'écran. C'est la première source d'inquiétude ; la laisser sans
- *   réponse à l'étape du créneau revenait à demander de choisir un jour sans
- *   savoir ce qu'il coûte.
+ * - **Le prix est visible en permanence** — barre basse sur mobile,
+ *   récapitulatif collant à droite sur desktop, jamais les deux à la fois.
+ *   C'est la première source d'inquiétude ; la laisser sans réponse à l'étape
+ *   du créneau revenait à demander de choisir un jour sans savoir ce qu'il
+ *   coûte.
  * - **Choisir, c'est avancer.** Sur les écrans à une seule question, appuyer
  *   sur une réponse passe à la suite : un bouton de confirmation qui suit un
  *   choix unique n'ajoute qu'un geste et une hésitation. Les écrans qui
@@ -178,43 +181,65 @@ const WHOLE_HOUR_CHOICES = wholeHourChoices(DURATION_SERVICE);
 /**
  * Les six écrans, dans l'ordre.
  *
- * L'ordre est la décision de conception la plus lourde du tunnel, et il obéit
- * à une seule règle : **plus une information coûte à donner, plus tard on la
- * demande.** L'adresse exacte et les coordonnées sont ce qu'on donne le moins
- * volontiers à un service qu'on n'a jamais essayé ; le prix est ce qu'on est
- * venu chercher. Le tunnel demandait auparavant l'adresse complète en premier
- * et n'affichait le prix qu'à la fin — friction maximale au moment où
- * l'engagement est minimal.
+ * **L'adresse est demandée d'emblée.** Le tunnel ouvrait auparavant sur une
+ * liste de seize communes, qui répondait à « intervenez-vous chez moi ? » sans
+ * qu'on ait rien à saisir. C'était moins coûteux à donner qu'une adresse, mais
+ * cela demandait de se reconnaître dans un référentiel administratif — de
+ * savoir que Cadaujac n'est pas Cestas, de trouver son nom parmi seize — pour
+ * finir par redemander l'adresse au dernier écran. Une seule saisie remplace
+ * les deux : on tape son adresse, la complétion la reconnaît, et la couverture
+ * se prononce sur le même geste. Le code postal reste une entrée valable, la
+ * Base Adresse Nationale le comprenant aussi bien qu'un nom de rue.
  *
- * La commune suffit à répondre « intervenez-vous chez moi ? » et à chercher
- * des créneaux : le moteur les cherche alors depuis le centre de la commune,
- * avec une marge de trajet qui les garde tenables une fois l'adresse connue
- * (`COMMUNE_TRAVEL_MARGIN_MINUTES`).
+ * Ce que ce déplacement coûte, et qu'il faut assumer : l'ordre du tunnel
+ * obéissait à la règle **« plus une information coûte à donner, plus tard on
+ * la demande »**, et l'adresse exacte est ce qu'on donne le moins volontiers à
+ * un service qu'on n'a pas essayé. Elle passe donc devant le prix. Deux choses
+ * en limitent le prix : elle n'est demandée qu'une fois au lieu de deux, et la
+ * barre basse annonce le tarif d'entrée dès cet écran — la question « combien
+ * ça coûte » reçoit une réponse avant la première frappe. Les coordonnées,
+ * elles, ne bougent pas : elles restent au cinquième écran, après le prix et
+ * le créneau.
+ *
+ * Deuxième conséquence, technique : les créneaux sont désormais cherchés
+ * depuis l'adresse réelle du premier écran au dernier, jamais depuis le centre
+ * de la commune. `COMMUNE_TRAVEL_MARGIN_MINUTES` ne sert donc plus au tunnel —
+ * elle reste dans le moteur, qui accepte toujours une recherche imprécise, et
+ * les créneaux proposés sont d'autant plus justes.
  *
  * Le prix n'a pas d'écran à lui : il apparaît au troisième, celui du rythme,
- * qui porte les quatre formules avec leur montant et leur durée — un écran
- * qui ne ferait que l'annoncer coûterait un geste sans rien apprendre. La
- * barre basse le montre de toute façon dès le premier écran.
+ * qui porte les formules avec leur montant et leur durée — un écran qui ne
+ * ferait que l'annoncer coûterait un geste sans rien apprendre.
  */
 const STEPS = [
-  "commune",
+  "adresse",
   "logement",
   "rythme",
   "creneau",
   "coordonnees",
-  "adresse",
+  "recap",
 ] as const;
 
 type Step = (typeof STEPS)[number];
 
 /** Titre lu par la personne, et repère de progression. */
 const STEP_TITLES: Record<Step, string> = {
-  commune: "Où habitez-vous ?",
+  adresse: "À quelle adresse venons-nous ?",
   logement: "De combien de temps avez-vous besoin ?",
   rythme: "À quel rythme souhaitez-vous nous voir ?",
   creneau: "Quand voulez-vous que nous venions ?",
   coordonnees: "Comment vous joindre ?",
-  adresse: "À quelle adresse exactement ?",
+  recap: "Vérifions votre réservation",
+};
+
+/** Libellé court de chaque étape, pour la barre d'avancement nommée. */
+const STEP_LABELS: Record<Step, string> = {
+  adresse: "Adresse",
+  logement: "Durée",
+  rythme: "Rythme",
+  creneau: "Créneau",
+  coordonnees: "Coordonnées",
+  recap: "Récapitulatif",
 };
 
 const dayFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -344,14 +369,16 @@ const savedStateSchema = z.object({
   /**
    * La commune, et rien de plus précis.
    *
-   * L'ancienne version conservait l'adresse complète — rue, code postal,
-   * coordonnées. Une adresse de domicile est une donnée personnelle, et la
-   * laisser au repos dans le stockage d'un navigateur possiblement partagé
-   * n'était justifié par rien : la reprise n'en a pas besoin, puisque
-   * l'adresse exacte est désormais demandée au dernier écran.
+   * Une adresse de domicile est une donnée personnelle, et la laisser au repos
+   * dans le stockage d'un navigateur possiblement partagé n'est justifié par
+   * rien. Seul un slug de notre référentiel y va, comme celui qui voyage déjà
+   * dans l'URL des pages communes.
    *
-   * Un slug de notre référentiel, donc, comme celui qui voyage déjà dans
-   * l'URL des pages communes.
+   * Conséquence assumée du déplacement de l'adresse en tête : **reprendre un
+   * parcours interrompu demande de retaper son adresse.** Le reste est
+   * restauré — durée, rythme, créneau — et l'écran de reprise y ramène
+   * directement une fois l'adresse redonnée. C'est le prix d'un stockage qui
+   * ne garde rien d'identifiant, et il est moins cher que l'inverse.
    */
   communeSlug: z.string().max(60),
   surfaceSqm: z.number().int().min(15).max(400).nullable(),
@@ -467,9 +494,14 @@ export function BookingFunnel({
   knownClient?: KnownClient | null;
 }) {
   /**
-   * Commune d'arrivée, quand le tunnel est ouvert depuis une page locale ou
-   * depuis le bloc « Où habitez-vous ? » de l'accueil. Elle vaut réponse au
-   * premier écran : le tunnel s'ouvre alors directement sur le logement.
+   * Commune d'arrivée, quand le tunnel est ouvert depuis une page locale.
+   *
+   * Elle ne vaut plus réponse au premier écran — l'adresse exacte s'y demande
+   * désormais, et une commune n'en est pas une. Elle sert trois choses moins
+   * visibles mais réelles : le repère de la saisie manuelle, l'exemple du
+   * champ, et surtout le préchargement des créneaux depuis le centre de la
+   * commune pendant qu'on tape son adresse — de sorte que l'écran des heures
+   * est le plus souvent déjà prêt quand on y arrive.
    */
   const originCommune =
     communes.find((entry) => entry.slug === defaultCommuneSlug) ?? null;
@@ -477,24 +509,32 @@ export function BookingFunnel({
   const [commune, setCommune] = useState<CommuneOption | null>(originCommune);
 
   /**
-   * Écran d'ouverture.
+   * Le tunnel ouvre toujours sur l'adresse, et il n'y a rien à en déduire.
    *
-   * Il est **ramené à ce que les choix connus rendent atteignable** : sans
-   * commune on ne dépasse pas le premier écran, sans surface pas le deuxième.
-   * Une URL bricolée à la main ne doit pas ouvrir un écran de créneaux qui n'a
-   * ni durée à chercher ni prix à afficher. Au-delà du rythme, l'URL ne suffit
-   * plus — le créneau retenu n'y voyage pas — et c'est la reprise depuis le
-   * stockage local qui prend le relais.
+   * L'URL ne porte jamais d'adresse et n'en portera pas : une barre d'adresse
+   * se partage, s'enregistre en favori et se retrouve dans les journaux d'un
+   * serveur. Aucun lien, aucun rechargement, aucune reprise ne peut donc
+   * franchir le premier écran sans qu'on ait saisi quelque chose.
+   *
+   * Ce que l'URL et le stockage savent n'est pas perdu pour autant : l'écran
+   * à rejoindre est mis de côté et rejoint **dès l'adresse donnée**, sans
+   * refaire les écrans déjà remplis. Il est ramené à ce que les choix connus
+   * rendent atteignable — sans surface, on ne dépasse pas le deuxième écran,
+   * une URL bricolée à la main n'ouvrant pas un écran de créneaux qui n'a ni
+   * durée à chercher ni prix à afficher.
    */
-  const openingStep: Step = !originCommune
-    ? "commune"
-    : defaultSurfaceSqm === undefined
-      ? "logement"
-      : defaultStep === "rythme" || defaultStep === "logement"
-        ? defaultStep
-        : "rythme";
+  const [step, setStep] = useState<Step>("adresse");
 
-  const [step, setStep] = useState<Step>(openingStep);
+  const [pendingStep, setPendingStep] = useState<Step | null>(
+    defaultSurfaceSqm === undefined
+      ? null
+      : defaultStep === "rythme"
+        ? "rythme"
+        : null,
+  );
+
+  /* Mesure du parcours : voir `tunnel-tracage.ts`. Sans cookie, sans identité. */
+  useTracageTunnel(backend, step);
   /** Renseigné quand une modification part du récapitulatif : on y revient. */
   const [returnToRecap, setReturnToRecap] = useState(false);
 
@@ -581,8 +621,17 @@ export function BookingFunnel({
 
   /* --- Persistance ------------------------------------------------------ */
 
+  /*
+   * On n'enregistre qu'un parcours **commencé**.
+   *
+   * La commune est désormais déduite de l'adresse, et non plus choisie au
+   * premier écran : sans cette garde, arriver sur `/reserver?commune=cestas`
+   * depuis une page locale suffirait à écrire un parcours à reprendre alors
+   * que rien n'a été décidé — et le bandeau de reprise s'afficherait en
+   * accueil pour une visite. La durée est le premier vrai choix.
+   */
   useEffect(() => {
-    if (!commune || confirmation) return;
+    if (!commune || surfaceSqm === null || confirmation) return;
     try {
       const state: SavedState = {
         savedAt: Date.now(),
@@ -716,7 +765,7 @@ export function BookingFunnel({
    * choix coûte, ou attendre un aller-retour à chaque changement d'avis.
    */
   const loadQuotes = useCallback(
-    async (surface: number) => {
+    async (surface: number, startAt?: string) => {
       setQuotesPending(true);
       const results = await Promise.all(
         FREQUENCIES.map(async (entry) => ({
@@ -725,6 +774,7 @@ export function BookingFunnel({
             surfaceSqm: surface,
             frequency: entry.value,
             optionSlugs: [],
+            ...(startAt ? { startAt } : {}),
           }),
         })),
       );
@@ -734,7 +784,7 @@ export function BookingFunnel({
         setQuotesPending(false);
         setError({
           message: failure.result.error,
-          retry: () => void loadQuotes(surface),
+          retry: () => void loadQuotes(surface, startAt),
         });
         return;
       }
@@ -847,8 +897,8 @@ export function BookingFunnel({
   /**
    * Avance d'un écran, ou revient au récapitulatif si l'on en venait.
    *
-   * Le récapitulatif n'est plus un écran à lui : il occupe le dernier, celui
-   * de l'adresse, où l'on a enfin tout ce qu'il faut pour le montrer.
+   * Le récapitulatif occupe le dernier écran, où l'on a enfin tout ce qu'il
+   * faut pour le montrer.
    */
   const LAST_STEP: Step = STEPS[STEPS.length - 1]!;
 
@@ -902,29 +952,43 @@ export function BookingFunnel({
   }
 
   /**
-   * Adresse exacte, au dernier écran.
+   * Adresse exacte, au premier écran.
    *
-   * Les créneaux ne sont **pas** invalidés : ils ont été cherchés depuis le
-   * centre de la commune avec une marge de trajet précisément pour rester
-   * tenables ici. Les jeter obligerait à rechoisir une heure au moment de
-   * confirmer, ce qui est le pire endroit pour faire recommencer quelqu'un.
-   * `createBooking` réévalue de toute façon le créneau sur cette adresse-là,
-   * et essaie le candidat suivant si le premier ne tient plus.
+   * Trois choses en découlent, dans cet ordre :
+   *
+   * - **La commune s'en déduit**, par le code INSEE — seul identifiant fiable
+   *   de couverture. Elle n'est plus une réponse mais une conséquence, et
+   *   c'est elle qui part dans le stockage et dans l'URL, jamais la rue.
+   * - **Les créneaux ne sont pas jetés** quand l'adresse change depuis le
+   *   récapitulatif. La clé de recherche porte le point : l'effet relance de
+   *   lui-même une recherche sur la nouvelle adresse. Effacer l'heure retenue
+   *   obligerait à rechoisir au moment de confirmer, ce qui est le pire
+   *   endroit pour faire recommencer quelqu'un — et `createBooking` réévalue
+   *   de toute façon le créneau sur l'adresse réelle, en essayant les replis
+   *   si le premier ne tient plus.
+   * - **On rejoint l'écran mis de côté**, s'il y en a un : c'est ce qui rend
+   *   une reprise ou un lien partagé utiles malgré une adresse qui ne voyage
+   *   nulle part.
    */
   function chooseAddress(choice: AddressChoice) {
     setAddress(choice);
     setError(null);
-  }
 
-  function chooseCommune(choice: CommuneOption) {
-    setCommune(choice);
-    // Une autre commune change les intervenants joignables et les temps de
-    // trajet : les créneaux calculés pour la précédente sont faux.
-    if (choice.slug !== commune?.slug) {
-      setAddress(null);
-      invalidateSlots();
+    const resolved =
+      communes.find((entry) => entry.insee === choice.inseeCode) ?? null;
+    if (resolved) setCommune(resolved);
+
+    /* Un écran mis de côté qui serait celui-ci n'en est pas un : c'est le
+       cas d'un parcours interrompu pendant qu'on corrigeait son adresse. On
+       avance normalement, sinon le geste ne ferait rien. */
+    if (!returnToRecap && pendingStep && pendingStep !== "adresse") {
+      const target = pendingStep;
+      setPendingStep(null);
+      goTo(target);
+      return;
     }
-    advance("commune");
+    setPendingStep(null);
+    advance("adresse");
   }
 
   /**
@@ -976,6 +1040,20 @@ export function BookingFunnel({
     // le serveur écarterait le doublon, mais l'écran l'aurait montré coché
     // deux fois.
     setAlternateSlots((current) => current.filter((entry) => entry !== start));
+
+    /*
+     * Le devis est refait avec l'heure retenue, et c'est le seul moment où il
+     * peut l'être : les majorations — samedi, dimanche, férié, dernière minute
+     * — dépendent du créneau. Sans ce second appel, le récapitulatif affichait
+     * le prix d'un jour ordinaire tandis que `confirmBooking`, qui recalcule
+     * côté serveur, prélevait le prix majoré. Le client voyait 84 € et payait
+     * 92,40 €.
+     *
+     * Les quatre rythmes sont refaits ensemble, comme au premier chargement :
+     * revenir en arrière pour changer de rythme doit montrer des prix qui
+     * tiennent compte du créneau déjà choisi.
+     */
+    if (surfaceSqm !== null) void loadQuotes(surfaceSqm, start);
   }
 
   function toggleAlternateSlot(start: string) {
@@ -1050,152 +1128,375 @@ export function BookingFunnel({
 
   /* --- Rendu ------------------------------------------------------------ */
 
+  /*
+   * Le récapitulatif collant n'accompagne pas le dernier écran : celui-ci
+   * porte déjà son propre récapitulatif, ligne à ligne — deux résumés côte à
+   * côte se contrediraient au premier oubli de synchronisation.
+   */
+  const showAside = step !== "recap";
+
   return (
-    /* Le conteneur occupe au moins la hauteur de l'écran : sans cela, la barre
-       de prix — collante au bas de son parent — se posait au milieu de la page
-       sur les étapes courtes au lieu de rester sous le pouce. */
-    <div className="flex min-h-[calc(100svh-8rem)] flex-col">
+    <div>
+      {/* La bande de progression court sur toute la largeur, au-dessus des
+          deux colonnes — comme sur le prototype. */}
       <FunnelHeader
         index={index}
         title={STEP_TITLES[step]}
         onBack={index > 0 || returnToRecap ? goBack : undefined}
       />
 
-      <div className="mt-6 flex-1 space-y-5 pb-4">
-        {/* La reprise se propose tant qu'on n'a rien décidé de neuf : au-delà
+      {/* En desktop, deux colonnes : le tunnel garde sa largeur de lecture et
+          le récapitulatif collant occupe la droite — c'est lui qui porte le
+          prix, la barre basse restant l'affaire du mobile. */}
+      <div
+        className={
+          showAside
+            ? "lg:grid lg:grid-cols-[1.5fr_0.9fr] lg:items-start lg:gap-10"
+            : undefined
+        }
+      >
+        {/* Le conteneur occupe au moins la hauteur de l'écran : sans cela, la
+            barre de prix — collante au bas de son parent — se posait au milieu
+            de la page sur les étapes courtes au lieu de rester sous le
+            pouce.
+            `min-w-0` — sans lui, une colonne de grille prend la largeur de son
+            contenu, et la bande de jours défilante pousse le récapitulatif
+            hors de l'écran : le piège que le prototype documente. */}
+        <div className="flex min-h-[calc(100svh-11rem)] min-w-0 flex-col">
+          <h2 className="mt-6 text-2xl font-black tracking-tight text-balance">
+            {STEP_TITLES[step]}
+          </h2>
+
+          <div className="mt-5 flex-1 space-y-5 pb-4">
+            {/* La reprise se propose tant qu'on n'a rien décidé de neuf : au-delà
             du deuxième écran, elle défaire ait un parcours en cours. */}
-        {resumable && index <= 1 ? (
-          <ResumePrompt
-            saved={resumable}
-            communeName={
-              communes.find((entry) => entry.slug === resumable.communeSlug)
-                ?.name ?? null
-            }
-            onResume={() => {
-              const saved = communes.find(
-                (entry) => entry.slug === resumable.communeSlug,
-              );
-              if (saved) setCommune(saved);
-              setSurfaceSqm(resumable.surfaceSqm);
-              setHousingLabel(resumable.housingLabel);
-              setFrequency(offeredFrequency(resumable.frequency));
-              setChosenSlot(resumable.chosenSlot);
-              // Les replis ne sont pas enregistrés : ils décrivent un état du
-              // planning qui a une semaine, et le proposer à nouveau ferait
-              // réserver sur des heures qui n'existent plus.
-              setAlternateSlots([]);
-              if (resumable.surfaceSqm !== null) {
-                void loadQuotes(resumable.surfaceSqm);
-              }
-              setResumeHandled(true);
-              goTo(saved ? resumable.step : "commune");
-            }}
-            onDiscard={() => {
-              clearSavedState();
-              setResumeHandled(true);
-            }}
-          />
-        ) : null}
+            {resumable && index <= 1 ? (
+              <ResumePrompt
+                saved={resumable}
+                communeName={
+                  communes.find((entry) => entry.slug === resumable.communeSlug)
+                    ?.name ?? null
+                }
+                onResume={() => {
+                  const saved = communes.find(
+                    (entry) => entry.slug === resumable.communeSlug,
+                  );
+                  if (saved) setCommune(saved);
+                  setSurfaceSqm(resumable.surfaceSqm);
+                  setHousingLabel(resumable.housingLabel);
+                  setFrequency(offeredFrequency(resumable.frequency));
+                  setChosenSlot(resumable.chosenSlot);
+                  // Les replis ne sont pas enregistrés : ils décrivent un état du
+                  // planning qui a une semaine, et le proposer à nouveau ferait
+                  // réserver sur des heures qui n'existent plus.
+                  setAlternateSlots([]);
+                  if (resumable.surfaceSqm !== null) {
+                    void loadQuotes(resumable.surfaceSqm);
+                  }
+                  setResumeHandled(true);
+                  /* L'adresse n'est jamais enregistrée : on la redemande, et
+                     l'écran où l'on en était est rejoint dès qu'elle est
+                     donnée. Une reprise qui rouvrirait directement le choix du
+                     créneau chercherait des heures sans savoir où aller. */
+                  setPendingStep(resumable.step);
+                  goTo("adresse");
+                }}
+                onDiscard={() => {
+                  clearSavedState();
+                  setResumeHandled(true);
+                }}
+              />
+            ) : null}
 
-        {error ? <ErrorNotice error={error} /> : null}
+            {error ? <ErrorNotice error={error} /> : null}
 
-        {step === "commune" ? (
-          <CommuneStep
-            communes={communes}
-            selected={commune}
-            onChoose={chooseCommune}
-          />
-        ) : null}
+            {step === "adresse" ? (
+              <AddressStep
+                backend={backend}
+                communes={communes}
+                defaultQuery={defaultQuery}
+                originCommune={commune ?? originCommune}
+                savedAddresses={knownClient?.addresses ?? []}
+                selected={address}
+                onSelect={chooseAddress}
+                onSelectSaved={chooseKnownAddress}
+              />
+            ) : null}
 
-        {step === "logement" ? (
-          <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
-        ) : null}
+            {step === "logement" ? (
+              <HousingStep surfaceSqm={surfaceSqm} onChoose={chooseHousing} />
+            ) : null}
 
-        {step === "rythme" ? (
-          <FrequencyStep
-            quotes={quotes}
-            pending={quotesPending}
-            selected={frequency}
-            onChoose={chooseFrequency}
-          />
-        ) : null}
+            {step === "rythme" ? (
+              <FrequencyStep
+                quotes={quotes}
+                pending={quotesPending}
+                selected={frequency}
+                onChoose={chooseFrequency}
+              />
+            ) : null}
 
-        {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
+            {/* En cas d'échec, l'encart d'erreur porte déjà le message et le
             réessai : un squelette perpétuel par-dessus ne dirait rien.
             Sans devis non plus il n'y a rien à attendre — la recherche de
             créneaux a besoin d'une durée, donc d'un devis, et le squelette
             promettait un contenu qui ne pouvait pas arriver. */}
-        {step === "creneau" &&
-        slotsStatus !== "error" &&
-        (quote !== null || quotesPending) ? (
-          <SlotStep
-            slots={slots}
-            fetchedAt={slotsFetchedAt}
-            pending={slotsStatus !== "ready"}
-            chosen={chosenSlot}
-            alternates={alternateSlots}
-            onChoose={chooseSlot}
-            onToggleAlternate={toggleAlternateSlot}
-            onContinue={() => advance("creneau")}
-          />
-        ) : null}
+            {step === "creneau" &&
+            slotsStatus !== "error" &&
+            (quote !== null || quotesPending) ? (
+              <SlotStep
+                slots={slots}
+                fetchedAt={slotsFetchedAt}
+                pending={slotsStatus !== "ready"}
+                chosen={chosenSlot}
+                alternates={alternateSlots}
+                onChoose={chooseSlot}
+                onToggleAlternate={toggleAlternateSlot}
+                onContinue={() => advance("creneau")}
+              />
+            ) : null}
 
-        {step === "coordonnees" ? (
-          <ContactStep
-            contact={contact}
-            onContactChange={setContact}
-            onContinue={() => advance("coordonnees")}
-            known={knownClient !== null}
-          />
-        ) : null}
+            {step === "coordonnees" ? (
+              <ContactStep
+                contact={contact}
+                onContactChange={setContact}
+                onContinue={() => advance("coordonnees")}
+                known={knownClient !== null}
+              />
+            ) : null}
 
-        {/* Dernier écran. Tant que l'adresse exacte n'est pas donnée, il ne
-            montre qu'elle ; une fois donnée, il devient le récapitulatif —
-            c'est le premier moment où l'on a tout ce qu'il faut pour le
-            montrer. */}
-        {step === "adresse" && !address ? (
-          <AddressStep
-            backend={backend}
-            communes={communes}
-            defaultQuery={defaultQuery}
-            originCommune={commune}
-            savedAddresses={knownClient?.addresses ?? []}
-            selected={address}
-            onSelect={chooseAddress}
-            onSelectSaved={chooseKnownAddress}
-          />
-        ) : null}
+            {/* Dernier écran : le récapitulatif, une fois qu'on a tout ce
+            qu'il faut pour le montrer. Le devis se refait sur le créneau
+            retenu — majorations comprises — et il peut n'être pas encore
+            revenu. */}
+            {step === "recap" && (!address || !quote || !chosenSlot) ? (
+              <div className="space-y-3" aria-hidden>
+                <div className="h-48 animate-pulse rounded-xl bg-secondary" />
+                <div className="h-32 animate-pulse rounded-xl bg-secondary" />
+              </div>
+            ) : null}
 
-        {step === "adresse" && address && (!quote || !chosenSlot) ? (
-          <div className="space-y-3" aria-hidden>
-            <div className="h-48 animate-pulse rounded-xl bg-secondary" />
-            <div className="h-32 animate-pulse rounded-xl bg-secondary" />
-          </div>
-        ) : null}
+            {step === "recap" && address && quote && chosenSlot ? (
+              <RecapStep
+                address={address}
+                quote={quote}
+                frequency={frequency}
+                startAt={chosenSlot}
+                contact={contact}
+                onContactChange={setContact}
+                onEdit={editFromRecap}
+                onSubmit={submit}
+                submitting={submitting}
+              />
+            ) : null}
 
-        {step === "adresse" && address && quote && chosenSlot ? (
-          <RecapStep
-            address={address}
-            quote={quote}
-            frequency={frequency}
-            startAt={chosenSlot}
-            contact={contact}
-            onContactChange={setContact}
-            onEdit={editFromRecap}
-            onChangeAddress={() => setAddress(null)}
-            onSubmit={submit}
-            submitting={submitting}
-          />
-        ) : null}
-
-        {/* Sur chaque écran, une sortie vers quelqu'un. Certaines demandes se
+            {/* Sur chaque écran, une sortie vers quelqu'un. Certaines demandes se
             règlent en deux minutes au téléphone et jamais dans un
             formulaire — une grande maison, un accès compliqué. */}
-        <TalkToSomeone communeName={commune?.name} />
+            <TalkToSomeone communeName={commune?.name} />
+          </div>
+
+          <PriceBar
+            quote={quote}
+            pending={quotesPending}
+            frequency={frequency}
+            className={showAside ? "lg:hidden" : undefined}
+          />
+        </div>
+
+        {showAside ? (
+          <RecapAside
+            step={step}
+            address={address}
+            surfaceSqm={surfaceSqm}
+            quote={quote}
+            frequency={frequency}
+            chosenSlot={chosenSlot}
+            alternateCount={alternateSlots.length}
+            onEdit={goTo}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Récapitulatif collant, à droite du tunnel en desktop.
+ *
+ * Chaque ligne renvoie à son écran : corriger un choix ne demande pas de
+ * remonter le parcours à l'aveugle. Une ligne n'apparaît que lorsque son
+ * information existe — un tiret serait une promesse de formulaire, pas un
+ * résumé — et « Modifier » ne se propose pas sur l'écran où l'on est déjà.
+ *
+ * Le prix y vit en permanence, comme dans la barre basse du mobile : même
+ * règle, un vrai prix d'entrée tant que la durée n'est pas connue, jamais un
+ * montant inventé.
+ */
+function RecapAside({
+  step,
+  address,
+  surfaceSqm,
+  quote,
+  frequency,
+  chosenSlot,
+  alternateCount,
+  onEdit,
+}: {
+  step: Step;
+  address: AddressChoice | null;
+  surfaceSqm: number | null;
+  quote: QuoteView | null;
+  frequency: Frequency;
+  chosenSlot: string | null;
+  alternateCount: number;
+  onEdit: (step: Step) => void;
+}) {
+  const rhythm = FREQUENCIES.find((entry) => entry.value === frequency);
+
+  const durationMinutes =
+    quote?.durationMinutes ??
+    (surfaceSqm !== null
+      ? estimateDuration({ surfaceSqm, service: DURATION_SERVICE })
+          .durationMinutes
+      : null);
+
+  const lines: {
+    label: string;
+    value: string;
+    target: Step;
+  }[] = [
+    ...(address
+      ? [{ label: "Adresse", value: address.label, target: "adresse" as Step }]
+      : []),
+    ...(durationMinutes !== null
+      ? [
+          {
+            label: "Durée",
+            value: `${formatDuration(durationMinutes)} · idéal pour ${suggestedSurfaceFor(
+              durationMinutes,
+              DURATION_SERVICE,
+            )} m²`,
+            target: "logement" as Step,
+          },
+        ]
+      : []),
+    // Le rythme n'a de sens qu'une fois la durée posée : avant, il n'est
+    // qu'une présélection que la personne n'a pas encore vue.
+    ...(durationMinutes !== null && rhythm
+      ? [{ label: "Rythme", value: rhythm.label, target: "rythme" as Step }]
+      : []),
+    ...(chosenSlot !== null
+      ? [
+          {
+            label: "Créneau",
+            value: `${dayFormatter.format(new Date(chosenSlot))} à ${hourLabel(
+              new Date(chosenSlot),
+            )}`,
+            target: "creneau" as Step,
+          },
+          {
+            label: "Replis",
+            value:
+              alternateCount > 0
+                ? `${alternateCount} créneau${alternateCount > 1 ? "x" : ""}`
+                : "aucun",
+            target: "creneau" as Step,
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <aside
+      aria-label="Votre demande"
+      className="sticky top-6 mt-6 hidden overflow-hidden rounded-[var(--r-l)] border border-border bg-card shadow-md lg:block"
+    >
+      <div className="flex items-center gap-2.5 border-b border-border-subtle px-5 py-4">
+        <ReceiptTextIcon className="size-5 text-brand" aria-hidden />
+        <p className="font-extrabold">Votre demande</p>
       </div>
 
-      <PriceBar quote={quote} pending={quotesPending} frequency={frequency} />
-    </div>
+      {lines.length > 0 ? (
+        <dl className="space-y-3 px-5 py-4 text-sm">
+          {lines.map((line) => (
+            <div
+              key={line.label}
+              className="flex items-start justify-between gap-3"
+            >
+              <dt className="shrink-0 text-muted-foreground">{line.label}</dt>
+              <dd className="text-right font-semibold">
+                {line.value}
+                {step !== line.target ? (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(line.target)}
+                    className="ml-auto block text-xs font-semibold text-brand underline underline-offset-2"
+                  >
+                    Modifier
+                    <span className="sr-only">
+                      {" "}
+                      — {line.label.toLowerCase()}
+                    </span>
+                  </button>
+                ) : null}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <p className="px-5 py-4 text-sm text-muted-foreground">
+          Vos choix s&apos;affichent ici au fil du parcours.
+        </p>
+      )}
+
+      <div className="bg-cream-50 px-5 py-4">
+        {quote ? (
+          <>
+            {/* Le prix se décompose, comme sur le prototype : la prestation,
+                l'absence de frais ajoutés, puis le total — c'est la ligne
+                « aucun » qui porte l'argument. */}
+            <dl className="space-y-1.5 text-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <dt>Ménage {formatDuration(quote.durationMinutes)}</dt>
+                <dd className="font-semibold tabular-nums">
+                  {formatEuros(quote.grossAmountCents)}
+                </dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-3 text-muted-foreground">
+                <dt>Frais de service</dt>
+                <dd>aucun</dd>
+              </div>
+            </dl>
+            <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-cream-200 pt-3">
+              <p className="font-extrabold">Par intervention</p>
+              <p className="text-2xl font-black tabular-nums">
+                {formatEuros(quote.grossAmountCents)}
+              </p>
+            </div>
+            <p className="mt-0.5 text-right text-sm text-muted-foreground tabular-nums">
+              {formatDuration(quote.durationMinutes)} ·{" "}
+              {formatHourlyRate(quote.hourlyRateCents)}
+            </p>
+          </>
+        ) : (
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="font-extrabold">
+              À partir de {formatHourlyRate(PUBLIC_RATES[0]!.hourlyRateCents)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              minimum {MINIMUM_BILLABLE_MINUTES / 60} h
+            </p>
+          </div>
+        )}
+        {/* La note reprend la réassurance de la barre basse — le
+            fonctionnement d'aujourd'hui, sans promettre une mécanique de
+            carte qui n'existe pas encore. */}
+        <p className="mt-3 rounded-[var(--r-s)] bg-pineapple-50 px-3 py-2 text-xs text-pretty text-ink-700">
+          {REASSURANCE}
+        </p>
+      </div>
+    </aside>
   );
 }
 
@@ -1208,6 +1509,16 @@ export function BookingFunnel({
  *
  * Un seul modèle de navigation à la fois — dans le tunnel, il n'y a ni menu ni
  * liens de contenu, qui ne serviraient qu'à en sortir.
+ *
+ * La progression est nommée, comme sur le prototype : une pastille par étape,
+ * cochée quand l'étape est derrière soi. Les pastilles ne sont pas cliquables
+ * — corriger un choix passe par le récapitulatif, qui dit ce qu'on va
+ * modifier, quand une pastille ne dirait que où l'on va. Sur un écran étroit,
+ * la bande défile horizontalement plutôt que d'empiler six libellés.
+ *
+ * La sarcelle 600 des pastilles cochées porte du blanc : c'est la sarcelle
+ * foncée, celle des liens — la règle « jamais de blanc » ne vaut que pour la
+ * pleine, à 400.
  */
 function FunnelHeader({
   index,
@@ -1236,27 +1547,67 @@ function FunnelHeader({
         </p>
       </div>
 
-      <div
-        className="mt-3 flex gap-1.5"
-        role="progressbar"
-        aria-valuenow={index + 1}
-        aria-valuemin={1}
-        aria-valuemax={STEPS.length}
-        aria-label={`Étape ${index + 1} sur ${STEPS.length}`}
+      <nav
+        aria-label="Progression de la réservation"
+        className="-mx-6 mt-4 overflow-x-auto px-6"
       >
-        {STEPS.map((entry, position) => (
-          <span
-            key={entry}
-            className={`h-1.5 flex-1 rounded-full ${
-              position <= index ? "bg-primary" : "bg-secondary"
-            }`}
-          />
-        ))}
-      </div>
-
-      <h2 className="mt-5 text-2xl font-black tracking-tight text-balance">
-        {title}
-      </h2>
+        <ol className="flex min-w-[640px] items-center gap-2">
+          {STEPS.map((entry, position) => {
+            const done = position < index;
+            const current = position === index;
+            return (
+              <li
+                key={entry}
+                aria-current={current ? "step" : undefined}
+                className={`flex items-center gap-2 ${
+                  position < STEPS.length - 1 ? "flex-1" : ""
+                }`}
+              >
+                <span
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${
+                    done
+                      ? "bg-teal-600 text-white"
+                      : current
+                        ? "bg-teal-100 text-teal-700"
+                        : "bg-ink-100 text-muted-foreground"
+                  }`}
+                  aria-hidden={done ? undefined : true}
+                >
+                  {done ? (
+                    <>
+                      <CheckIcon
+                        className="size-3.5"
+                        strokeWidth={3}
+                        aria-hidden
+                      />
+                      <span className="sr-only">Étape faite : </span>
+                    </>
+                  ) : (
+                    position + 1
+                  )}
+                </span>
+                <span
+                  className={`text-xs whitespace-nowrap ${
+                    current
+                      ? "font-bold text-foreground"
+                      : "font-medium text-muted-foreground"
+                  }`}
+                >
+                  {STEP_LABELS[entry]}
+                </span>
+                {position < STEPS.length - 1 ? (
+                  <span
+                    className={`h-0.5 min-w-3 flex-1 rounded-full ${
+                      done ? "bg-teal-300" : "bg-ink-200"
+                    }`}
+                    aria-hidden
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
 
       {/*
         Le changement d'écran est annoncé aux lecteurs d'écran.
@@ -1284,15 +1635,20 @@ function PriceBar({
   quote,
   pending,
   frequency,
+  className,
 }: {
   quote: QuoteView | null;
   pending: boolean;
   frequency: Frequency;
+  /** `lg:hidden` quand le récapitulatif collant porte déjà le prix. */
+  className?: string;
 }) {
   const rhythm = FREQUENCIES.find((entry) => entry.value === frequency);
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-6 mt-2 border-t border-border bg-background/95 px-6 py-3 backdrop-blur">
+    <div
+      className={`sticky bottom-0 z-20 -mx-6 mt-2 border-t border-border bg-background/95 px-6 py-3 backdrop-blur ${className ?? ""}`}
+    >
       {quote ? (
         <div>
           <div className="flex items-baseline justify-between gap-3">
@@ -1348,7 +1704,7 @@ function ResumePrompt({
   const position = STEPS.indexOf(saved.step) + 1;
 
   return (
-    <div className="rounded-xl border border-mint-200 bg-mint-50 p-5">
+    <div className="rounded-xl border border-teal-200 bg-teal-50 p-5">
       <p className="font-medium">
         Reprendre ma réservation — étape {position} sur {STEPS.length}
       </p>
@@ -1449,128 +1805,13 @@ function ErrorNotice({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Étape 1 — Commune                                                          */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Premier écran : « intervenez-vous chez moi ? ».
- *
- * C'est la question que se pose réellement quelqu'un devant un service local,
- * et la seule à laquelle il faut répondre avant toute autre. Elle ne coûte
- * presque rien à donner — le nom de sa ville n'est pas une donnée personnelle —
- * alors que l'adresse complète, qui était demandée ici, est ce qu'on donne le
- * moins volontiers à un service qu'on n'a jamais essayé.
- *
- * Le choix se fait dans **notre référentiel**, jamais dans un champ libre : il
- * est ainsi structurellement impossible d'engager un parcours hors zone, et
- * chaque commune répond « oui » d'un seul geste. Le code postal reste accepté
- * parce que c'est ce que beaucoup tapent d'abord — il filtre la liste, il ne
- * la remplace pas.
- */
-function CommuneStep({
-  communes,
-  selected,
-  onChoose,
-}: {
-  communes: readonly CommuneOption[];
-  selected: CommuneOption | null;
-  onChoose: (commune: CommuneOption) => void;
-}) {
-  const [query, setQuery] = useState("");
-
-  const normalized = query.trim().toLowerCase();
-  const matches = normalized
-    ? communes.filter(
-        (commune) =>
-          commune.postalCode.startsWith(normalized) ||
-          commune.name
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/\p{Diacritic}/gu, "")
-            .includes(
-              normalized.normalize("NFD").replace(/\p{Diacritic}/gu, ""),
-            ),
-      )
-    : communes;
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <Label htmlFor="commune-filter">
-          Votre commune ou votre code postal
-        </Label>
-        <div className="relative mt-3">
-          <MapPinIcon
-            className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            id="commune-filter"
-            value={query}
-            /* Le clavier numérique s'ouvre pour un code postal, sans empêcher
-               d'écrire un nom de commune : `inputMode` propose, il n'impose
-               pas. */
-            inputMode="numeric"
-            autoComplete="postal-code"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="33850 ou Léognan"
-            className="min-h-12 pl-9"
-          />
-        </div>
-      </div>
-
-      {matches.length === 0 ? (
-        <p className="rounded-xl border border-border bg-secondary/40 p-4 text-sm">
-          Léo Clean intervient dans {communes.length} communes au sud de
-          Bordeaux, et pas encore ici —{" "}
-          <Link href="/menage-a-domicile" className="text-brand underline">
-            voir la liste des communes
-          </Link>
-          .
-        </p>
-      ) : (
-        <ul className="flex flex-wrap gap-2">
-          {matches.map((commune) => (
-            <li key={commune.slug}>
-              <button
-                type="button"
-                onClick={() => onChoose(commune)}
-                aria-pressed={selected?.slug === commune.slug}
-                className={`inline-flex min-h-12 items-center gap-2 rounded-full border-2 px-4 text-sm font-bold transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] motion-reduce:active:scale-100 ${
-                  selected?.slug === commune.slug
-                    ? "border-mint-500 bg-mint-50 ring-3 ring-mint-100"
-                    : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
-                }`}
-              >
-                {commune.name}
-                <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                  {commune.postalCode}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <p className="flex items-start gap-2 text-sm text-muted-foreground">
-        <CheckIcon className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
-        Toutes ces communes sont desservies, au même tarif. Nous vous
-        demanderons votre adresse exacte au dernier écran.
-      </p>
-
-      <Reassurance />
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Étape 1 — Adresse                                                          */
 /* -------------------------------------------------------------------------- */
 
 /*
  * Carte de choix — le `selectable` du design system.
  *
- * Retenue, elle prend la bordure menthe, le fond menthe très clair et un halo :
+ * Retenue, elle prend la bordure sarcelle, le fond sarcelle très clair et un halo :
  * trois signaux plutôt qu'un, pour que le choix se voie sans dépendre de la
  * seule couleur. Le texte reste encre, donc lisible dans tous les états.
  */
@@ -1599,8 +1840,8 @@ function ChoiceCard({
       aria-pressed={selected}
       className={`flex min-h-16 w-full items-center justify-between gap-4 rounded-lg border-2 p-4.5 text-left transition-[background-color,border-color,box-shadow,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-50 motion-reduce:active:scale-100 ${
         selected
-          ? "border-mint-500 bg-mint-50 ring-3 ring-mint-100"
-          : "border-border bg-card hover:border-mint-400 enabled:hover:bg-mint-50"
+          ? "border-teal-500 bg-teal-50 ring-3 ring-teal-100"
+          : "border-border bg-card hover:border-teal-300 enabled:hover:bg-teal-50"
       } ${className}`}
     >
       <span>
@@ -1608,7 +1849,7 @@ function ChoiceCard({
         {hint ? (
           <span
             className={`mt-0.5 block text-sm ${
-              selected ? "text-mint-800" : "text-muted-foreground"
+              selected ? "text-teal-800" : "text-muted-foreground"
             }`}
           >
             {hint}
@@ -1620,6 +1861,21 @@ function ChoiceCard({
   );
 }
 
+/**
+ * Premier écran : l'adresse, et la réponse à « intervenez-vous chez moi ? ».
+ *
+ * Une seule saisie fait trois choses que le tunnel demandait auparavant en
+ * deux écrans : elle dit où l'on va, elle dit si c'est desservi — chaque
+ * résultat porte sa pastille, et un résultat hors zone n'est pas cliquable —
+ * et elle donne le point exact depuis lequel les créneaux seront cherchés.
+ *
+ * La complétion reste **un confort, pas une dépendance**. La Base Adresse
+ * Nationale est un service public qui limite son débit et renvoie parfois
+ * 503 ; quand elle ne rend rien, la saisie manuelle prend le relais, et sa
+ * commune se choisit dans notre référentiel — ce qui rend structurellement
+ * impossible d'engager un parcours hors zone. C'est ce chemin-là que teste le
+ * parcours de bout en bout, précisément pour ne pas dépendre d'un tiers.
+ */
 function AddressStep({
   backend,
   communes,
@@ -1724,8 +1980,9 @@ function AddressStep({
       <div>
         <Label htmlFor="address">Votre adresse</Label>
         <p className="mt-1 text-sm text-muted-foreground">
-          Dernière question. Commencez à taper, nous la complétons — elle sert à
-          l&apos;intervenant pour venir, et à personne d&apos;autre.
+          Commencez à taper — le code postal marche aussi — nous la complétons.
+          Elle sert à savoir si nous venons chez vous et à calculer le trajet de
+          l&apos;intervenant, à rien d&apos;autre.
         </p>
         <div className="relative mt-3">
           <MapPinIcon
@@ -1789,7 +2046,7 @@ function AddressStep({
                 <span
                   className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
                     address.isCovered
-                      ? "bg-mint-100 text-mint-800"
+                      ? "bg-teal-100 text-teal-800"
                       : "border-[1.5px] border-border text-muted-foreground"
                   }`}
                 >
@@ -1824,6 +2081,10 @@ function AddressStep({
           Saisir mon adresse manuellement
         </button>
       )}
+
+      {/* Le premier écran porte la réassurance, comme les autres : c'est là
+          que quelqu'un décide s'il continue. */}
+      <Reassurance />
     </div>
   );
 }
@@ -1908,8 +2169,8 @@ function ManualAddress({
           ))}
         </select>
         <p className="mt-2 text-sm text-muted-foreground">
-          Reprise de votre premier choix. Seules les communes desservies
-          figurent dans cette liste.
+          Seules les communes desservies figurent dans cette liste : il est
+          impossible d&apos;engager un parcours hors zone.
         </p>
       </div>
 
@@ -1920,7 +2181,7 @@ function ManualAddress({
           className="min-h-12 w-full"
           disabled={street.trim().length < 3}
         >
-          Voir mon récapitulatif
+          Valider mon adresse
         </Button>
         <Button
           type="button"
@@ -1952,20 +2213,12 @@ function HousingStep({
       : estimateDuration({ surfaceSqm, service: DURATION_SERVICE })
           .durationMinutes;
 
-  const matchesWholeHour =
-    chosenMinutes !== null && WHOLE_HOUR_CHOICES.includes(chosenMinutes);
-
-  const [custom, setCustom] = useState(
-    chosenMinutes !== null && !matchesWholeHour,
-  );
-  const [value, setValue] = useState(String(chosenMinutes ?? 180));
-
-  const parsedMinutes = Number(value);
-  const validCustom =
-    Number.isInteger(parsedMinutes) &&
-    parsedMinutes % SLOT_GRANULARITY_MINUTES === 0 &&
-    parsedMinutes >= MINIMUM_BILLABLE_MINUTES &&
-    parsedMinutes <= MAX_DURATION_MINUTES;
+  /**
+   * Le curseur au pas de 30 minutes, synchronisé avec les cartes : glisser ne
+   * fait qu'ajuster la valeur, c'est le bouton qui engage — un curseur qui
+   * ferait avancer l'écran à chaque cran serait inutilisable au pouce.
+   */
+  const [sliderMinutes, setSliderMinutes] = useState(chosenMinutes ?? 180);
 
   /** Une durée choisie devient la surface qui la produit, à l'unité près. */
   function chooseDuration(minutes: number, fromPreset: boolean) {
@@ -1978,9 +2231,8 @@ function HousingStep({
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Personne ne connaît sa surface au mètre près, mais tout le monde sait
-        dire combien de temps il faut. Choisissez une durée : nous indiquons le
-        logement qu&apos;elle couvre habituellement. Elle reste ajustable avec
+        À titre indicatif, un intervenant traite environ {STANDARD_SQM_PER_HOUR}{" "}
+        m² à l&apos;heure. Choisissez une durée : elle reste ajustable avec
         l&apos;intervenant.
       </p>
 
@@ -1996,51 +2248,50 @@ function HousingStep({
         ))}
       </div>
 
-      {/* Repliée par défaut : la demi-heure d'appoint est une précision, pas
-          le chemin principal. */}
-      {custom ? (
-        <div className="rounded-xl border border-border bg-card p-4">
-          <Label htmlFor="duration">Autre durée</Label>
-          <div className="mt-3 flex items-center gap-3">
-            <Input
-              id="duration"
-              type="number"
-              inputMode="numeric"
-              min={MINIMUM_BILLABLE_MINUTES}
-              max={MAX_DURATION_MINUTES}
-              step={SLOT_GRANULARITY_MINUTES}
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              className="min-h-12 w-28"
-            />
-            <span className="text-muted-foreground">minutes</span>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Par tranches de {SLOT_GRANULARITY_MINUTES} minutes, de{" "}
-            {formatDuration(MINIMUM_BILLABLE_MINUTES)} à{" "}
-            {formatDuration(MAX_DURATION_MINUTES)}. Au-delà, il vaut mieux deux
-            passages qu&apos;une journée intenable : appelez-nous.
-          </p>
-          <Button
-            type="button"
-            size="lg"
-            className="mt-4 min-h-12 w-full"
-            disabled={!validCustom}
-            onClick={() => chooseDuration(parsedMinutes, false)}
-          >
-            Choisir mon rythme
-          </Button>
+      {/* Le curseur remplace l'ancien champ « minutes » : la demi-heure
+          d'appoint se règle au pouce, entre les mêmes bornes que la grille. */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <Label htmlFor="duration-slider">
+            Ajuster par pas de {SLOT_GRANULARITY_MINUTES} minutes
+          </Label>
+          <span className="font-display text-xl font-extrabold tabular-nums">
+            {formatDuration(sliderMinutes)}
+          </span>
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setCustom(true)}
-          className="flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground underline"
+        <input
+          id="duration-slider"
+          type="range"
+          className="range-slider mt-4"
+          min={MINIMUM_BILLABLE_MINUTES}
+          max={MAX_DURATION_MINUTES}
+          step={SLOT_GRANULARITY_MINUTES}
+          value={sliderMinutes}
+          onChange={(event) => setSliderMinutes(Number(event.target.value))}
+          aria-label="Durée de l'intervention, par pas de 30 minutes"
+        />
+        <div
+          className="mt-2 flex justify-between font-mono text-xs text-muted-foreground"
+          aria-hidden
         >
-          <ChevronDownIcon className="size-4" aria-hidden />
-          Il me faut une autre durée
-        </button>
-      )}
+          {WHOLE_HOUR_CHOICES.map((minutes) => (
+            <span key={minutes}>{formatDuration(minutes)}</span>
+          ))}
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Idéal pour {suggestedSurfaceFor(sliderMinutes, DURATION_SERVICE)} m²
+          environ. Au-delà de {formatDuration(MAX_DURATION_MINUTES)}, il vaut
+          mieux deux passages qu&apos;une journée intenable : appelez-nous.
+        </p>
+        <Button
+          type="button"
+          size="lg"
+          className="mt-4 min-h-12 w-full"
+          onClick={() => chooseDuration(sliderMinutes, false)}
+        >
+          Choisir mon rythme
+        </Button>
+      </div>
 
       <Reassurance />
     </div>
@@ -2098,7 +2349,7 @@ function FrequencyStep({
                     <span
                       className={`block text-xs ${
                         selected === option.value
-                          ? "text-mint-800"
+                          ? "text-teal-800"
                           : "text-muted-foreground"
                       }`}
                     >
@@ -2112,7 +2363,7 @@ function FrequencyStep({
                       <span
                         className={`block text-xs ${
                           selected === option.value
-                            ? "text-mint-800"
+                            ? "text-teal-800"
                             : "text-muted-foreground"
                         }`}
                       >
@@ -2133,9 +2384,16 @@ function FrequencyStep({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        En formule régulière, nous calons les passages suivants avec vous après
-        le premier ménage, et nous cherchons à vous envoyer la même personne à
-        chaque fois. Vous ne vous engagez sur rien aujourd&apos;hui.
+        Aucun abonnement à résilier : vous arrêtez quand vous voulez. En formule
+        régulière, nous calons les passages suivants avec vous après le premier
+        ménage, et nous cherchons à vous envoyer la même personne à chaque fois.
+      </p>
+
+      {/* Dire pourquoi un rythme manque vaut mieux que le laisser chercher. */}
+      <p className="text-xs text-muted-foreground">
+        « Une fois par mois » n&apos;est pas proposé : à ce rythme,
+        l&apos;entretien courant n&apos;en est plus un et la promesse d&apos;un
+        intervenant attitré ne tient plus.
       </p>
 
       <Reassurance />
@@ -2247,7 +2505,7 @@ function SlotStep({
         </p>
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+          className="mt-4 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
         >
           Appeler le {SITE.phone}
         </a>
@@ -2257,104 +2515,140 @@ function SlotStep({
 
   return (
     <div className="space-y-5">
-      {/* Les journées complètes restent visibles, barrées : ce que le planning
+      <p className="text-sm text-muted-foreground">
+        Choisissez l&apos;heure qui vous arrange le mieux, puis celles qui vous
+        iraient aussi.
+      </p>
+
+      {/* Le calendrier vit dans sa carte, comme sur le prototype : la bande
+          de jours, la grille d'heures et la légende forment un seul objet. */}
+      <div className="space-y-4 rounded-[var(--r-l)] border border-border bg-card p-5">
+        {/* Les journées complètes restent visibles, barrées : ce que le planning
           ne peut pas offrir se lit, au lieu de disparaître. */}
-      {/* Le bandeau s'accroche : un défilement horizontal libre laisse une
+        {/* Le bandeau s'accroche : un défilement horizontal libre laisse une
           date coupée en deux au bord de l'écran, et on ne sait plus quel jour
           on lit. */}
-      <div className="-mx-6 snap-x snap-mandatory overflow-x-auto px-6">
-        <ul className="flex gap-2 pb-1">
-          {days.map((day) => {
-            const open = day.slots.length > 0;
-            const isActive = active?.key === day.key;
-            return (
-              <li key={day.key} className="snap-start">
-                <button
-                  type="button"
-                  disabled={!open}
-                  onClick={() => setActiveKey(day.key)}
-                  aria-pressed={isActive}
-                  className={`flex min-h-18 w-18 flex-col items-center justify-center rounded-lg border-2 px-2 py-2 text-center transition-[background-color,border-color] duration-200 ease-brand ${
-                    isActive
-                      ? "border-ink-900 bg-ink-900 text-white"
-                      : open
-                        ? "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
-                        : "border-border-subtle bg-muted text-ink-300 line-through"
-                  }`}
-                >
-                  <span className="text-xs capitalize">
-                    {chipFormatter.format(day.date).split(" ")[0]}
-                  </span>
-                  <span className="text-lg font-extrabold tabular-nums">
-                    {day.date.getDate()}
-                  </span>
-                  <span className="text-[0.65rem] uppercase">
-                    {monthFormatter.format(day.date).replace(".", "")}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+        <div className="-mx-5 snap-x snap-mandatory overflow-x-auto px-5">
+          <ul className="flex gap-2 pb-1">
+            {days.map((day) => {
+              const open = day.slots.length > 0;
+              const isActive = active?.key === day.key;
+              return (
+                <li key={day.key} className="snap-start">
+                  <button
+                    type="button"
+                    disabled={!open}
+                    onClick={() => setActiveKey(day.key)}
+                    aria-pressed={isActive}
+                    className={`flex min-h-18 w-18 flex-col items-center justify-center rounded-lg border-2 px-2 py-2 text-center transition-[background-color,border-color] duration-200 ease-brand ${
+                      isActive
+                        ? "border-ink-900 bg-ink-900 text-white"
+                        : open
+                          ? "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
+                          : "border-border-subtle bg-muted text-ink-300 line-through"
+                    }`}
+                  >
+                    <span className="text-xs capitalize">
+                      {chipFormatter.format(day.date).split(" ")[0]}
+                    </span>
+                    <span className="text-lg font-extrabold tabular-nums">
+                      {day.date.getDate()}
+                    </span>
+                    <span className="text-[0.65rem] uppercase">
+                      {monthFormatter.format(day.date).replace(".", "")}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
-      {active ? (
-        <div>
-          <h3 className="font-extrabold first-letter:uppercase">
-            {dayFormatter.format(active.date)}
-          </h3>
-          {active.slots.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              Complet ce jour-là. Choisissez une autre date ci-dessus.
-            </p>
-          ) : (
-            <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {active.slots.map((slot) => {
-                const preferred = chosen === slot.start;
-                const alternate = alternates.includes(slot.start);
-                const full = alternates.length >= MAX_ALTERNATE_SLOTS;
+        {active ? (
+          <div>
+            <h3 className="font-extrabold first-letter:uppercase">
+              {dayFormatter.format(active.date)}
+            </h3>
+            {active.slots.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Complet ce jour-là. Choisissez une autre date ci-dessus.
+              </p>
+            ) : (
+              <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {active.slots.map((slot) => {
+                  const preferred = chosen === slot.start;
+                  const alternate = alternates.includes(slot.start);
+                  const full = alternates.length >= MAX_ALTERNATE_SLOTS;
 
-                return (
-                  <li key={slot.start}>
-                    <button
-                      type="button"
-                      /* Le premier choix désigne le créneau préféré. Les
+                  return (
+                    <li key={slot.start}>
+                      <button
+                        type="button"
+                        /* Le premier choix désigne le créneau préféré. Les
                          suivants ajoutent des replis — sauf sur le préféré
                          lui-même, qu'un second appui libérerait sans qu'on
                          sache lequel prend sa place. */
-                      disabled={
-                        !preferred &&
-                        chosen !== null &&
-                        alternate === false &&
-                        full
-                      }
-                      onClick={() => {
-                        // Une impulsion de dix millisecondes : le geste se
-                        // confirme dans la main. Absente sur iOS, sans
-                        // conséquence — c'est un ajout, pas un signal dont
-                        // dépend la compréhension.
-                        navigator.vibrate?.(10);
-                        if (chosen === null || preferred) onChoose(slot.start);
-                        else onToggleAlternate(slot.start);
-                      }}
-                      aria-pressed={preferred || alternate}
-                      className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100 ${
-                        preferred
-                          ? "border-ink-900 bg-ink-900 text-white"
-                          : alternate
-                            ? "border-mint-400 bg-mint-50 text-mint-800"
-                            : "border-border bg-card hover:border-mint-400 hover:bg-mint-50"
-                      }`}
-                    >
-                      {timeFormatter.format(new Date(slot.start))}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      ) : null}
+                        disabled={
+                          !preferred &&
+                          chosen !== null &&
+                          alternate === false &&
+                          full
+                        }
+                        onClick={() => {
+                          // Une impulsion de dix millisecondes : le geste se
+                          // confirme dans la main. Absente sur iOS, sans
+                          // conséquence — c'est un ajout, pas un signal dont
+                          // dépend la compréhension.
+                          navigator.vibrate?.(10);
+                          if (chosen === null || preferred)
+                            onChoose(slot.start);
+                          else onToggleAlternate(slot.start);
+                        }}
+                        aria-pressed={preferred || alternate}
+                        className={`min-h-12 w-full rounded-md border-2 text-sm font-bold tabular-nums transition-[background-color,border-color,transform] duration-200 ease-brand active:scale-[0.98] disabled:opacity-40 motion-reduce:active:scale-100 ${
+                          preferred
+                            ? "border-ink-900 bg-ink-900 text-white"
+                            : alternate
+                              ? "border-teal-400 bg-teal-50 text-teal-800"
+                              : "border-border bg-card hover:border-teal-300 hover:bg-teal-50"
+                        }`}
+                      >
+                        {timeFormatter.format(new Date(slot.start))}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ) : null}
+
+        {/* La légende dit ce que les couleurs disent : personne ne devine
+          qu'encre veut dire « préféré » et sarcelle « repli ». */}
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block size-3.5 rounded-xs bg-ink-900"
+              aria-hidden
+            />
+            Votre préféré
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block size-3.5 rounded-xs border-2 border-teal-400 bg-teal-50"
+              aria-hidden
+            />
+            Repli accepté
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span
+              className="inline-block size-3.5 rounded-xs border border-border bg-muted"
+              aria-hidden
+            />
+            Déjà pris
+          </li>
+        </ul>
+      </div>
 
       {chosen !== null ? (
         <div className="rounded-xl border border-border bg-card p-4">
@@ -2384,7 +2678,7 @@ function SlotStep({
                   <button
                     type="button"
                     onClick={() => onToggleAlternate(start)}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-mint-400 bg-mint-50 px-3 text-sm font-medium text-mint-800"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-teal-400 bg-teal-50 px-3 text-sm font-medium text-teal-800"
                   >
                     {dayFormatter.format(new Date(start)).split(" ")[0]}{" "}
                     {timeFormatter.format(new Date(start))}
@@ -2396,13 +2690,15 @@ function SlotStep({
             </ul>
           ) : null}
 
+          {/* Le bouton annonce l'écran suivant plutôt que « Continuer », qui
+              ne dit pas vers quoi. */}
           <Button
             type="button"
             size="lg"
             className="mt-4 min-h-12 w-full"
             onClick={onContinue}
           >
-            Continuer
+            Saisir mes coordonnées
           </Button>
         </div>
       ) : null}
@@ -2413,7 +2709,7 @@ function SlotStep({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Étape 5 — Récapitulatif et coordonnées                                     */
+/* Étape 6 — Récapitulatif                                                    */
 /* -------------------------------------------------------------------------- */
 
 function RecapLine({
@@ -2454,7 +2750,6 @@ function RecapStep({
   contact,
   onContactChange,
   onEdit,
-  onChangeAddress,
   onSubmit,
   submitting,
 }: {
@@ -2465,8 +2760,6 @@ function RecapStep({
   contact: ContactInput;
   onContactChange: (contact: ContactInput) => void;
   onEdit: (step: Step) => void;
-  /** Revenir à la recherche d'adresse, sur ce même écran. */
-  onChangeAddress: () => void;
   onSubmit: () => void;
   submitting: boolean;
 }) {
@@ -2488,6 +2781,11 @@ function RecapStep({
         onSubmit();
       }}
     >
+      <p className="text-sm text-muted-foreground">
+        Dernière étape : vérifions ensemble. Nous recalculons le trajet sur
+        votre adresse exacte avant de proposer la mission.
+      </p>
+
       <dl className="rounded-xl border border-border bg-card px-5 py-1">
         <RecapLine
           label="Rendez-vous"
@@ -2495,12 +2793,14 @@ function RecapStep({
           onEdit={() => onEdit("creneau")}
           editLabel="Modifier le créneau"
         />
+        {/* L'adresse se modifie comme les autres lignes, en revenant à son
+            écran : c'est le premier, et il porte déjà la complétion, les
+            adresses enregistrées et la saisie manuelle. La rouvrir ici en
+            aurait fait une seconde recherche d'adresse à maintenir. */}
         <RecapLine
           label="Adresse"
           value={address.label}
-          /* L'adresse se change sur place : c'est l'écran où on la donne, y
-             revenir par la navigation serait un détour pour rien. */
-          onEdit={onChangeAddress}
+          onEdit={() => onEdit("adresse")}
           editLabel="Modifier l'adresse"
         />
         {/* La durée affichée est celle du devis, pas celle qu'on recalculerait
@@ -2566,6 +2866,19 @@ function RecapStep({
           Ajouter l&apos;accès au logement et vos priorités
         </button>
       )}
+
+      {/* Ce que la demande devient : la diffusion par lots, dite avant le
+          geste qui engage — personne ne doit découvrir après coup que le
+          rendez-vous dépend d'une acceptation. */}
+      <div className="rounded-xl bg-cream-50 p-5">
+        <p className="font-extrabold">Ce que nous faisons de votre demande</p>
+        <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+          Elle part chez les cinq intervenants qui habitent le plus près de chez
+          vous. Le premier qui accepte l&apos;emporte, et vous êtes prévenu sous
+          24 h. Sans acceptation, la recherche s&apos;élargit puis s&apos;arrête
+          au bout d&apos;une semaine — et nous vous écrivons.
+        </p>
+      </div>
 
       <ul className="space-y-2 text-sm text-muted-foreground">
         <li className="flex items-baseline gap-2">
@@ -2655,7 +2968,7 @@ function ContactStep({
       <p className="text-sm text-muted-foreground">
         {known
           ? "Ces coordonnées sont celles de votre compte. Corrigez-les si besoin."
-          : "Votre compte se crée avec ces informations — aucun mot de passe à choisir."}
+          : "Votre compte se crée à la réservation. Rien à retenir : la connexion se fait par un lien envoyé par email."}
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -2710,8 +3023,9 @@ function ContactStep({
         </div>
       </div>
 
+      {/* Le bouton annonce l'écran suivant plutôt que « Continuer ». */}
       <Button type="submit" size="lg" className="min-h-12 w-full">
-        Continuer
+        Voir mon récapitulatif
       </Button>
       <Reassurance />
     </form>
@@ -2738,12 +3052,29 @@ function IntervenantCard({ cleaner }: { cleaner: CleanerCardView | null }) {
   if (!cleaner) {
     return (
       <div className="rounded-xl border border-border bg-card p-5 text-left">
+        {/*
+         * **« Le créneau est bloqué » était faux, et c'était le pire des
+         * deux.** Une proposition ne réserve rien — ni en base, ni dans le
+         * moteur — précisément pour qu'un intervenant puisse recevoir deux
+         * offres et choisir. Promettre un créneau tenu, c'est promettre ce
+         * qu'aucune ligne du produit ne tient.
+         *
+         * On dit donc le mécanisme réel : la mission part aux plus proches de
+         * chez vous, le premier qui accepte l'emporte, et si personne n'est
+         * libre à cette heure-là c'est vous qui tranchez l'heure suivante.
+         * C'est exactement ce que font `diffusion.ts` et `SlotProposal`.
+         */}
         <p className="font-medium">
-          Nous vous confirmons votre intervenant sous 24 heures.
+          Maintenant, on vous trouve quelqu&apos;un.
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Le créneau, lui, est bloqué : c&apos;est la personne qui reste à
-          confirmer, pas le rendez-vous.
+        <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
+          Votre mission part aux intervenants les plus proches de chez vous. Le
+          premier qui l&apos;accepte la prend, et vous recevez son prénom — sous
+          24 heures.
+        </p>
+        <p className="mt-2 text-sm text-pretty text-muted-foreground">
+          Si personne n&apos;est libre à cette heure-là, on vous propose une
+          autre heure. Rien ne bouge sans votre accord.
         </p>
       </div>
     );
@@ -2762,7 +3093,7 @@ function IntervenantCard({ cleaner }: { cleaner: CleanerCardView | null }) {
     <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 text-left">
       <span
         aria-hidden
-        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-mint-100 text-lg font-black text-mint-800"
+        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-teal-100 text-lg font-black text-teal-800"
       >
         {cleaner.firstName.slice(0, 2).toUpperCase()}
       </span>
@@ -2811,7 +3142,7 @@ function AddToCalendar({ confirmation }: { confirmation: ConfirmationView }) {
     <a
       href={href}
       download={bookingCalendarFilename(new Date(confirmation.startAt))}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-mint-400 hover:bg-mint-50"
+      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-teal-300 hover:bg-teal-50"
     >
       <CalendarPlusIcon className="size-4" aria-hidden />
       Ajouter à mon calendrier
@@ -2824,14 +3155,22 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-mint-200 bg-mint-50 p-8 text-center">
+      <div className="rounded-xl border border-teal-200 bg-teal-50 p-8 text-center">
         <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <CheckIcon className="size-6" aria-hidden />
         </span>
-        <h2 className="mt-5 text-2xl font-black">C&apos;est réservé.</h2>
+        {/*
+         * **« C'est réservé » promettait ce que le produit ne fait pas.**
+         * Depuis la diffusion par lots, sortir du tunnel crée une demande
+         * proposée à cinq intervenants : aucun n'a accepté, et la formule
+         * laissait croire que quelqu'un viendrait. Le titre dit donc ce qui
+         * vient d'être fait — la demande est prise — et ce qui commence :
+         * la recherche.
+         */}
+        <h2 className="mt-5 text-2xl font-black">C&apos;est noté.</h2>
         <p className="mx-auto mt-3 max-w-prose text-muted-foreground">
-          Rendez-vous{" "}
-          <strong className="text-foreground first-letter:uppercase">
+          Votre demande est enregistrée pour le{" "}
+          <strong className="text-foreground">
             {dayFormatter.format(start)} à {hourLabel(start)}
           </strong>{" "}
           au {confirmation.addressLabel}, pour{" "}
@@ -2844,10 +3183,11 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
             réservation reste ferme, sur une heure que le client avait
             lui-même déclarée acceptable. */}
         {confirmation.usedAlternate ? (
-          <p className="mx-auto mt-4 max-w-prose rounded-lg bg-lemon-100 px-4 py-3 text-sm">
-            Votre créneau préféré est parti pendant que vous remplissiez le
-            formulaire. Nous avons retenu l&apos;un de ceux que vous aviez
-            acceptés — c&apos;est bien l&apos;heure ci-dessus qui est réservée.
+          <p className="mx-auto mt-4 max-w-prose rounded-lg bg-pineapple-100 px-4 py-3 text-sm">
+            Votre créneau préféré n&apos;était plus tenable pendant que vous
+            remplissiez le formulaire. Nous avons retenu l&apos;un de ceux que
+            vous aviez acceptés — c&apos;est bien l&apos;heure ci-dessus que
+            nous cherchons à pourvoir.
           </p>
         ) : null}
       </div>
@@ -2865,11 +3205,16 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
               {confirmation.accessLinkEmail}
             </strong>
             . Vous y retrouverez cette intervention, pourrez écrire à votre
-            intervenant et annuler si besoin.
+            intervenant, enregistrer votre carte et annuler si besoin.
           </p>
+          {/* La carte n'est pas exigée ici, et c'est délibéré : la
+              préautorisation part vingt-quatre heures avant la mission, pas à
+              la réservation. Demander une carte pour obtenir une date est le
+              meilleur moyen de perdre quelqu'un qui n'a pas encore essayé le
+              service — et le tunnel a déjà atteint sa cible de gestes. */}
           <Link
             href="/mon-espace"
-            className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-mint-400 hover:bg-mint-50"
+            className="mt-4 inline-flex min-h-11 items-center rounded-full border-2 border-border bg-card px-5 text-sm font-bold transition-colors hover:border-teal-300 hover:bg-teal-50"
           >
             Ouvrir mon espace
           </Link>
@@ -2882,7 +3227,7 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
         <AddToCalendar confirmation={confirmation} />
         <a
           href={`tel:${SITE.phoneE164}`}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-mint-400 hover:bg-mint-50"
+          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-6 font-bold shadow-xs transition-colors duration-200 ease-brand hover:border-teal-300 hover:bg-teal-50"
         >
           Appeler le {SITE.phone}
         </a>
@@ -2894,7 +3239,11 @@ function Confirmed({ confirmation }: { confirmation: ConfirmationView }) {
       <InstallPrompt />
 
       <p className="text-center text-sm text-muted-foreground">
-        Un email de confirmation part maintenant. Pour modifier ou annuler,
+        {/* L'email qui part est « demande reçue », pas une confirmation :
+            `messages.ts` s'interdit de confirmer avant qu'un intervenant ait
+            accepté, et cette ligne était le dernier endroit du parcours à
+            promettre le contraire. */}
+        Un récapitulatif part maintenant par email. Pour modifier ou annuler,
         répondez-y ou appelez-nous — c&apos;est gratuit jusqu&apos;à{" "}
         {FREE_CANCELLATION_HOURS} heures avant.
       </p>

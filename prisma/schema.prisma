@@ -93,7 +93,23 @@ model Organization {
   /// Numéro de déclaration Services à la personne, requis pour communiquer
   /// sur le crédit d'impôt.
   sapDeclarationNumber String?
-  insuranceExpiresAt   DateTime?
+
+  /// `FRANCHISE_EN_BASE` · `ASSUJETTI` — voir `facturation/document.RegimeTva`.
+  ///
+  /// **C'est une donnée, pas une constante du code**, et c'est délibéré : le
+  /// régime de la plateforme dépend de son chiffre d'affaires et d'options que
+  /// seul son comptable connaît, et il n'est pas le même que celui d'une
+  /// société cliente du SaaS. L'écrire en dur dans `site.ts` obligerait à un
+  /// déploiement pour le corriger, et ferait porter la même mention à tout le
+  /// monde.
+  ///
+  /// La valeur par défaut mérite d'être vérifiée avant la première facture :
+  /// une mention de TVA fausse rend la facture irrégulière dans les deux sens.
+  vatRegime String @default("FRANCHISE_EN_BASE")
+  /// Taux en points de base, exigé si assujetti. 2 000 = 20 %.
+  vatRateBp Int?
+
+  insuranceExpiresAt DateTime?
 
   /// Stripe. `stripeAccountId` est le compte Connect qui reçoit les
   /// reversements ; `stripeCustomerId` porte l'abonnement SaaS des sociétés.
@@ -105,34 +121,45 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships          Membership[]
-  clientProfiles       ClientProfile[]
-  cleanerProfiles      CleanerProfile[]
-  addresses            Address[]
-  services             Service[]
-  serviceOptions       ServiceOption[]
-  pricingRules         PricingRule[]
-  bookings             Booking[]
-  bookingItems         BookingItem[]
-  bookingStatusEvents  BookingStatusEvent[]
-  subscriptions        Subscription[]
-  availabilityRules    AvailabilityRule[]
+  memberships            Membership[]
+  clientProfiles         ClientProfile[]
+  cleanerProfiles        CleanerProfile[]
+  addresses              Address[]
+  services               Service[]
+  serviceOptions         ServiceOption[]
+  pricingRules           PricingRule[]
+  bookings               Booking[]
+  bookingItems           BookingItem[]
+  bookingStatusEvents    BookingStatusEvent[]
+  subscriptions          Subscription[]
+  availabilityRules      AvailabilityRule[]
   availabilityExceptions AvailabilityException[]
-  calendarConnections  CalendarConnection[]
-  externalBusyBlocks   ExternalBusyBlock[]
-  assignments          Assignment[]
-  slotProposals        SlotProposal[]
-  payments             Payment[]
-  payouts              Payout[]
-  invoices             Invoice[]
-  reviews              Review[]
-  messages             Message[]
-  cleanerDocuments     CleanerDocument[]
-  leads                Lead[]
-  auditLogs            AuditLog[]
-  referralCodes        ReferralCode[]
-  referrals            Referral[]
-  referralRewards      ReferralReward[]
+  calendarConnections    CalendarConnection[]
+  externalBusyBlocks     ExternalBusyBlock[]
+  assignments            Assignment[]
+  slotProposals          SlotProposal[]
+  payments               Payment[]
+  payouts                Payout[]
+  invoices               Invoice[]
+  reviews                Review[]
+  reclamations           Reclamation[]
+  invoiceSequences       InvoiceSequence[]
+  taxCertificates        TaxCertificate[]
+  messages               Message[]
+  cleanerDocuments       CleanerDocument[]
+  leads                  Lead[]
+  auditLogs              AuditLog[]
+  referralCodes          ReferralCode[]
+  referrals              Referral[]
+  referralRewards        ReferralReward[]
+  analyticsEvents        AnalyticsEvent[]
+  pricingSurcharges      PricingSurcharge[]
+  propertyKeyLogs        PropertyKeyLog[]
+  accessSecretReads      AccessSecretRead[]
+  missionChecks          MissionCheck[]
+  missionPhotos          MissionPhoto[]
+  missionAnomalies       MissionAnomaly[]
+  missionChecklistItems  MissionChecklistItem[]
 
   @@index([type, status])
 }
@@ -164,17 +191,25 @@ model User {
   name          String?
   image         String?
 
+  /// Empreinte scrypt, paramètres compris — voir `auth/mot-de-passe.ts`.
+  ///
+  /// **Nullable, et destinée à le rester.** Le mot de passe s'ajoute au lien de
+  /// connexion, il ne le remplace pas : un compte sans mot de passe n'a rien à
+  /// se faire voler, et c'est la meilleure protection qui soit.
+  passwordHash      String?
+  passwordUpdatedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts         Account[]
-  sessions         Session[]
-  memberships      Membership[]
-  clientProfiles   ClientProfile[]
-  cleanerProfiles  CleanerProfile[]
-  auditLogs        AuditLog[]
-  sentMessages     Message[]        @relation("MessageSender")
-  receivedMessages Message[]        @relation("MessageRecipient")
+  accounts          Account[]
+  sessions          Session[]
+  memberships       Membership[]
+  clientProfiles    ClientProfile[]
+  cleanerProfiles   CleanerProfile[]
+  auditLogs         AuditLog[]
+  sentMessages      Message[]         @relation("MessageSender")
+  receivedMessages  Message[]         @relation("MessageRecipient")
   verifiedDocuments CleanerDocument[] @relation("DocumentVerifier")
   referralCodes     ReferralCode[]
   referredBy        Referral?
@@ -262,18 +297,28 @@ model ClientProfile {
 
   stripeCustomerId String?
 
+  /// Date d'entrée en recouvrement, `null` quand tout est en ordre.
+  ///
+  /// Le gel des interventions à venir s'en **dérive** : il n'est pas posé
+  /// réservation par réservation. Régulariser lève donc tout d'un coup, sans
+  /// parcours — et aucun oubli ne peut laisser gelé quelqu'un qui a payé.
+  recouvrementDepuis DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  addresses     Address[]
-  bookings      Booking[]
-  subscriptions Subscription[]
-  reviews       Review[]
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses       Address[]
+  bookings        Booking[]
+  subscriptions   Subscription[]
+  reviews         Review[]
+  reclamations    Reclamation[]
+  taxCertificates TaxCertificate[]
 
   @@unique([organizationId, userId])
   @@index([organizationId])
+  @@index([recouvrementDepuis])
 }
 
 enum CleanerStatus {
@@ -304,7 +349,7 @@ model CleanerProfile {
   status         CleanerStatus  @default(PENDING_VERIFICATION)
   employmentType EmploymentType @default(INDEPENDENT)
 
-  siret              String?
+  siret                String?
   /// Numéro de déclaration Services à la personne de l'intervenant.
   ///
   /// La facturation en deux lignes suppose **deux** organismes déclarés : celui
@@ -316,6 +361,17 @@ model CleanerProfile {
   /// SIRET déclaré : deux identités différentes sont soit une faute de frappe,
   /// soit le numéro de quelqu'un d'autre.
   sapDeclarationNumber String?
+
+  /// `FRANCHISE_EN_BASE` · `ASSUJETTI` — voir `facturation/document.RegimeTva`.
+  ///
+  /// La franchise est la situation de tout auto-entrepreneur sous le seuil,
+  /// donc la quasi-totalité des intervenants. Elle commande la mention « TVA
+  /// non applicable, article 293 B du CGI », dont l'absence — ou la présence à
+  /// tort — rend la facture irrégulière.
+  vatRegime String @default("FRANCHISE_EN_BASE")
+  /// Taux en points de base, exigé si assujetti. 2 000 = 20 %.
+  vatRateBp Int?
+
   insuranceExpiresAt DateTime?
   stripeAccountId    String?
   /// Onboarding Stripe Connect achevé : sans cela, aucun reversement possible.
@@ -338,20 +394,24 @@ model CleanerProfile {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  homeAddress            Address?                @relation("CleanerHome", fields: [homeAddressId], references: [id], onDelete: SetNull)
-  documents              CleanerDocument[]
-  availabilityRules      AvailabilityRule[]
-  availabilityExceptions AvailabilityException[]
-  calendarConnections    CalendarConnection[]
-  externalBusyBlocks     ExternalBusyBlock[]
-  assignments            Assignment[]
-  slotProposals          SlotProposal[]
-  payouts                Payout[]
-  reviews                Review[]
-  issuedInvoices         Invoice[]
-  preferredForSubscriptions Subscription[]       @relation("PreferredCleaner")
+  organization              Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  homeAddress               Address?                @relation("CleanerHome", fields: [homeAddressId], references: [id], onDelete: SetNull)
+  documents                 CleanerDocument[]
+  availabilityRules         AvailabilityRule[]
+  availabilityExceptions    AvailabilityException[]
+  calendarConnections       CalendarConnection[]
+  externalBusyBlocks        ExternalBusyBlock[]
+  assignments               Assignment[]
+  slotProposals             SlotProposal[]
+  payouts                   Payout[]
+  reviews                   Review[]
+  issuedInvoices            Invoice[]
+  issuedTaxCertificates     TaxCertificate[]
+  preferredForSubscriptions Subscription[]          @relation("PreferredCleaner")
+  propertyKeyLogs           PropertyKeyLog[]
+  accessSecretReads         AccessSecretRead[]
+  missionChecks             MissionCheck[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, status])
@@ -381,10 +441,10 @@ model CleanerDocument {
   type             DocumentType
   status           DocumentStatus @default(PENDING)
 
-  fileUrl        String
-  expiresAt      DateTime?
-  verifiedAt     DateTime?
-  verifiedById   String?
+  fileUrl         String
+  expiresAt       DateTime?
+  verifiedAt      DateTime?
+  verifiedById    String?
   rejectionReason String?
 
   createdAt DateTime @default(now())
@@ -413,8 +473,8 @@ model CleanerDocument {
 /// initiale) : elle est dérivée de `lat`/`lng`, ne peut pas diverger, et porte
 /// l'index GIST utilisé par les requêtes de proximité.
 model Address {
-  id             String  @id @default(cuid())
-  organizationId String
+  id              String  @id @default(cuid())
+  organizationId  String
   clientProfileId String?
 
   label      String?
@@ -431,22 +491,118 @@ model Address {
   /// a été résolue automatiquement.
   banId String?
 
-  /// Informations d'accès : étage, ascenseur, digicode, stationnement.
+  /// Informations d'accès non sensibles : étage, ascenseur, stationnement.
+  /// Le digicode, lui, ne passe pas par ici — voir `accessSecretEnc`.
   accessNotes String?
   floor       String?
   hasElevator Boolean?
 
+  // --- Le logement, et non plus seulement le point postal -------------------
+
+  /// `APPARTEMENT` · `MAISON`
+  propertyType String?
+  rooms        Int?
+  bathrooms    Int?
+  wc           Int?
+  parkingNotes String?
+
+  /// Ce à quoi on ne touche pas. Écrit par le client, lu par l'intervenant.
+  forbiddenZones   String?
+  /// Animaux : nom, tempérament, consigne. Un chien qu'on ne sait pas nommer
+  /// est un chien qu'on n'ose pas approcher.
+  pets             Json?
+  /// Allergies et produits à éviter. Sécurité avant confort.
+  allergies        String?
+  /// Matériel disponible sur place : aspirateur, serpillère, produits.
+  supplies         Json?
+  /// Le client fournit ses produits, ou l'intervenant apporte les siens.
+  ownProducts      Boolean?
+  /// Tâches habituelles par pièce, reprises à chaque passage.
+  defaultChecklist Json?
+
+  /// Consigne d'accès sensible — digicode, emplacement d'une clé.
+  ///
+  /// Chiffrée en AES-256-GCM, jamais lisible par une requête ordinaire, jamais
+  /// écrite dans un journal. Elle ne se déchiffre que par
+  /// `logement/secret.ts`, pour un intervenant affecté et dans la fenêtre
+  /// J-24 h → J+2 h. Hors de cette fenêtre, un compte compromis ne donne accès
+  /// à aucun domicile.
+  accessSecretEnc   Bytes?
+  /// Instant de la dernière modification, pour dire « code enregistré · le … »
+  /// au client sans jamais le lui réafficher.
+  accessSecretSetAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clientProfile ClientProfile?  @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
-  cleanerHome   CleanerProfile? @relation("CleanerHome")
-  bookings      Booking[]
-  subscriptions Subscription[]
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile  ClientProfile?     @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  cleanerHome    CleanerProfile?    @relation("CleanerHome")
+  bookings       Booking[]
+  subscriptions  Subscription[]
+  keyLogs        PropertyKeyLog[]
+  secretAccesses AccessSecretRead[]
 
   @@index([organizationId])
   @@index([inseeCode])
+}
+
+/// Journal de remise de clés.
+///
+/// Sans lui, une clé perdue est une discussion sans pièce. Chaque mouvement est
+/// horodaté et porte l'accord des deux parties : ce n'est pas une formalité,
+/// c'est ce qui permet de dire qui détenait quoi et depuis quand.
+model PropertyKeyLog {
+  id               String  @id @default(cuid())
+  organizationId   String
+  addressId        String
+  cleanerProfileId String?
+
+  /// `HANDED_OVER` · `RETURNED` · `LOST`
+  action String
+  notes  String?
+
+  /// Confirmé par le client, et par l'intervenant. Les deux, ou aucun des deux
+  /// ne vaut preuve.
+  confirmedByClientAt  DateTime?
+  confirmedByCleanerAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  address      Address         @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile? @relation(fields: [cleanerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, addressId, createdAt])
+}
+
+/// Journal des lectures de consigne d'accès.
+///
+/// Obligation RGPD, et protection en cas de litige : le jour où un client
+/// signale une entrée qu'il n'attendait pas, la question « qui a lu le code, et
+/// quand » doit avoir une réponse. Le journal est écrit par le module qui
+/// déchiffre, jamais par l'appelant — sinon il finirait par être oublié.
+model AccessSecretRead {
+  id               String  @id @default(cuid())
+  organizationId   String
+  addressId        String
+  cleanerProfileId String?
+  bookingId        String?
+
+  /// Lecture refusée : hors fenêtre, ou sans affectation. Conservée aussi, et
+  /// c'est le plus intéressant à relire.
+  granted Boolean
+
+  reason String?
+
+  readAt DateTime @default(now())
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  address      Address         @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile? @relation(fields: [cleanerProfileId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, addressId, readAt])
+  @@index([cleanerProfileId, readAt])
 }
 
 // ===========================================================================
@@ -499,10 +655,10 @@ model ServiceOption {
   name           String
   description    String?
 
-  extraMinutes   Int     @default(30)
-  extraPriceCents Int    @default(0)
-  isActive       Boolean @default(true)
-  sortOrder      Int     @default(0)
+  extraMinutes    Int     @default(30)
+  extraPriceCents Int     @default(0)
+  isActive        Boolean @default(true)
+  sortOrder       Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -544,7 +700,7 @@ model PricingRule {
   professionalHourlyRateCents Int
 
   /// Taux du crédit d'impôt services à la personne, en points de base.
-  taxCreditRateBp Int       @default(5000)
+  taxCreditRateBp Int @default(5000)
 
   validFrom  DateTime  @default(now())
   validUntil DateTime?
@@ -585,7 +741,7 @@ enum BookingSource {
 }
 
 model Booking {
-  id              String        @id @default(cuid())
+  id              String  @id @default(cuid())
   organizationId  String
   clientProfileId String
   addressId       String
@@ -601,8 +757,8 @@ model Booking {
   scheduledEnd    DateTime
   durationMinutes Int
 
-  surfaceSqm Int?
-  frequency  Frequency      @default(ONE_OFF)
+  surfaceSqm     Int?
+  frequency      Frequency      @default(ONE_OFF)
   engagementMode EngagementMode @default(PRESTATAIRE)
 
   /// Montants figés à la création. Un changement de tarif ou de commission ne
@@ -661,26 +817,45 @@ model Booking {
   clientNotes   String?
   internalNotes String?
 
-  cancelledAt     DateTime?
+  cancelledAt        DateTime?
   cancellationReason String?
-  completedAt     DateTime?
+  completedAt        DateTime?
+
+  /// Durée réellement passée, du pointage d'arrivée à celui de départ.
+  ///
+  /// **Elle ne refacture rien.** Le montant reste celui qui a été annoncé ; un
+  /// ajustement passe par une anomalie validée. Facturer autre chose que ce qui
+  /// a été affiché serait un changement de contrat, pas une correction.
+  actualMinutes Int?
+
+  /// Rapport jugé complet : deux photos avant et deux après.
+  ///
+  /// Faux ne bloque rien — ni le check-out, ni le paiement. Un intervenant qui
+  /// ne peut pas terminer sa journée à cause d'une photo manquante finit par
+  /// photographier n'importe quoi.
+  reportComplete Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  organization  Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  clientProfile ClientProfile        @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
-  address       Address              @relation(fields: [addressId], references: [id])
-  service       Service              @relation(fields: [serviceId], references: [id])
-  subscription  Subscription?        @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  items         BookingItem[]
-  assignments   Assignment[]
-  slotProposals SlotProposal[]
-  statusEvents  BookingStatusEvent[]
-  payments      Payment[]
-  invoices      Invoice[]
-  messages      Message[]
-  review        Review?
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile  ClientProfile          @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  address        Address                @relation(fields: [addressId], references: [id])
+  service        Service                @relation(fields: [serviceId], references: [id])
+  subscription   Subscription?          @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  items          BookingItem[]
+  assignments    Assignment[]
+  slotProposals  SlotProposal[]
+  statusEvents   BookingStatusEvent[]
+  payments       Payment[]
+  invoices       Invoice[]
+  messages       Message[]
+  review         Review?
+  checks         MissionCheck[]
+  photos         MissionPhoto[]
+  anomalies      MissionAnomaly[]
+  checklistItems MissionChecklistItem[]
+  reclamations   Reclamation[]
 
   @@index([organizationId, status, scheduledStart])
   @@index([organizationId, clientProfileId])
@@ -693,6 +868,10 @@ model Booking {
 enum BookingItemKind {
   SERVICE
   OPTION
+  /// Majoration de jour ou de délai. Détaillée en ligne plutôt que fondue dans
+  /// le total : un client qui lit « dimanche +25 % » comprend, un client qui
+  /// voit un montant plus élevé sans explication conteste.
+  SURCHARGE
 }
 
 /// Ligne de réservation : instantané du catalogue au moment de la commande.
@@ -725,14 +904,14 @@ model BookingItem {
 /// Journal des transitions de statut. Alimente les indicateurs (taux
 /// d'annulation, délai d'attribution) et sert de preuve en cas de litige.
 model BookingStatusEvent {
-  id             String        @id @default(cuid())
+  id             String         @id @default(cuid())
   organizationId String
   bookingId      String
   fromStatus     BookingStatus?
   toStatus       BookingStatus
   reason         String?
   actorUserId    String?
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime       @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
@@ -763,15 +942,15 @@ model Subscription {
   addressId       String
   serviceId       String
 
-  frequency Frequency
+  frequency       Frequency
   /// 1 = lundi … 7 = dimanche (ISO 8601).
-  weekday   Int
+  weekday         Int
   /// Heure de début en minutes depuis minuit, fuseau Europe/Paris.
-  startMinute Int
+  startMinute     Int
   durationMinutes Int
   /// Pour les mensuels : 1 à 4, ou -1 pour la dernière semaine du mois.
-  weekOfMonth Int?
-  anchorDate  DateTime
+  weekOfMonth     Int?
+  anchorDate      DateTime
 
   preferredCleanerId String?
   status             SubscriptionStatus @default(ACTIVE)
@@ -893,9 +1072,9 @@ model CalendarConnection {
   syncCursor String?
 
   /// Abonnement aux notifications push. Expire et doit être renouvelé.
-  pushChannelId        String?
-  pushResourceId       String?
-  pushExpiresAt        DateTime?
+  pushChannelId  String?
+  pushResourceId String?
+  pushExpiresAt  DateTime?
 
   /// Écriture des missions LéoClean dans l'agenda de l'intervenant.
   writeEnabled Boolean @default(true)
@@ -928,11 +1107,11 @@ model ExternalBusyBlock {
   cleanerProfileId     String
   calendarConnectionId String
 
-  startAt DateTime
-  endAt   DateTime
-  isAllDay Boolean @default(false)
+  startAt  DateTime
+  endAt    DateTime
+  isAllDay Boolean  @default(false)
 
-  externalEventId String
+  externalEventId  String
   /// Événement maître d'une série récurrente, pour traiter les exceptions.
   recurringEventId String?
   sourceUpdatedAt  DateTime?
@@ -985,12 +1164,12 @@ model Assignment {
   /// parce qu'il explique pourquoi telle personne a été sollicitée, et qu'une
   /// diffusion qu'on ne peut pas relire est une décision qu'on ne peut pas
   /// défendre.
-  lot              Int              @default(1)
+  lot Int @default(1)
 
   /// Créneau de la mission, recopié depuis la réservation pour que la
   /// contrainte d'exclusion puisse s'appliquer sans jointure.
-  startAt DateTime
-  endAt   DateTime
+  startAt      DateTime
+  endAt        DateTime
   /// Créneau élargi des temps de trajet amont et aval.
   blockStartAt DateTime
   blockEndAt   DateTime
@@ -1001,12 +1180,12 @@ model Assignment {
   /// Décomposition du score d'attribution : coût d'insertion trajet, note,
   /// taux d'acceptation, équité de charge, priorité au cleaner attitré.
   /// Conservée pour pouvoir expliquer une décision.
-  score         Float?
+  score          Float?
   scoreBreakdown Json?
 
-  proposedAt  DateTime  @default(now())
-  respondBy   DateTime?
-  respondedAt DateTime?
+  proposedAt    DateTime  @default(now())
+  respondBy     DateTime?
+  respondedAt   DateTime?
   declineReason String?
 
   /// Renseigné quand cette affectation remplace un intervenant absent.
@@ -1070,6 +1249,19 @@ model SlotProposal {
   respondBy   DateTime?
   respondedAt DateTime?
 
+  /// Instant à partir duquel le client la voit.
+  ///
+  /// Une **pré-acceptation** — moins d'une heure d'écart, proposée par quelqu'un
+  /// qui tient encore l'offre — part tout de suite : il s'est engagé, faire
+  /// attendre le client n'apporterait rien. Une contre-proposition ordinaire
+  /// attend l'échéance du lot : le client a demandé une heure, on la cherche
+  /// avant de lui en proposer une autre.
+  ///
+  /// La colonne porte cette différence plutôt qu'un statut, parce que le statut
+  /// décrit le cycle de la réponse et non celui de la visibilité — mêler les
+  /// deux rendrait « en attente mais pas encore montrée » inexprimable.
+  visibleAt DateTime @default(now())
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1085,6 +1277,8 @@ model SlotProposal {
   @@index([organizationId, status])
   @@index([bookingId, status])
   @@index([cleanerProfileId, status])
+  /// La lecture client cherche « visible, en attente, à venir ».
+  @@index([bookingId, status, visibleAt])
 }
 
 // ===========================================================================
@@ -1116,6 +1310,16 @@ model Payment {
   capturedAt   DateTime?
   failureCode  String?
 
+  /// Date du **premier** échec, jamais du dernier : c'est elle qui datte toute
+  /// la suite des relances. La remplacer à chaque tentative repousserait
+  /// indéfiniment la suspension.
+  firstFailedAt  DateTime?
+  failedAttempts Int       @default(0)
+  /// Dernière relance envoyée. L'ordonnanceur repasse toutes les heures, la
+  /// relance se compte en jours : sans cette date, elle partirait vingt-quatre
+  /// fois par jour.
+  lastReminderAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -1123,6 +1327,8 @@ model Payment {
   booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, status])
+  /// L'ordonnanceur cherche « ce qui a échoué et attend une relance ».
+  @@index([status, firstFailedAt])
 }
 
 enum PayoutStatus {
@@ -1181,11 +1387,23 @@ model Invoice {
   /// exigence comptable.
   number String
 
-  issuedAt   DateTime @default(now())
-  totalCents Int
+  issuedAt               DateTime @default(now())
+  totalCents             Int
   /// Part de la facture ouvrant droit au crédit d'impôt services à la personne.
-  taxCreditEligibleCents Int @default(0)
-  pdfUrl     String?
+  ///
+  /// **Zéro si l'émetteur n'est pas déclaré**, quelle que soit la prestation :
+  /// c'est `facturation/document.partEligible` qui tranche, et le devis ne dit
+  /// que ce qui *serait* éligible.
+  taxCreditEligibleCents Int      @default(0)
+  pdfUrl                 String?
+
+  /// Le document, figé à l'émission.
+  ///
+  /// Une facture est immuable : tout ce qu'elle imprime — identité de
+  /// l'émetteur, adresse du client, lieu d'exécution — vient de sources
+  /// vivantes qui changeront. Sans instantané, une facture de l'an dernier se
+  /// réimprimerait différemment. Forme : `facturation/document.Facture`.
+  snapshot Json?
 
   createdAt DateTime @default(now())
 
@@ -1197,6 +1415,10 @@ model Invoice {
   booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   subscription Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   issuedBy     CleanerProfile? @relation(fields: [issuedByCleanerProfileId], references: [id], onDelete: SetNull)
+  /// Une facture par prestation et par type — l'ordonnanceur repasse toutes les
+  /// heures, et une seconde émission laisserait un doublon impossible à retirer
+  /// sans faire un trou dans la suite. Index partiel posé à la main dans la
+  /// migration : Prisma ne sait pas exprimer le `WHERE`.
 
   @@unique([organizationId, number])
   @@index([organizationId, issuedAt])
@@ -1224,7 +1446,12 @@ model Review {
   comment      String?
   communeInsee String
 
-  isPublic    Boolean   @default(true)
+  /// Vocabulaire fermé — voir `TAGS_AVIS` dans `src/lib/mission/notation.ts`.
+  tags String[] @default([])
+
+  /// Faux par défaut : ce qui se publie est décidé par `estPubliable`, jamais
+  /// subi. Une étoile nue ne dit rien à personne et gonfle un compteur.
+  isPublic    Boolean   @default(false)
   publishedAt DateTime?
   reply       String?
 
@@ -1241,11 +1468,108 @@ model Review {
   @@index([cleanerProfileId])
 }
 
-model Message {
-  id             String  @id @default(cuid())
+/// Ce qu'une mauvaise note ouvre — et ce qu'un client signale de lui-même.
+///
+/// Trois étoiles ou moins appellent quelqu'un, sans exception. La table sert
+/// aussi aux réclamations ouvertes sans note : un objet cassé se signale que la
+/// mission ait été notée ou non, d'où un `bookingId` facultatif.
+model Reclamation {
+  id              String  @id @default(cuid())
+  organizationId  String
+  bookingId       String?
+  clientProfileId String
+
+  /// PROPRETE | RETARD | COMPORTEMENT | CASSE | AUTRE
+  categorie String
+  /// OUVERTE | EN_COURS | RESOLUE | CLASSEE
+  statut    String @default("OUVERTE")
+  /// P0 | P1 | P2 | P3 — la même échelle que la file d'attente ops.
+  priorite  String @default("P2")
+
+  description     String?
+  /// Vrai quand le ticket est né d'une note basse plutôt que d'une démarche du
+  /// client : on ne relance pas de la même façon quelqu'un qui a demandé
+  /// quelque chose et quelqu'un à qui on écrit.
+  ouvertParLaNote Boolean @default(false)
+
+  ouverteLe  DateTime  @default(now())
+  resolueLe  DateTime?
+  resolution String?
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking       Booking?      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, statut, priorite])
+  @@index([clientProfileId])
+}
+
+/// Compteur de la suite des factures.
+///
+/// L'article 242 nonies A de l'annexe II au CGI exige une séquence
+/// chronologique **continue, sans rupture**. Une `SEQUENCE` PostgreSQL ne
+/// convient pas : elle ne revient pas en arrière quand la transaction échoue, et
+/// laisse exactement le trou qu'on cherche à éviter. Une ligne de compteur,
+/// incrémentée dans la transaction qui écrit la facture, se comporte à
+/// l'inverse — et son verrou sérialise deux émissions simultanées.
+model InvoiceSequence {
+  id             String @id @default(cuid())
   organizationId String
-  bookingId      String?
-  senderUserId   String
+
+  /// `LC` pour la plateforme, `LC-<siren>` pour l'autofacturation.
+  serie       String
+  /// Année civile française : l'exercice est civil et local.
+  annee       Int
+  dernierRang Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, serie, annee])
+}
+
+/// Attestation fiscale annuelle.
+///
+/// Elle se recalcule depuis les paiements, mais elle ne se **recompose** pas :
+/// un document joint à une déclaration de revenus doit pouvoir être rendu à
+/// l'identique. Comme la facture, elle est figée à l'émission.
+///
+/// Deux organismes déclarés, deux attestations — le même découpage que les
+/// factures, et pour la même raison : chacun atteste sur son propre montant.
+model TaxCertificate {
+  id                       String  @id @default(cuid())
+  organizationId           String
+  clientProfileId          String
+  /// Nul quand c'est la plateforme qui atteste sa coordination.
+  issuedByCleanerProfileId String?
+
+  annee Int
+
+  issuedAt      DateTime @default(now())
+  /// Sommes effectivement versées dans l'année, remboursements déduits.
+  verseCents    Int
+  /// Part ouvrant droit à l'avantage de l'article 199 sexdecies du CGI.
+  eligibleCents Int
+  /// Forme : `facturation/attestation.Attestation`.
+  snapshot      Json
+
+  organization  Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  clientProfile ClientProfile   @relation(fields: [clientProfileId], references: [id], onDelete: Cascade)
+  issuedBy      CleanerProfile? @relation(fields: [issuedByCleanerProfileId], references: [id], onDelete: SetNull)
+  /// Unicité par client, année et émetteur : deux index partiels posés à la
+  /// main dans la migration, PostgreSQL considérant deux NULL comme distincts.
+
+  @@index([organizationId, annee])
+  @@index([clientProfileId, annee])
+}
+
+model Message {
+  id              String  @id @default(cuid())
+  organizationId  String
+  bookingId       String?
+  senderUserId    String
   recipientUserId String
 
   body   String
@@ -1296,7 +1620,6 @@ model Lead {
 
   @@index([organizationId, status, createdAt])
 }
-
 
 // ===========================================================================
 // Parrainage et cooptation
@@ -1355,9 +1678,9 @@ model Referral {
   /// déclenchement. Le gain suit l'activité, jamais le recrutement.
   completedBookings Int @default(0)
 
-  qualifiedAt DateTime?
-  expiresAt   DateTime
-  cancelledAt DateTime?
+  qualifiedAt        DateTime?
+  expiresAt          DateTime
+  cancelledAt        DateTime?
   cancellationReason String?
 
   createdAt DateTime @default(now())
@@ -1405,14 +1728,14 @@ model ReferralReward {
 
   /// Mois de rattachement, pour les commissions récurrentes. Nul pour une
   /// récompense unique.
-  periodStart DateTime?
-  periodEnd   DateTime?
+  periodStart          DateTime?
+  periodEnd            DateTime?
   /// Chiffre d'affaires du filleul ayant servi de base au calcul.
-  basisAmountCents Int?
+  basisAmountCents     Int?
   /// Le plafond mensuel a rogné le montant dû.
-  cappedByMonthlyLimit Boolean @default(false)
+  cappedByMonthlyLimit Boolean   @default(false)
 
-  paidAt DateTime?
+  paidAt   DateTime?
   /// Reversement Stripe portant cette récompense, pour les versements en
   /// espèces.
   payoutId String?
@@ -1470,7 +1793,7 @@ model TravelTimeCache {
 /// unique : un événement déjà traité est ignoré au lieu d'être appliqué deux
 /// fois.
 model WebhookEvent {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   provider   String
   externalId String
   eventType  String
@@ -1533,4 +1856,377 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@index([entityType, entityId])
+}
+
+/// Événement de parcours, enregistré pour comprendre ce qui coûte des clients
+/// et des intervenants sans que personne ne se plaigne.
+///
+/// La mesure vit en base plutôt que chez un tiers, et ce n'est pas une économie :
+/// le module Frictions lira la même base que le reste du produit, et une mesure
+/// qui ne dépose aucun cookie et ne suit personne d'un site à l'autre n'a pas à
+/// demander un consentement qu'on obtiendrait mal.
+///
+/// **Aucune donnée personnelle n'entre ici.** Ni nom, ni email, ni téléphone, ni
+/// adresse, ni position, ni adresse IP : `CHAMPS_INTERDITS` l'impose à
+/// l'écriture, et un test l'impose à la définition. Un événement dit ce qui
+/// s'est passé, jamais à qui — sans quoi une table de mesure échapperait à la
+/// purge des comptes et deviendrait le dernier endroit où une identité survit.
+model AnalyticsEvent {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// Nom de la taxonomie : objet puis verbe au passé.
+  name String
+
+  /// Identifiant de parcours engendré par le navigateur, opaque et sans lien
+  /// avec une identité. Il ne sert qu'à relier les écrans d'une même session ;
+  /// sans lui, un taux d'abandon par étape n'est pas calculable.
+  journeyId String?
+
+  /// Renseigné quand la personne était connectée. Nul le reste du temps, ce qui
+  /// est le cas de tout le tunnel jusqu'à l'avant-dernier écran.
+  userId String?
+
+  properties Json @default("{}")
+
+  occurredAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// L'analyse lit « tel événement sur telle période » : le nom en tête.
+  @@index([organizationId, name, occurredAt])
+  @@index([journeyId])
+  /// La purge de rétention balaie par date, toutes organisations confondues.
+  @@index([occurredAt])
+}
+
+/// Majoration de prix, avec son bénéficiaire.
+///
+/// Le jour — samedi, dimanche, férié — revient à l'intervenant : c'est lui qui
+/// travaille le week-end. Le délai — moins de 48 heures — revient à la
+/// plateforme : c'est elle qui place la mission au forceps. Ce partage prolonge
+/// la règle du dépôt, où la marge est un écart et non un taux.
+///
+/// Historisée comme `PricingRule` : une réservation passée continue de pointer
+/// sur la règle qui l'a chiffrée.
+model PricingSurcharge {
+  id             String @id @default(cuid())
+  organizationId String
+
+  /// `SAMEDI` · `DIMANCHE_FERIE` · `COURT_DELAI`
+  cause       String
+  rateBp      Int
+  /// `PROFESSIONAL` · `PLATFORM`
+  beneficiary String
+  label       String
+
+  validFrom  DateTime  @default(now())
+  validUntil DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, cause, validFrom])
+}
+
+/// Demande venue d'une commune que Léo Clean ne dessert pas.
+///
+/// Le tunnel rend une réservation hors zone structurellement impossible — on
+/// choisit sa commune dans le référentiel — et c'est un bon choix : il n'existe
+/// aucun moyen de réserver un ménage qu'on ne saurait pas honorer. Mais la
+/// conséquence est que **le produit n'a aucun signal d'expansion** : personne ne
+/// sait combien de gens ont voulu réserver depuis Pessac.
+///
+/// Volontairement hors du périmètre multi-tenant : une demande hors zone
+/// précède toute organisation, comme les compteurs de limitation de débit.
+model Waitlist {
+  id String @id @default(cuid())
+
+  /// `CLIENT` ou `CLEANER` : les deux manques ne se comblent pas pareil.
+  kind String
+
+  email String?
+  phone String?
+
+  /// Ce que la personne a écrit. Aucune géolocalisation : une commune suffit à
+  /// décider d'ouvrir un secteur, un point désigne un domicile.
+  communeName String
+  postalCode  String?
+
+  /// Page d'origine, pour savoir ce qui amène ces gens.
+  sourcePath String?
+
+  /// Prévenue de l'ouverture. Nul tant que personne ne l'a été.
+  notifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  /// L'analyse lit « combien de demandes par commune, et depuis quand ».
+  @@index([kind, communeName, createdAt])
+}
+
+/// Pointage d'arrivée ou de départ.
+///
+/// La position est capturée **au tap seulement**, jamais en continu : c'est une
+/// preuve de réalisation, pas une surveillance. Elle n'est jamais bloquante —
+/// un sous-sol, un immeuble mal géocodé ou un refus de localisation ne doivent
+/// pas empêcher quelqu'un de travailler. Rétention treize mois.
+model MissionCheck {
+  id               String @id @default(cuid())
+  organizationId   String
+  bookingId        String
+  cleanerProfileId String
+
+  /// `ARRIVEE` ou `DEPART`.
+  kind String
+
+  at DateTime @default(now())
+
+  lat            Float?
+  lng            Float?
+  /// Écart au logement au moment du pointage, en mètres. Conservé même hors
+  /// tolérance : c'est ce qui permet de relire une contestation.
+  distanceMeters Int?
+  /// `POSITION` · `MANUEL` · `CODE_CLIENT` · `HORS_LIGNE`
+  method         String
+
+  /// Instant relevé par l'appareil quand le pointage a été fait hors ligne.
+  /// C'est lui qui fait foi, et le marquage dit qu'il vient de l'appareil.
+  deviceAt DateTime?
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cleaner      CleanerProfile @relation(fields: [cleanerProfileId], references: [id], onDelete: Cascade)
+
+  /// Un seul pointage de chaque sens par mission.
+  @@unique([bookingId, kind])
+  @@index([organizationId, at])
+}
+
+/// Photo de mission, avant ou après.
+///
+/// Consigne affichée à la prise : cadrer les pièces, jamais les personnes ni
+/// les documents. Rétention treize mois, comme les positions.
+model MissionPhoto {
+  id             String @id @default(cuid())
+  organizationId String
+  bookingId      String
+
+  /// `AVANT` ou `APRES`.
+  phase String
+  /// Pièce concernée, telle que l'intervenant l'a nommée.
+  room  String?
+
+  /// Chemin dans le coffre `missions/`. Jamais une URL : elles se périment en
+  /// soixante secondes et se demandent au moment de l'affichage.
+  storagePath String
+
+  takenAt    DateTime?
+  uploadedAt DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, phase])
+}
+
+/// Anomalie constatée sur place.
+///
+/// Une seule catégorie peut proposer un ajustement de durée — le logement
+/// inhabituellement sale — et **la proposition ne facture rien** : elle attend
+/// une validation. Un supplément appliqué unilatéralement par celui qui en
+/// bénéficie n'est pas un ajustement, c'est une facture non consentie.
+model MissionAnomaly {
+  id             String @id @default(cuid())
+  organizationId String
+  bookingId      String
+
+  type        String
+  description String?
+  storagePath String?
+
+  /// Minutes proposées en plus. Nul tant que rien n'est proposé.
+  proposedExtraMinutes Int?
+  /// `PENDING` · `ACCEPTED` · `REFUSED`. Nul quand aucun ajustement n'est demandé.
+  adjustmentStatus     String?
+  decidedAt            DateTime?
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, adjustmentStatus])
+  @@index([bookingId])
+}
+
+/// Tâche de la checklist d'un passage.
+///
+/// **Ce n'est pas un instrument de contrôle**, c'est un mémo et une preuve.
+/// Rien ne bloque au check-out : une confirmation suffit. Les tâches ajoutées
+/// par le client pour ce passage se distinguent des tâches habituelles.
+model MissionChecklistItem {
+  id             String @id @default(cuid())
+  organizationId String
+  bookingId      String
+
+  room          String?
+  label         String
+  /// Ajoutée par le client pour ce passage, par opposition aux tâches
+  /// habituelles du logement.
+  addedByClient Boolean @default(false)
+
+  doneAt DateTime?
+
+  position Int @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, position])
+}
+
+/// Candidature d'intervenant.
+///
+/// **Le principe qui gouverne tout le funnel : un candidat sans SIRET n'est pas
+/// un candidat disqualifié, c'est un candidat à quatre semaines.** C'est là que
+/// se trouve le vivier réel au sud de Bordeaux — quelqu'un qui sait faire le
+/// travail mais que l'administratif arrête.
+///
+/// Conséquence de conception : l'attente est un **état du parcours**, pas une
+/// sortie. Pendant les deux à six semaines que prennent les démarches, le
+/// dossier avance sur tout ce qui n'en dépend pas — profil, photo, pièces
+/// d'identité, entretien — pour que l'activation ait lieu le jour même de la
+/// réception du SIRET.
+///
+/// Hors du périmètre multi-tenant : une candidature précède l'appartenance, et
+/// c'est justement ce qu'elle sert à obtenir.
+model ProApplication {
+  id     String  @id @default(cuid())
+  userId String? @unique
+
+  /// Voir `candidature/parcours.ts` : quatorze valeurs, aucune ne porte de
+  /// jugement sur la personne.
+  status String @default("COMMENCE")
+
+  /// `SIRET_EXISTANT` · `CREATION_AE`
+  branchLegal String?
+  /// `SAP_EXISTANT` · `SAP_A_DECLARER`
+  branchSap   String?
+
+  firstName String?
+  lastName  String?
+  phone     String?
+  email     String?
+
+  declaredCity  String?
+  declaredInsee String?
+  travelMode    String?
+  hoursPerWeek  String?
+  experience    String?
+  presentation  String?
+  photoPath     String?
+  skills        String[] @default([])
+  availability  Json?
+
+  siret            String?
+  siretVerifiedAt  DateTime?
+  legalName        String?
+  apeCode          String?
+  siretSubmittedAt DateTime?
+  siretReceivedAt  DateTime?
+
+  sapNumber      String?
+  sapVerifiedAt  DateTime?
+  sapSubmittedAt DateTime?
+
+  interviewAt     DateTime?
+  interviewScores Json?
+  interviewNotes  String?
+
+  /// Signature horodatée des trois documents : CGU, charte, mandat de
+  /// facturation. Conservation cinq ans.
+  chartersSignedAt DateTime?
+  chartersIp       String?
+  chartersVersion  String?
+
+  /// Signaux d'attention, **volontairement hors de tout score** : un doublon
+  /// d'IBAN ne se compense pas par de bons points ailleurs.
+  flags String[] @default([])
+
+  decidedAt      DateTime?
+  decidedById    String?
+  decisionReason String?
+
+  source String?
+
+  /// Dernière activité du candidat, qui datte les relances.
+  lastActivityAt DateTime @default(now())
+  /// Relances déjà envoyées depuis le statut courant.
+  nudgesSent     Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events    ProApplicationEvent[]
+  documents ProApplicationDocument[]
+
+  @@index([status, lastActivityAt])
+  @@index([phone])
+  @@index([siret])
+}
+
+/// Journal d'une candidature.
+///
+/// Chaque changement y figure : sans lui, on ne sait pas pourquoi un dossier
+/// est là où il est, ni depuis quand — et c'est précisément ce qu'on veut
+/// savoir quand un candidat rappelle trois semaines plus tard.
+model ProApplicationEvent {
+  id            String @id @default(cuid())
+  applicationId String
+
+  event   String
+  payload Json?
+
+  at DateTime @default(now())
+
+  application ProApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId, at])
+}
+
+/// Pièce justificative d'une candidature.
+///
+/// Distincte de `CleanerDocument`, qui suit un intervenant déjà actif : une
+/// candidature n'a pas encore de profil, et confondre les deux ferait exister
+/// des documents rattachés à personne.
+model ProApplicationDocument {
+  id            String @id @default(cuid())
+  applicationId String
+
+  /// Voir `PIECES` dans `candidature/parcours.ts`.
+  kind   String
+  status String @default("ATTENDUE")
+
+  /// Chemin dans le coffre `kyc/`. Jamais une URL.
+  storagePath String?
+
+  issuedOn  DateTime?
+  expiresOn DateTime?
+
+  verifiedAt   DateTime?
+  verifiedById String?
+  /// Motif rédigé en langage courant, jamais un code : un motif vague fait
+  /// redéposer la même pièce.
+  rejectReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  application ProApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, kind])
+  @@index([status])
 }

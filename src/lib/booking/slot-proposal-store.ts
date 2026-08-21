@@ -8,8 +8,12 @@ import {
   proposalRefusalMessage,
   proposedEndFor,
   respondByFor,
+  type SituationProposant,
+  type VoieProposition,
+  visibleAPartirDe,
 } from "@/lib/booking/slot-proposal";
 import type { TenantClient } from "@/lib/db";
+import { parisDayKey } from "@/lib/time";
 
 /**
  * Écriture et réponse des contre-propositions de créneau.
@@ -46,7 +50,11 @@ export async function proposeSlot(
   cleanerProfileId: string,
   input: { bookingId: string; proposedStart: Date; message?: string | null },
   now: Date,
-): Promise<{ proposalId: string; proposedEnd: Date }> {
+): Promise<{
+  proposalId: string;
+  proposedEnd: Date;
+  voie: VoieProposition;
+}> {
   const booking = await db.booking.findUnique({
     where: { id: input.bookingId },
     select: {
@@ -55,12 +63,37 @@ export async function proposeSlot(
       status: true,
       scheduledStart: true,
       durationMinutes: true,
+      diffusionDeadlineAt: true,
     },
   });
   if (!booking) throw new ProposalNotFoundError();
 
+  /*
+   * Deux portes, et deux seulement : tenir une offre à laquelle on n'a pas
+   * répondu, ou constater que plus personne n'est sur la mission. La première
+   * est lue en base plutôt que déduite du statut de la réservation — c'est
+   * l'affectation qui dit si cette personne-là a encore la main.
+   */
+  const offreVivante = await db.assignment.findFirst({
+    where: {
+      bookingId: booking.id,
+      cleanerProfileId,
+      status: "PROPOSED",
+      respondBy: { gt: now },
+    },
+    select: { id: true },
+  });
+
+  const situation: SituationProposant = offreVivante
+    ? "PROPOSITION_VIVANTE"
+    : booking.status === "PENDING_ASSIGNMENT"
+      ? "RESERVATION_ORPHELINE"
+      : "AUCUNE";
+
   const check = canProposeSlot({
-    bookingStatus: booking.status,
+    situation,
+    memeJourCivil:
+      parisDayKey(booking.scheduledStart) === parisDayKey(input.proposedStart),
     currentStart: booking.scheduledStart,
     proposedStart: input.proposedStart,
     now,
@@ -83,11 +116,16 @@ export async function proposeSlot(
       proposedEnd,
       message: input.message?.trim() || null,
       respondBy: respondByFor(input.proposedStart, now),
+      visibleAt: visibleAPartirDe(
+        check.voie!,
+        now,
+        booking.diffusionDeadlineAt,
+      ),
     },
     select: { id: true },
   });
 
-  return { proposalId: proposal.id, proposedEnd };
+  return { proposalId: proposal.id, proposedEnd, voie: check.voie! };
 }
 
 export interface ClientProposalView {
@@ -116,6 +154,12 @@ export async function readClientProposals(
     where: {
       status: "PENDING",
       proposedStart: { gt: now },
+      /*
+       * Une contre-proposition ordinaire attend l'échéance du lot : tant que
+       * l'heure demandée est encore cherchée, en proposer une autre reviendrait
+       * à renoncer pour le client.
+       */
+      visibleAt: { lte: now },
       booking: { clientProfileId: profile.id },
     },
     orderBy: { proposedStart: "asc" },

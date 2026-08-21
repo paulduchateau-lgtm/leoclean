@@ -32,12 +32,16 @@ const ECARTES = [
   "src/app/api/auth",
   // Server actions : leur seule présence dans le graphe interdit l'export.
   "src/app/etre-rappele/actions.ts",
+  "src/app/zones-desservies/actions.ts",
   "src/app/reserver/actions.ts",
   // La page d'offre porte sa propre server action, et elle n'a rien à faire
   // sur une vitrine destinée à montrer le parcours client. Ses composants
   // partent avec elle : ils n'ont pas d'autre consommateur, et le formulaire
   // de candidature importerait une action qui n'est plus là.
   "src/app/travailler-avec-nous",
+  // Le funnel d'inscription porte ses propres server actions et écrit un
+  // dossier en base : il n'a rien à faire sur une vitrine de démonstration.
+  "src/app/rejoindre",
   "src/components/intervenants",
   // Les pages société lisent la base pour lister les slugs publiables, et
   // `dynamicParams` est incompatible avec `output: export` — une page rendue
@@ -48,6 +52,10 @@ const ECARTES = [
   // exclusion à envisager » : `force-dynamic` est incompatible avec
   // `output: export`, et rien ne le signale avant la construction.
   "src/app/api/taches",
+  // Le webhook Stripe lit un corps brut et vérifie une signature : il n'a
+  // aucun sens dans un site de fichiers, et `force-dynamic` est de toute façon
+  // incompatible avec `output: export`.
+  "src/app/api/webhooks",
   // Le middleware suppose un serveur devant les fichiers.
   "src/proxy.ts",
   // Un plan du site contredirait le `Disallow: /` de la vitrine.

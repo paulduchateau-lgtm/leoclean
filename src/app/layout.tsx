@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, Fraunces } from "next/font/google";
+import { Figtree, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 
 import { AppTabBar } from "@/components/app-tab-bar";
 import { BandeauEnvironnement } from "@/components/bandeau-environnement";
@@ -26,16 +27,28 @@ const sans = Figtree({
 });
 
 /**
- * Police d'accent, réservée à un mot par titre marketing. Elle n'est pas
- * préchargée : aucun écran ne la demande au premier rendu, et la précharger
- * coûterait une requête bloquante pour trois mots sur tout le site.
+ * Police de titrage : Alan Sans porte tous les titres et les grands chiffres.
+ * Elle est auto-hébergée depuis le dépôt — elle n'est pas disponible chez
+ * `next/font/google` — et préchargée : le titre de chaque page la demande au
+ * premier rendu.
  */
-const display = Fraunces({
+const display = localFont({
+  src: "./fonts/alansans-variable.woff2",
   variable: "--font-display",
+  display: "swap",
+  weight: "300 900",
+});
+
+/**
+ * Chiffres posés : prix, codes postaux, horaires. Non préchargée — elle
+ * n'apparaît qu'au fil de la lecture, jamais au-dessus de la ligne de
+ * flottaison.
+ */
+const mono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
   display: "swap",
-  style: "italic",
-  weight: ["600"],
+  weight: ["400", "600"],
   preload: false,
 });
 
@@ -97,9 +110,9 @@ export const viewport: Viewport = {
    */
   viewportFit: "cover",
   themeColor: [
-    // ink-0 et ink-950 du design system.
-    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#0B1B16" },
+    // --bg (blanc chaud) et teal-950 du design system tropical punch.
+    { media: "(prefers-color-scheme: light)", color: "#FFFCF9" },
+    { media: "(prefers-color-scheme: dark)", color: "#022727" },
   ],
 };
 
@@ -107,7 +120,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="fr"
-      className={`${sans.variable} ${display.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         {/* Un seul bandeau à la fois : la vitrine statique dit déjà tout ce

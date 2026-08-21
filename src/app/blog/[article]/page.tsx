@@ -181,7 +181,7 @@ export default async function ArticlePage({
           </section>
         </article>
 
-        <section className="border-y border-border bg-mint-50">
+        <section className="border-y border-border bg-teal-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
             <h2 className="text-2xl font-black tracking-tight">
               Une question sur votre situation ?

@@ -46,6 +46,7 @@ const SESSION_COOKIES = [
 const HOSTS = {
   site: hostOf(process.env.NEXT_PUBLIC_SITE_URL),
   app: hostOf(process.env.NEXT_PUBLIC_APP_URL),
+  pro: hostOf(process.env.NEXT_PUBLIC_PRO_URL),
 };
 
 /**
@@ -91,8 +92,11 @@ function route(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
 
   /*
-   * Chaque chemin est servi par un seul des deux domaines : la vitrine porte
-   * ce qui se référence, l'application ce qui se fait. La redirection est
+   * Chaque chemin est servi par un seul des trois domaines : la vitrine
+   * porte ce qui se référence côté client, l'application ce que le client
+   * fait, la face pro tout ce qui s'adresse aux intervenants. Seules la
+   * connexion et les routes d'Auth.js sont servies partout — c'est ce qui
+   * donne à chaque face sa propre session. La redirection est
    * permanente et conserve la méthode — une action de formulaire arrivée du
    * mauvais côté ne perdrait pas son corps de requête.
    */

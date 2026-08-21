@@ -6,6 +6,7 @@ import { ContactChannels } from "@/components/contact-channels";
 import { CadreIntervenants } from "@/components/intervenants/cadre";
 import { CandidatureForm } from "@/components/intervenants/candidature-form";
 import { ChiffresIntervenants } from "@/components/intervenants/chiffres";
+import { EspaceProfessionnel } from "@/components/intervenants/espace-professionnel";
 import { JourneeRangee } from "@/components/intervenants/journee-rangee";
 import { Parrainage } from "@/components/intervenants/parrainage";
 import { Perimetre } from "@/components/intervenants/perimetre";
@@ -230,19 +231,19 @@ export default function TravaillerAvecNousPage() {
         }}
       />
 
-      <SiteHeader />
+      <SiteHeader variant="pro" />
 
       <main className="flex flex-1 flex-col">
         {/* Bloc 1 — la thèse, et la double porte dès le premier écran.
             Un gérant de société ne doit pas lire trois écrans destinés aux
             indépendants avant de comprendre qu'on lui parle aussi. */}
-        <section className="relative overflow-hidden border-b border-border-subtle bg-mint-50">
+        <section className="relative overflow-hidden border-b border-border-subtle bg-teal-50">
           <div
-            className="blob top-[-160px] right-[-90px] size-[360px] bg-mint-200"
+            className="blob top-[-160px] right-[-90px] size-[360px] bg-teal-200"
             aria-hidden
           />
           <div
-            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-lemon-200 opacity-70"
+            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-pineapple-200 opacity-70"
             aria-hidden
           />
 
@@ -265,15 +266,22 @@ export default function TravaillerAvecNousPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              {/*
+               * Vers le tunnel, pas vers l'ancre du formulaire de rappel. Le
+               * tunnel ouvre un dossier, vérifie le SIRET auprès de l'INSEE et
+               * se reprend depuis n'importe quel appareil ; le formulaire ne
+               * fait que demander qu'on rappelle. Les laisser cohabiter
+               * envoyait la moitié des candidats sur le chemin le plus long.
+               */}
               <Link
-                href="#candidature"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+                href="/rejoindre"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
               >
                 Déposer ma candidature
               </Link>
               <Link
                 href="#societes"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
               >
                 Je représente une société de ménage
               </Link>
@@ -347,7 +355,7 @@ export default function TravaillerAvecNousPage() {
               {ETAPES.map((etape) => (
                 <li key={etape.number}>
                   <span
-                    className="block text-3xl font-black tracking-tight text-mint-300"
+                    className="block text-3xl font-black tracking-tight text-teal-300"
                     aria-hidden
                   >
                     {etape.number}
@@ -479,19 +487,48 @@ export default function TravaillerAvecNousPage() {
             Déposer votre candidature
           </h2>
           <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
-            Six questions, et nous vous rappelons. Le reste se traite au
-            téléphone.
+            Quelques questions pour savoir si nous couvrons votre secteur, puis
+            votre dossier. Il se reprend depuis n&apos;importe quel appareil :
+            personne ne remplit tout d&apos;une traite entre deux missions.
           </p>
 
-          <div className="mt-8">
-            <CandidatureForm />
-          </div>
+          <Link
+            href="/rejoindre"
+            className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+          >
+            Commencer ma candidature
+          </Link>
 
-          <div className="mt-10 border-t border-border/60 pt-6">
-            <p className="mb-4 text-sm text-muted-foreground">
-              Vous préférez en parler de vive voix ?
+          <p className="mt-4 max-w-prose text-sm text-pretty text-muted-foreground">
+            Pas encore de statut d&apos;auto-entrepreneur ? Ce n&apos;est pas un
+            obstacle : le parcours vous accompagne, et nous gardons vos missions
+            pendant les semaines d&apos;attente.
+          </p>
+
+          {/*
+           * Le formulaire de rappel reste, en second. Une partie de la cible
+           * candidate plus volontiers par message que par formulaire, et
+           * quelqu'un qui bloque sur le tunnel doit pouvoir aboutir autrement
+           * — c'est le point de sauvetage le plus rentable du recrutement.
+           */}
+          <div className="mt-12 border-t border-border/60 pt-8">
+            <h3 className="text-lg font-extrabold">
+              Vous préférez qu&apos;on vous rappelle ?
+            </h3>
+            <p className="mt-2 max-w-prose text-pretty text-muted-foreground">
+              Six questions, et nous vous appelons. Le reste se traite de vive
+              voix.
             </p>
-            <ContactChannels className="[&>div]:sm:justify-start" />
+            <div className="mt-6">
+              <CandidatureForm />
+            </div>
+
+            <div className="mt-10 border-t border-border/60 pt-6">
+              <p className="mb-4 text-sm text-muted-foreground">
+                Ou tout de suite, au téléphone :
+              </p>
+              <ContactChannels className="[&>div]:sm:justify-start" />
+            </div>
           </div>
 
           <p className="mt-8 text-sm text-muted-foreground">
@@ -507,6 +544,11 @@ export default function TravaillerAvecNousPage() {
             l&apos;autre.
           </p>
         </section>
+
+        {/* Bloc 17 — la porte de l'espace professionnel, en fin de page et
+            visée depuis l'en-tête. Elle ferme la page sur les deux gestes qui
+            restent à faire : entrer, ou commencer. */}
+        <EspaceProfessionnel />
       </main>
 
       <SiteFooter />

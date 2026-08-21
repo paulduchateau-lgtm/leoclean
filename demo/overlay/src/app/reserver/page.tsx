@@ -34,8 +34,8 @@ export default function ReserverPage() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
         <h1 className="sr-only">Réserver un ménage à domicile</h1>
 
-        <div className="rounded-xl border border-peach-200 bg-peach-50 p-5">
-          <p className="font-extrabold text-peach-800">Démonstration</p>
+        <div className="rounded-xl border border-papaya-200 bg-papaya-50 p-5">
+          <p className="font-extrabold text-papaya-800">Démonstration</p>
           <p className="mt-2 text-pretty text-muted-foreground">
             Le parcours ci-dessous fonctionne réellement : la recherche
             d&apos;adresse interroge la Base Adresse Nationale, le prix sort du

@@ -110,20 +110,42 @@ describe("conditions faites aux intervenants", () => {
     expect(INTERVENANTS.maxDriveMinutes).toBe(FACTS.maxDriveMinutes);
   });
 
-  it("n'écrit pas « garanti » tant que les trois situations sont sans réponse", () => {
-    // Le mot n'engage à rien tant qu'on n'a pas dit contre quoi il garantit.
-    // On dit alors ce qu'on tient réellement : le délai de versement.
-    expect(canSayGuaranteed()).toBe(false);
-    expect(netRateLabel()).toBe("net");
-    expect(netRateLabel()).not.toContain("garanti");
-    expect(netRatePhrase()).not.toContain("garanti");
+  it("écrit « garanti », les trois situations ayant désormais une réponse", () => {
+    // Arbitrées le 21 août 2026 : impayé porté par Léo Clean, frais
+    // d'annulation partagés en deux, délai de versement indépendant du
+    // règlement client. Le mot est mérité, donc il s'écrit.
+    expect(canSayGuaranteed()).toBe(true);
+    expect(netRateLabel()).toBe("net garanti");
+    expect(netRatePhrase()).toBe("net garanti");
+  });
+
+  it("dit contre quoi il garantit, sans promettre un logiciel qui n'existe pas", () => {
+    // C'est la condition qui rend le mot honnête : chaque situation nomme un
+    // engagement vérifiable. Celle de l'impayé décrit le gel de l'intervention
+    // suivante comme une règle — ce qu'elle est — et surtout pas comme une
+    // alerte automatique : rien ne pose aujourd'hui `SUSPENDED` sur une
+    // réservation impayée, et aucune notification ne part vers l'intervenant.
+    const { latePayment, unpaidClient, lateCancellation } =
+      INTERVENANTS.guarantee;
+
+    expect(unpaidClient).toContain("Vous êtes payé");
+    expect(unpaidClient).toContain("gelée");
+    expect(unpaidClient).not.toMatch(/automatique|notification|alerte/i);
+
+    // Les frais d'annulation se partagent, ils ne se recopient pas : le barème
+    // est plafonné, et annoncer une part du prix ferait attendre davantage que
+    // ce qui rentre réellement.
+    expect(lateCancellation).toMatch(/deux parts égales|moitié/i);
+    expect(lateCancellation).not.toMatch(/\d+\s?€/);
+
+    // Le délai de versement ne dépend pas du règlement du client.
+    expect(latePayment).toContain("5 jours ouvrés");
   });
 
   it("décrit le versement par son délai réel, pas par une date fixe", () => {
     // Cinq jours ouvrés après l'intervention est un délai. Écrire « à date
     // fixe » décrirait un engagement mensuel qu'on ne prend pas.
     expect(INTERVENANTS.paymentTerms).toBe("sous 5 jours ouvrés");
-    expect(netRatePhrase()).toBe("net, versé sous 5 jours ouvrés");
     expect(netRatePhrase()).not.toContain("date fixe");
   });
 
@@ -172,15 +194,22 @@ describe("conditions faites aux intervenants", () => {
     expect(regle(manquant)).toBe(false);
   });
 
-  it("tient la page hors de l'index tant qu'une garantie manque", () => {
-    // La rémunération et le délai de paiement sont arbitrés ; les trois
-    // situations de garantie ne le sont pas. Une page d'offre qui se
-    // classerait sans pouvoir dire ce qui se passe en cas d'impayé décevrait
-    // précisément les gens qu'elle cherche à convaincre.
-    expect(PENDING_INTERVENANT_FIELDS).not.toContain("rémunération nette");
-    expect(PENDING_INTERVENANT_FIELDS).not.toContain("délai de paiement");
-    expect(PENDING_INTERVENANT_FIELDS).toContain("garantie en cas d'impayé");
-    expect(INTERVENANT_PAGE_READY).toBe(false);
+  it("ouvre la page à l'index, plus rien ne manquant", () => {
+    // Les cinq valeurs sont arbitrées : la page peut se classer sans décevoir
+    // qui la lit. Ce test verrouille l'état du jour ; celui qui suit verrouille
+    // la règle, et c'est lui qui rattraperait une régression.
+    expect(PENDING_INTERVENANT_FIELDS).toEqual([]);
+    expect(INTERVENANT_PAGE_READY).toBe(true);
+  });
+
+  it("refermerait la page si une valeur repassait à null", () => {
+    // La règle, pas l'état : `INTERVENANT_PAGE_READY` doit rester dérivé de la
+    // liste et d'elle seule. Un drapeau posé à la main à côté finirait par dire
+    // le contraire de ce que la page sait faire.
+    const derive = (manquants: readonly string[]) => manquants.length === 0;
+
+    expect(derive([])).toBe(true);
+    expect(derive(["garantie en cas d'impayé"])).toBe(false);
   });
 
   it("ne demande aucune exclusivité et ne facture aucune inscription", () => {

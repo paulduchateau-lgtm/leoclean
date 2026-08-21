@@ -1,21 +1,41 @@
-import { CheckIcon, MapPinIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ClockIcon,
+  MailIcon,
+  MapPinIcon,
+  RepeatIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+
+/*
+ * Les photos sont importées statiquement : Next connaît leurs dimensions —
+ * aucun décalage de mise en page — et applique lui-même le `basePath` de la
+ * vitrine statique, ce que `assetPath()` devrait faire à la main pour un
+ * fichier de `public/`.
+ */
+import photoIntervenante from "@/components/home/photos/intervenante-salon.webp";
+import photoInterieur from "@/components/home/photos/interieur.webp";
 
 import { ContactChannels } from "@/components/contact-channels";
 import { Comparison } from "@/components/home/comparison";
+import { Conseils } from "@/components/home/conseils";
 import { Engagement } from "@/components/home/engagement";
+import { Faq } from "@/components/home/faq";
 import { KeyFigures } from "@/components/home/key-figures";
 import { Prestations } from "@/components/home/prestations";
-import { TrustStrip } from "@/components/home/trust-strip";
+import { Services } from "@/components/home/services";
 import { Zones } from "@/components/home/zones";
+import { LeadForm } from "@/components/lead-form";
 import { ResumeBookingBanner } from "@/components/resume-booking-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { StickyBookingCta } from "@/components/sticky-booking-cta";
 import { Badge } from "@/components/ui/badge";
 import { clientEnv } from "@/lib/env";
-import { FACTS, INTERVENANT_PAGE_READY } from "@/lib/facts";
+import { FACTS } from "@/lib/facts";
 import { FISCAL } from "@/lib/fiscal";
 import { formatHourlyRate } from "@/lib/pricing";
 import {
@@ -35,47 +55,36 @@ export const metadata: Metadata = pageMetadata({
 export const revalidate = 86_400;
 
 /**
- * Ce que la limite de {@link FACTS.maxDriveMinutes} minutes change chez vous.
+ * Le déroulé, du point de vue du client.
  *
- * Ces quatre arguments existaient déjà et ne sont pas réécrits : ils sont bons,
- * et le seul défaut de leur ancienne place était de venir avant qu'on ait dit
- * pourquoi. Ils suivent désormais la thèse dont ils sont la conséquence.
+ * L'ancienne version racontait la mécanique interne — diffusion par lots,
+ * cinq intervenants, premier qui accepte. C'est vrai, et cela reste écrit là
+ * où cela engage : au récapitulatif, juste avant le geste qui réserve, et sur
+ * l'écran de confirmation. Mais l'accueil n'a pas à faire porter au visiteur
+ * le fonctionnement de l'attribution : ce qu'il achète, c'est de ne plus s'en
+ * occuper.
+ *
+ * D'où trois étapes qui disent ce qu'il fait (presque rien) et ce que nous
+ * faisons (le reste) — suivies d'une ligne qui garde la promesse exacte : la
+ * confirmation arrive sous 24 h, elle n'est pas immédiate. Sans elle,
+ * quelqu'un lirait « vous profitez de votre maison » comme un rendez-vous
+ * acquis à la seconde, et le découvrirait à la première réservation.
  */
-const PROMISES = [
-  {
-    title: "Le même intervenant, chaque semaine",
-    body: "Sur une formule régulière, vous retrouvez la même personne à chaque passage. Elle finit par connaître votre logement, vos habitudes et votre chien.",
-  },
-  {
-    title: "Des gens qui habitent à côté",
-    body: "Nos intervenants vivent dans les communes où ils travaillent. Quinze minutes de route, pas quarante : c'est ce qui rend possible de tenir un créneau.",
-  },
-  {
-    title: "Un vrai numéro, une vraie personne",
-    body: "Vous appelez, quelqu'un décroche. Pas de standard, pas de formulaire resté sans réponse.",
-  },
-  {
-    title: "Des professionnels vérifiés",
-    body: "SIRET actif, attestation d'assurance responsabilité civile professionnelle, pièce d'identité et RIB contrôlés avant la première intervention.",
-  },
-];
-
-/** Le déroulé, en trois temps. Ce sont les écrans réels du tunnel. */
 const STEPS = [
   {
-    number: "01",
-    title: "Votre commune et votre logement",
-    body: "Deux questions, pas de compte à créer. La surface suffit à estimer la durée.",
+    number: "1",
+    title: "Dites-nous ce dont vous avez besoin",
+    body: "Quelques clics suffisent : votre adresse, la durée, le rythme, votre créneau. Le prix s'affiche avant qu'on vous demande la moindre donnée personnelle.",
   },
   {
-    number: "02",
-    title: "Votre créneau, prix affiché",
-    body: "Du lundi au vendredi de 8 h à 19 h, le samedi de 9 h à 13 h. Le prix est connu avant de confirmer.",
+    number: "2",
+    title: "Nous trouvons le bon professionnel près de chez vous",
+    body: `Sélectionné et suivi par ${SITE.name}, et choisi parmi ceux qui habitent votre commune ou la commune d'à côté.`,
   },
   {
-    number: "03",
-    title: "Votre intervenant confirmé",
-    body: "Nous choisissons la personne disponible la plus proche de chez vous, et nous vous la présentons.",
+    number: "3",
+    title: "Vous profitez de votre maison",
+    body: "Planning, paiement et suivi : on reste disponible si vous avez besoin de nous.",
   },
 ];
 
@@ -96,92 +105,176 @@ export default function Home() {
 
       <main className="flex flex-1 flex-col">
         {/* Bloc 1 — la thèse.
-            La page s'ouvrait sur « Où habitez-vous ? » et seize communes :
-            un effort de sélection demandé à quelqu'un à qui on n'avait encore
-            donné aucune raison de rester. Les seize liens sont maintenant en
-            fin de page, où ils servent de preuve au lieu de servir de menu.
-
-            Le fond menthe et ses taches colorées sont la signature du système :
-            une pièce aérée, pas un bandeau. Elles se posent en absolu derrière
-            le contenu, et `overflow-hidden` les empêche d'élargir la page. */}
-        <section className="relative overflow-hidden border-b border-border-subtle bg-mint-50">
+            Le héros est un lever de soleil — papaye vers le blanc chaud de la
+            page — et ses taches colorées sont la signature du système : une
+            pièce aérée, pas un bandeau. Elles se posent en absolu derrière le
+            contenu, et `overflow-hidden` les empêche d'élargir la page. */}
+        <section className="relative overflow-hidden border-b border-border-subtle bg-gradient-to-b from-papaya-100 to-background">
           <div
-            className="blob top-[-160px] right-[-90px] size-[360px] bg-mint-200"
+            className="blob top-[-160px] right-[-90px] size-[360px] bg-papaya-200 opacity-60"
             aria-hidden
           />
           <div
-            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-lemon-200 opacity-70"
+            className="blob bottom-[-90px] left-[-60px] size-[230px] bg-pineapple-200 opacity-70"
             aria-hidden
           />
-          {/* La tache pêche passe derrière le titre : elle ne paraît qu'à
+          {/* La tache sarcelle passe derrière le titre : elle ne paraît qu'à
               partir du moment où la ligne de texte ne la traverse plus. */}
           <div
-            className="blob top-[120px] left-[64%] hidden size-[150px] bg-peach-200 opacity-40 lg:block"
+            className="blob top-[120px] left-[64%] hidden size-[150px] bg-teal-200 opacity-40 lg:block"
             aria-hidden
           />
 
-          <div className="relative mx-auto w-full max-w-4xl px-6 py-10 sm:py-20">
-            {/* Un parcours interrompu se retrouve ici, pas dans la mémoire de
-                la personne : elle revient par l'accueil, et sans ce bandeau
-                elle recommence de zéro. Posé avant le premier rendu, il ne
-                décale rien. */}
-            <ResumeBookingBanner />
+          <div className="relative mx-auto grid w-full max-w-5xl items-center gap-14 px-6 py-10 sm:py-20 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              {/* Un parcours interrompu se retrouve ici, pas dans la mémoire
+                  de la personne : elle revient par l'accueil, et sans ce
+                  bandeau elle recommence de zéro. Posé avant le premier rendu,
+                  il ne décale rien. */}
+              <ResumeBookingBanner />
 
-            <Badge variant="secondary" className="mb-5 gap-1.5">
-              <MapPinIcon className="size-3.5" aria-hidden />
-              {FACTS.communeCount} communes au sud de Bordeaux
-            </Badge>
+              {/* La pilule ananas : le badge des moments d'accroche, texte
+                encre — la signature la plus pétillante de la palette.
 
-            {/* Un seul mot en Fraunces, en fin de phrase : c'est la respiration
-                humaine qui empêche le rendu SaaS, et elle ne se répète pas. */}
-            <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
-              Le ménage à domicile, par des personnes qui habitent{" "}
-              <span className="accent-word">à côté</span> de chez vous.
-            </h1>
+                Elle dit le territoire et non son décompte : « seize communes »
+                se lit comme une limite là où « au sud de Bordeaux » se lit
+                comme une adresse. Le chiffre n'est pas perdu — il vit dans le
+                paragraphe d'identité et dans le bloc des communes, aux deux
+                endroits où il sert de preuve plutôt que de restriction. */}
+              <Badge className="mb-5 gap-1.5 bg-pineapple-300 text-ink-900">
+                <MapPinIcon className="size-3.5" aria-hidden />
+                Les pros du ménage au sud de Bordeaux
+              </Badge>
 
-            {/* La thèse du site, et elle n'est pas une excuse. Un périmètre
-                court n'est pas une couverture en construction : c'est le
-                mécanisme qui rend tenable la promesse de revoir la même
-                personne. Cette phrase était enterrée en milieu de page. */}
-            <p className="mt-6 max-w-prose text-lg text-pretty">
-              Nous ne dépassons pas une vingtaine de minutes de route depuis{" "}
-              {SITE.address.city}. C&apos;est une limite que nous nous imposons,
-              et c&apos;est elle qui rend le reste possible : des intervenants
-              qui habitent votre commune, et la même personne chez vous à chaque
-              passage.
-            </p>
+              {/* Un seul mot d'accent, en sarcelle : le tropical punch accentue
+                par la couleur, pas par un changement de plume. */}
+              <h1 className="text-4xl leading-tight font-black tracking-tight text-balance sm:text-5xl">
+                Votre ménage à domicile,{" "}
+                <span className="accent-word">simplement</span>.
+              </h1>
 
-            {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
+              {/* La thèse.
+
+                Elle disait auparavant que la proximité rendait possible « la
+                seule promesse qui compte vraiment : la même personne à chaque
+                passage ». C'était faire de l'intervenant attitré la promesse
+                centrale, alors que ce n'est qu'un moyen : ce qu'achète
+                quelqu'un dont la maison est sale, c'est de ne plus avoir à
+                s'en occuper. La continuité reste dite — plus bas, dans les
+                engagements, à sa vraie place de conséquence. */}
+              <p className="mt-6 max-w-prose text-lg text-pretty">
+                Des professionnels sélectionnés près de chez vous. {SITE.name}{" "}
+                s&apos;occupe du reste.
+              </p>
+
+              {/* Tant que ce bloc est à l'écran, la barre collante s'efface :
                 deux appels à l'action visibles demanderaient de choisir lequel
                 compte. */}
-            <div
-              className="mt-8 flex flex-col gap-3 sm:flex-row"
-              data-booking-cta
-            >
-              <Link
-                href="/reserver"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
+              <div
+                className="mt-8 flex flex-col gap-3 sm:flex-row"
+                data-booking-cta
               >
-                Réserver
-              </Link>
-              <Link
-                href="/tarifs"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
-              >
-                Voir les tarifs
-              </Link>
+                <Link
+                  href="/reserver"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+                >
+                  Réserver un ménage
+                </Link>
+                <a
+                  href="#contact"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
+                >
+                  Nous écrire
+                </a>
+              </div>
+
+              {/* Les trois objections qu'on ne pose pas à voix haute, levées
+                sous le geste plutôt qu'en bas de page. */}
+              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                <li className="flex items-center gap-1.5">
+                  <ShieldCheckIcon
+                    className="size-4 shrink-0 text-brand"
+                    aria-hidden
+                  />
+                  Intervenants vérifiés et assurés
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <ClockIcon
+                    className="size-4 shrink-0 text-brand"
+                    aria-hidden
+                  />
+                  Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours}{" "}
+                  h avant
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <RepeatIcon
+                    className="size-4 shrink-0 text-brand"
+                    aria-hidden
+                  />
+                  Sans abonnement
+                </li>
+              </ul>
+
+              {/* Les deux CTA de connexion, sous le geste de réservation et
+                jamais à sa place : « Réserver » reste l'action de la page.
+                Principal, « Se connecter » désigne l'espace client — qui
+                redirige lui-même vers la connexion quand la session manque, si
+                bien qu'une seule adresse sert les deux cas. Secondaire,
+                « Devenir pro » ouvre la face offre, qui porte sa propre porte
+                professionnelle : la vitrine client ne désigne pas l'espace
+                intervenant, on n'y entre qu'après la page qui dit le métier.
+
+                La vitrine statique n'embarque ni les espaces connectés ni la
+                face offre : les liens y pointeraient vers des pages
+                absentes. */}
+              {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
+                <p className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                  <Link
+                    href="/mon-espace"
+                    className="font-semibold text-brand underline"
+                  >
+                    Se connecter
+                  </Link>
+                  <span aria-hidden>·</span>
+                  <Link
+                    href="/travailler-avec-nous"
+                    className="text-brand underline"
+                  >
+                    Devenir pro
+                  </Link>
+                </p>
+              )}
             </div>
 
-            {/* La vitrine statique n'embarque pas les espaces connectés : le
-                lien y pointerait vers une page qui n'existe pas. */}
-            {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
-              <p className="mt-5 text-sm text-muted-foreground">
-                Déjà client ?{" "}
-                <Link href="/mon-espace" className="text-brand underline">
-                  Accéder à mes interventions
-                </Link>
-              </p>
-            )}
+            {/* La photo n'apparaît qu'en desktop : en mobile elle coûterait
+                le premier écran entier, là où la thèse doit se lire avant
+                tout défilement. La carte flottante ne porte que des promesses
+                vraies — pas de personne inventée. */}
+            <div className="relative hidden lg:block">
+              <div className="relative h-[420px] overflow-hidden rounded-[var(--r-2xl)]">
+                <Image
+                  src={photoInterieur}
+                  alt="Un intervenant Léo Clean aspire un canapé dans un salon lumineux"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 480px, 0px"
+                  className="object-cover"
+                />
+              </div>
+              <div className="absolute bottom-8 -left-7 flex max-w-72 items-center gap-3 rounded-[var(--r-l)] bg-card p-4 shadow-xl">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700">
+                  <CheckIcon className="size-5" strokeWidth={3} aria-hidden />
+                </span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="font-bold">
+                    Des professionnels sélectionnés
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Pour leur expérience, leur sérieux et leur fiabilité
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -190,13 +283,11 @@ export default function Home() {
         {/* Bloc 2 — les preuves chiffrées. */}
         <KeyFigures />
 
-        {/* Bloc 3 — le cadre : ce qui sécurise, avant l'objection. */}
-        <TrustStrip />
-
-        {/* Bloc 4 — le paragraphe d'identité.
+        {/* Bloc 3 — le paragraphe d'identité.
             Dense et factuel : c'est celui que les moteurs et les modèles de
             langage citent. Il reste vrai hors de sa page, et chaque chiffre
-            n'y apparaît qu'une fois. */}
+            n'y apparaît qu'une fois. Il porte aussi la mention fiscale — le
+            statut du dossier, rien de plus. */}
         <section className="mx-auto w-full max-w-4xl px-6 pt-16">
           <p className="max-w-prose text-pretty">
             {SITE.description} Nos intervenants se déplacent à{" "}
@@ -211,121 +302,203 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Bloc 5 — la conséquence concrète de la thèse. */}
-        <section className="mx-auto w-full max-w-4xl px-6 py-16">
-          <h2 className="text-2xl font-black tracking-tight">
-            Ce que ça change chez vous
-          </h2>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            {PROMISES.map((promise) => (
-              <div
-                key={promise.title}
-                className="rounded-[var(--r-l)] border border-border bg-card p-5"
-              >
-                <h3 className="flex items-baseline gap-2 text-lg font-extrabold">
-                  <CheckIcon
-                    className="size-4 shrink-0 translate-y-0.5 text-brand"
-                    aria-hidden
-                  />
-                  {promise.title}
-                </h3>
-                <p className="mt-2 text-pretty text-muted-foreground">
-                  {promise.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Bloc 4 — les quatre prestations. */}
+        <Services />
 
-        {/* Bloc 6 — l'offre. */}
+        {/* Bloc 5 — l'offre : deux tarifs, pas de forfait, pas d'abonnement. */}
         <Prestations />
 
-        {/* Bloc 7 — le déroulé. */}
-        <section className="border-y border-border-subtle bg-sky-50">
-          <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="text-2xl font-black tracking-tight">
-              Comment ça se passe
-            </h2>
+        {/* Bloc 6 — le déroulé, sur la bande sombre sarcelle : c'est la
+            profondeur de la palette, et les numéros en pilule ananas y portent
+            du texte encre — le duo signature du tropical punch. */}
+        <section className="bg-teal-900 text-white">
+          <div className="mx-auto grid w-full max-w-5xl items-center gap-14 px-6 py-16 lg:grid-cols-2">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-balance text-white">
+                Vous réservez. Nous nous occupons du reste.
+              </h2>
 
-            <ol className="mt-8 grid gap-6 sm:grid-cols-3">
-              {STEPS.map((step) => (
-                <li key={step.number}>
-                  <span
-                    className="block text-3xl font-black tracking-tight text-mint-300"
-                    aria-hidden
-                  >
-                    {step.number}
-                  </span>
-                  <h3 className="mt-1 font-extrabold">{step.title}</h3>
-                  <p className="mt-1.5 text-sm text-pretty text-muted-foreground">
-                    {step.body}
-                  </p>
-                </li>
-              ))}
-            </ol>
+              <ol className="mt-8 space-y-6">
+                {STEPS.map((step) => (
+                  <li key={step.number} className="flex gap-4">
+                    <span
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-pineapple-300 font-display text-base font-bold text-ink-900 tabular-nums"
+                      aria-hidden
+                    >
+                      {step.number}
+                    </span>
+                    <span>
+                      <h3 className="font-extrabold text-white">
+                        {step.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-pretty text-teal-200">
+                        {step.body}
+                      </p>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+
+              {/* La promesse exacte, sous la liste et non à la place :
+                  « vous profitez de votre maison » ne doit pas se lire comme
+                  un rendez-vous acquis à la seconde. Le fonctionnement
+                  complet — la demande part chez cinq intervenants, le premier
+                  qui accepte l'emporte — est écrit au récapitulatif, juste
+                  avant le geste qui engage. */}
+              <p className="mt-6 text-sm text-teal-200">
+                Vous êtes prévenu sous 24 h, avec le prénom de votre
+                intervenant, sa commune et son ancienneté.
+              </p>
+
+              {/* L'accent de la bande sombre : la pilule ananas, texte
+                  encre. */}
+              <Link
+                href="/reserver"
+                className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-pineapple-300 px-8 font-bold text-ink-900 transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-pineapple-400"
+              >
+                Commencer
+              </Link>
+            </div>
+
+            <div className="relative hidden h-[380px] overflow-hidden rounded-[var(--r-2xl)] lg:block">
+              <Image
+                src={photoIntervenante}
+                alt="Une intervenante Léo Clean nettoie une table basse en bois"
+                fill
+                sizes="(min-width: 1024px) 480px, 0px"
+                className="object-cover"
+              />
+            </div>
           </div>
         </section>
 
-        {/* Bloc 8 — l'alternative. */}
+        {/* Bloc 7 — le comparatif de modèles. */}
         <Comparison />
+
+        {/* Bloc 8 — la conséquence concrète, sans avis inventés.
+            Il précède les communes : le test de la page l'impose — la
+            première commune n'apparaît qu'après la thèse et ses conséquences,
+            jamais avant le premier argument. */}
+        <Engagement />
 
         {/* Bloc 9 — le lieu, en fin de parcours. */}
         <Zones />
 
-        {/* Bloc 10 — la confiance, sans avis inventés. */}
-        <Engagement />
+        {/* Bloc 10 — les conseils : les questions sans nom de ville. */}
+        <Conseils />
 
-        {/* Bloc 11 — la sortie. */}
-        <section className="border-t border-border-subtle bg-mint-50">
+        {/* Bloc 11 — les questions fréquentes. */}
+        <Faq />
+
+        {/* Bloc 12 — le contact : un formulaire, à côté des trois canaux.
+            Écrire est le canal de ceux qui ne réserveront pas seuls et
+            n'appellent pas non plus — le formulaire est le même que celui de
+            /etre-rappele, distingué par son chemin d'origine. */}
+        <section
+          id="contact"
+          className="border-t border-border-subtle bg-cream-50"
+        >
           <div className="mx-auto w-full max-w-4xl px-6 py-16">
-            <h2 className="text-2xl font-black tracking-tight text-balance">
-              Une personne qui habite à côté, chez vous cette semaine
-            </h2>
+            <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-balance">
+                  Une question avant de réserver ?
+                </h2>
+                {/* Le prénom du fondateur figurait ici, à trois lignes de
+                    l'adresse du siège — qui est aussi son domicile. La
+                    promesse tenue par ce bloc est qu'une vraie personne
+                    répond, et elle tient sans nommer qui : c'est le délai de
+                    réponse et le numéro qui la rendent vérifiable. */}
+                <p className="mt-2 max-w-prose text-muted-foreground">
+                  Écrivez-nous : quelqu&apos;un lit et répond, dans la journée,
+                  en semaine.
+                </p>
 
-            <div
-              className="mt-8 flex flex-col gap-3 sm:flex-row"
-              data-booking-cta
-            >
-              <Link
-                href="/reserver"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mint transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500"
-              >
-                Réserver
-              </Link>
-              <Link
-                href="/tarifs"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
-              >
-                Voir les tarifs
-              </Link>
+                <ul className="mt-6 space-y-3 text-sm">
+                  <li className="flex items-center gap-2">
+                    <MailIcon
+                      className="size-4 shrink-0 text-brand"
+                      aria-hidden
+                    />
+                    <a href={`mailto:${SITE.email}`} className="font-medium">
+                      {SITE.email}
+                    </a>
+                  </li>
+                  {SITE.address.street !== null && (
+                    <li className="flex items-center gap-2">
+                      <MapPinIcon
+                        className="size-4 shrink-0 text-brand"
+                        aria-hidden
+                      />
+                      {SITE.address.street}, {SITE.address.postalCode}{" "}
+                      {SITE.address.city}
+                    </li>
+                  )}
+                </ul>
+
+                <div className="mt-8">
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Vous préférez en parler à quelqu&apos;un ?
+                  </p>
+                  <ContactChannels stacked />
+                </div>
+              </div>
+
+              <LeadForm sourcePath="/" />
             </div>
+          </div>
+        </section>
 
-            <p className="mt-4 text-sm text-muted-foreground">
-              Prix affiché avant de réserver · Rien à payer aujourd&apos;hui ·
-              Annulation gratuite jusqu&apos;à {FACTS.freeCancellationHours} h
-              avant
-            </p>
-
-            {/* Les trois canaux directs restent, en second rang : ils servent
-                ceux qui ne réserveront pas seuls, pas ceux qui le feraient. */}
-            <div className="mt-10 border-t border-border/60 pt-6">
-              <p className="mb-4 text-sm text-muted-foreground">
-                Vous préférez en parler à quelqu&apos;un ?
+        {/* Bloc 13 — la sortie. Le panneau porte LE rose de la palette, en
+            surface arrondie et texte encre — jamais de blanc sur papaye. */}
+        <section className="border-t border-border-subtle">
+          <div className="mx-auto w-full max-w-4xl px-6 py-16">
+            <div className="rounded-[var(--r-2xl)] bg-papaya-200 p-8 sm:p-12">
+              <h2 className="text-2xl font-black tracking-tight text-balance">
+                Votre premier ménage, en deux minutes
+              </h2>
+              <p className="mt-2 text-ink-800">
+                Sans engagement. Annulation gratuite jusqu&apos;à{" "}
+                {FACTS.freeCancellationHours} h avant.
               </p>
-              <ContactChannels className="[&>div]:sm:justify-start" />
+
+              <div
+                className="mt-8 flex flex-col gap-3 sm:flex-row"
+                data-booking-cta
+              >
+                <Link
+                  href="/reserver"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-8 font-bold text-primary-foreground shadow-mango transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500"
+                >
+                  Réserver
+                </Link>
+                <Link
+                  href="/tarifs"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-transparent bg-card px-8 font-bold shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
+                >
+                  Voir les tarifs
+                </Link>
+              </div>
             </div>
 
-            {/* La porte côté offre, discrète et tout en bas : quelqu'un qui
-                cherche du travail lit la page jusqu'au bout, un client non.
-                Elle n'apparaît qu'une fois les conditions arbitrées. */}
-            {INTERVENANT_PAGE_READY && (
+            {/* La porte côté offre, redite tout en bas : quelqu'un qui cherche
+                du travail lit la page jusqu'au bout, un client non.
+
+                Elle n'est plus gardée par `INTERVENANT_PAGE_READY`. Ce drapeau
+                tenait deux choses à la fois — l'indexation de la page, et sa
+                désignation depuis la vitrine — et la seconde est désormais une
+                décision produit : la face offre est annoncée. La première
+                tient toujours, `/travailler-avec-nous` restant en `noindex` et
+                hors du sitemap tant que ses trois garanties ne sont pas
+                arbitrées. Un lien pour les humains, pas pour les moteurs. */}
+            {!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE && (
               <p className="mt-8 text-sm text-muted-foreground">
                 Vous êtes professionnel du ménage ?{" "}
                 <Link
                   href="/travailler-avec-nous"
                   className="text-brand underline"
                 >
-                  Travaillez avec nous
+                  Devenir pro
                 </Link>
                 .
               </p>

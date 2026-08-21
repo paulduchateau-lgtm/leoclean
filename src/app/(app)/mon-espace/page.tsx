@@ -106,7 +106,7 @@ function BookingCard({
         <p className="mt-3 flex items-center gap-3 text-sm">
           <span
             aria-hidden
-            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-mint-100 text-xs font-black text-mint-800"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xs font-black text-teal-800"
           >
             {booking.cleaner.firstName.slice(0, 2).toUpperCase()}
           </span>
@@ -184,6 +184,33 @@ export default async function MonEspacePage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
         <h1 className="text-3xl font-black tracking-tight">Mes réservations</h1>
         <p className="mt-2 text-muted-foreground">{session.user.email}</p>
+
+        <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+          <Link
+            href="/mon-espace/abonnement"
+            className="text-primary hover:underline"
+          >
+            Mon abonnement →
+          </Link>
+          <Link
+            href="/mon-espace/noter"
+            className="text-primary hover:underline"
+          >
+            Noter une intervention →
+          </Link>
+          <Link
+            href="/mon-espace/paiement"
+            className="text-primary hover:underline"
+          >
+            Moyen de paiement →
+          </Link>
+          <Link
+            href="/mon-espace/parrainage"
+            className="text-primary hover:underline"
+          >
+            Parrainage →
+          </Link>
+        </p>
 
         <h2 className="mt-10 text-lg font-extrabold">Prochaines</h2>
         {upcoming.length === 0 ? (

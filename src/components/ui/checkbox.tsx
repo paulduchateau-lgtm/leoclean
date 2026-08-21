@@ -10,7 +10,7 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       className={cn(
-        "peer relative flex size-6 shrink-0 items-center justify-center rounded-xs border-[2.5px] border-border-strong bg-card transition-[background-color,border-color,box-shadow] duration-200 ease-brand outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 hover:border-mint-500 focus-visible:border-mint-600 focus-visible:ring-4 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-mint-500 data-checked:border-mint-500 data-checked:bg-primary data-checked:text-primary-foreground",
+        "peer relative flex size-6 shrink-0 items-center justify-center rounded-xs border-[2.5px] border-border-strong bg-card transition-[background-color,border-color,box-shadow] duration-200 ease-brand outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 hover:border-teal-500 focus-visible:border-teal-600 focus-visible:ring-4 focus-visible:ring-ring/35 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 aria-invalid:aria-checked:border-teal-500 data-checked:border-teal-500 data-checked:bg-teal-400 data-checked:text-ink-900",
         className,
       )}
       {...props}

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import {
   confirmBooking,
+  tracerEtape,
   getQuote,
   getSlots,
   searchAddress,
@@ -102,7 +103,9 @@ export default async function ReserverPage({
 
       <SiteHeader variant="tunnel" />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8">
+      {/* En desktop, la page s'élargit pour loger le récapitulatif collant à
+          droite du tunnel — la colonne de saisie garde sa largeur de lecture. */}
+      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-8 lg:max-w-5xl">
         {/* Le titre de la page reste un h1 pour la structure du document, mais
             il est discret : la question de l'écran, portée par le tunnel, est
             ce que la personne doit lire en premier. */}
@@ -115,7 +118,18 @@ export default async function ReserverPage({
               même écran de tourner au-dessus d'un serveur ou, sur la vitrine
               statique, d'un calcul dans le navigateur. */}
           <BookingFunnel
-            backend={{ searchAddress, getQuote, getSlots, confirmBooking }}
+            backend={{
+              searchAddress,
+              getQuote,
+              getSlots,
+              confirmBooking,
+              /*
+               * L'action est passée telle quelle : envelopper l'appel dans une
+               * fonction ordinaire ferait échouer le rendu, une fonction
+               * non marquée « use server » ne traversant pas la frontière.
+               */
+              tracerEtape,
+            }}
             communes={COMMUNES_BY_POPULATION.map((commune) => ({
               slug: commune.slug,
               name: commune.name,

@@ -131,7 +131,7 @@ règle complète et son unique point de bascule vivent dans `src/lib/fiscal.ts`.
 ## Canaux de conversion
 
 Cinq portes. Le **tunnel de réservation** (`/reserver`) est la principale : le
-client choisit son adresse, voit son prix, choisit son heure et repart avec un
+client donne son adresse, voit son prix, choisit son heure et repart avec un
 rendez-vous ferme. Le formulaire de rappel (`/etre-rappele`, également intégré à
 chaque page commune avec la commune pré-sélectionnée) reste pour ceux qui ne
 veulent pas réserver seuls. Les trois autres sont directes, par ordre
@@ -220,11 +220,95 @@ Trois limites, documentées plutôt que masquées :
 Le client non cloisonné `prisma` est réservé à l'authentification, à
 l'administration plateforme sur un chemin explicite, et aux scripts.
 
+**L'extension ne protège que ce qui passe par l'application, et il y a une
+seconde porte.** Supabase expose PostgREST sur `/rest/v1/<Table>`, atteignable
+avec la clé anonyme — publique par construction — et accorde par défaut `ALL`
+aux rôles `anon` et `authenticated` sur toute table nouvellement créée du
+schéma `public` : les tables engendrées par `prisma migrate` en héritent
+silencieusement. Sans RLS, quiconque a la clé anonyme lit `User`, `Address`,
+`Booking` — noms, téléphones, adresses de domicile, consignes d'accès, sans
+qu'aucune ligne du dépôt ne s'en aperçoive.
+
+La migration `20260820040000_verrouiller_lacces_api` pose trois verrous : RLS
+activée partout **sans aucune politique**, privilèges retirés à `anon` et
+`authenticated`, privilèges par défaut annulés pour les tables futures.
+`FORCE ROW LEVEL SECURITY` n'est volontairement pas posée — le propriétaire
+contourne la RLS, et c'est exactement ce qu'on veut : l'application se connecte
+avec ce rôle et son cloisonnement est déjà assuré par l'extension. La forcer
+couperait l'application sans rien ajouter contre la porte qu'on ferme.
+
+`src/lib/acces-api.integration.test.ts` est le seul endroit où l'oubli se voit :
+`prisma migrate` n'active pas la RLS sur les tables qu'il crée, et rien d'autre
+ne le signalerait. Le reste — retirer `public` des schémas exposés, ne jamais
+déployer de clé `service_role` — ne s'écrit pas en SQL versionné et vit dans
+[docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md).
+
 ## Authentification et autorisation
 
-Connexion sans mot de passe : lien envoyé par email, ou Google. Sessions en
-base plutôt qu'en jeton signé, afin de pouvoir être révoquées immédiatement
-— suspension d'un intervenant, suppression de compte au titre du RGPD.
+Trois moyens de se connecter : lien envoyé par email, fournisseur social, et
+mot de passe. Sessions en base plutôt qu'en jeton signé, afin de pouvoir être
+révoquées immédiatement — suspension d'un intervenant, suppression de compte au
+titre du RGPD.
+
+**Le mot de passe s'ajoute, il ne remplace rien.** Il est facultatif, et un
+compte qui n'en a pas continue de se connecter par lien : la raison d'origine
+tient toujours, un mot de passe qu'on n'a pas ne peut pas fuir. Ce qu'il
+apporte est de ne plus réclamer un aller-retour par la boîte mail à chaque
+connexion, ce qui compte pour un intervenant qui ouvre l'application tous les
+matins.
+
+**Il ne se définit que depuis une session déjà ouverte**, donc après avoir
+prouvé qu'on reçoit les emails de l'adresse. Conséquence : il n'y a **aucun
+parcours « mot de passe oublié »**, et c'est délibéré — le lien magique en
+tient lieu, déjà à usage unique, expirant et limité en débit. Un second
+mécanisme de récupération serait une deuxième surface à sécuriser, pas un
+raccourci. Changer un mot de passe existant exige l'ancien, en revanche : un
+poste laissé ouvert ne doit pas permettre de verrouiller le compte de son
+propriétaire.
+
+**scrypt plutôt qu'Argon2id**, qui vient pourtant en tête des recommandations
+de l'OWASP : Argon2 exige une dépendance native, et une dépendance native est
+ce qui casse une construction sans serveur le jour où l'exécuteur change
+d'architecture. `N = 2^15` demande 32 Mio — `2^17`, la valeur citée pour un
+serveur dédié, en réclamerait 128, et quelques connexions simultanées
+épuiseraient la mémoire de l'instance. Les paramètres sont **écrits dans
+l'empreinte**, si bien qu'un durcissement futur n'invalide rien : les
+empreintes se réencodent à la connexion suivante, seul moment où le mot de
+passe en clair est disponible.
+
+**Aucune règle de composition** — ni majuscule, ni chiffre, ni caractère
+spécial. Le NIST 800-63B les décourage explicitement parce qu'elles produisent
+`Motdepasse1!` et non de l'entropie. Dix caractères minimum, une liste des
+mots de passe les plus courants comparée après aplatissement des substitutions
+naïves (`M0td3p@sse` vaut `motdepasse`), et refus de tout ce qui contient
+l'adresse ou le nom.
+
+**Auth.js n'écrit pas de session en base pour le fournisseur `Credentials`** :
+il bascule sur un jeton signé, quelle que soit la stratégie déclarée. L'accepter
+donnerait deux régimes de session — révocable pour le lien, non révocable pour
+le mot de passe — et ferait tomber la garantie dont dépend tout le reste.
+`authConfig.jwt.encode` intercepte donc l'encodage et rend le jeton d'une vraie
+ligne `Session`, créée par `auth/session-connexion.ts`. Ce montage s'appuie sur
+un comportement interne, donc il casse en silence à une mise à jour : un test
+d'intégration vérifie l'écriture, et un test de bout en bout vérifie qu'Auth.js
+passe bien par là — le cookie doit contenir un identifiant de session, pas un
+jeton à trois segments.
+
+**Le message d'échec est unique** et ne dit jamais laquelle des deux valeurs
+est fausse, ni si l'adresse existe. La durée de réponse non plus : quand le
+compte est inconnu, on dérive contre une empreinte factice, sans quoi une
+réponse instantanée d'un côté et soixante millisecondes de l'autre suffiraient
+à énumérer les comptes. La limitation de débit vit dans `authorize` et non dans
+la server action, parce que le point d'entrée réel est la route d'Auth.js,
+qu'un script appelle sans passer par notre écran.
+
+**Les fournisseurs sociaux ne sont déclarés que s'ils sont configurés**
+(`auth/fournisseurs.ts`, pur et lu deux fois) : l'écran de connexion n'affiche
+donc jamais un bouton menant à une erreur, et la server action valide contre la
+même liste. `allowDangerousEmailAccountLinking` est activé — le nom dit un vrai
+risque, mais Google, Apple et Facebook vérifient tous l'adresse avant de la
+transmettre, et sans cette option quelqu'un qui a réservé par lien puis revient
+par Google trouverait un compte vide.
 
 **Les rôles ne sont pas hiérarchisés sur une échelle unique.** Un intervenant
 n'est pas « plus » qu'un client. On raisonne en capacités explicites
@@ -242,6 +326,22 @@ l'occasion d'interroger une autre organisation.
 `asPlatformAdmin().scopeTo(orgId, motif)` est **le seul** chemin franchissant la
 frontière d'une organisation. Il est volontairement verbeux et journalise
 chaque accès de façon nominative et motivée.
+
+**Un compte se crée sans appartenance, et les espaces doivent le supporter.**
+`requireOrganization` lève quand elle manque — la bonne conception pour une
+primitive de sécurité, un appelant qui oublie d'attraper une exception fermant
+la porte plutôt que de l'ouvrir. Mais une page qui laisse remonter l'exception
+rend une **erreur 500** là où la réponse juste tient en une phrase, et le cas
+est nominal : quelqu'un qui se connecte par lien magique avant d'avoir réservé
+n'a de droit nulle part. `auth/espaces.ts` traduit donc le refus en résultat,
+sans rien relâcher — même vérification, et seule `ForbiddenError` est attrapée,
+une panne de base devant continuer de remonter. Trois refus, trois phrases,
+parce qu'ils appellent trois gestes différents.
+
+Sur un environnement de test, cette règle rend les espaces inatteignables :
+`npm run db:roles -- vous@exemple.fr --admin` accorde ce qu'il faut, et refuse
+de s'exécuter en production — accorder `PLATFORM_ADMIN` ouvre la lecture de
+toutes les organisations.
 
 **`src/proxy.ts` ne fait pas d'autorisation** — en Next 16, `middleware.ts` est
 d'ailleurs renommé `proxy.ts`. Il constate l'absence de cookie et évite un
@@ -378,20 +478,53 @@ par un `validUntil` et en ouvre de nouvelles. Rien n'est écrasé : une
 réservation passée continue de pointer sur le tarif qui l'a chiffrée. Seule la
 marketplace est touchée, une société cliente fixant ses propres prix.
 
-### L'accueil raconte pourquoi le rayon est court
+### L'accueil raconte ce qu'on n'aura plus à faire
 
-**La thèse du site est que le périmètre est petit exprès.** Léo Clean vend
-l'inverse d'une plateforme : là où l'argument national est l'échelle et le
-choix, le nôtre est qu'une vingtaine de minutes de route est la limite qui
-rend tenable « la même personne chaque semaine ». Ce n'est pas une faiblesse à
-excuser ni une couverture en construction, c'est le mécanisme. La phrase qui
-le dit ouvre désormais la page au lieu d'être enterrée en milieu de parcours.
+**La promesse est qu'on s'occupe du reste.** Quelqu'un dont la maison est sale
+n'achète pas un intervenant attitré : il achète de ne plus avoir à y penser.
+L'accueil ouvrait auparavant sur « la seule promesse qui compte vraiment : la
+même personne chez vous, à chaque passage » — arbitrage revu le 20 août 2026
+avec le porteur du projet. La continuité est un **moyen**, pas la promesse :
+elle reste écrite dans les engagements, à sa place de conséquence. Le titre
+dit « Votre ménage à domicile, simplement », le chapeau « Des professionnels
+sélectionnés près de chez vous. Léo Clean s'occupe du reste. »
 
-**L'ordre des blocs découle de là** : thèse, preuves chiffrées, cadre qui
-sécurise, conséquences concrètes, offre, déroulé, comparatif des modèles,
-communes, engagements, sortie. Le visiteur comprend _pourquoi_ avant qu'on lui
+**La proximité reste la thèse, elle n'est plus l'accroche.** Le périmètre est
+petit exprès : une vingtaine de minutes de route est la limite qui rend
+tenable « la même personne chaque semaine », et c'est un mécanisme, pas une
+couverture en construction. Elle a désormais son bloc à elle — « Nous ne
+venons pas de loin » — au lieu d'occuper la première phrase.
+
+**La pastille dit le territoire, pas son décompte.** « Les pros du ménage au
+sud de Bordeaux », et non plus « 16 communes au sud de Bordeaux » : un chiffre
+en tête de page se lit comme une limite là où un lieu se lit comme une
+adresse. Le décompte n'est pas perdu — il vit dans le paragraphe d'identité et
+dans le bloc des communes, aux deux endroits où il sert de preuve.
+
+**L'ordre des blocs** est repris du prototype à la refonte d'août
+2026 : thèse (avec la réassurance sous le geste), preuves chiffrées,
+paragraphe d'identité, quatre prestations, offre à deux tarifs, déroulé sur la
+bande sombre — « Vous réservez. Nous nous occupons du reste. » —, comparatif
+des modèles, engagements (« Ce que ça change chez
+vous », fusion des anciennes promesses et du bloc de confiance), communes,
+conseils lus dans `blog.ts`, questions fréquentes aux chiffres dérivés du
+barème, formulaire de contact (le `LeadForm` de `/etre-rappele`, distingué par
+son `sourcePath`), sortie. Le visiteur comprend _pourquoi_ avant qu'on lui
 demande _où_ — l'accueil s'ouvrait auparavant sur « Où habitez-vous ? » et
 seize liens, soit un effort de sélection réclamé avant le premier argument.
+Les engagements précèdent les communes, seule entorse à l'ordre du prototype :
+le test de la page impose qu'aucun lien commune n'apparaisse avant les
+conséquences de la thèse.
+
+**Le déroulé raconte ce que le client fait — presque rien.** Il détaillait la
+mécanique interne : cinq intervenants sollicités, le premier qui accepte
+l'emporte. C'est vrai, et cela reste écrit **là où cela engage** — au
+récapitulatif, juste avant le geste qui réserve, et sur l'écran de
+confirmation. L'accueil n'a pas à faire porter au visiteur le fonctionnement
+de l'attribution. Une ligne sous la liste garde en revanche la promesse
+exacte, et un test l'impose : « vous êtes prévenu sous 24 h ». Sans elle,
+« vous profitez de votre maison » se lirait comme un rendez-vous acquis à la
+seconde, et se découvrirait à la première réservation.
 
 **Les seize communes n'ont pas disparu, elles ont changé de fonction.**
 Placées en fin de page et groupées en deux familles, chaque pastille portant
@@ -399,6 +532,16 @@ son temps de trajet, elles ne sont plus un menu mais la preuve de la thèse.
 Aucun lien interne n'est perdu et `src/app/page.test.tsx` le vérifie sur le
 HTML rendu, pas sur les constantes : une donnée juste qui n'atteint pas la
 page ne vaut rien.
+
+**Un champ de code postal ouvre le bloc des communes.** Seize pastilles
+répondent à qui sait déjà lire une carte ; « est-ce que vous venez chez
+moi ? » se répond mieux en tapant cinq chiffres. `CouvertureCheck` est le seul
+composant client de l'accueil : il reçoit le référentiel réduit à quatre
+champs par commune — importer `territory.ts` embarquerait des coordonnées et
+des codes INSEE dont l'écran n'a rien à faire — nomme **toutes** les communes
+d'un code postal partagé (33650 en couvre sept) et ne transmet aucune commune
+au tunnel, qui demande désormais l'adresse. Un refus donne le numéro plutôt
+qu'un champ qui ne rend rien.
 
 **`src/lib/facts.ts` n'est pas une source de vérité, c'est un agrégateur.** Un
 bandeau de crédibilité rassemble en quatre nombres ce que quatre modules
@@ -417,11 +560,24 @@ formulations peuvent coexister.
 **Il n'y a aucun avis client, et rien ne le maquille.** Fabriquer un
 témoignage est une pratique commerciale trompeuse au sens de l'article L121-2
 du code de la consommation, pour un gain sans rapport avec le risque. Le bloc
-d'engagements signés tient ce rôle : une promesse vérifiable, tenue par
-quelqu'un dont le nom et le numéro sont sur la page, ce qui est la seule forme
-de confiance qu'un service neuf peut offrir honnêtement. `<Avis />` est en
-place et muet, gardé par `FACTS.hasReviews` — le même drapeau que le
+d'engagements tient ce rôle : des promesses **vérifiables** — SIRET actif,
+attestation de responsabilité civile, pièce d'identité et RIB contrôlés avant
+la première intervention, un vrai numéro où quelqu'un décroche — ce qui est la
+seule forme de confiance qu'un service neuf peut offrir honnêtement. `<Avis />`
+est en place et muet, gardé par `FACTS.hasReviews` — le même drapeau que le
 `aggregateRating` du JSON-LD.
+
+**Le fondateur n'est plus nommé, ni sur la page ni dans le balisage.** Le bloc
+d'engagements écrivait « Prénom Nom, <rue> à <ville> », et le JSON-LD déclarait
+`founder` dans le même objet que `address` : le siège étant le domicile du
+porteur du projet, cela publiait une identité associée à une adresse
+d'habitation — et le balisage étant émis sur toutes les pages, partout.
+Arbitrage du 20 août 2026 : la NAP garde sa place — pied de page, mentions
+légales, `PostalAddress` du JSON-LD — parce que c'est celle de l'entreprise, et
+`taxID` identifie déjà la structure de façon vérifiable. `SITE.founder` reste
+renseigné et reste affiché sur `/a-propos`, où le nommer est l'objet de la
+page. `src/app/page.test.tsx` échoue si le nom revient sur l'accueil, texte
+rendu et balisage compris.
 
 **Le comparatif oppose des modèles, jamais des sociétés.** Aucun concurrent
 n'est nommé, aucun superlatif n'est employé, et chaque case défavorable à un
@@ -471,14 +627,75 @@ non payé et les trous de planning : un périmètre court concentre là où une
 plateforme nationale disperse. On parle donc de kilomètres, d'heures et de
 délais de paiement, jamais de « rejoindre une aventure ».
 
-**La page n'est ni indexée ni annoncée tant qu'elle est incomplète.**
-`PENDING_INTERVENANT_FIELDS` suit la convention de `PENDING_IDENTITY_FIELDS` :
-tant qu'il manque une valeur — la rémunération nette au premier chef — la
-page porte `noindex`, reste hors du sitemap et de `llms.txt`, et aucun lien ne
-la désigne depuis l'en-tête, le pied de page ou l'accueil. Elle reste
-atteignable par son URL, pour être relue. Se classer sur « missions ménage
-Gironde » sans pouvoir dire ce qu'on paie ferait venir exactement les gens
-qu'on décevrait.
+**La page n'est pas indexée tant qu'elle est incomplète, mais elle est
+annoncée.** `PENDING_INTERVENANT_FIELDS` suit la convention de
+`PENDING_IDENTITY_FIELDS` : tant qu'il manque une valeur, la page porte
+`noindex` et reste hors du sitemap et de `llms.txt`. Se classer sur « missions
+ménage Gironde » sans pouvoir dire ce qu'on paie ferait venir exactement les
+gens qu'on décevrait.
+
+Le drapeau **ne gouverne plus le maillage interne**, et c'est une décision du
+porteur du projet (21 août 2026) : l'en-tête, l'accueil et le pied de page
+désignent « Devenir pro » sans condition. Il tenait deux choses à la fois — ce
+que les moteurs ont le droit d'indexer, et ce que le site a le droit
+d'annoncer — et les deux ne se décident pas de la même façon.
+
+**Les cinq valeurs ont été arbitrées le 21 août 2026, et la page est donc
+ouverte** : `PENDING_INTERVENANT_FIELDS` est vide, la pastille « à préciser »
+a disparu d'elle-même, la page entre au sitemap et dans `llms.txt`, et le mot
+« garanti » s'écrit — parce qu'on peut enfin dire contre quoi.
+
+Les trois garanties, telles qu'elles ont été tranchées :
+
+- **Retard de règlement du client** : sans effet. Le versement part sous cinq
+  jours ouvrés après l'intervention, sur son propre délai.
+- **Impayé** : porté par Léo Clean. La prestation a été faite, elle est due.
+  Ce qui est suspendu est la **suite** — l'intervention suivante chez ce client
+  est gelée tant que la situation n'est pas régularisée, l'intervenant en étant
+  informé avant de partir, et le client passe en recouvrement.
+- **Annulation tardive** : les frais **encaissés** se partagent moitié-moitié.
+  Jamais une part du prix de la mission : le barème des CGU est plafonné, et
+  annoncer un pourcentage du prix ferait attendre plus que ce qui rentre.
+
+**Le gel est écrit depuis le 21 août 2026**, et il ne pose aucun statut.
+
+`ClientProfile.recouvrementDepuis` porte une date, et **tout le reste s'en
+dérive** : `paiement/recouvrement.ts` est pur et décide, mission par mission,
+si elle est gelée. La tentation était de poser un `SUSPENDED` sur chaque
+réservation à venir ; elle a été écartée parce qu'il aurait fallu parcourir les
+réservations **deux fois** — au gel et au dégel — et qu'un seul oubli au dégel
+laisserait gelé quelqu'un qui vient de payer, c'est-à-dire punir précisément le
+client qui a régularisé. Une date qui retombe à `null` dégèle tout d'un coup,
+sans parcours et sans oubli possible.
+
+Trois arbitrages tiennent dans la fonction pure :
+
+- **Une intervention déjà commencée ne se gèle pas.** Quelqu'un qui est chez le
+  client finit son ménage et est payé pour ; retirer la mission sous ses pieds
+  lui ferait porter un litige qui n'est pas le sien.
+- **La date d'entrée ne bouge pas**, comme `Payment.firstFailedAt` : la
+  remplacer ferait rajeunir indéfiniment une dette, alors que c'est son
+  ancienneté qui décide de l'ordre d'appel.
+- **Un paiement réussi ne lève pas forcément le recouvrement.** `leverLe­
+Recouvrement` relit l'état complet : régler un impayé sur deux ne dégèle
+  rien, sinon l'intervenant partirait sur la foi d'un message que rien ne
+  justifie.
+
+`ouvrirLeRecouvrement` consomme enfin `aSuspendre` et prévient **les
+intervenants affectés** — seules les affectations `ACCEPTED`, une proposition
+n'engageant personne. L'`updateMany` filtré sur `null` fait office de verrou :
+l'ordonnanceur repasse toutes les heures, et personne ne doit recevoir
+vingt-quatre fois le même email. Les deux messages ne disent **rien du
+client** — ni montant, ni ancienneté, ni prix de la mission : ce n'est pas
+l'affaire de l'intervenant, et `recap(intervention, false)` tient déjà la règle
+qui lui interdit de lire le prix client.
+
+Trois surfaces, une seule règle : l'écran de l'intervenant affiche le gel
+**avant l'adresse et avant le lien vers l'écran de travail** — à 8 h du matin,
+celui qui cherche où aller ne doit pas découvrir en bas de carte qu'il ne faut
+pas y aller — le back-office en tient la file, du plus ancien au plus récent, et
+le libellé vient du module pur pour que les deux écrans ne puissent pas se
+contredire.
 
 **Le mot « garanti » est dérivé, pas écrit.** Il n'engage à rien tant qu'on
 n'a pas dit _contre quoi_ il garantit : `canSayGuaranteed()` n'est vrai que si
@@ -575,7 +792,7 @@ celle de la route.
 
 **La carte de partage est générée, une par commune.** `src/lib/seo/og.tsx`
 compose l'image dans le langage du système — surtitre en capitales, titre en
-graisse 900, prix en pilule menthe sur texte encre. C'est la deuxième surface,
+graisse 900, prix en pilule mangue sur texte encre. C'est la deuxième surface,
 après `magic-link-email.tsx`, où les couleurs sont recopiées plutôt que
 référencées : le moteur de rendu ne voit pas la feuille de styles. Chaque
 valeur porte le nom de son token. Figtree y est versionnée en TrueType dans
@@ -614,6 +831,58 @@ le serveur fait précisément ce qu'on lui a demandé. L'ordre est donc : créer
 sous-domaine, l'attacher au projet, vérifier qu'il répond, puis seulement
 renseigner la variable. Le cas s'est produit en production.
 
+### Trois domaines, et une connexion qui n'appartient à aucun
+
+`leoclean.fr` porte la vitrine client, `app.leoclean.fr` ce que le client fait
+une fois décidé, et **`pro.leoclean.fr` toute la face offre** — la page qui
+explique le métier, le tunnel de candidature et l'espace intervenant.
+`NEXT_PUBLIC_PRO_URL` la déclare, sous la même précaution que
+`NEXT_PUBLIC_APP_URL` et pour la même raison. **Absente, rien ne bouge** : la
+vitrine offre reste sur la vitrine, l'espace intervenant sur l'application,
+exactement comme la veille. Un test l'impose, parce que c'est le repli qui
+évite de rejouer la panne.
+
+**La connexion est servie par l'hôte qui la reçoit, jamais redirigée.**
+`/connexion` et `/api/auth` sont neutres. C'est ce qui rend le cloisonnement
+réel : Auth.js tourne en `trustHost` et construit ses URL depuis la requête,
+si bien qu'une session ouverte sur `pro.` y dépose un cookie qui **n'est pas**
+envoyé à `app.` — deux faces, deux sessions, deux périmètres. L'alternative
+était d'élargir le cookie à `.leoclean.fr`, c'est-à-dire de faire l'inverse de
+ce que « cloisonner » veut dire. Conséquence de configuration : chez Google,
+l'URI de redirection OAuth doit être enregistrée **pour chaque hôte** qui sert
+une connexion.
+
+**Un sous-domaine est un site distinct pour un moteur**, et trois pièces en
+découlent, toutes vérifiées :
+
+- **Le canonical est devenu absolu.** Il était relatif, résolu par
+  `metadataBase` — juste tant qu'un seul domaine portait du contenu indexable.
+  Une page servie par `pro.` déclarerait sinon un canonical sur `leoclean.fr`,
+  c'est-à-dire une autre page que celle qu'on lit : la façon la plus directe de
+  se désindexer soi-même. `canonicalUrl()` choisit l'origine d'après le chemin,
+  et `og:url` la même.
+- **Chaque hôte a son sitemap et son `robots.txt`.** Les deux routes lisent
+  l'en-tête `host`, ce qui les rend dynamiques — un `sitemap.ts` est mis en
+  cache par défaut. Le coût est nul : ces fichiers ne sont lus que par des
+  robots. Déclarer dans le sitemap d'un domaine une URL d'un autre est ignoré
+  au mieux, tenu pour une manipulation au pire.
+- **La page d'offre change de sitemap, pas de statut.** Tant que la face pro
+  n'a pas d'hôte, elle reste dans celui de la vitrine ; dès qu'elle en a un,
+  elle passe dans le sien et disparaît de l'autre.
+
+**Le prix à payer est connu et assumé** : `/travailler-avec-nous` vient d'être
+ouverte à l'indexation et repart de zéro en autorité sur le nouveau domaine,
+coupée du maillage interne de `leoclean.fr`. C'est un arbitrage du porteur du
+projet (21 août 2026), pris en connaissance de l'alternative — ne cloisonner
+que l'espace connecté, qui aurait laissé la vitrine offre sur le domaine
+principal.
+
+**La vitrine statique ne voit rien de tout cela** : `sitemap.ts` est écarté de
+son arbre et `robots.ts` remplacé par l'overlay, si bien qu'`output: export`
+ne rencontre jamais les deux routes dynamiques. C'est ce qu'il faut revérifier
+au prochain passage — la règle du dépôt reste qu'une route ajoutée est une
+exclusion à envisager.
+
 **`/pro/[slug]` dit autre chose qu'une page commune.** Léo Clean opère en mise
 en relation ; une société cliente du SaaS est prestataire et emploie ses propres
 agents. Sa page présente donc une entreprise, ses prestations et **ses** tarifs,
@@ -646,6 +915,27 @@ que deux appels à l'action à l'écran demandent de choisir lequel compte. Aucu
 principal que sur franchissement. Elle n'est jamais démontée non plus : elle
 glisse hors de l'écran, `inert`, ce qui évite un saut de mise en page à chaque
 franchissement.
+
+**Deux portes de connexion sur la vitrine, jamais trois.** L'en-tête portait
+« Espace client » et « Espace cleaner » côte à côte, ce qui demandait au
+visiteur de savoir de quel côté du produit il se trouve avant de pouvoir se
+connecter. Le site public n'a qu'un public : **« Se connecter »** y mène
+l'espace client — l'espace, et non `/connexion`, parce qu'il redirige lui-même
+quand la session manque et qu'une seule adresse sert donc les deux cas — et
+**« Devenir pro »** ouvre la face offre. La vitrine client ne désigne plus
+l'espace intervenant, et un test de l'accueil l'interdit : on n'y entre
+qu'après la page qui dit le métier.
+
+**Cette page porte sa propre porte professionnelle.** `/travailler-avec-nous`
+prend la variante `pro` de l'en-tête — le retour vers la vitrine client posé
+tout en haut et en secondaire, un bouton « Espace pro » à la place de
+« Réserver ». Ce bouton vise un bloc à deux entrées de même poids —
+se connecter, ou créer son compte — plutôt que la connexion directement : les
+deux personnes qui le pressent ne cherchent pas la même chose, l'une veut son
+planning et l'autre veut savoir comment commencer, et n'en servir qu'une en
+perdrait l'autre. La connexion y passe par `/connexion?callbackUrl=/intervenant`
+et non par `/intervenant`, qui sait afficher son propre refus quand la session
+existe sans porter le droit.
 
 **L'aide est un panneau, pas une page.** Ajouter un écran entre la question et
 la réponse quand la réponse tient en trois liens ne se justifie pas.
@@ -800,18 +1090,41 @@ du centre de la commune : les temps de trajet sont moins justes, donc les
 créneaux un peu plus prudents. C'est ce chemin que teste le parcours de bout en
 bout, précisément pour ne pas dépendre d'un service tiers.
 
+Depuis que l'adresse ouvre le tunnel, ce repli porte davantage : une complétion
+en panne arrêtait auparavant un parcours au dernier écran, elle l'arrêterait
+désormais au premier. C'est pour cela que le bouton « Saisir mon adresse
+manuellement » est **toujours** présent, avant même toute recherche, et non
+seulement après un échec.
+
 ## Ordre des écrans du tunnel
 
-**Plus une information coûte à donner, plus tard on la demande.** C'est la
-seule règle, et elle décide de tout l'ordre. Le tunnel demandait auparavant
-l'adresse complète en premier et n'affichait le prix qu'à la fin : friction
-maximale au moment où l'engagement est minimal.
+Six écrans : **adresse, durée, rythme, créneau, coordonnées, récapitulatif.**
 
-Six écrans : commune, durée, rythme, créneau, coordonnées, adresse. La
-commune suffit à répondre « intervenez-vous chez moi ? » et à chercher des
-créneaux ; le prix apparaît au troisième, avant toute donnée personnelle ;
-l'adresse exacte, la plus coûteuse à donner, arrive en dernier et emporte le
-récapitulatif avec elle.
+**L'adresse ouvre le tunnel depuis le 20 août 2026**, à la place de l'écran de
+choix de commune. Le parcours obéissait jusque-là à « plus une information
+coûte à donner, plus tard on la demande » : la commune d'abord, presque
+gratuite à donner, l'adresse exacte au dernier écran. La règle vaut toujours
+pour les coordonnées — nom, téléphone, email restent au cinquième écran — mais
+elle avait pour l'adresse un défaut qu'elle ne voyait pas : **le même
+renseignement était demandé deux fois.** Il fallait d'abord se reconnaître dans
+un référentiel administratif — savoir que Cadaujac n'est pas Cestas, se
+trouver parmi seize — pour finir par taper sa rue de toute façon. Une seule
+saisie remplace les deux, et la complétion prononce la couverture sur le même
+geste : le code postal reste une entrée valable, la BAN le comprenant aussi
+bien qu'un nom de rue.
+
+Ce que cela coûte, et qu'il faut assumer : **l'adresse passe devant le prix**,
+qui n'apparaît qu'au troisième écran. Deux choses en limitent la portée — elle
+n'est demandée qu'une fois au lieu de deux, et la barre basse annonce le tarif
+d'entrée dès le premier écran, si bien que « combien ça coûte » reçoit une
+réponse avant la première frappe. Un test de bout en bout garde ce qui reste
+vraiment structurant : **aucune donnée d'identité n'est réclamée avant que le
+prix soit affiché.**
+
+Conséquence technique : les créneaux sont cherchés depuis l'adresse réelle du
+premier écran au dernier, jamais depuis le centre d'une commune. Ils sont donc
+plus justes, et `COMMUNE_TRAVEL_MARGIN_MINUTES` ne sert plus au tunnel — elle
+reste dans le moteur, qui accepte toujours une recherche imprécise.
 
 **Le deuxième écran demande une durée, pas une surface.** On demandait une
 taille de logement pour en déduire des heures ; on demande les heures et on
@@ -863,23 +1176,26 @@ avec leur montant et leur durée, et la barre basse l'annonce dès le premier
 écran : un écran de plus qui ne ferait que le répéter coûterait un geste sans
 rien apprendre.
 
-**Chercher des créneaux depuis un centre de commune impose une marge de
-trajet.** `COMMUNE_TRAVEL_MARGIN_MINUTES` élargit les deux tampons de route
-tant que l'adresse exacte est inconnue : ce qui est proposé doit rester tenable
-une fois l'adresse donnée, sinon la réservation échouerait au dernier écran,
-après que tout a été rempli. La marge ne rend jamais un créneau plus facile,
-seulement plus rare — et `createBooking` réévalue de toute façon sur l'adresse
-réelle, en essayant le candidat suivant si le premier ne tient plus.
-
 **Le stockage local ne contient ni adresse ni coordonnées** — une commune, une
-surface, un rythme, une heure, sept jours durant. L'ancienne version y laissait
-l'adresse du domicile, ce que la reprise n'exige pas.
+surface, un rythme, une heure, sept jours durant. La commune y est désormais
+**déduite** du code INSEE de l'adresse choisie, et non plus saisie ; la rue n'y
+va toujours pas. Un parcours n'est enregistré qu'une fois une durée choisie :
+sans cette garde, arriver sur `/reserver?commune=cestas` depuis une page locale
+suffirait à faire apparaître un bandeau de reprise pour une simple visite.
 
 **L'URL porte la commune, la surface et l'écran**, et rien d'autre : une barre
 d'adresse se partage, s'enregistre en favori et se retrouve dans les journaux
-d'un serveur. Elle est relue côté serveur au premier rendu, et l'écran est
-ramené à ce que les choix connus rendent atteignable — une URL bricolée à la
-main n'ouvre pas un écran de créneaux sans durée à chercher.
+d'un serveur. Elle n'a jamais porté d'adresse et n'en portera pas.
+
+**Le tunnel ouvre donc toujours sur l'adresse — reprise et lien partagé
+compris.** Aucun lien, aucun rechargement, aucune reprise ne peut franchir le
+premier écran, puisque rien de ce qui est conservé ne dit où l'on va. C'est le
+prix d'un stockage qui ne garde rien d'identifiant, et il est moins cher que
+l'inverse. Ce qui est su n'est pas perdu pour autant : l'écran à rejoindre est
+mis de côté (`pendingStep`) et **rejoint dès l'adresse donnée**, sans refaire
+la durée, le rythme ni le créneau. Il reste ramené à ce que les choix connus
+rendent atteignable — une URL bricolée à la main n'ouvre pas un écran de
+créneaux sans durée à chercher.
 
 **La confirmation montre quelqu'un.** `IntervenantCard` porte le prénom, la
 commune de résidence et l'ancienneté : « le même intervenant, chaque semaine »
@@ -898,20 +1214,30 @@ du barème des CGU.
 | Parcours                               | Cible | Mesuré |
 | -------------------------------------- | ----- | ------ |
 | Accueil → prix affiché                 | ≤ 4   | 3      |
-| Accueil → réservation confirmée        | ≤ 9   | **10** |
+| Accueil → réservation confirmée        | ≤ 9   | 9      |
 | Accueil → appel téléphonique           | ≤ 2   | 1      |
-| Reprise → confirmation (dernier écran) | ≤ 4   | 4      |
+| Reprise → confirmation (dernier écran) | ≤ 4   | **5**  |
 
 **Les deux premiers parcours ont coûté un geste à la refonte narrative de
 l'accueil**, et c'est un arbitrage assumé, pas une dérive. Le bloc « Où
 habitez-vous ? » répondait de la commune dès l'accueil, si bien que le tunnel
 s'ouvrait sur le logement ; l'accueil n'ayant plus qu'un bouton « Réserver »
 sans paramètre, le tunnel s'ouvre désormais sur son premier écran. Le prix
-apparaît donc au troisième geste au lieu du deuxième, et la réservation au
-neuvième au lieu du huitième. Les deux plafonds tiennent, mais **il ne reste
-plus de marge sur le second** : tout écran ajouté au tunnel dépasserait la
-cible, et c'est la cible qu'il faudrait alors rediscuter, pas la mesure qu'il
-faudrait arrondir.
+apparaît donc au troisième geste au lieu du deuxième.
+
+**Le geste rendu par l'adresse en tête ramène la réservation à neuf.** L'écran
+d'adresse du dernier rang a disparu — c'était le doublon de l'écran commune —
+et la cible de neuf, dépassée depuis l'ajout des créneaux de repli, est de
+nouveau tenue. Il n'y reste toujours **aucune marge** : tout écran ajouté la
+dépasserait, et c'est alors la cible qu'il faudrait rediscuter, pas la mesure
+qu'il faudrait arrondir.
+
+**La reprise, elle, coûte un geste de plus et dépasse sa cible.** L'adresse
+n'étant jamais enregistrée, un parcours repris repasse par le premier écran
+avant de rejoindre celui où il s'était arrêté. Les deux issues sont connues :
+soit on assume cinq, soit on conserve l'adresse en stockage local — ce que le
+dépôt refuse, et pour une raison qui n'a pas changé. La cible est donc à
+rediscuter, pas la mesure à arrondir.
 
 Ce que le geste achète : un visiteur qui a compris pourquoi le rayon est court
 avant qu'on lui demande où il habite. Les seize communes ouvraient la page —
@@ -974,6 +1300,61 @@ ne pas confirmer un identifiant à un curieux.
 intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
 personnes mélangerait deux interventions sans rapport. Sans intervenant
 désigné, l'envoi est refusé plutôt que d'écrire à personne.
+
+**Quatre écrans se sont ouverts le 20 août**, tous branchés sur des moteurs
+déjà écrits et testés qui n'avaient aucun appelant.
+
+_L'abonnement._ **La pause vient avant la résiliation, et elle est plus
+visible** : c'est le principal outil anti-résiliation, et le cacher derrière le
+bouton qui fait tout perdre serait un choix contre le client autant que contre
+l'entreprise. La sortie n'est pas cachée pour autant — aucun appel obligatoire,
+aucun préavis, un lien atteignable en un geste, parce qu'un parcours de
+résiliation qu'on n'atteint pas se termine par un appel à sa banque. Le motif
+décide de ce qu'on propose **une fois**, sans insister : proposer une remise à
+quelqu'un qui déménage transformerait un départ neutre en mauvais souvenir.
+
+_La notation._ Deux taps — les étoiles, puis des tags — et le commentaire reste
+facultatif : un champ libre obligatoire fait chuter le taux de réponse sans rien
+apprendre de plus qu'une étoile. Les mêmes cinq tags quel que soit le nombre
+d'étoiles ; deux jeux distincts feraient dire au formulaire ce que le client n'a
+pas dit. Trois étoiles ou moins ouvrent un ticket, dans la même transaction que
+l'avis — un mécontentement enregistré que personne ne voit passer est pire que
+pas d'avis du tout. `Review.isPublic` vaut désormais **faux par défaut** : ce
+qui se publie est décidé par `estPubliable`, jamais subi.
+
+_Le parrainage._ Les phrases sont **engendrées depuis le programme**
+(`referral/annonce.ts`, pur), jamais écrites : un plafond recopié dans une page
+finit par diverger de celui qui s'applique, et c'est le reproche fait aux
+plateformes nationales. Un test le vérifie en modifiant le programme. Le
+plafond et l'unique niveau sont annoncés.
+
+_Le moyen de paiement._ La saisie a lieu **chez Stripe**, par une session
+Checkout en mode `setup` : aucun champ de carte dans nos pages, aucune
+dépendance ajoutée, et la surface PCI reste chez celui dont c'est le métier.
+`setup_future_usage: off_session` est déclaré à l'enregistrement, ce qui fait
+demander l'authentification forte pendant que le client est devant son écran
+plutôt que la nuit d'avant la mission. **La carte n'est pas exigée à la
+réservation** — la préautorisation part à H-24 — et retirer la dernière est
+refusé quand une intervention est à venir, avec le geste à faire à la place.
+
+**« Mon compte » est un sommaire, pas un tableau de bord.** `compte/menu.ts`
+est pur et compose la liste à partir de ce qui est réellement disponible ; un
+test lui interdit de proposer une fonction que le produit n'a pas, et de
+prononcer le mot « fiscal » tant que la déclaration SAP n'est pas obtenue. Le
+corpus de référence propose « Carte cadeau » et « Compte URSSAF » : ni l'un ni
+l'autre n'est repris, les copier reviendrait à promettre le service d'un autre.
+**Une entrée qui déçoit apprend à ne plus faire confiance au menu**, et le
+menu entier perd sa valeur pour une ligne de trop.
+
+_Les informations personnelles._ Le nom et le téléphone se corrigent ;
+**l'adresse email non**, parce qu'elle identifie le compte et reçoit les liens
+de connexion — la changer sur simple saisie permettrait de détourner un compte
+depuis un poste laissé ouvert. **Les adresses postales ne s'éditent pas** : une
+adresse porte des coordonnées géocodées, des consignes d'accès et un code de
+porte chiffré, et la corriger hors du parcours qui les collecte produirait un
+texte qui ne correspond plus à son point géographique — le moteur calculerait
+des trajets vers un endroit où personne n'habite. Celles qui n'ont jamais servi
+se retirent ; les autres restent, leurs factures y étant rattachées.
 
 **La replanification à l'initiative du client n'y est toujours pas** : elle
 suppose de rechercher un créneau et de réattribuer, c'est-à-dire le tunnel
@@ -1073,11 +1454,36 @@ est pur et sert deux fois — l'écran empêche de se tromper, la server action
 empêche de contourner. Pas de 30 minutes, plage minimale de 2 h : une plage de
 dix minutes produirait des créneaux que le moteur ne peut pas remplir.
 
+**Quatre écrans se sont ajoutés le 20 août.** _Aujourd'hui_ répond à trois
+questions d'un coup d'œil — où je vais maintenant, combien je gagne
+aujourd'hui, qu'est-ce qui a changé — et **l'ordre affiché est suggéré, jamais
+imposé** : c'est écrit sur la page, parce qu'un logiciel qui ordonne la journée
+d'un indépendant est un indice de subordination s'il le subit. _Mes revenus_
+tient **trois états jamais mélangés** — viré, en attente du virement, à venir —
+et ne calcule aucun montant : chaque euro vient de la rémunération proposée et
+acceptée avant la mission. Un virement dont la date est passée est signalé comme
+tel, l'écrire sous « prochain virement » présenterait un retard comme une
+promesse. _Mes messages_ est le symétrique du fil client, rattaché à
+l'intervention et non au couple de personnes ; ouvrir un fil le marque comme lu
+dans le même appel. _Coopter_ lit le même programme que le parrainage client.
+
 **Ce qui n'y est pas, et pourquoi c'est bloquant pour la production** :
-l'inscription (un intervenant s'enregistre par `npm run db:intervenant`), le
-dépôt des pièces justificatives, la pose d'une absence — le moteur lit les
-`AvailabilityException`, rien ne les écrit — la clôture d'une mission et le suivi
-des revenus. Voir « Ce que la chaîne n'a pas encore ».
+l'inscription en autonomie existe désormais (`/rejoindre`, `/rejoindre/dossier`,
+et la revue de dossier côté plateforme), mais **le dépôt des pièces attend le
+bucket Scaleway** — l'adaptateur est écrit, et l'écran dit honnêtement que le
+dépôt n'est pas ouvert en donnant le téléphone plutôt que d'accepter un fichier
+qu'il perdrait. Restent les factures et l'attestation fiscale annuelle, qui
+attendent la facturation.
+
+**Les absences se déclarent depuis le 19 août 2026.** `availability/absences.ts`
+est pur, comme `semaine.ts`, et sert deux fois — l'écran empêche de se tromper,
+la server action empêche de contourner. Trois arbitrages : une absence déjà
+commencée est acceptée, parce que quelqu'un qui tombe malade un mardi doit
+pouvoir se retirer du reste de la semaine ; les bornes sont `[debut, fin)`,
+faute de quoi deux absences jointives se refuseraient sur une milliseconde ;
+et **l'écran ne retire aucune mission déjà acceptée**, il nomme celles que
+l'absence recouvre et renvoie au téléphone. Une absence change ce qui sera
+proposé ; se dégager d'un engagement pris regarde aussi le client. Voir « Ce que la chaîne n'a pas encore ».
 
 ## Back-office plateforme
 
@@ -1093,9 +1499,115 @@ La lecture traverse les organisations, ce que seul un administrateur plateforme
 peut faire : elle passe par le client non cloisonné, et `asPlatformAdmin()` est
 vérifié à l'entrée de la page, où cela se lit.
 
-**L'écran est en lecture seule** : il désigne le travail, il ne le fait pas
-encore. Rattraper une réservation orpheline ou relancer une proposition périmée
-se fait aujourd'hui à la main.
+**Deux écrans agissent désormais, le tableau des quatre listes reste en lecture
+seule.** Rattraper une réservation orpheline ou relancer une proposition périmée
+se fait toujours à la main.
+
+_La revue de dossier_ trie **du plus ancien au plus récent**, et ce n'est pas
+cosmétique : traiter le plus récent d'abord laisse indéfiniment au fond de la
+pile celui qui attend depuis trois semaines, et c'est celui-là qu'on perd. Les
+signaux d'attention s'affichent **hors de toute note** — un doublon d'IBAN ne se
+compense pas par de bons points ailleurs — et deux d'entre eux suspendent
+l'examen, le bouton d'activation disant alors pourquoi il est éteint. La grille
+d'entretien homogénéise **sans classer** : aucune moyenne n'en est tirée, une
+moyenne ferait compenser « français opérationnel » par « motivation ». Un refus
+de pièce choisit son motif dans une liste écrite en langage courant, parce
+qu'un motif vague fait redéposer la même pièce et que c'est le candidat qui
+paie l'aller-retour.
+
+_Les réclamations_ affichent leur origine en tête — note basse ou démarche du
+client — parce qu'elle décide de la première phrase au téléphone : on ne
+rappelle pas de la même façon quelqu'un qui a demandé quelque chose et quelqu'un
+à qui on écrit. **Un classement sans suite exige une résolution écrite** autant
+qu'une résolution : « on n'a rien fait » est une décision qui se justifie, et
+qui se relit quand la même personne rappelle.
+
+## Factures et attestations fiscales
+
+**Une prestation produit deux factures**, et le module les écrit ensemble ou
+pas du tout. Une prestation dont une seule moitié serait facturée laisserait la
+comptabilité fausse d'un côté, le client sans justificatif de l'autre — et la
+suite de numéros porterait déjà le trou.
+
+**La numérotation est une contrainte fiscale, pas une convention.** L'article
+242 nonies A de l'annexe II au CGI exige une séquence chronologique **continue,
+sans rupture** : un trou se présume être une facture retirée, et c'est ce qu'on
+cherche en premier. D'où trois choix :
+
+- **Une série par émetteur.** Léo Clean facture sa coordination pour son propre
+  compte, l'intervenant sa prestation pour le sien.
+- **Une série dédiée à l'autofacturation** (`LC-<siren>`). Les factures de
+  l'intervenant sont établies en son nom et pour son compte — article 289, I-2
+  du CGI — et il facture aussi ailleurs : une série distincte est la réponse
+  prévue pour ce cas. La mention correspondante est obligatoire, et son absence
+  rend la facture irrégulière.
+- **Le compteur vit en base et s'incrémente dans la transaction** qui écrit la
+  facture, jamais dans une `SEQUENCE` PostgreSQL — une séquence ne revient pas
+  en arrière quand la transaction échoue, et laisse exactement le trou qu'on
+  évite.
+
+**Une facture est immuable, donc figée à l'émission.** Tout ce qu'elle imprime
+— identité de l'émetteur, adresse du client, lieu d'exécution — vient de
+sources vivantes qui changeront ; sans instantané, une facture de l'an dernier
+se réimprimerait différemment. Le code de commerce impose dix ans.
+
+**`verifierLaFacture` refuse d'écrire une facture irrégulière.** Le régime
+applicable est celui de la « note » de l'arrêté du 3 octobre 1983 — prestation
+de services à un particulier — et non celui des factures entre professionnels :
+date de rédaction, identité et adresse du prestataire, nom du client, **date et
+lieu d'exécution**, décompte détaillé en quantité et en prix, total. Une facture
+déjà remise ne se corrige que par un avoir ; un refus, lui, se voit dans le
+back-office avant que quiconque l'ait vue.
+
+**La quantité facturée est la durée vendue, pas la durée réelle.** Le dépôt a
+déjà tranché que la durée réelle ne refacture rien ; porter la durée réelle en
+gardant le montant convenu produirait un prix unitaire de fiction — une
+intervention pointée en une minute affichait 6 882 € de l'heure — et c'est
+précisément le prix unitaire qu'un contrôle recalcule. L'écart appartient au
+rapport de mission.
+
+**L'éligibilité au crédit d'impôt se décide facture par facture, et le devis n'y
+suffit pas.** `partEligible` rend zéro quand l'émetteur n'a pas de numéro de
+déclaration, quelle que soit la prestation : annoncer une réduction sans
+déclaration ferait porter au client un avantage que l'administration lui
+reprendrait. C'est la même frontière que `fiscal.ts` tient pour le site,
+appliquée à chaque document — aujourd'hui la coordination affiche donc 0 €
+éligible, la plateforme n'étant pas déclarée.
+
+**L'attestation annuelle porte sur les sommes _versées_, jamais sur celles
+facturées** (CGI, art. 199 sexdecies). Une prestation de décembre payée en
+janvier appartient à l'année du paiement : la bâtir sur les factures donnerait
+un montant faux pour tout client servi à cheval sur deux années, c'est-à-dire
+pour un abonné — la clientèle que le service vise. Trois corollaires : un
+remboursement diminue la somme attestée, **des frais d'annulation n'ouvrent
+aucun droit** — ils indemnisent un créneau, ils ne rémunèrent pas un service —
+et le plafond de 12 000 € est **annoncé mais jamais appliqué**, l'administration
+le calculant sur l'ensemble du foyer.
+
+Elle est **figée comme la facture** : un document joint à une déclaration de
+revenus doit pouvoir être rendu à l'identique. Et elle avertit qu'il faut
+déduire les aides perçues — CESU préfinancé, employeur, APA, PCH — sans quoi le
+client déclare le brut et se fait redresser.
+
+**Le régime de TVA est une donnée, pas une constante du code.** Il vit sur
+`Organization` et sur `CleanerProfile`, parce qu'il dépend du chiffre d'affaires
+et d'options que seul un comptable connaît. **PAPER PLANE est assujettie au taux
+normal** (20 %, confirmé le 20 août 2026) ; les intervenants restent en
+franchise en base sous le seuil. Deux régimes distincts sur la même prestation,
+puisque ce sont deux entités qui facturent.
+
+**La TVA s'extrait du montant, elle ne s'y ajoute pas.** Le client est annoncé
+un prix tout compris et les deux factures se partagent ce prix-là : la part de
+coordination est donc du TTC, dont le HT se déduit. L'ajouter par-dessus ferait
+somme des factures supérieure à ce qu'il a réglé — le même défaut que
+d'annoncer un prix et d'en prélever un autre. `decomposerTtc` calcule le HT et
+**déduit** la TVA, si bien que `ht + tva === ttc` au centime quel que soit
+l'arrondi ; un test le vérifie sur cinq mille montants.
+
+**Le document se télécharge par l'impression du navigateur.** Une bibliothèque
+de PDF ajouterait une dépendance lourde à une construction sans serveur pour
+produire ce que tous les appareils savent déjà faire. Ce qui rend le document
+stable n'est pas son format mais son instantané.
 
 ## Données personnelles
 
@@ -1178,6 +1690,33 @@ l'export impose ce mode. D'où `lib/asset-path.ts` : tout fichier de `public/`
 référencé en dur doit passer par `assetPath()`, sinon il est cherché à la
 racine du domaine.
 
+## La frontière client / serveur, tenue par un test
+
+**Elle s'est vengée trois fois dans la même journée** : le vocabulaire des
+réclamations, celui de la messagerie, le plafond du rapport photo. À chaque
+fois le même geste — une constante ou un type lu depuis un module qui, lui,
+importe Prisma ou le SDK S3. Le typage ne voit rien, `tsc` passe, et c'est la
+**construction** qui s'arrête, ou le serveur de développement qui refuse de
+démarrer plusieurs minutes plus tard sur une trace qui ne nomme pas le geste
+fautif.
+
+`src/frontiere-client.test.ts` parcourt le graphe d'imports du dépôt et échoue
+si un fichier `"use client"` atteint un module `server-only`, en rendant la
+chaîne complète. Deux règles le rendent juste :
+
+- **Un `import type` est ignoré**, parce qu'il est effacé à la compilation et
+  ne tire rien dans le paquet. `sign-in-form.tsx` lit ainsi `ActionResult`
+  depuis un module `server-only` sans jamais en charger une ligne.
+- **La traversée s'arrête aux `"use server"`**. Une server action est la
+  frontière RPC prévue par React : un composant client a le droit de
+  l'importer, et elle a le droit d'atteindre la base. C'est exactement ce qui
+  distingue un appel légitime d'une fuite de dépendance.
+
+Le remède au piège n'était pas la vigilance. Quand il faut partager une
+constante, un type ou un libellé, il va dans un module pur — c'est déjà ce que
+font `reclamation/vocabulaire.ts`, `messagerie/vocabulaire.ts` et
+`mission/rapport-photo.ts`.
+
 ## Performance et accessibilité, mesurées
 
 `scripts/mesurer-vitals.mjs` relève les indicateurs sur une construction de
@@ -1193,9 +1732,16 @@ le reste vers le bas. Il se pose avant le premier rendu, si bien que le
 décalage ne compte pas — mais la mesure est faite dans les deux états, avec et
 sans parcours enregistré, précisément parce que ce n'est pas évident.
 
-**Le site ne contient aucune image.** La typographie fait tout le travail
-visuel, et les deux familles sont chargées par `next/font`, Fraunces sans
-préchargement — aucun écran ne la demande au premier rendu.
+**Le site porte deux photos, et seulement en desktop.** Fournies par le
+porteur du projet avec le prototype (héros et bande sombre de l'accueil),
+elles sont importées statiquement — dimensions connues, aucun décalage de mise
+en page, `basePath` de la vitrine géré par Next — et masquées sous `lg:` : en
+mobile, elles coûteraient le premier écran entier là où la thèse doit se lire
+avant tout défilement. Elles semblent générées (le logo du t-shirt est déformé
+sur l'une) : à faire valider avant une communication publique. Les trois
+familles sont chargées par `next/font` — Alan Sans préchargée (chaque titre la
+demande au premier rendu), JetBrains Mono sans préchargement, elle
+n'apparaît qu'au fil de la lecture.
 
 **Deux dépendances ne descendent plus dans le premier octet.** `ContactSheet`
 embarque le `Dialog` de Base UI et n'est chargé qu'à l'ouverture du panneau —
@@ -1273,6 +1819,8 @@ src/
     app-tab-bar.tsx      navigation du pouce, mobile, hors espaces applicatifs
     sticky-booking-cta.tsx rappel de prix à la lecture, effacé par le vrai bouton
     contact-sheet.tsx    les trois canaux, en panneau bas
+    booking-funnel.tsx   le tunnel — adresse, durée, rythme, créneau, contact, récap
+    home/couverture-check.tsx « venez-vous chez moi ? », par code postal
   lib/
     db.ts              client Prisma et cloisonnement multi-tenant
     env.ts             variables d'environnement validées par Zod
@@ -1292,6 +1840,11 @@ src/
       config.ts        configuration Auth.js
       permissions.ts   capacités par rôle
       session.ts       vérifications d'accès côté serveur
+      mot-de-passe.ts  politique et dérivation scrypt — pur
+      identifiants.ts  vérification, définition, sessions (server-only)
+      session-connexion.ts session en base d'une connexion par mot de passe
+      fournisseurs.ts  les fournisseurs sociaux réellement configurés — pur
+    compte/            sommaire de « Mon compte » (pur) et informations
     catalogue.ts       lecture du catalogue et devis, sur client cloisonné
     organizations.ts   résolution de l'organisation côté serveur
     booking/           création de réservation, transactionnelle (server-only)
@@ -1301,8 +1854,24 @@ src/
     assignments/       diffusion par lots, échéances et classement des candidats
       diffusion.ts     les quatre minuteries et leur ordre — pur
       echeances.ts     ce qui arrive quand personne ne fait rien (server-only)
-    availability/      semaine type déclarée — pur
+    availability/      semaine type et absences déclarées — pur
+    analytics/         taxonomie des événements (pure) et journal (server-only)
+    stockage/          politique de dépôt (pure), interface, résolution
+      s3.ts            Scaleway Object Storage — bucket privé, URL signées 60 s
+    logement/          chiffrement des consignes d'accès (pur) et module gardien
+    mission/           cycle de travail et notation — purs ; travail.ts écrit
+    abonnement/        récurrence — pure ; generateur.ts écrit les occurrences
+    paiement/          calendrier — pur ; stripe.ts, travaux.ts et moyen.ts exécutent
+      moyen.ts         carte du client, par session Checkout chez Stripe
+      revenus.ts       trois états jamais mélangés, aucun montant recalculé
     administration/    tableau de bord plateforme, ce qui attend un humain
+      reclamations.ts  file des réclamations (server-only)
+    candidature/       parcours (pur), dossier et revue (server-only)
+    messagerie/        vocabulaire (pur), fil de l'intervenant (server-only)
+    reclamation/       vocabulaire des réclamations — pur
+    facturation/       numérotation, document et attestation — purs
+      emission.ts      les deux factures d'une prestation (server-only)
+      attestation-annuelle.ts  sommes versées dans l'année (server-only)
     societes/          page publique d'une société cliente du SaaS
     rgpd/              accès et effacement, avec leurs limites
     securite/          limitation de débit des formulaires publics
@@ -1343,31 +1912,40 @@ ne doit être ressaisie en dur dans une page.
 
 ## Design
 
-Le design system fait foi. Ses tokens vivent dans `src/styles/tokens/` et sont
-**importés tels quels**, jamais recopiés : une valeur dupliquée finit toujours
-par diverger. Ils portent les noms du système — `--mint-400`, `--r-l`,
-`--sp-6`, `--sh-m` — pour qu'une valeur du document se retrouve dans le code
-sans traduction.
+Le design system fait foi, et depuis la refonte d'août 2026 c'est la variante
+**« tropical punch »** du prototype (`proto/`, thème `theme-tropical.css`) qui
+en est la source : FF8243 · FFC0CB · FCE883 · 069494. Ses tokens vivent dans
+`src/styles/tokens/` et sont **importés tels quels**, jamais recopiés : une
+valeur dupliquée finit toujours par diverger. Ils portent les noms du système —
+`--mango-400`, `--teal-600`, `--r-l`, `--sp-6`, `--sh-m` — pour qu'une valeur
+du document se retrouve dans le code sans traduction.
 
 `globals.css` câble ensuite les variables sémantiques de shadcn/ui dessus —
-`--primary` sur `--mint-400`, `--background` sur `--bg`, et ainsi de suite.
+`--primary` sur `--mango-400`, `--background` sur `--bg`, et ainsi de suite.
 Aucun composant ne connaît la marque, ce qui permet de changer l'identité en un
-seul fichier. **Ne jamais écrire de couleur en dur.** Seule exception,
-documentée sur place : `magic-link-email.tsx`, les clients de messagerie
-n'acceptant pas les variables CSS.
+seul fichier. **Ne jamais écrire de couleur en dur.** Trois exceptions,
+documentées sur place : `magic-link-email.tsx`, `notifications/gabarit.tsx` et
+`seo/og.tsx`, rendus hors du navigateur où les variables CSS n'existent pas.
 
 ### Ce que le système impose
 
-Palettes : **menthe** en primaire, **pêche** en secondaire pour la chaleur,
-**citron** en accent des moments de joie, **ciel**, **sauge**, **crème** en
-teintes de soutien, et des neutres **ink** légèrement teintés vert. Les
-couleurs sémantiques — succès, alerte, erreur, information — gardent la même
-teinte quel que soit le thème.
+Palettes, distribuées par rôle : **sarcelle** (`teal`) porte la profondeur et
+la marque — bandes sombres, pied de page, liens, logotype, états sélectionnés ;
+**mangue** (`mango`) porte l'action principale ; **ananas** (`pineapple`) les
+pilules et les moments de joie ; **papaye** (`papaya`) les surfaces douces —
+héros en lever de soleil, panneau de sortie. **Ciel**, **sauge**, **crème**
+(réchauffée d'un souffle de papaye) en teintes de soutien, et des neutres
+**ink** légèrement teintés vert. Le fond de page est un blanc chaud
+(`#fffcf9`) : le tropical est solaire, pas clinique. Les couleurs sémantiques —
+succès, alerte, erreur, information — gardent la même teinte quel que soit le
+thème.
 
-**La menthe pleine ne sert qu'à l'action principale : un écran, un seul bouton
-menthe.** Elle porte du texte encre, jamais du blanc — à 400, elle ne tient pas
-le contraste. Pour écrire, une icône ou un trait fin, employer `text-brand`
-(menthe 700), jamais `text-primary`.
+**La mangue pleine ne sert qu'à l'action principale : un écran, un seul bouton
+mangue.** Elle porte du texte encre, jamais du blanc — à 400, elle ne tient pas
+le contraste ; sa lueur est `shadow-mango`. La même règle vaut pour la sarcelle
+pleine des états sélectionnés (cases cochées, créneaux retenus) : texte encre.
+Pour écrire, une icône ou un trait fin, employer `text-brand` (sarcelle 600),
+jamais `text-primary`. `src/styles/contrast.test.ts` verrouille ces couples.
 
 **Toute action est une pilule** — boutons, tags, badges, avatars. Le reste de
 l'échelle grandit avec l'élément : 6 px pour une case à cocher, 14 px pour un
@@ -1377,15 +1955,19 @@ section ou un hero. Aucun angle vif.
 Gabarits tactiles : bouton primaire à 48 px, champ à 52 px, case à cocher et
 radio à 24 px. Rien qui porte une conversion ne descend sous 44 px.
 
-Typographie : **Figtree** porte 98 % du système, titres compris — la hiérarchie
-vient de la graisse (900 pour trancher, 800 en dessous, 400 pour lire), pas
-d'un changement de famille. **Fraunces** en italique ne sert qu'au mot d'accent
-d'un titre marketing, via la classe `.accent-word` : un mot, jamais dans le
-tunnel ni le tableau de bord. Les deux sont chargées par `next/font` plutôt que
-par l'`@import` Google Fonts du système, qui bloquerait le rendu.
+Typographie : **Alan Sans** porte les titres et les grands chiffres — la
+famille tranche, la graisse gradue (900 pour les titres de page, 800 en
+dessous). **Figtree** reste la famille de lecture, **JetBrains Mono** celle des
+chiffres posés — prix, codes postaux, temps de trajet. Alan Sans est
+auto-hébergée (`src/app/fonts/`, `next/font/local`, absente de
+`next/font/google`), les deux autres viennent de `next/font/google` — jamais
+l'`@import` Google Fonts du système, qui bloquerait le rendu. **Fraunces a
+disparu avec la refonte** : `.accent-word` ne change plus de plume, il colore
+le mot en sarcelle.
 
 Le thème sombre n'est pas défini par le système : celui du projet en est une
-dérivation, à revoir si le système en fournit un.
+dérivation — fonds sarcelle profonde, action mangue — à revoir si le système
+en fournit un.
 
 **Ton éditorial**, repris du système : vouvoiement du client, « nous » pour ce
 que l'entreprise organise, intervenants nommés par prénom. Phrases courtes, une
@@ -1394,21 +1976,22 @@ capitales complètes sont réservées aux surtitres, avec la classe `.overline`.
 Typographie française : espace insécable avant les unités et la ponctuation
 double.
 
-### Divergences avec le système, à arbitrer
+### Divergences avec le prototype, assumées
 
-- Le document est rédigé sous une marque de démonstration, **MENTA**, avec son
-  propre logotype et sa baseline. Le code n'en reprend que le langage visuel :
-  la marque reste **Léo Clean**, et le symbole est l'étoile fournie par le
-  client, incrustée en `currentColor` pour respecter la règle de contraste du
-  système — jamais de monochrome menthe sur blanc.
-- Le mot d'accent en Fraunces est posé au milieu du titre d'accueil, quand le
-  système le veut en fin de phrase. Déplacer l'accent supposait de réécrire une
-  accroche qui n'est pas la nôtre : à trancher avec le client.
-- Le document décrit un périmètre et des tarifs qui ne correspondent pas aux
-  décisions prises depuis — communes hors zone, « 23 € / h » quand la grille
-  est à 28 €/h, déclaration Urssaf que suppose un agrément SAP non obtenu. Ce
-  sont des exemples de rédaction, pas des tokens : le code suit les décisions
-  du projet.
+- Le symbole reste l'étoile fournie par le client, incrustée en `currentColor`
+  — jamais de monochrome sarcelle sur blanc, où le contraste ne tient pas. Le
+  pied de page sombre la passe en blanc via la prop `inverse` du logo.
+- **Le « −50 % crédit d'impôt » du bandeau de crédibilité du prototype n'est
+  pas repris** : il contredit `src/lib/fiscal.ts` tant que la déclaration SAP
+  n'est pas obtenue. La quatrième tuile reste « un vrai numéro, quelqu'un
+  décroche ».
+- Les deux photos du prototype sont reprises sur arbitrage du porteur du
+  projet (18 août 2026), en desktop seulement. Elles paraissent générées — à
+  faire valider avant une communication publique — et aucune autre image ne
+  doit entrer sans le même arbitrage.
+- ~~Le prototype ouvre le tunnel sur l'adresse ; le produit garde son écran
+  commune.~~ **Divergence levée le 20 août 2026** : le tunnel ouvre lui aussi
+  sur l'adresse. Voir « Ordre des écrans du tunnel ».
 
 ## Commandes
 
@@ -1423,7 +2006,8 @@ npm run db:migrate      # applique une nouvelle migration
 npm run db:seed         # remplit la base de développement (tronque tout d'abord)
 npm run db:init         # installe une base de production, sans données fictives
 npm run db:intervenant  # enregistre un intervenant réel (confirmation exigée)
-npm run db:utilisateurs-test # comptes nominatifs pour parcourir les espaces
+npm run db:utilisateurs-test # comptes nominatifs, avec mot de passe (refusé en production)
+npm run db:roles        # donne des rôles à un compte existant (refusé en production)
 npm run db:tarifs       # applique la grille publique aux tarifs en base
 npm run test:integration # tests exigeant PostgreSQL + PostGIS
 npm run build:demo      # vitrine statique de démonstration dans out/
@@ -1440,12 +2024,29 @@ Le produit est complet du référencement jusqu'au rendez-vous confirmé. Ce qui
 suit est ce qui manque **après** la confirmation, écrit ici pour qu'aucune de ces
 absences ne soit redécouverte en production.
 
-**Un seul email part du produit : le lien de connexion.** Ni confirmation de
-réservation au client, ni notification de mission à l'intervenant, ni rappel
-avant le passage, ni alerte sur une demande de rappel. `sendEmail` existe,
-`react-email` est installé, et un seul appelant s'en sert. C'est le manque le
-moins coûteux à combler et le plus visible du dehors : aujourd'hui, un
-intervenant ne sait qu'on l'attend que s'il ouvre son espace.
+**Le produit prend la parole à huit moments.** Demande reçue, mission proposée,
+intervenant trouvé, mission prise de vitesse, recherche élargie, horaires
+alternatifs disponibles, recherche interrompue, rappel de la veille — client et
+intervenant, chacun son texte.
+
+`src/lib/notifications/messages.ts` est **pur** : il compose, il n'envoie rien.
+Le contenu d'un email est du texte, donc l'endroit où une promesse se glisse le
+plus facilement, et le seul que le destinataire garde. Des tests tiennent donc
+les règles que le produit tient déjà à l'écran — ne rien confirmer tant que
+personne n'a accepté, ne nommer personne avant l'acceptation, ne pas s'excuser
+auprès de qui a perdu la course, présenter à égalité l'alternative et la
+poursuite de la recherche. L'un d'eux a d'ailleurs attrapé une faute : la
+proposition annonçait à l'intervenant le prix client à côté de sa rémunération.
+
+**Une notification qui échoue ne défait pas ce qu'elle annonce.** L'envoi est
+appelé après l'écriture, hors transaction, sans être attendu, et son échec est
+journalisé sans être propagé. C'est le seul endroit du dépôt où une erreur est
+volontairement avalée : une panne de messagerie ne doit pas annuler une
+réservation ni faire échouer l'acceptation d'une mission.
+
+**Un seul gabarit visuel pour les huit**, dans `gabarit.tsx`. C'est la deuxième
+surface après `magic-link-email.tsx` où les couleurs sont recopiées plutôt que
+référencées : un client de messagerie ne lit pas de feuille de styles.
 
 **L'ordonnanceur existe, et il est frappé par un travail planifié.**
 `vercel.json` déclare un appel horaire à `/api/taches`, protégée par
@@ -1472,24 +2073,81 @@ Les variables Inngest restent déclarées et inutilisées. Le travail planifié 
 Vercel suffit à des échéances qui se comptent en heures ; Inngest apportera la
 durabilité et les reprises le jour où de l'argent transitera.
 
-**La vie d'une réservation s'arrête à `CONFIRMED`.** `IN_PROGRESS`, `COMPLETED`
-et `NO_SHOW` sont modélisés et jamais écrits. Sans clôture de mission : pas de
-facture émise, pas d'avis à demander, pas de reversement à déclencher, pas de
-passage suivant à caler. C'est le maillon qui manque pour que le service tourne
-au quotidien, et il ne dépend d'aucun tiers.
+**La mission se clôt depuis le 20 août 2026.** `CONFIRMED → IN_PROGRESS →
+COMPLETED` s'écrit enfin, avec la durée réelle, l'état du rapport et la clôture
+de l'affectation dans une seule transaction — une mission dont le pointage
+serait écrit sans que le statut suive laisserait le client sans rapport et
+l'intervenant sans reversement.
 
-**Modélisé, seedé, jamais écrit par le produit** : `Payment`, `Payout`,
-`Invoice`, `Review`, `Message`, `Subscription`, `Referral` et
-`ReferralCode`, `CalendarConnection` et `ExternalBusyBlock`, `WebhookEvent`. Le
+**Le fil conducteur est que rien ne bloque.** La position est capturée au tap,
+jamais en continu, et hors tolérance le pointage est _assumé_ plutôt que refusé
+— sous-sol, immeuble mal géocodé, refus de localisation. La checklist est un
+mémo, pas un contrôle. Un rapport incomplet ne bloque ni la fin ni le paiement.
+Un produit qui empêche de travailler pour protéger une mesure obtient des
+mesures fausses.
+
+**La durée réelle ne refacture rien.** Elle est enregistrée, l'écart est
+visible, et le montant reste celui qui a été annoncé. Un ajustement passe par
+une anomalie validée, et une seule catégorie peut même le proposer : un
+supplément appliqué par celui qui en bénéficie n'est pas un ajustement, c'est
+une facture non consentie.
+
+**Le rapport photo existe depuis le 20 août**, débloqué par le coffre Scaleway.
+Deux avant, deux après, et **rien n'est bloquant** : il ne retient ni la fin de
+mission ni le paiement. Un produit qui empêche de travailler pour protéger une
+mesure obtient des mesures fausses — quelqu'un photographierait n'importe quoi
+pour finir sa journée. La lecture passe par une URL signée de soixante
+secondes, et l'appartenance est revérifiée à chaque appel : c'est le seul
+endroit où l'on décide qui voit l'intérieur du domicile d'un client.
+
+Restent à écrire : le mode hors ligne, dont le schéma est prêt mais dont la
+file d'envoi manque. `NO_SHOW` reste modélisé et non écrit.
+
+**Le stockage objet est tranché : Scaleway Object Storage**, compatible S3 et
+hébergé en France — les pièces d'identité ne quittent pas l'Union européenne, ce
+qui évite d'avoir à documenter un transfert. `STOCKAGE_PROVIDER` vaut `memoire`
+en développement (volatil, et refusé en production) ou `scaleway`. Absent, il
+n'y a pas de stockage : les écrans le disent et le dépôt est refusé, plutôt que
+d'accepter un fichier qu'on perdrait. **Rien n'est jamais servi en direct** — une
+lecture passe par une URL signée de soixante secondes, engendrée à la demande et
+jamais mise en cache, une URL signée mise en cache étant une URL publique à
+retardement. Réglages du bucket dans
+[docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md).
+
+**Modélisé, seedé, jamais écrit par le produit** : `Payout`,
+`CalendarConnection` et `ExternalBusyBlock`. `Invoice` a rejoint le produit le
+20 août, avec `InvoiceSequence` et `TaxCertificate`. `Payment`, `Subscription`, `Message` et `WebhookEvent` ont
+rejoint le produit les 19 et 20 août. Le
 parrainage est le cas le plus trompeur : `src/lib/referral/` est écrit, pur et
 testé, sans un seul appelant ni écran. Les tables ne mentent pas sur l'intention,
 elles ne disent rien de ce qui est branché.
 
-**Le paiement n'est pas commencé.** Ce n'est pas une clé qui manque : le SDK
-Stripe n'est pas installé, et les deux routes de webhook annoncées par
-`.env.example` (`/api/webhooks/stripe`, `/api/webhooks/stripe-connect`) n'existent
-pas. À écrire en _separate charges and transfers_, le modèle à deux factures
-interdisant le _destination charge_.
+**Le socle du paiement est posé depuis le 20 août 2026.** SDK installé,
+`paiement/calendrier.ts` pur et testé, préautorisation à H-24, prélèvement à
+H+24 et libération des autorisations sur mission annulée, plus le webhook
+`/api/webhooks/stripe` avec vérification de signature et idempotence par
+insertion.
+
+**Une autorisation bancaire expire au bout de sept jours**, et c'est la
+contrainte qui gouverne tout le calendrier : la poser à la réservation la
+rendrait caduque avant la mission. `autorisationTiendra` vérifie la marge à
+chaque préautorisation, et un test échoue si quelqu'un allonge l'un des délais.
+
+**Le prélèvement est conditionné à la clôture, jamais à l'horloge seule** — et
+le délai court depuis la clôture réelle, pas depuis l'heure prévue.
+
+**Les relances d'impayé partent depuis le 20 août.** Trois messages — J+1, J+3,
+J+7 — puis une suspension **annoncée** : jamais d'annulation silencieuse, qui
+ferait découvrir la rupture au client le matin où personne ne vient. La date du
+premier échec ne bouge jamais, sans quoi un impayé deviendrait éternel à
+condition d'échouer régulièrement. Et la suspension n'annule rien : elle
+appelle un humain.
+
+Restent à écrire : Connect Express et les reversements —
+dont le calendrier est écrit et testé mais que rien n'appelle. Les reversements
+restent à écrire en _separate charges and transfers_, le modèle à deux factures
+interdisant le _destination charge_. Rien n'a pu être vérifié contre le vrai
+Stripe : les clés vivent chez l'hébergeur, pas en local.
 
 **Le temps de trajet réel non plus.** `TRAVEL_TIME_PROVIDER` accepte
 `openrouteservice` et `osrm`, et aucun des deux n'est implémenté : seul le
@@ -1499,8 +2157,8 @@ le code ne tient.
 
 ## Avancement
 
-État au 17 août 2026 : **336 tests unitaires** (26 fichiers), **10 suites
-d'intégration** exigeant PostgreSQL + PostGIS, **75 tests de bout en bout**. Les
+État au 20 août 2026 : **826 tests unitaires** (61 fichiers), **13 suites
+d'intégration** exigeant PostgreSQL + PostGIS, **152 tests de bout en bout**. Les
 chiffres cités phase par phase datent de leur phase et ne sont pas remis à jour :
 ils disent l'effort consenti à ce moment-là.
 
@@ -1545,8 +2203,11 @@ ils disent l'effort consenti à ce moment-là.
 - [x] **Application installable et espace client.** Service worker limité aux
       fichiers versionnés, `/hors-ligne`, invitation d'installation après une
       réservation confirmée, `/mon-espace` sur le lien magique existant.
-- [ ] Phase 7 — Paiement Stripe _(non commencée : ni SDK, ni routes de webhook,
-      ni clés)_
+- [ ] **Phase 7 — Paiement Stripe, partielle.** **Fait** : socle et calendrier,
+      préautorisation à H-24, prélèvement à H+24, webhook signé et idempotent,
+      enregistrement de carte par session Checkout, **facturation en deux
+      documents et attestation fiscale annuelle**. **Manque** : Connect Express
+      et les reversements, les relances d'échec.
 - [ ] **Phase 8 — Espace intervenant, partielle** _(mise en production visée
       ici)_. **Fait** : missions et propositions, acceptation qui écrit `CONFIRMED`,
       refus qui rejoue l'attribution en écartant ceux qui ont décliné, semaine
@@ -1576,8 +2237,47 @@ ils disent l'effort consenti à ce moment-là.
 - [ ] **Phase 13 — Durcissement et conformité, partielle.** **Fait** : droits
       d'accès et d'effacement avec leurs limites comptables, identité neutralisée
       plutôt que supprimée, limitation de débit en base sur les formulaires
-      publics, IP condensée. **Manque** : la purge planifiée des compteurs, et
-      tout ce qui relève du paiement.
+      publics, IP condensée, purge planifiée des compteurs, **et la fermeture de
+      la seconde porte** — RLS sur toutes les tables, privilèges retirés à `anon`
+      et `authenticated`, test d'intégration qui refuse une table sans RLS.
+      **Manque** : les réglages de console Supabase listés dans
+      [docs/SECURITE-ACCES.md](docs/SECURITE-ACCES.md) — retirer `public` des
+      schémas exposés, vérifier l'absence de clé `service_role` déployée, faire
+      tourner le mot de passe de la base — et tout ce qui relève du paiement.
+- [x] **Jalon A — Fondations** (plan du 19 août 2026). **Stockage de fichiers** :
+      politique pure — nombres magiques plutôt que type déclaré, deux coffres aux
+      politiques distinctes, métadonnées retirées par suppression de segments,
+      chemin engendré. L'implémentation mémoire applique la même politique que la
+      vraie ; le fournisseur distant échoue bruyamment tant qu'il n'est pas
+      configuré, direction inverse de `TRAVEL_TIME_PROVIDER`. L'adaptateur
+      Scaleway a été écrit le 20 août. **Taxonomie
+      d'événements** : `AnalyticsEvent` en base plutôt que chez un tiers, aucun
+      cookie, aucune donnée personnelle — la commune est mesurée, les coordonnées
+      ne le sont pas — purge à treize mois, et le traçage passe par
+      `BookingBackend` pour que la vitrine statique continue de construire.
+      **Variante dense** de tropical punch pour la console : espacements, rayons
+      et ombres seulement, aucune couleur touchée. **Absences** de l'intervenant.
+
+- [x] **Jalon B — Le prix et la demande** (20 août 2026). Contre-proposition
+      d'horaire ouverte dès l'écran de proposition, avec pré-acceptation sous une
+      heure d'écart : l'heure demandée l'emporte toujours, rien n'est bloqué en
+      base, le prix ne bouge jamais. Majorations samedi +10 %, dimanche et férié
+      +25 %, dernière minute +10 % — le jour à l'intervenant, l'urgence à la
+      plateforme, fériés calculés et non listés. Captation de la demande hors
+      zone, seul signal d'expansion du produit.
+- [x] **Jalon C — Le logement.** `Address` porte désormais pièces, consignes,
+      animaux, matériel et zones interdites. Le code de porte est chiffré en
+      AES-256-GCM et ne se lit que par un module gardien, pour un intervenant
+      affecté, entre J-24 h et J+2 h, avec journal des lectures accordées **et**
+      refusées. Deux tests gardent la frontière plutôt qu'un comportement.
+- [ ] **Jalon D — La mission se termine, partielle.** **Fait** : pointage
+      d'arrivée et de départ, checklist, anomalies, passage en `COMPLETED` avec
+      durée réelle, écran de travail, écran « Aujourd'hui », notation de bout en
+      bout — module pur, écriture transactionnelle, écran client, ticket qualité
+      sous trois étoiles. **Manque** : le mode hors ligne, et le branchement du
+      dépôt de photos sur Scaleway (l'adaptateur existe, la configuration
+      attend le bucket).
+
 - [ ] Refonte UX, phase 5 — espace client (modification, annulation, notation,
       adresses, moyens de paiement, parrainage). La liste des réservations et les
       droits RGPD existent déjà ; le reste **ne peut pas précéder les
@@ -1611,6 +2311,11 @@ espace réservé : une NAP incomplète est neutre, une NAP inexacte est pénalis
   sans elle les liens de connexion restent dans la console, donc personne ne se
   connecte ; le nom de domaine et ses deux sous-domaines, faute de quoi le
   `noindex` des hôtes `*.vercel.app` ne s'applique pas.
+- **Bucket Scaleway Object Storage** et sa clé d'API restreinte à ce seul
+  bucket. Sans lui, le dépôt des pièces justificatives et des photos de mission
+  reste fermé — les écrans le disent et proposent le téléphone, ils n'acceptent
+  pas un fichier qu'ils perdraient. C'est ce qui bloque la fin du dossier de
+  candidature en autonomie.
 - Accès **non bloquants** : projet Google Cloud (connexion Google, puis
-  Calendar), Stripe, Inngest, OpenRouteService. Chacun dégrade une
-  fonctionnalité identifiée, aucun n'empêche le site de fonctionner.
+  Calendar), Inngest, OpenRouteService. Chacun dégrade une fonctionnalité
+  identifiée, aucun n'empêche le site de fonctionner.

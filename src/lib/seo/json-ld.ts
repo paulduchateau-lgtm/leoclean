@@ -92,9 +92,21 @@ export function organizationJsonLd(): JsonLd {
     },
     areaServed: areaServed(),
     ...(SITE.foundingDate ? { foundingDate: SITE.foundingDate } : {}),
-    ...(SITE.founder
-      ? { founder: { "@type": "Person", name: SITE.founder } }
-      : {}),
+    /*
+     * Le fondateur n'est plus déclaré ici.
+     *
+     * `founder` est une propriété légitime de schema.org, mais elle publiait
+     * son nom dans le même objet que `address` — c'est-à-dire une identité
+     * associée à une adresse d'habitation, le siège étant son domicile, et
+     * cela sur **toutes** les pages du site puisque ce balisage y est émis
+     * partout. Ce que le balisage doit porter, c'est l'entreprise : sa raison
+     * sociale, son SIRET, sa NAP et sa zone. Aucun de ces signaux ne dépend
+     * d'un patronyme, et `taxID` identifie déjà la structure de façon
+     * vérifiable.
+     *
+     * `SITE.founder` reste renseigné et reste affiché sur `/a-propos`, où le
+     * nommer est précisément l'objet de la page.
+     */
     ...(SITE.siret ? { taxID: SITE.siret } : {}),
     ...(SOCIAL_PROFILES.length > 0 ? { sameAs: SOCIAL_PROFILES } : {}),
     currenciesAccepted: SITE.currency,

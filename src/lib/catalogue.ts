@@ -4,6 +4,12 @@ import type { Frequency } from "@prisma/client";
 
 import type { TenantClient } from "@/lib/db";
 import { type Quote, type QuoteOption, quote } from "@/lib/pricing";
+import {
+  MAJORATIONS_PAR_DEFAUT,
+  type Beneficiaire,
+  type CauseMajoration,
+  type RegleMajoration,
+} from "@/lib/pricing/majorations";
 
 /**
  * Catalogue et devis.
@@ -163,6 +169,14 @@ export interface QuoteRequest {
   frequency: Frequency;
   durationOverrideMinutes?: number;
   at?: Date;
+  /**
+   * Début de l'intervention, quand il est connu.
+   *
+   * Sans lui, aucune majoration n'est appliquée : c'est le devis d'exploration
+   * qu'affiche l'accueil avant qu'aucune date ne soit choisie, et le prix
+   * d'appel honnête d'un jour ordinaire réservé à l'avance.
+   */
+  startAt?: Date;
 }
 
 export interface CatalogueQuote extends Quote {
@@ -231,6 +245,14 @@ export async function quoteFromCatalogue(
     ...(request.durationOverrideMinutes !== undefined
       ? { durationOverrideMinutes: request.durationOverrideMinutes }
       : {}),
+    /*
+     * Les majorations n'entrent en jeu qu'une fois le créneau choisi. `at` fait
+     * office d'instant de réservation : c'est déjà lui qui décide quel tarif est
+     * en vigueur, et faire décider deux horloges différentes du même devis
+     * finirait par produire deux prix.
+     */
+    ...(request.startAt ? { startAt: request.startAt, bookedAt: at } : {}),
+    surchargeRules: await lireMajorations(db, at),
   });
 
   return {
@@ -254,4 +276,42 @@ export function lowestHourlyRate(
     Object.values(service.hourlyRatesByFrequency),
   );
   return rates.length > 0 ? Math.min(...rates) : undefined;
+}
+
+/**
+ * Les majorations en vigueur pour cette organisation.
+ *
+ * Repli sur la grille de la marketplace quand la base n'en porte aucune : une
+ * organisation sans règle n'est pas une organisation sans majoration, c'est une
+ * organisation qui n'a pas dérogé. Le contraire ferait qu'un socle non installé
+ * facture silencieusement les dimanches au tarif de la semaine — exactement le
+ * défaut que ce lot corrige.
+ */
+export async function lireMajorations(
+  db: TenantClient,
+  at: Date,
+): Promise<readonly RegleMajoration[]> {
+  const lignes = await db.pricingSurcharge.findMany({
+    where: {
+      validFrom: { lte: at },
+      OR: [{ validUntil: null }, { validUntil: { gt: at } }],
+    },
+    orderBy: { validFrom: "desc" },
+    select: { cause: true, rateBp: true, beneficiary: true, label: true },
+  });
+
+  if (lignes.length === 0) return MAJORATIONS_PAR_DEFAUT;
+
+  /* Une cause n'a qu'une règle en vigueur : la plus récente l'emporte. */
+  const parCause = new Map<string, RegleMajoration>();
+  for (const ligne of lignes) {
+    if (parCause.has(ligne.cause)) continue;
+    parCause.set(ligne.cause, {
+      cause: ligne.cause as CauseMajoration,
+      rateBp: ligne.rateBp,
+      beneficiaire: ligne.beneficiary as Beneficiaire,
+      label: ligne.label,
+    });
+  }
+  return [...parCause.values()];
 }

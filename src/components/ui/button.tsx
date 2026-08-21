@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  * Toute action est une pilule : c'est la forme la plus reconnaissable du
  * système, et la seule admise pour un élément cliquable. Les gabarits partent
  * de 48 px — un bouton de conversion se touche au pouce, pas au curseur — et
- * la menthe pleine porte du texte encre, jamais du blanc : à 400 elle est trop
+ * la mangue pleine porte du texte encre, jamais du blanc : à 400 elle est trop
  * claire pour tenir le contraste.
  */
 const buttonVariants = cva(
@@ -17,18 +17,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /* Un écran, un seul bouton menthe. */
+        /* Un écran, un seul bouton mangue. */
         default:
-          "bg-primary text-primary-foreground shadow-xs hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint active:translate-y-0 active:scale-[0.985] active:bg-mint-600 active:shadow-xs",
+          "bg-primary text-primary-foreground shadow-xs hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango active:translate-y-0 active:scale-[0.985] active:bg-mango-600 active:shadow-xs",
         secondary:
           "bg-ink-900 text-white hover:-translate-y-px hover:bg-ink-800 hover:shadow-md active:translate-y-0 active:scale-[0.985] active:bg-ink-950 dark:bg-ink-100 dark:text-ink-950 dark:hover:bg-white",
         outline:
-          "border-border bg-card text-foreground shadow-xs hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50 active:translate-y-0 active:scale-[0.985] active:bg-mint-100",
+          "border-border bg-card text-foreground shadow-xs hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50 active:translate-y-0 active:scale-[0.985] active:bg-teal-100",
         ghost:
-          "text-mint-700 hover:bg-mint-50 active:scale-[0.985] active:bg-mint-100",
+          "text-teal-700 hover:bg-teal-50 active:scale-[0.985] active:bg-teal-100",
         destructive:
           "bg-destructive text-white hover:-translate-y-px hover:bg-destructive-hover active:translate-y-0 active:scale-[0.985]",
-        link: "text-mint-700 underline decoration-mint-300 decoration-2 underline-offset-4 hover:decoration-mint-600",
+        link: "text-teal-700 underline decoration-teal-300 decoration-2 underline-offset-4 hover:decoration-teal-600",
       },
       size: {
         default: "h-12 gap-2 px-6 text-base",

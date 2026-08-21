@@ -19,6 +19,8 @@
 @import "../styles/tokens/spacing.css";
 @import "../styles/tokens/radius-shadow.css";
 @import "../styles/tokens/motion.css";
+/* Variante dense de la console : densité seule, aucune couleur touchée. */
+@import "../styles/tokens/density.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -26,13 +28,14 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  /* JetBrains Mono : prix, codes postaux, horaires — des chiffres posés. */
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
   /*
-   * Figtree porte aussi les titres : la hiérarchie vient de la graisse, pas
-   * d'un changement de famille. `font-display` expose Fraunces, réservée au
-   * mot d'accent d'un titre marketing.
+   * Alan Sans porte les titres et les grands chiffres ; Figtree reste la
+   * famille de lecture. La hiérarchie vient des deux : la famille pour
+   * trancher, la graisse pour graduer.
    */
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -63,9 +66,10 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
   /*
-   * La menthe pleine sert à peindre une action, pas à écrire : à 400 elle ne
-   * tient pas le contraste sur blanc. `text-brand` est la menthe lisible, la
-   * seule à employer sur du texte, une icône ou un trait fin.
+   * La mangue pleine sert à peindre une action, pas à écrire : à 400 elle ne
+   * tient pas le contraste sur blanc. `text-brand` est la sarcelle lisible,
+   * la seule teinte de marque à employer sur du texte, une icône ou un trait
+   * fin.
    */
   --color-brand: var(--brand);
   --color-popover-foreground: var(--popover-foreground);
@@ -97,32 +101,46 @@
   --color-info-border: var(--info-border);
   --color-info-dark: var(--info-dark);
 
-  /* Palettes de marque, accessibles en `bg-mint-400`, `text-peach-700`… */
-  --color-mint-50: var(--mint-50);
-  --color-mint-100: var(--mint-100);
-  --color-mint-200: var(--mint-200);
-  --color-mint-300: var(--mint-300);
-  --color-mint-400: var(--mint-400);
-  --color-mint-500: var(--mint-500);
-  --color-mint-600: var(--mint-600);
-  --color-mint-700: var(--mint-700);
-  --color-mint-800: var(--mint-800);
-  --color-mint-900: var(--mint-900);
-  --color-mint-950: var(--mint-950);
-  --color-peach-50: var(--peach-50);
-  --color-peach-100: var(--peach-100);
-  --color-peach-200: var(--peach-200);
-  --color-peach-300: var(--peach-300);
-  --color-peach-400: var(--peach-400);
-  --color-peach-500: var(--peach-500);
-  --color-peach-600: var(--peach-600);
-  --color-peach-700: var(--peach-700);
-  --color-peach-800: var(--peach-800);
-  --color-lemon-100: var(--lemon-100);
-  --color-lemon-200: var(--lemon-200);
-  --color-lemon-300: var(--lemon-300);
-  --color-lemon-400: var(--lemon-400);
-  --color-lemon-700: var(--lemon-700);
+  /* Palettes de marque, accessibles en `bg-teal-400`, `text-mango-700`… */
+  --color-teal-50: var(--teal-50);
+  --color-teal-100: var(--teal-100);
+  --color-teal-200: var(--teal-200);
+  --color-teal-300: var(--teal-300);
+  --color-teal-400: var(--teal-400);
+  --color-teal-500: var(--teal-500);
+  --color-teal-600: var(--teal-600);
+  --color-teal-700: var(--teal-700);
+  --color-teal-800: var(--teal-800);
+  --color-teal-900: var(--teal-900);
+  --color-teal-950: var(--teal-950);
+  --color-mango-50: var(--mango-50);
+  --color-mango-100: var(--mango-100);
+  --color-mango-200: var(--mango-200);
+  --color-mango-300: var(--mango-300);
+  --color-mango-400: var(--mango-400);
+  --color-mango-500: var(--mango-500);
+  --color-mango-600: var(--mango-600);
+  --color-mango-700: var(--mango-700);
+  --color-mango-800: var(--mango-800);
+  --color-mango-900: var(--mango-900);
+  --color-papaya-50: var(--papaya-50);
+  --color-papaya-100: var(--papaya-100);
+  --color-papaya-200: var(--papaya-200);
+  --color-papaya-300: var(--papaya-300);
+  --color-papaya-400: var(--papaya-400);
+  --color-papaya-500: var(--papaya-500);
+  --color-papaya-600: var(--papaya-600);
+  --color-papaya-700: var(--papaya-700);
+  --color-papaya-800: var(--papaya-800);
+  --color-papaya-900: var(--papaya-900);
+  --color-pineapple-50: var(--pineapple-50);
+  --color-pineapple-100: var(--pineapple-100);
+  --color-pineapple-200: var(--pineapple-200);
+  --color-pineapple-300: var(--pineapple-300);
+  --color-pineapple-400: var(--pineapple-400);
+  --color-pineapple-500: var(--pineapple-500);
+  --color-pineapple-600: var(--pineapple-600);
+  --color-pineapple-700: var(--pineapple-700);
   --color-cream-50: var(--cream-50);
   --color-cream-100: var(--cream-100);
   --color-cream-200: var(--cream-200);
@@ -152,7 +170,7 @@
   --shadow-md: var(--sh-m);
   --shadow-lg: var(--sh-l);
   --shadow-xl: var(--sh-xl);
-  --shadow-mint: var(--sh-mint);
+  --shadow-mango: var(--sh-mango);
 
   --ease-brand: var(--ease);
   --ease-bounce: var(--ease-bounce);
@@ -191,16 +209,16 @@
   --popover-foreground: var(--text);
 
   /*
-   * La menthe pleine ne sert qu'à l'action principale, et porte du texte
+   * La mangue pleine ne sert qu'à l'action principale, et porte du texte
    * encre : à 400, elle est trop claire pour du blanc.
    */
-  --primary: var(--mint-400);
+  --primary: var(--mango-400);
   --primary-foreground: var(--text-on-brand);
   --brand: var(--text-brand);
   /*
    * `secondary` désigne une surface creusée, pas une action : c'est ainsi que
    * shadcn l'emploie et que les pages s'en servent. L'action secondaire du
-   * système — l'encre pleine, contrepoint de la menthe — est portée par la
+   * système — l'encre pleine, contrepoint de la mangue — est portée par la
    * variante du bouton, qui la nomme explicitement.
    */
   --secondary: var(--surface-alt);
@@ -209,11 +227,12 @@
   --muted-foreground: var(--text-secondary);
   /*
    * `accent` est l'état survolé des listes et des menus, pas la couleur
-   * d'accent de la marque : le système survole en menthe très claire. La pêche
-   * reste disponible en `bg-peach-500`, pour les blocs qui la réclament.
+   * d'accent de la marque : le système survole en sarcelle très claire. La
+   * papaye reste disponible en `bg-papaya-200`, pour les surfaces qui la
+   * réclament.
    */
-  --accent: var(--mint-50);
-  --accent-foreground: var(--mint-800);
+  --accent: var(--teal-50);
+  --accent-foreground: var(--teal-800);
 
   --success-foreground: var(--text-inverse);
   --warning-foreground: var(--text-inverse);
@@ -223,21 +242,21 @@
   --input: var(--border);
   --ring: var(--focus);
 
-  --chart-1: var(--mint-500);
-  --chart-2: var(--peach-500);
-  --chart-3: var(--sky-400);
-  --chart-4: var(--lemon-400);
-  --chart-5: var(--mint-800);
+  --chart-1: var(--teal-500);
+  --chart-2: var(--mango-500);
+  --chart-3: var(--papaya-500);
+  --chart-4: var(--pineapple-400);
+  --chart-5: var(--teal-800);
 
   /* Rayon de référence : celui d'une card. */
   --radius: var(--r-l);
 
   --sidebar: var(--surface-alt);
   --sidebar-foreground: var(--text);
-  --sidebar-primary: var(--mint-400);
+  --sidebar-primary: var(--mango-400);
   --sidebar-primary-foreground: var(--text-on-brand);
-  --sidebar-accent: var(--mint-100);
-  --sidebar-accent-foreground: var(--mint-800);
+  --sidebar-accent: var(--teal-100);
+  --sidebar-accent-foreground: var(--teal-800);
   --sidebar-border: var(--border-subtle);
   --sidebar-ring: var(--focus);
 }
@@ -246,46 +265,46 @@
  * Thème sombre.
  *
  * Le design system n'en définit pas. Celui-ci en est une dérivation : encre
- * profonde en fond, menthe éclaircie pour rester lisible, mêmes familles. À
+ * profonde en fond, sarcelle éclaircie pour rester lisible, mêmes familles. À
  * revoir si le système en fournit un.
  */
 .dark {
-  --background: var(--ink-950);
+  --background: var(--teal-950);
   --foreground: var(--ink-50);
-  --card: var(--ink-900);
+  --card: var(--teal-900);
   --card-foreground: var(--ink-25);
-  --popover: var(--ink-900);
+  --popover: var(--teal-900);
   --popover-foreground: var(--ink-25);
 
-  --primary: var(--mint-400);
+  --primary: var(--mango-400);
   --primary-foreground: var(--ink-950);
-  --brand: var(--mint-300);
-  --secondary: var(--ink-800);
+  --brand: var(--teal-300);
+  --secondary: var(--teal-800);
   --secondary-foreground: var(--ink-50);
-  --muted: var(--ink-800);
+  --muted: var(--teal-800);
   --muted-foreground: var(--ink-300);
-  --accent: var(--ink-800);
-  --accent-foreground: var(--mint-300);
+  --accent: var(--teal-800);
+  --accent-foreground: var(--teal-200);
 
-  --success: var(--mint-400);
+  --success: var(--teal-300);
   --success-foreground: var(--ink-950);
-  --warning: var(--lemon-300);
+  --warning: var(--pineapple-300);
   --warning-foreground: var(--ink-950);
   --destructive: #f08b84;
   --destructive-hover: #f6b4af;
 
-  --border: color-mix(in oklab, var(--ink-300) 24%, transparent);
-  --input: color-mix(in oklab, var(--ink-300) 32%, transparent);
-  --ring: var(--mint-400);
+  --border: color-mix(in oklab, var(--teal-300) 24%, transparent);
+  --input: color-mix(in oklab, var(--teal-300) 32%, transparent);
+  --ring: var(--mango-400);
 
-  --sidebar: var(--ink-900);
+  --sidebar: var(--teal-900);
   --sidebar-foreground: var(--ink-50);
-  --sidebar-primary: var(--mint-400);
+  --sidebar-primary: var(--mango-400);
   --sidebar-primary-foreground: var(--ink-950);
-  --sidebar-accent: var(--ink-800);
+  --sidebar-accent: var(--teal-800);
   --sidebar-accent-foreground: var(--ink-50);
-  --sidebar-border: color-mix(in oklab, var(--ink-300) 24%, transparent);
-  --sidebar-ring: var(--mint-400);
+  --sidebar-border: color-mix(in oklab, var(--teal-300) 24%, transparent);
+  --sidebar-ring: var(--mango-400);
 }
 
 @layer base {
@@ -305,11 +324,12 @@
   }
 
   /*
-   * Les titres restent en Figtree : c'est la graisse — 900 pour trancher,
-   * 800 en dessous — qui fait la hiérarchie, pas un changement de famille.
+   * Les titres passent en Alan Sans : la famille tranche, la graisse gradue
+   * — 900 pour les titres de page, 800 en dessous.
    */
   h1,
   h2 {
+    font-family: var(--font-display);
     font-weight: var(--fw-black);
     letter-spacing: var(--ls-heading);
     line-height: var(--lh-snug);
@@ -317,13 +337,14 @@
 
   h3,
   h4 {
+    font-family: var(--font-display);
     font-weight: var(--fw-extrabold);
     letter-spacing: -0.015em;
     line-height: var(--lh-heading);
   }
 
   ::selection {
-    background: var(--mint-200);
+    background: var(--teal-200);
     color: var(--ink-900);
   }
 
@@ -365,19 +386,58 @@
   }
 
   /*
-   * Mot d'accent d'un titre marketing : Fraunces en italique, un mot maximum,
-   * toujours en fin de phrase, jamais dans l'app transactionnelle.
+   * Mot d'accent d'un titre marketing : la sarcelle lisible, dans la même
+   * famille que le titre. L'italique Fraunces a disparu avec elle — le
+   * tropical punch accentue par la couleur, pas par un changement de plume.
    */
   .accent-word {
-    font-family: var(--font-display), Georgia, serif;
-    font-style: italic;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    font-optical-sizing: auto;
-    font-variation-settings:
-      "SOFT" 40,
-      "WONK" 1;
-    color: var(--mint-600);
+    color: var(--teal-600);
+  }
+
+  /*
+   * Curseur de durée du tunnel : piste en pilule, poignée sarcelle bordée de
+   * blanc — assez large pour le pouce. Les pseudo-éléments de range ne se
+   * stylent qu'en CSS, moteur par moteur.
+   */
+  .range-slider {
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    margin: 0;
+    border-radius: var(--r-pill);
+    background: var(--ink-200);
+    outline: none;
+  }
+
+  .range-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--r-pill);
+    background: var(--teal-600);
+    border: 3px solid var(--ink-0);
+    box-shadow: var(--sh-m);
+    cursor: pointer;
+    transition: transform var(--t-fast, 140ms) var(--ease, ease-out);
+  }
+
+  .range-slider::-webkit-slider-thumb:active {
+    transform: scale(1.12);
+  }
+
+  .range-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--r-pill);
+    background: var(--teal-600);
+    border: 3px solid var(--ink-0);
+    box-shadow: var(--sh-m);
+    cursor: pointer;
+  }
+
+  .range-slider:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
   }
 
   /*

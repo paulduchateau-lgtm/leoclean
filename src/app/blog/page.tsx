@@ -62,7 +62,7 @@ export default function BlogIndexPage() {
             <li key={article.slug}>
               <Link
                 href={`/blog/${article.slug}`}
-                className="block rounded-lg border border-border bg-card p-6 transition-colors hover:border-mint-400"
+                className="block rounded-lg border border-border bg-card p-6 transition-colors hover:border-teal-300"
               >
                 <h2 className="text-xl font-extrabold tracking-tight text-balance">
                   {article.title}

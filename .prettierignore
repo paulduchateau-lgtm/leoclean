@@ -3,3 +3,8 @@ node_modules
 package-lock.json
 playwright-report
 test-results
+
+# Corpus de spécifications fourni par le porteur du projet.
+# Ce sont des documents source, pas du code du dépôt : les reformater
+# produirait un diff de plusieurs centaines de lignes sans rien améliorer.
+files

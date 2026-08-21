@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Espace cleaner — Léo Clean</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="stylesheet" href="assets/leo-clean.css" />
+    <link rel="stylesheet" href="assets/theme-menthe.css" />
+    <link rel="stylesheet" href="assets/theme-pop.css" />
+    <link rel="stylesheet" href="assets/theme-tropical.css" />
+    <link rel="stylesheet" href="assets/theme-tropical-rose.css" />
+    <script src="assets/theme.js"></script>
+    <link rel="stylesheet" href="assets/login.css" />
+  </head>
+  <body>
+    <script src="assets/icons.js"></script>
+
+    <p class="proto-banner">
+      Prototype — maquette non contractuelle. Aucun compte n’est créé.
+    </p>
+
+    <header class="site-header">
+      <div class="bar">
+        <a class="wordmark" href="index.html">Léo Clean</a>
+        <nav></nav>
+        <div class="actions">
+          <a class="btn btn-ghost btn-sm" href="espace-client.html"
+            ><svg class="i i-16"><use href="#i-user" /></svg
+            ><span class="tel-label">Espace client</span></a
+          >
+          <a class="btn btn-sm" href="index.html"
+            >Le site<svg class="i i-16"><use href="#i-arrow-right" /></svg
+          ></a>
+        </div>
+      </div>
+    </header>
+
+    <main class="login">
+      <div class="login-card card card-feature">
+        <span class="login-seal"
+          ><svg class="i i-24"><use href="#i-sparkles" /></svg
+        ></span>
+        <h1>Votre espace cleaner</h1>
+        <p class="muted">
+          Vos missions, vos propositions et vos disponibilités. Pas de mot de
+          passe : on vous envoie un lien de connexion.
+        </p>
+
+        <form class="stack" style="gap: 16px" id="form">
+          <label class="field"
+            ><span class="label">Votre email</span>
+            <span class="input-shell"
+              ><svg class="i i-18"><use href="#i-mail" /></svg>
+              <input
+                type="email"
+                placeholder="amina@exemple.fr"
+                autocomplete="email"
+                required
+            /></span>
+            <span class="hint">Celui de votre inscription.</span></label
+          >
+          <button class="btn btn-lg btn-block" type="submit">
+            Recevoir mon lien de connexion<svg class="i i-18">
+              <use href="#i-arrow-right" />
+            </svg>
+          </button>
+        </form>
+
+        <div class="sep"><span>ou</span></div>
+        <button class="btn btn-lg btn-secondary btn-block" type="button">
+          Continuer avec Google
+        </button>
+
+        <div class="pitch card card-leaf">
+          <b>Pas encore intervenant chez nous ?</b>
+          <p class="sm">
+            Vous travaillez dans votre commune et celles d’à côté, vous fixez
+            vos disponibilités, et vous acceptez ou refusez chaque mission.
+            Aucune exclusivité, aucun frais d’inscription.
+          </p>
+          <ul
+            class="stack"
+            style="gap: 8px; padding: 0; margin: 0; list-style: none"
+          >
+            <li class="row sm" style="gap: 8px">
+              <svg class="i i-16" style="color: var(--leaf-600)">
+                <use href="#i-check" /></svg
+              >18 € net de l’heure, versés sous 5 jours ouvrés
+            </li>
+            <li class="row sm" style="gap: 8px">
+              <svg class="i i-16" style="color: var(--leaf-600)">
+                <use href="#i-check" /></svg
+              >Vous déclarez vos horaires, personne ne vous en impose
+            </li>
+            <li class="row sm" style="gap: 8px">
+              <svg class="i i-16" style="color: var(--leaf-600)">
+                <use href="#i-check" /></svg
+              >Des missions proches, pour une journée pleine sans la passer en
+              voiture
+            </li>
+          </ul>
+          <a class="btn btn-secondary btn-block" href="#"
+            >Déposer ma candidature<svg class="i i-18">
+              <use href="#i-arrow-right" /></svg
+          ></a>
+        </div>
+      </div>
+
+      <div class="login-card card card-feature sent">
+        <span class="login-seal"
+          ><svg class="i i-24" style="stroke-width: 3">
+            <use href="#i-check" /></svg
+        ></span>
+        <h1>Regardez vos emails</h1>
+        <p class="muted">
+          Nous venons d’envoyer un lien de connexion. Il est valable une heure
+          et ne fonctionne qu’une fois.
+        </p>
+        <a class="btn btn-lg btn-secondary btn-block" href="index.html"
+          >Retour à l’accueil</a
+        >
+      </div>
+    </main>
+
+    <script src="assets/login.js"></script>
+  </body>
+</html>

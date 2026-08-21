@@ -13,6 +13,9 @@ import { pointsOf } from "@/lib/scheduling/repository";
 
 import { composerLots, echeanceDuLot } from "@/lib/assignments/diffusion";
 
+import { annoncerLaDiffusion } from "@/lib/notifications/evenements";
+import { parisIsoWeekday, utcToParisWallClock } from "@/lib/time";
+
 import { NoCleanerAvailableError } from "./errors";
 
 /**
@@ -119,6 +122,13 @@ export async function createBooking(
     frequency: input.frequency,
     durationOverrideMinutes: input.durationOverrideMinutes,
     at: now,
+    /*
+     * Le créneau est connu ici, donc les majorations s'appliquent. C'est le
+     * seul devis qui engage : celui du tunnel sert à montrer, celui-ci à
+     * facturer, et il est recalculé côté serveur sans rien reprendre du
+     * navigateur.
+     */
+    startAt: input.scheduledStart,
   });
 
   const scheduledEnd = new Date(
@@ -184,7 +194,17 @@ export async function createBooking(
     ),
   );
 
-  return diffuser(premier, respondBy);
+  const cree = await diffuser(premier, respondBy);
+
+  /*
+   * Les notifications partent après la transaction, jamais dedans : un envoi
+   * lent tiendrait la base ouverte, et un envoi qui échoue ne doit pas défaire
+   * une demande enregistrée. On ne les attend pas non plus — le client a déjà
+   * son écran de confirmation.
+   */
+  void annoncerLaDiffusion(db, cree.bookingId, cree.proposedTo);
+
+  return cree;
 
   /**
    * La demande, ses lignes facturables et les propositions du lot : ensemble ou
@@ -199,13 +219,47 @@ export async function createBooking(
     respondBy: Date,
   ): Promise<CreatedBooking> {
     return db.$transaction(async (tx) => {
+      /*
+       * L'abonnement naît avec la première réservation d'une série.
+       *
+       * Le tunnel vend un rythme depuis toujours — « toutes les deux semaines,
+       * le mardi matin » — et rien ne le matérialisait : chaque passage était
+       * une réservation isolée, et « le même intervenant chaque semaine »
+       * tenait à ce que le client reprenne rendez-vous de lui-même.
+       *
+       * L'ancrage est la première réservation, et c'est lui qui définit la
+       * parité d'une série bimensuelle : le recalculer plus tard depuis
+       * « maintenant » ferait changer de semaine sans que personne l'ait
+       * demandé.
+       */
+      let subscriptionId = input.subscriptionId ?? null;
+      if (!subscriptionId && input.frequency !== "ONE_OFF") {
+        const mur = utcToParisWallClock(input.scheduledStart);
+        const abonnement = await tx.subscription.create({
+          data: {
+            organizationId: organization.id,
+            clientProfileId: input.clientProfileId,
+            addressId: address.id,
+            serviceId: quote.serviceId,
+            frequency: input.frequency,
+            weekday: parisIsoWeekday(input.scheduledStart),
+            startMinute: mur.hour * 60 + mur.minute,
+            durationMinutes: quote.durationMinutes,
+            anchorDate: input.scheduledStart,
+            status: "ACTIVE",
+          },
+          select: { id: true },
+        });
+        subscriptionId = abonnement.id;
+      }
+
       const booking = await tx.booking.create({
         data: {
           organizationId: organization.id,
           clientProfileId: input.clientProfileId,
           addressId: address.id,
           serviceId: quote.serviceId,
-          subscriptionId: input.subscriptionId ?? null,
+          subscriptionId,
           /*
            * La demande naît en recherche, et non attribuée : personne n'a
            * encore accepté. Elle passera en CONFIRMED à la première

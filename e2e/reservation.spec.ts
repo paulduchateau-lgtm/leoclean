@@ -7,11 +7,13 @@ import { expect, test } from "@playwright/test";
  * c'est le seul moyen de vérifier que le devis affiché, le créneau proposé et
  * la réservation enregistrée sont bien la même chose.
  *
- * L'ordre des écrans obéit à une règle, et c'est elle que ces tests protègent :
- * **plus une information coûte à donner, plus tard on la demande.** La commune
- * d'abord, le prix au troisième écran, les coordonnées au cinquième, l'adresse
- * exacte au dernier. Un test qui verrait réapparaître l'adresse en tête
- * signalerait la régression la plus coûteuse du parcours.
+ * L'ordre des écrans est ce que ces tests protègent en premier : **l'adresse,
+ * la durée, le rythme, le créneau, les coordonnées, le récapitulatif.**
+ * L'adresse ouvre le tunnel — elle a remplacé l'écran de choix de commune, et
+ * elle n'est plus demandée qu'une fois. Ce qui reste tenu, et qui compte
+ * autant : **le prix est affiché avant la moindre donnée d'identité.** Un test
+ * qui verrait un nom ou un email réclamés avant le tarif signalerait la
+ * régression la plus coûteuse du parcours.
  *
  * Le chemin emprunté pour l'adresse est celui de la **saisie manuelle**,
  * délibérément. La complétion dépend de la Base Adresse Nationale, un service
@@ -23,9 +25,23 @@ import { expect, test } from "@playwright/test";
 
 type Page = import("@playwright/test").Page;
 
-/** Écran 1 : la commune, choisie dans notre référentiel. */
-async function choisirCommune(page: Page, nom = "Léognan") {
-  await page.getByRole("button", { name: new RegExp(`^${nom}`) }).click();
+/**
+ * Écran 1 : l'adresse, en saisie manuelle.
+ *
+ * C'est le chemin qui ne dépend d'aucun tiers, et c'est aussi celui que
+ * prendra un client le jour où la Base Adresse Nationale sera indisponible.
+ */
+async function saisirAdresseManuelle(
+  page: Page,
+  commune = "leognan",
+  rue = "12 rue des Vignes",
+) {
+  await page
+    .getByRole("button", { name: "Saisir mon adresse manuellement" })
+    .click();
+  await page.fill("#manual-street", rue);
+  await page.selectOption("#manual-commune", commune);
+  await page.getByRole("button", { name: "Valider mon adresse" }).click();
 }
 
 /** Écran 5 : les coordonnées, une fois le prix et le créneau connus. */
@@ -34,16 +50,6 @@ async function saisirCoordonnees(page: Page, email: string) {
   await page.fill("#lastName", "Durand");
   await page.fill("#phone", "06 12 34 56 78");
   await page.fill("#email", email);
-  await page.getByRole("button", { name: "Continuer" }).click();
-}
-
-/** Écran 6 : l'adresse exacte, en saisie manuelle. */
-async function saisirAdresseManuelle(page: Page, commune = "leognan") {
-  await page
-    .getByRole("button", { name: "Saisir mon adresse manuellement" })
-    .click();
-  await page.fill("#manual-street", "12 rue des Vignes");
-  await page.selectOption("#manual-commune", commune);
   await page.getByRole("button", { name: "Voir mon récapitulatif" }).click();
 }
 
@@ -52,7 +58,7 @@ test.describe("réservation", () => {
   // recherche de créneaux sur trois semaines : il dépasse le budget par défaut.
   test.setTimeout(120_000);
 
-  test("mène de la commune à la confirmation", async ({ page, isMobile }) => {
+  test("mène de l'adresse à la confirmation", async ({ page, isMobile }) => {
     /*
      * Le seul test de la suite qui écrive réellement en base, et donc le seul
      * qui consomme un créneau. Le faire tourner sur les deux projets revenait
@@ -65,13 +71,19 @@ test.describe("réservation", () => {
 
     await page.goto("/reserver");
 
-    // 1. Commune. Le prix d'appel est annoncé avant même le premier choix :
+    // 1. Adresse. Le prix d'appel est annoncé avant même la première frappe :
     // la barre basse n'est jamais vide.
     await expect(
-      page.getByRole("heading", { name: "Où habitez-vous ?" }),
+      page.getByRole("heading", { name: /À quelle adresse/ }),
     ).toBeVisible();
-    await expect(page.getByText(/À partir de 28/)).toBeVisible();
-    await choisirCommune(page);
+    /*
+     * Le prix figure à deux endroits depuis que le récapitulatif accompagne le
+     * tunnel : la barre basse et le récapitulatif. On vise le premier, faute de
+     * quoi le sélecteur résout sur deux éléments et échoue — ce que le test
+     * lisait comme une absence de prix alors qu'il y en avait deux.
+     */
+    await expect(page.getByText(/À partir de 28/).first()).toBeVisible();
+    await saisirAdresseManuelle(page);
 
     // 2. Durée — un nombre d'heures, pas une surface à estimer.
     await expect(
@@ -80,7 +92,7 @@ test.describe("réservation", () => {
     await page.getByRole("button", { name: "3 h" }).click();
 
     // 3. Rythme — c'est ici que le prix apparaît, avant toute donnée
-    // personnelle. Chaque formule porte le sien, calculé par le serveur :
+    // d'identité. Chaque formule porte le sien, calculé par le serveur :
     // 3 h à 28 €/h en formule régulière.
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
@@ -102,7 +114,7 @@ test.describe("réservation", () => {
     const chosenTime = await slot.first().innerText();
     await expect(page.getByText(/par intervention/)).toContainText("3 h");
     await slot.first().click();
-    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.getByRole("button", { name: "Saisir mes coordonnées" }).click();
 
     // 5. Coordonnées — demandées une fois la valeur visible et l'heure retenue.
     await expect(
@@ -111,12 +123,12 @@ test.describe("réservation", () => {
     const email = `e2e-${Date.now()}@leoclean.test`;
     await saisirCoordonnees(page, email);
 
-    // 6. Adresse exacte, puis récapitulatif dont chaque ligne est modifiable.
+    // 6. Récapitulatif, dont chaque ligne est modifiable — l'adresse comprise,
+    // qui renvoie à son écran plutôt que d'ouvrir une seconde recherche.
     await expect(
-      page.getByRole("heading", { name: /À quelle adresse/ }),
+      page.getByRole("heading", { name: /Vérifions votre réservation/ }),
     ).toBeVisible();
-    await saisirAdresseManuelle(page);
-
+    await expect(page.getByText("12 rue des Vignes")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Modifier le créneau" }),
     ).toBeVisible();
@@ -128,16 +140,40 @@ test.describe("réservation", () => {
       .click();
     await page.fill("#accessNotes", "Digicode 1234, portail vert");
 
+    /*
+     * Le montant du récapitulatif est relevé **avant** de confirmer, et
+     * comparé à celui de la confirmation. C'est l'invariant qui compte : le
+     * client paie ce qu'on lui a montré.
+     *
+     * Un montant écrit en dur ne le vérifiait pas et se cassait tout seul —
+     * une majoration de dernière minute s'applique dès que le premier créneau
+     * libre est proche, si bien que le test passait ou échouait selon le jour
+     * et l'état du planning.
+     */
+    const recapitulatif = (await page.locator("main").innerText()).replace(
+      /\s+/g,
+      " ",
+    );
+    const devis = /(\d[\d ]*,\d{2} €)/.exec(recapitulatif)?.[1];
+    expect(devis, "aucun montant sur le récapitulatif").toBeTruthy();
+
     await page.getByRole("button", { name: /^Réserver / }).click();
 
-    await expect(page.getByText("C'est réservé.")).toBeVisible({
+    await expect(page.getByText("C'est noté.")).toBeVisible({
       timeout: 30_000,
     });
-    // Le récapitulatif reprend l'heure choisie et le montant du devis.
+
+    // Sortir du tunnel crée une demande proposée à cinq intervenants, jamais
+    // une réservation tenue. L'écran ne doit donc promettre ni un rendez-vous
+    // ferme ni un créneau bloqué — c'est la formulation qui a été corrigée, et
+    // rien n'empêcherait qu'elle revienne.
+    const ecran = await page.locator("main").innerText();
+    expect(ecran).not.toContain("C'est réservé");
+    expect(ecran).not.toMatch(/créneau[^.]*bloqué/);
     // Les montants portent une espace fine insécable avant l'euro : on
     // normalise toutes les espaces Unicode plutôt que d'en énumérer deux.
     const main = await page.locator("main").innerText();
-    expect(main.replace(/\s+/g, " ")).toContain("84,00 €");
+    expect(main.replace(/\s+/g, " ")).toContain(devis!);
     expect(chosenTime).toMatch(/^\d{2}:\d{2}$/);
 
     // « Le même intervenant, chaque semaine » est la promesse centrale : la
@@ -147,7 +183,7 @@ test.describe("réservation", () => {
     await expect(
       page
         .getByText("Vous serez suivi par")
-        .or(page.getByText(/votre intervenant sous 24 heures/)),
+        .or(page.getByText(/on vous trouve quelqu'un/i)),
     ).toBeVisible();
 
     // Le fichier iCalendar est produit là où la réservation est écrite, et
@@ -160,30 +196,42 @@ test.describe("réservation", () => {
     await expect(calendar).toHaveAttribute("download", /\.ics$/);
   });
 
-  test("montre le prix avant de demander la moindre donnée personnelle", async ({
+  test("montre le prix avant de demander la moindre donnée d'identité", async ({
     page,
   }) => {
-    // C'est la règle d'ordonnancement du tunnel, et la raison de la refonte :
-    // le prix était auparavant le dernier écran, l'adresse le premier.
+    // L'adresse ouvre désormais le tunnel : ce qui reste tenu, et qui décide
+    // de l'abandon, est que le prix arrive avant qu'on demande qui vous êtes.
     await page.goto("/reserver");
-    await choisirCommune(page);
+    await saisirAdresseManuelle(page);
     await page.getByRole("button", { name: "3 h" }).click();
 
     await expect(
       page.getByRole("button", { name: /Tous les quinze jours/ }),
     ).toContainText("84,00", { timeout: 20_000 });
 
-    // Aucun champ de coordonnées ni d'adresse n'a été rencontré en chemin.
+    // Aucun champ d'identité n'a été rencontré en chemin.
     await expect(page.locator("#firstName")).toHaveCount(0);
     await expect(page.locator("#email")).toHaveCount(0);
+    await expect(page.locator("#phone")).toHaveCount(0);
+  });
+
+  test("ne demande l'adresse qu'une seule fois", async ({ page }) => {
+    // C'est le gain du déplacement : le tunnel demandait la commune au premier
+    // écran puis l'adresse complète au dernier, c'est-à-dire deux fois le même
+    // renseignement. Après le premier écran, plus aucun champ d'adresse.
+    await page.goto("/reserver");
+    await saisirAdresseManuelle(page);
+
+    await page.getByRole("button", { name: "3 h" }).click();
     await expect(page.locator("#address")).toHaveCount(0);
+    await expect(page.locator("#manual-street")).toHaveCount(0);
   });
 
   test("garde la saisie quand on revient en arrière", async ({ page }) => {
     // Revenir changer un choix ne doit rien détruire : c'est le retour le plus
     // probable du parcours, et il vidait les six champs déjà remplis.
     await page.goto("/reserver");
-    await choisirCommune(page);
+    await saisirAdresseManuelle(page);
     await page.getByRole("button", { name: "2 h" }).click();
     await page
       .getByRole("button", { name: /Tous les quinze jours/ })
@@ -194,10 +242,9 @@ test.describe("réservation", () => {
     });
     await expect(slot.first()).toBeVisible({ timeout: 45_000 });
     await slot.first().click();
-    await page.getByRole("button", { name: "Continuer" }).click();
+    await page.getByRole("button", { name: "Saisir mes coordonnées" }).click();
 
     await saisirCoordonnees(page, "camille@exemple.fr");
-    await saisirAdresseManuelle(page);
 
     // Depuis le récapitulatif, on va changer le rythme puis on revient.
     await page.getByRole("button", { name: "Modifier le rythme" }).click();
@@ -213,7 +260,7 @@ test.describe("réservation", () => {
 
   test("propose de reprendre un parcours interrompu", async ({ page }) => {
     await page.goto("/reserver");
-    await choisirCommune(page);
+    await saisirAdresseManuelle(page);
     await page.getByRole("button", { name: "4 h" }).click();
 
     // Retour par une URL nue — le chemin de quelqu'un qui revient par
@@ -222,16 +269,33 @@ test.describe("réservation", () => {
 
     await expect(page.getByText(/Reprendre ma réservation/)).toBeVisible();
     await page.getByRole("button", { name: /Reprendre où j'en étais/ }).click();
+
+    /*
+     * L'adresse n'est jamais enregistrée — c'est une donnée personnelle, et le
+     * stockage local n'en garde aucune. Une reprise repasse donc par le
+     * premier écran, puis rejoint directement l'écran où l'on en était, sans
+     * refaire la durée ni le rythme.
+     */
+    await expect(
+      page.getByRole("heading", { name: /À quelle adresse/ }),
+    ).toBeVisible();
+    await saisirAdresseManuelle(page);
+
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
     ).toBeVisible();
+    // La durée choisie avant l'interruption est bien celle qui est chiffrée :
+    // 4 h à 28 €/h en formule régulière.
+    await expect(
+      page.getByRole("button", { name: /Tous les quinze jours/ }),
+    ).toContainText("112,00", { timeout: 20_000 });
   });
 
   test("annonce la reprise dès l'accueil", async ({ page }) => {
     // Un parcours interrompu ne se retrouve pas tout seul : la personne revient
     // par l'accueil, et sans bandeau elle recommence de zéro.
     await page.goto("/reserver");
-    await choisirCommune(page, "Cadaujac");
+    await saisirAdresseManuelle(page, "cadaujac");
     await page.getByRole("button", { name: "4 h" }).click();
 
     await page.goto("/");
@@ -250,7 +314,7 @@ test.describe("réservation", () => {
     // donnée personnelle que personne n'a demandé à y laisser, et la reprise
     // n'en a pas besoin.
     await page.goto("/reserver");
-    await choisirCommune(page);
+    await saisirAdresseManuelle(page);
     await page.getByRole("button", { name: "2 h" }).click();
 
     const saved = await page.evaluate(() =>
@@ -266,10 +330,13 @@ test.describe("réservation", () => {
     // Un rechargement ne doit pas ramener au premier écran, et un lien
     // partagé doit rouvrir le tunnel au même endroit.
     await page.goto("/reserver");
-    await choisirCommune(page, "Gradignan");
+    await saisirAdresseManuelle(page, "gradignan");
     await page.getByRole("button", { name: "2 h" }).click();
 
     const url = new URL(page.url());
+    // La commune n'est plus choisie : elle est déduite du code INSEE de
+    // l'adresse. C'est elle, et jamais la rue, qui a le droit d'être dans une
+    // barre d'adresse.
     expect(url.searchParams.get("commune")).toBe("gradignan");
     // L'écran demande une durée et en déduit la surface, et non l'inverse :
     // deux heures valent 50 m² à 25 m²/h. L'URL porte la surface parce que
@@ -279,15 +346,15 @@ test.describe("réservation", () => {
     expect(url.searchParams.get("step")).toBe("rythme");
   });
 
-  test("accepte une durée libre, repliée par défaut", async ({ page }) => {
+  test("accepte une durée libre, au curseur", async ({ page }) => {
     await page.goto("/reserver");
-    await choisirCommune(page);
+    await saisirAdresseManuelle(page);
 
-    await expect(page.locator("#duration")).toHaveCount(0);
-    await page
-      .getByRole("button", { name: /Il me faut une autre durée/ })
-      .click();
-    await page.fill("#duration", "210");
+    // Le curseur part de 3 h ; un cran à droite fait 3 h 30 — le pas de
+    // 30 minutes que l'ancien champ « minutes » demandait de taper.
+    await page.locator("#duration-slider").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.locator("#duration-slider")).toHaveValue("210");
     await page.getByRole("button", { name: "Choisir mon rythme" }).click();
 
     // 3 h 30 à 28 €/h en formule régulière, soit la surface de 87 m²
@@ -299,36 +366,41 @@ test.describe("réservation", () => {
   });
 
   test("ne propose que des communes desservies", async ({ page }) => {
-    // La liste vient du référentiel, pas d'une saisie libre : il est
-    // structurellement impossible d'engager un parcours hors zone.
+    /*
+     * La garde a suivi l'adresse en tête du tunnel. Elle s'exerce à deux
+     * endroits, et c'est le second que ce test vérifie : la complétion marque
+     * « Hors zone » et désactive tout résultat non desservi, la saisie
+     * manuelle ne propose que notre référentiel. Dans les deux cas il est
+     * structurellement impossible d'engager un parcours hors zone.
+     */
     await page.goto("/reserver");
+    await page
+      .getByRole("button", { name: "Saisir mon adresse manuellement" })
+      .click();
 
     const communes = await page
-      .locator("main ul li button[aria-pressed]")
+      .locator("#manual-commune option")
       .allInnerTexts();
     expect(communes).toHaveLength(16);
     expect(communes.join(" ")).toContain("Léognan");
     expect(communes.join(" ")).not.toContain("Bordeaux");
   });
 
-  test("filtre la liste par code postal", async ({ page }) => {
-    // C'est ce que beaucoup tapent d'abord : il filtre, il ne remplace pas.
-    await page.goto("/reserver");
-    await page.fill("#commune-filter", "33850");
-
-    const communes = await page
-      .locator("main ul li button[aria-pressed]")
-      .allInnerTexts();
-    expect(communes.join(" ")).toContain("Léognan");
-    expect(communes.join(" ")).not.toContain("Gradignan");
-  });
-
   test("rouvre le tunnel là où un lien partagé s'est arrêté", async ({
     page,
   }) => {
-    // C'est ce que l'URL sert à faire : un rechargement ou un lien envoyé à
-    // quelqu'un ne doit pas renvoyer au premier écran.
+    /*
+     * Ce que l'URL sait, elle le rend — sauf l'adresse, qui n'y voyage jamais.
+     * Un lien partagé rouvre donc sur l'adresse, puis saute directement à
+     * l'écran où il s'était arrêté : les écrans déjà remplis ne sont pas
+     * refaits.
+     */
     await page.goto("/reserver?commune=cestas&surface=100&step=rythme");
+
+    await expect(
+      page.getByRole("heading", { name: /À quelle adresse/ }),
+    ).toBeVisible();
+    await saisirAdresseManuelle(page, "cestas");
 
     await expect(
       page.getByRole("heading", { name: /À quel rythme/ }),
@@ -345,25 +417,35 @@ test.describe("réservation", () => {
     // Une URL bricolée à la main ne doit pas ouvrir un écran de créneaux qui
     // n'a ni durée à chercher ni prix à afficher.
     await page.goto("/reserver?commune=cestas&step=creneau");
+    await saisirAdresseManuelle(page, "cestas");
 
     await expect(
       page.getByRole("heading", { name: /De combien de temps/ }),
     ).toBeVisible();
   });
 
-  test("saute le premier écran quand la commune est déjà connue", async ({
+  test("demande l'adresse même quand la commune est connue", async ({
     page,
   }) => {
-    // Le lien des pages locales transmet la commune : on ne repose pas la
-    // question dont on vient de lire la page entière.
+    /*
+     * Le lien des pages locales transmet la commune, mais une commune n'est
+     * pas une adresse : la sauter mènerait à la redemander plus loin, ce que
+     * le déplacement de l'écran sert précisément à supprimer. Elle sert en
+     * revanche de repère — la saisie manuelle s'ouvre déjà sur la bonne.
+     */
     await page.goto("/reserver?commune=gradignan");
 
     await expect(
-      page.getByRole("heading", { name: /De combien de temps/ }),
+      page.getByRole("heading", { name: /À quelle adresse/ }),
     ).toBeVisible();
     await expect(
-      page.getByText("Étape 2 sur 6", { exact: true }),
+      page.getByText("Étape 1 sur 6", { exact: true }),
     ).toBeVisible();
+
+    await page
+      .getByRole("button", { name: "Saisir mon adresse manuellement" })
+      .click();
+    await expect(page.locator("#manual-commune")).toHaveValue("gradignan");
   });
 
   test("reste utilisable quand la recherche d'adresse ne rend rien", async ({
@@ -373,24 +455,18 @@ test.describe("réservation", () => {
     // ramène rien — service indisponible, adresse trop récente — doit mener à
     // la saisie manuelle, pas à une impasse.
     await page.goto("/reserver");
-    await choisirCommune(page);
-    await page.getByRole("button", { name: "2 h" }).click();
-    await page
-      .getByRole("button", { name: /Tous les quinze jours/ })
-      .click({ timeout: 30_000 });
-
-    const slot = page.locator("main ul li button", {
-      hasText: /^\d{2}:\d{2}$/,
-    });
-    await expect(slot.first()).toBeVisible({ timeout: 45_000 });
-    await slot.first().click();
-    await page.getByRole("button", { name: "Continuer" }).click();
-    await saisirCoordonnees(page, `e2e-${Date.now()}@leoclean.test`);
 
     await page.fill("#address", "zzzz adresse qui n'existe pas quelque part");
     await expect(
       page.getByRole("button", { name: "Saisir mon adresse manuellement" }),
     ).toBeVisible({ timeout: 20_000 });
+
+    // La sortie fonctionne, et elle fait avancer le tunnel : une complétion en
+    // panne ne doit pas arrêter une réservation au premier écran.
+    await saisirAdresseManuelle(page);
+    await expect(
+      page.getByRole("heading", { name: /De combien de temps/ }),
+    ).toBeVisible();
   });
 
   test("offre une sortie vers quelqu'un à chaque écran", async ({ page }) => {
@@ -399,7 +475,7 @@ test.describe("réservation", () => {
       page.getByRole("button", { name: "Vous préférez en parler ?" }),
     ).toBeVisible();
 
-    await choisirCommune(page);
+    await saisirAdresseManuelle(page);
     await expect(
       page.getByRole("button", { name: "Vous préférez en parler ?" }),
     ).toBeVisible();

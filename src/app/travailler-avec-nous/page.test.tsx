@@ -48,14 +48,25 @@ describe("landing intervenants — ce que la page ne doit jamais dire", () => {
     expect(text).not.toMatch(/note moyenne/i);
   });
 
-  it("n'écrit pas « garanti » tant que la garantie n'est pas définie", () => {
-    // Trois situations sans réponse : le mot ne veut rien dire, et l'employer
-    // à vide le viderait aussi pour le jour où il sera mérité. On dit à la
-    // place ce qu'on tient — le délai de versement — et jamais « à date fixe »,
-    // qui décrirait un engagement mensuel qu'on ne prend pas.
-    expect(text.toLowerCase()).not.toContain("garanti");
-    expect(text).toContain("versé sous 5 jours ouvrés");
+  it("n'écrit « garanti » qu'en disant contre quoi", () => {
+    // Le mot est mérité depuis que les trois situations ont une réponse. Il
+    // reste conditionné : la page ne l'écrit que parce que `canSayGuaranteed()`
+    // l'y autorise, et les trois réponses sont sur la page, pas dans les CGU.
+    expect(text.toLowerCase()).toContain("garanti");
+    expect(text).toContain("Le client ne paie pas");
+    expect(text).toContain("Le client paie en retard");
+    expect(text).toContain("Le client annule tardivement");
     expect(text).not.toContain("date fixe");
+  });
+
+  it("ne promet aucune alerte automatique sur l'impayé", () => {
+    // Le gel de l'intervention suivante est une règle tenue à la main : rien
+    // ne pose `SUSPENDED` sur une réservation impayée, et aucune notification
+    // ne part vers l'intervenant. L'annoncer comme un écran serait démenti au
+    // premier impayé — c'est-à-dire au pire moment.
+    expect(text).not.toMatch(
+      /alerte automatique|vous êtes alerté|notification automatique/i,
+    );
   });
 
   it("affiche le partage complet, chaque ligne déduite des deux autres", () => {
@@ -67,13 +78,11 @@ describe("landing intervenants — ce que la page ne doit jamais dire", () => {
     expect(text).toContain("15,00 €");
   });
 
-  it("marque encore ce qui n'est pas arbitré, sans l'inventer", () => {
-    // Les trois situations de garantie n'ont pas de réponse : la page le
-    // montre plutôt que de combler, et c'est aussi ce qui la tient hors de
-    // l'index. Le jour où elles sont écrites, la pastille disparaît et le mot
-    // « garanti » apparaît, sans autre modification.
-    expect(text).toContain("à préciser");
-    expect(text).toContain("Le client ne paie pas");
+  it("ne marque plus rien « à préciser »", () => {
+    // La pastille signalait une valeur non arbitrée. Les cinq le sont : elle
+    // doit avoir disparu d'elle-même, sans autre modification que les valeurs
+    // écrites dans `facts.ts` — c'est ce que promettait sa conception.
+    expect(text).not.toContain("à préciser");
   });
 
   it("dit que les premières missions du filleul ne sont pas commissionnées", () => {
@@ -173,7 +182,46 @@ describe("landing intervenants — ce qu'elle doit dire", () => {
     expect(text).toContain(`${FACTS.maxDriveMinutes} min`);
   });
 
-  it("reste hors de l'index tant que ses conditions ne sont pas arbitrées", () => {
-    expect(metadata.robots).toEqual({ index: false, follow: true });
+  it("entre dans l'index, ses conditions étant arbitrées", () => {
+    // `pageMetadata` ne pose plus de `robots` restrictif : la page suit la
+    // règle générale du site, qui n'indexe que la production.
+    expect(metadata.robots).toBeUndefined();
+  });
+});
+
+describe("landing intervenants — les deux portes de l'espace professionnel", () => {
+  const hrefs = [...html.matchAll(/href="([^"]+)"/g)].map((match) => match[1]!);
+
+  it("rend le retour vers le site client avant tout le reste", () => {
+    // Quelqu'un qui cherchait un ménage chez lui doit repartir au premier
+    // regard. Le critère vérifiable est l'ordre : le retour précède le titre,
+    // donc il est lisible sans défilement.
+    const retour = html.indexOf("Site client");
+    const h1 = html.indexOf("<h1");
+
+    expect(retour).toBeGreaterThan(-1);
+    expect(retour).toBeLessThan(h1);
+    expect(hrefs).toContain("/");
+  });
+
+  it("propose les deux entrées, jamais une seule", () => {
+    // Les deux personnes qui pressent « Espace pro » ne cherchent pas la même
+    // chose : l'une veut son planning, l'autre veut savoir comment commencer.
+    // N'en servir qu'une en perdrait l'autre.
+    expect(hrefs).toContain("/connexion?callbackUrl=/intervenant");
+    expect(hrefs).toContain("/rejoindre");
+  });
+
+  it("vise la connexion, jamais l'espace intervenant en direct", () => {
+    // `/intervenant` sait afficher son propre refus quand la session existe
+    // sans porter le droit ; y envoyer un visiteur non connecté depuis une
+    // page publique ferait un aller-retour de plus pour le même écran.
+    expect(hrefs.filter((href) => href.startsWith("/intervenant"))).toEqual([]);
+  });
+
+  it("n'annonce aucun accès que le dossier ne donne pas encore", () => {
+    // Se connecter ne donne l'espace qu'à un dossier activé. Annoncer un
+    // tableau de bord serait démenti à l'écran suivant.
+    expect(text.toLowerCase()).not.toContain("tableau de bord");
   });
 });

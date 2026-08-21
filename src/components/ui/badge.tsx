@@ -9,13 +9,13 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        /* Menthe claire : l'étiquette courante, celle qui ne crie pas. */
-        default: "bg-mint-100 text-mint-800 [a]:hover:bg-mint-200",
+        /* Sarcelle claire : l'étiquette courante, celle qui ne crie pas. */
+        default: "bg-teal-100 text-teal-800 [a]:hover:bg-teal-200",
         /* Encre pleine : la seule étiquette qui tranche sur une photo. */
         secondary: "bg-ink-900 text-white [a]:hover:bg-ink-800",
-        peach: "bg-peach-100 text-peach-800 [a]:hover:bg-peach-200",
+        peach: "bg-papaya-100 text-papaya-800 [a]:hover:bg-papaya-200",
         /* Citron : réservé aux moments de joie — notes, promos, récompenses. */
-        lemon: "bg-lemon-100 text-lemon-700 [a]:hover:bg-lemon-200",
+        lemon: "bg-pineapple-100 text-pineapple-700 [a]:hover:bg-pineapple-200",
         sky: "bg-sky-100 text-info-dark [a]:hover:bg-sky-200",
         success: "bg-success-bg text-success-dark",
         warning: "bg-warning-bg text-warning-dark",
@@ -24,7 +24,7 @@ const badgeVariants = cva(
         outline:
           "border-[1.5px] border-border bg-card text-ink-700 [a]:hover:bg-muted",
         ghost: "hover:bg-muted hover:text-muted-foreground",
-        link: "text-mint-700 underline-offset-4 hover:underline",
+        link: "text-teal-700 underline-offset-4 hover:underline",
       },
     },
     defaultVariants: {

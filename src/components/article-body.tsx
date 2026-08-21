@@ -39,7 +39,7 @@ function Block({ block }: { block: ArticleBlock }) {
 
     case "list":
       return (
-        <ul className="max-w-prose list-disc space-y-2 pl-5 text-muted-foreground marker:text-mint-500">
+        <ul className="max-w-prose list-disc space-y-2 pl-5 text-muted-foreground marker:text-teal-500">
           {block.items.map((item) => (
             <li key={item} className="text-pretty">
               {item}
@@ -101,7 +101,7 @@ function Block({ block }: { block: ArticleBlock }) {
 
     case "note":
       return (
-        <aside className="max-w-prose rounded-lg border border-mint-200 bg-mint-50 p-5">
+        <aside className="max-w-prose rounded-lg border border-teal-200 bg-teal-50 p-5">
           <p className="font-extrabold">{block.title}</p>
           <p className="mt-2 text-pretty text-muted-foreground">{block.text}</p>
         </aside>

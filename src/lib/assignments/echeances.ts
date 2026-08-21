@@ -7,6 +7,12 @@ import {
 } from "@/lib/assignments/diffusion";
 import { classerCandidats } from "@/lib/assignments/reattribution";
 import { forOrganization, prisma } from "@/lib/db";
+import {
+  annoncerLArretDeLaRecherche,
+  annoncerLElargissement,
+  annoncerLesAlternatives,
+  rappelerLaVeille,
+} from "@/lib/notifications/evenements";
 import { purger } from "@/lib/securite/limitation";
 
 /**
@@ -47,6 +53,8 @@ export interface RapportEcheances {
   contrePropositionsPerimees: number;
   /** Compteurs de limitation de débit purgés. */
   compteursPurges: number;
+  /** Rappels de la veille envoyés au client et à l'intervenant. */
+  rappelsEnvoyes: number;
   /** Demandes dont le traitement a échoué, à reprendre au tour suivant. */
   echecs: number;
 }
@@ -61,6 +69,7 @@ export async function traiterLesEcheances(
     propositionsPerimees: 0,
     contrePropositionsPerimees: 0,
     compteursPurges: 0,
+    rappelsEnvoyes: 0,
     echecs: 0,
   };
 
@@ -97,18 +106,42 @@ export async function traiterLesEcheances(
       const etape = prochaineEtape(await etatDe(demande), maintenant);
 
       switch (etape.type) {
-        case "diffuser":
-          await elargirAuSecteur(demande, maintenant);
+        case "diffuser": {
+          const nouveaux = await elargirAuSecteur(demande, maintenant);
           rapport.lotsElargis += 1;
+          await annoncerLElargissement(
+            forOrganization(demande.organizationId),
+            demande.id,
+            nouveaux,
+          );
           break;
-        case "soumettre-alternatives":
+        }
+        case "soumettre-alternatives": {
+          const db = forOrganization(demande.organizationId);
           await rendreLaMainAuClient(demande);
           rapport.alternativesSoumises += 1;
+          await annoncerLesAlternatives(
+            db,
+            demande.id,
+            await db.slotProposal.count({
+              where: { bookingId: demande.id, status: "PENDING" },
+            }),
+          );
           break;
-        case "cesser-la-recherche":
+        }
+        case "cesser-la-recherche": {
+          const db = forOrganization(demande.organizationId);
           await cesserDeChercher(demande);
           rapport.recherchesAbandonnees += 1;
+          await annoncerLArretDeLaRecherche(
+            db,
+            demande.id,
+            await db.slotProposal.count({
+              where: { bookingId: demande.id, status: "PENDING" },
+            }),
+          );
           break;
+        }
         case "attendre":
           // L'échéance a été repoussée entre la lecture et le traitement.
           break;
@@ -122,6 +155,7 @@ export async function traiterLesEcheances(
     }
   }
 
+  rapport.rappelsEnvoyes = await rappelerLesInterventionsDeDemain(maintenant);
   rapport.compteursPurges = await purger(maintenant);
   return rapport;
 }
@@ -161,7 +195,7 @@ async function etatDe(demande: Demande): Promise<EtatDiffusion> {
 async function elargirAuSecteur(
   demande: Demande,
   maintenant: Date,
-): Promise<void> {
+): Promise<string[]> {
   const db = forOrganization(demande.organizationId);
 
   const dejaSollicites = await db.assignment.findMany({
@@ -235,6 +269,8 @@ async function elargirAuSecteur(
       },
     });
   });
+
+  return candidats.map((candidat) => candidat.cleanerProfileId);
 }
 
 /**
@@ -325,4 +361,54 @@ async function perimerLesContrePropositions(maintenant: Date): Promise<number> {
     data: { status: "EXPIRED", respondedAt: maintenant },
   });
   return count;
+}
+
+/**
+ * Rappelle les interventions qui commencent dans les vingt-quatre heures.
+ *
+ * **Le marqueur est un évènement de statut, pas une colonne.** L'ordonnanceur
+ * passe toutes les heures : sans trace, le même rappel partirait vingt-quatre
+ * fois. `BookingStatusEvent` sert déjà de journal à la réservation, et y écrire
+ * « rappel envoyé » évite une colonne dont personne n'aurait besoin ailleurs.
+ *
+ * La fenêtre est ouverte à gauche : une intervention déjà commencée n'a plus
+ * besoin d'être rappelée.
+ */
+const RAPPEL_MARQUEUR = "Rappel de la veille envoyé";
+
+async function rappelerLesInterventionsDeDemain(
+  maintenant: Date,
+): Promise<number> {
+  const dansVingtQuatreHeures = new Date(maintenant.getTime() + 24 * 3_600_000);
+
+  const interventions = await prisma.booking.findMany({
+    where: {
+      status: "CONFIRMED",
+      scheduledStart: { gt: maintenant, lte: dansVingtQuatreHeures },
+      statusEvents: { none: { reason: RAPPEL_MARQUEUR } },
+    },
+    select: { id: true, organizationId: true },
+    take: 200,
+  });
+
+  let envoyes = 0;
+  for (const intervention of interventions) {
+    try {
+      const db = forOrganization(intervention.organizationId);
+      await rappelerLaVeille(db, intervention.id);
+      await db.bookingStatusEvent.create({
+        data: {
+          organizationId: intervention.organizationId,
+          bookingId: intervention.id,
+          toStatus: "CONFIRMED",
+          reason: RAPPEL_MARQUEUR,
+        },
+      });
+      envoyes += 1;
+    } catch (error) {
+      console.error(`Rappel non envoyé pour ${intervention.id}`, error);
+    }
+  }
+
+  return envoyes;
 }

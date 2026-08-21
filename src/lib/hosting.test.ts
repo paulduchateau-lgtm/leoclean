@@ -5,6 +5,8 @@ import {
   hostOf,
   isAppPath,
   isIndexableHost,
+  isNeutralPath,
+  isProPath,
 } from "@/lib/hosting";
 
 /**
@@ -172,5 +174,83 @@ describe("hôtes indexables", () => {
     const dev = { environnement: "dev" as const, site: null, app: null };
     expect(isIndexableHost(dev, "dev.leoclean.fr")).toBe(false);
     expect(isIndexableHost(dev, "localhost:3000")).toBe(false);
+  });
+});
+
+describe("face professionnelle", () => {
+  const TROIS = {
+    site: "leoclean.fr",
+    app: "app.leoclean.fr",
+    pro: "pro.leoclean.fr",
+  };
+
+  it.each([
+    "/travailler-avec-nous",
+    "/rejoindre",
+    "/rejoindre/dossier",
+    "/intervenant",
+    "/intervenant/revenus",
+  ])("range « %s » du côté professionnel", (path) => {
+    expect(isProPath(path)).toBe(true);
+    expect(canonicalHost(TROIS, "leoclean.fr", path)).toBe("pro.leoclean.fr");
+  });
+
+  it("ramène sur la vitrine ce qui n'est pas de son ressort", () => {
+    // Le défaut le plus coûteux d'une table de routage est la boucle : on
+    // vérifie donc les deux sens, comme pour l'application.
+    expect(canonicalHost(TROIS, "pro.leoclean.fr", "/tarifs")).toBe(
+      "leoclean.fr",
+    );
+    expect(canonicalHost(TROIS, "pro.leoclean.fr", "/reserver")).toBe(
+      "app.leoclean.fr",
+    );
+    expect(
+      canonicalHost(TROIS, "pro.leoclean.fr", "/travailler-avec-nous"),
+    ).toBeNull();
+  });
+
+  it("ne redirige jamais la connexion, d'où qu'elle vienne", () => {
+    // C'est ce qui donne à chaque face sa propre session. Rediriger
+    // `/connexion` vers un hôte unique y déposerait le cookie, et l'autre face
+    // ne le recevrait jamais — le cookie étant lié à l'hôte.
+    for (const hote of ["leoclean.fr", "app.leoclean.fr", "pro.leoclean.fr"]) {
+      expect(canonicalHost(TROIS, hote, "/connexion")).toBeNull();
+      expect(
+        canonicalHost(TROIS, hote, "/api/auth/callback/resend"),
+      ).toBeNull();
+    }
+    expect(isNeutralPath("/connexion")).toBe(true);
+    expect(isNeutralPath("/api/auth/callback/google")).toBe(true);
+  });
+
+  it("ne bouge rien tant que le sous-domaine n'est pas déclaré", () => {
+    // Le repli est la partie qui compte : router vers un hôte qui n'existe
+    // pas encore produirait un 308 vers un domaine introuvable — la panne déjà
+    // vécue en production sur `NEXT_PUBLIC_APP_URL`. Sans `pro`, chaque chemin
+    // retourne exactement là où il vivait la veille.
+    const DEUX = { site: "leoclean.fr", app: "app.leoclean.fr", pro: null };
+
+    expect(
+      canonicalHost(DEUX, "leoclean.fr", "/travailler-avec-nous"),
+    ).toBeNull();
+    expect(canonicalHost(DEUX, "leoclean.fr", "/rejoindre")).toBeNull();
+    expect(canonicalHost(DEUX, "leoclean.fr", "/intervenant")).toBe(
+      "app.leoclean.fr",
+    );
+  });
+
+  it("laisse la face professionnelle s'indexer", () => {
+    expect(
+      isIndexableHost(
+        { environnement: "production", ...TROIS },
+        "pro.leoclean.fr",
+      ),
+    ).toBe(true);
+  });
+
+  it("garde l'espace intervenant hors de la coque client", () => {
+    // Il change d'hôte, pas de nature : c'est un espace connecté, où un seul
+    // modèle de navigation doit régner.
+    expect(isAppPath("/intervenant/revenus")).toBe(true);
   });
 });

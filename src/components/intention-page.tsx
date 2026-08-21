@@ -120,7 +120,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
 
           {/* La part propre à la commune, mise en évidence : c'est ce que
               cette page dit et qu'aucune autre ne dit. */}
-          <div className="mt-6 max-w-prose space-y-4 rounded-lg border border-mint-200 bg-mint-50 p-5 text-pretty">
+          <div className="mt-6 max-w-prose space-y-4 rounded-lg border border-teal-200 bg-teal-50 p-5 text-pretty">
             {local.paragraphs.map((paragraph) => (
               <p key={paragraph.slice(0, 40)}>{paragraph}</p>
             ))}
@@ -193,7 +193,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
           </div>
         </section>
 
-        <section className="border-t border-border bg-mint-50">
+        <section className="border-t border-border bg-teal-50">
           <div className="mx-auto w-full max-w-4xl px-6 py-12 text-center">
             <h2 className="text-2xl font-black tracking-tight">
               Un ménage à {commune.name} ?
@@ -212,7 +212,7 @@ export function IntentionPageView({ page }: { page: PublishedIntentionPage }) {
                  deux appels à l'action concurrents demanderaient de choisir
                  lequel compte. */
               data-booking-cta
-              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+              className="mt-6 inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
             >
               Voir les créneaux à {commune.name}
             </Link>

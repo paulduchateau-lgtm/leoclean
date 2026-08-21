@@ -85,7 +85,7 @@ export function PropositionCreneau({
   }
 
   return (
-    <div className="mt-4 rounded-xl border-2 border-peach-300 bg-peach-50 p-4">
+    <div className="mt-4 rounded-xl border-2 border-papaya-300 bg-papaya-50 p-4">
       <p className="flex items-center gap-2 text-xs tracking-overline uppercase">
         <CalendarClockIcon className="size-4" aria-hidden />
         Autre créneau proposé

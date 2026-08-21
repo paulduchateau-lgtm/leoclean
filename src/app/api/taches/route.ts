@@ -1,5 +1,12 @@
+import { genererLesRecurrences } from "@/lib/abonnement/generateur";
+import { traiterLesImpayes } from "@/lib/paiement/impayes";
+import { traiterLesPaiements } from "@/lib/paiement/travaux";
+import { purgerSelonLaRetention } from "@/lib/rgpd/retention";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
+import { forOrganization } from "@/lib/db";
 import { serverEnv } from "@/lib/env";
+import { emettreLesFacturesDues } from "@/lib/facturation/emission";
+import { marketplaceOrganizationId } from "@/lib/organizations";
 
 /**
  * Point d'entrée de l'ordonnanceur.
@@ -38,9 +45,92 @@ export async function GET(request: Request): Promise<Response> {
 
   const rapport = await traiterLesEcheances();
 
+  /*
+   * La génération des récurrences vient après les échéances, et séparément :
+   * une erreur dans l'une ne doit pas empêcher l'autre. Elle est idempotente,
+   * donc la repasser toutes les heures ne produit rien de plus.
+   */
+  let recurrences;
+  try {
+    recurrences = await genererLesRecurrences();
+  } catch (erreur) {
+    console.error("Génération des récurrences interrompue", erreur);
+    recurrences = { erreur: true };
+  }
+
   // Le compte rendu part dans les journaux de l'hébergeur : c'est la seule
   // trace de ce qui s'est passé pendant que personne ne regardait.
-  console.info("Ordonnanceur", rapport);
+  /*
+   * Les paiements viennent en dernier et séparément : un échec de Stripe ne
+   * doit ni empêcher la diffusion des missions ni la génération des
+   * récurrences, qui sont ce qui fait tourner le service.
+   */
+  let paiements;
+  try {
+    paiements = await traiterLesPaiements();
+  } catch (erreur) {
+    console.error("Traitement des paiements interrompu", erreur);
+    paiements = { erreur: true };
+  }
 
-  return Response.json(rapport);
+  /*
+   * Les impayés suivent les paiements et précèdent la facturation : une
+   * relance non partie coûte de l'argent, une facture émise une heure plus
+   * tard ne coûte rien.
+   */
+  let impayes;
+  try {
+    impayes = await traiterLesImpayes();
+  } catch (erreur) {
+    console.error("Traitement des impayés interrompu", erreur);
+    impayes = { erreur: true };
+  }
+
+  /*
+   * La facturation suit les paiements et précède la purge. Elle est idempotente
+   * — un index unique sur `(bookingId, type)` — donc la repasser toutes les
+   * heures n'émet rien de plus. Chaque prestation est traitée séparément : un
+   * SIRET manquant chez l'un ne doit pas empêcher de facturer les autres, un
+   * blocage silencieux se découvrant à la clôture comptable.
+   */
+  let factures;
+  try {
+    factures = await emettreLesFacturesDues(
+      forOrganization(await marketplaceOrganizationId()),
+    );
+  } catch (erreur) {
+    console.error("Émission des factures interrompue", erreur);
+    factures = { erreur: true };
+  }
+
+  /*
+   * La purge de rétention vient en dernier : elle n'a aucune urgence, et une
+   * erreur ne doit rien empêcher. Personne ne se plaint qu'on garde ses données
+   * trop longtemps — c'est précisément pour cela qu'il faut une horloge.
+   */
+  let retention;
+  try {
+    retention = await purgerSelonLaRetention();
+  } catch (erreur) {
+    console.error("Purge de rétention interrompue", erreur);
+    retention = { erreur: true };
+  }
+
+  console.info("Ordonnanceur", {
+    ...rapport,
+    recurrences,
+    paiements,
+    impayes,
+    factures,
+    retention,
+  });
+
+  return Response.json({
+    ...rapport,
+    recurrences,
+    paiements,
+    impayes,
+    factures,
+    retention,
+  });
 }

@@ -20,8 +20,20 @@ import {
  * NAP inexacte est pénalisante.
  */
 
+import { isProPath } from "@/lib/hosting";
+
 const url =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://leoclean.fr";
+
+/**
+ * Origine de la face professionnelle, ou celle de la vitrine à défaut.
+ *
+ * Tant que `pro.leoclean.fr` n'existe pas, les pages de la face pro sont
+ * servies par la vitrine : leur canonical doit alors désigner la vitrine, sans
+ * quoi elles déclareraient une adresse qui ne répond pas — et se
+ * désindexeraient elles-mêmes le jour même où on vient de les ouvrir.
+ */
+const proUrl = process.env.NEXT_PUBLIC_PRO_URL?.replace(/\/$/, "") ?? url;
 
 export const SITE = {
   name: "Léo Clean",
@@ -165,7 +177,24 @@ export function whatsappLink(communeName?: string): string {
   return `${SITE.whatsappUrl}?text=${encodeURIComponent(message)}`;
 }
 
+/** Origine servant la face professionnelle. Voir `proUrl`. */
+export const PRO_ORIGIN = proUrl;
+
 /** URL absolue à partir d'un chemin, pour les canonicals et le JSON-LD. */
 export function absoluteUrl(path: string): string {
   return `${SITE.url}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+/**
+ * URL absolue sur l'origine qui sert réellement ce chemin.
+ *
+ * `absoluteUrl` suppose la vitrine, ce qui était vrai tant qu'un seul domaine
+ * portait du contenu indexable. Depuis que la face pro a le sien, un canonical
+ * construit sur la vitrine pour une page servie par `pro.` désignerait une
+ * autre page que celle qu'on lit : c'est la façon la plus directe de se
+ * désindexer soi-même.
+ */
+export function canonicalUrl(path: string): string {
+  const chemin = path.startsWith("/") ? path : `/${path}`;
+  return `${isProPath(chemin) ? PRO_ORIGIN : SITE.url}${chemin}`;
 }

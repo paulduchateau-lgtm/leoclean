@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Variante « tropical rose » — la même palette, rose et sarcelle inversés.
+
+   Elle hérite de tout le thème tropical (theme-tropical.css s'applique aussi
+   à `tropical2`), et n'échange que les deux échelles : la papaye prend la
+   marque et la profondeur — bandes sombres en framboise, liens, logotype,
+   états sélectionnés — la sarcelle passe en surfaces douces — héros, panneau
+   de sortie. Mangue et ananas ne bougent pas.
+
+   Chargée en dernier : à spécificité égale, ces règles gagnent.
+   ========================================================================== */
+
+html[data-theme="tropical2"] {
+  /* --- Rose (prend les slots leaf : marque, liens, sélections, bandes) --- */
+  --leaf-50: #fff5f7;
+  --leaf-100: #ffe3e8;
+  --leaf-200: #ffd1d9;
+  --leaf-300: #ffc0cb;
+  --leaf-400: #fb90a3;
+  --leaf-500: #ef4d6f;
+  --leaf-600: #d42a52;
+  --leaf-700: #b01c41;
+  --leaf-800: #8c1434;
+  --leaf-900: #64102c;
+
+  /* --- Sarcelle (prend les slots clay : surfaces douces) --- */
+  --clay-50: #e6f7f7;
+  --clay-100: #c3eded;
+  --clay-200: #8fdede;
+  --clay-300: #55c7c7;
+  --clay-400: #25adad;
+  --clay-500: #069494;
+  --clay-600: #057c7c;
+  --clay-700: #056363;
+
+  /* Un succès ne devient pas rose : « nous intervenons chez vous » lu dans
+     une teinte rouge se comprend comme un refus. Il reste sarcelle. */
+  --status-success-fg: #057c7c;
+  --status-success-bg: #e6f7f7;
+
+  /* Le focus suit la nouvelle couleur de marque. */
+  --focus-ring: 0 0 0 4px rgba(239, 77, 111, 0.35);
+}

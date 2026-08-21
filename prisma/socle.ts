@@ -172,6 +172,22 @@ export const MARKETPLACE = {
    * pour l'intervenant, soit 11 € de coordination.
    */
   commissionRateBp: 3800,
+
+  /**
+   * Régime de TVA de l'exploitant.
+   *
+   * PAPER PLANE est **assujettie au taux normal** (confirmé par le porteur du
+   * projet le 20 août 2026). Ce n'est pas le régime de l'intervenant, qui reste
+   * en franchise en base sous le seuil : c'est bien deux régimes distincts sur
+   * la même prestation, puisque ce sont deux entités qui facturent.
+   *
+   * Conséquence sur les montants : la part de coordination est du **TTC**, la
+   * TVA s'en extrait. Le client est annoncé un prix tout compris, et les deux
+   * factures se partagent ce prix-là — l'ajouter par-dessus ferait somme des
+   * factures supérieure à ce qu'il a réglé.
+   */
+  vatRegime: "ASSUJETTI",
+  vatRateBp: 2000,
 } as const;
 
 export interface SocleResult {
@@ -200,6 +216,8 @@ export async function ensureSocle(prisma: PrismaClient): Promise<SocleResult> {
       tagline: MARKETPLACE.tagline,
       description: MARKETPLACE.description,
       commissionRateBp: MARKETPLACE.commissionRateBp,
+      vatRegime: MARKETPLACE.vatRegime,
+      vatRateBp: MARKETPLACE.vatRateBp,
       isPubliclyBookable: true,
     },
     // On ne réécrit pas une organisation existante : ses valeurs peuvent avoir

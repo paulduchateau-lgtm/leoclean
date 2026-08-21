@@ -144,6 +144,12 @@ export async function readClientBookings(
         end: booking.scheduledEnd,
         location: addressLabel,
         cleanerFirstName: cleaner?.firstName ?? null,
+        /*
+         * `CONFIRMED` a un sens précis ici : quelqu'un a accepté. Les statuts
+         * qui suivent en héritent, ceux qui le précèdent sont une recherche en
+         * cours — et un agenda ne doit pas les présenter pareil.
+         */
+        confirmed: !["PENDING_ASSIGNMENT", "ASSIGNED"].includes(booking.status),
         stampedAt: now,
       }),
     };

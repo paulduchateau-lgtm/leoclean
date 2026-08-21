@@ -99,14 +99,14 @@ export function AppTabBar() {
                   href={tab.href}
                   aria-current={active ? "page" : undefined}
                   className={`flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-bold transition-colors ${
-                    active ? "text-mint-800" : "text-ink-600"
+                    active ? "text-teal-800" : "text-ink-600"
                   }`}
                 >
-                  {/* La pastille menthe est la même que celle des liens de
+                  {/* La pastille sarcelle est la même que celle des liens de
                       l'en-tête : un seul vocabulaire d'état actif. */}
                   <span
                     className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                      active ? "bg-mint-50" : ""
+                      active ? "bg-teal-50" : ""
                     }`}
                   >
                     <Icon className="size-5" aria-hidden />

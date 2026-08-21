@@ -8,6 +8,7 @@ import {
   proposalRefusalMessage,
   proposedEndFor,
   respondByFor,
+  visibleAPartirDe,
 } from "@/lib/booking/slot-proposal";
 
 const NOW = new Date("2026-09-01T08:00:00Z");
@@ -18,7 +19,8 @@ const PROPOSED = new Date("2026-09-06T14:30:00Z");
 describe("proposer un autre créneau", () => {
   it("accepte une proposition régulière sur une réservation orpheline", () => {
     const check = canProposeSlot({
-      bookingStatus: "PENDING_ASSIGNMENT",
+      situation: "RESERVATION_ORPHELINE",
+      memeJourCivil: false,
       currentStart: CURRENT_START,
       proposedStart: PROPOSED,
       now: NOW,
@@ -28,32 +30,27 @@ describe("proposer un autre créneau", () => {
     expect(check.refusal).toBeNull();
   });
 
-  it("ne s'ouvre que sur une réservation que personne n'a prise", () => {
-    // Hors de ce cas, ce n'est plus une contre-proposition mais une
-    // replanification, qui se négocie et se traite au téléphone.
-    for (const status of [
-      "CONFIRMED",
-      "ASSIGNED",
-      "IN_PROGRESS",
-      "COMPLETED",
-      "CANCELLED_BY_CLIENT",
-    ] as const) {
-      const check = canProposeSlot({
-        bookingStatus: status,
-        currentStart: CURRENT_START,
-        proposedStart: PROPOSED,
-        now: NOW,
-      });
-      expect(check.allowed).toBe(false);
-      expect(check.refusal).toBe("RESERVATION_NON_ORPHELINE");
-    }
+  it("ne s'ouvre à personne d'autre qu'au proposant légitime", () => {
+    // Sans offre vivante ni réservation orpheline, ce n'est plus une
+    // contre-proposition mais une replanification, qui se traite au téléphone.
+    const check = canProposeSlot({
+      situation: "AUCUNE",
+      memeJourCivil: true,
+      currentStart: CURRENT_START,
+      proposedStart: PROPOSED,
+      now: NOW,
+    });
+    expect(check.allowed).toBe(false);
+    expect(check.refusal).toBe("RESERVATION_NON_ORPHELINE");
+    expect(check.voie).toBeNull();
   });
 
   it("refuse un créneau hors de la grille de trente minutes", () => {
     // Le planning entier travaille à ce pas : un créneau à 14 h 07 ne serait
     // proposable à personne d'autre ensuite.
     const check = canProposeSlot({
-      bookingStatus: "PENDING_ASSIGNMENT",
+      situation: "RESERVATION_ORPHELINE",
+      memeJourCivil: false,
       currentStart: CURRENT_START,
       proposedStart: new Date("2026-09-06T14:07:00Z"),
       now: NOW,
@@ -65,7 +62,8 @@ describe("proposer un autre créneau", () => {
 
   it("refuse de reproposer le créneau déjà refusé", () => {
     const check = canProposeSlot({
-      bookingStatus: "PENDING_ASSIGNMENT",
+      situation: "RESERVATION_ORPHELINE",
+      memeJourCivil: false,
       currentStart: CURRENT_START,
       proposedStart: CURRENT_START,
       now: NOW,
@@ -83,7 +81,8 @@ describe("proposer un autre créneau", () => {
     trop_proche.setUTCMinutes(0, 0, 0);
 
     const check = canProposeSlot({
-      bookingStatus: "PENDING_ASSIGNMENT",
+      situation: "RESERVATION_ORPHELINE",
+      memeJourCivil: false,
       currentStart: CURRENT_START,
       proposedStart: trop_proche,
       now: NOW,
@@ -193,5 +192,147 @@ describe("répondre à une proposition", () => {
       expect(message.length).toBeGreaterThan(20);
       expect(message).not.toContain("_");
     }
+  });
+});
+
+describe("pré-acceptation", () => {
+  /** Même jour, une demi-heure plus tard : le cas que le lot doit rattraper. */
+  const DEMANDE = new Date("2026-09-05T09:00:00Z");
+  const DECALE_30MIN = new Date("2026-09-05T09:30:00Z");
+  const DECALE_2H = new Date("2026-09-05T11:00:00Z");
+
+  it("part au client tout de suite sous une heure d'écart", () => {
+    const check = canProposeSlot({
+      situation: "PROPOSITION_VIVANTE",
+      memeJourCivil: true,
+      currentStart: DEMANDE,
+      proposedStart: DECALE_30MIN,
+      now: NOW,
+    });
+
+    expect(check.allowed).toBe(true);
+    expect(check.voie).toBe("PRE_ACCEPTATION");
+  });
+
+  it("accepte exactement une heure d'écart", () => {
+    const check = canProposeSlot({
+      situation: "PROPOSITION_VIVANTE",
+      memeJourCivil: true,
+      currentStart: DEMANDE,
+      proposedStart: new Date("2026-09-05T10:00:00Z"),
+      now: NOW,
+    });
+    expect(check.voie).toBe("PRE_ACCEPTATION");
+  });
+
+  it("vaut aussi vers l'avant : décaler plus tôt est un écart comme un autre", () => {
+    const check = canProposeSlot({
+      situation: "PROPOSITION_VIVANTE",
+      memeJourCivil: true,
+      currentStart: DEMANDE,
+      proposedStart: new Date("2026-09-05T08:30:00Z"),
+      now: NOW,
+    });
+    expect(check.voie).toBe("PRE_ACCEPTATION");
+  });
+
+  /*
+   * Au-delà d'une heure, ce n'est plus « je décale un peu », c'est un autre
+   * rendez-vous : le client mérite qu'on cherche d'abord son heure à lui.
+   */
+  it("repasse en voie lente au-delà d'une heure", () => {
+    const check = canProposeSlot({
+      situation: "PROPOSITION_VIVANTE",
+      memeJourCivil: true,
+      currentStart: DEMANDE,
+      proposedStart: DECALE_2H,
+      now: NOW,
+    });
+
+    expect(check.allowed).toBe(true);
+    expect(check.voie).toBe("CONTRE_PROPOSITION");
+  });
+
+  /*
+   * Le prix dépend du jour — samedi, dimanche, férié. Une pré-acceptation qui
+   * changerait de jour changerait le prix annoncé, et un prix qui bouge après
+   * la réservation n'est plus une proposition.
+   */
+  it("refuse de changer de jour", () => {
+    const check = canProposeSlot({
+      situation: "PROPOSITION_VIVANTE",
+      memeJourCivil: false,
+      currentStart: new Date("2026-09-05T23:30:00Z"),
+      proposedStart: new Date("2026-09-06T00:00:00Z"),
+      now: NOW,
+    });
+
+    expect(check.allowed).toBe(false);
+    expect(check.refusal).toBe("JOUR_DIFFERENT");
+  });
+
+  /*
+   * Sur une réservation orpheline il n'y a plus de lot à attendre : la
+   * proposition part au client de toute façon, et l'appeler pré-acceptation
+   * ne dirait rien de plus.
+   */
+  it("n'existe pas sur une réservation orpheline", () => {
+    const check = canProposeSlot({
+      situation: "RESERVATION_ORPHELINE",
+      memeJourCivil: true,
+      currentStart: DEMANDE,
+      proposedStart: DECALE_30MIN,
+      now: NOW,
+    });
+
+    expect(check.allowed).toBe(true);
+    expect(check.voie).toBe("CONTRE_PROPOSITION");
+  });
+
+  it("reste soumise au délai minimal comme les autres", () => {
+    const check = canProposeSlot({
+      situation: "PROPOSITION_VIVANTE",
+      memeJourCivil: true,
+      currentStart: new Date("2026-09-01T10:00:00Z"),
+      proposedStart: new Date("2026-09-01T10:30:00Z"),
+      now: NOW,
+    });
+
+    expect(check.allowed).toBe(false);
+    expect(check.refusal).toBe("CRENEAU_TROP_PROCHE");
+  });
+});
+
+describe("visibleAPartirDe", () => {
+  const MAINTENANT = new Date("2026-09-01T08:00:00Z");
+  const ECHEANCE = new Date("2026-09-02T08:00:00Z");
+
+  it("montre une pré-acceptation immédiatement", () => {
+    expect(visibleAPartirDe("PRE_ACCEPTATION", MAINTENANT, ECHEANCE)).toEqual(
+      MAINTENANT,
+    );
+  });
+
+  it("fait attendre une contre-proposition jusqu'à l'échéance du lot", () => {
+    expect(
+      visibleAPartirDe("CONTRE_PROPOSITION", MAINTENANT, ECHEANCE),
+    ).toEqual(ECHEANCE);
+  });
+
+  /*
+   * Sans lot en cours — réservation orpheline — il n'y a rien à attendre : la
+   * proposition est visible tout de suite.
+   */
+  it("montre tout de suite quand aucun lot ne court", () => {
+    expect(visibleAPartirDe("CONTRE_PROPOSITION", MAINTENANT, null)).toEqual(
+      MAINTENANT,
+    );
+  });
+
+  it("ne fait pas attendre une échéance déjà passée", () => {
+    const passee = new Date("2026-08-30T08:00:00Z");
+    expect(visibleAPartirDe("CONTRE_PROPOSITION", MAINTENANT, passee)).toEqual(
+      MAINTENANT,
+    );
   });
 });

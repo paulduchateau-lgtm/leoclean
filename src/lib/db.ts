@@ -89,6 +89,13 @@ export const GLOBAL_MODELS: Readonly<Record<string, string>> = {
     "Journal d'idempotence des webhooks : l'organisation n'est connue qu'après analyse du contenu.",
   RateLimit:
     "Compteur de limitation de débit : il protège des formulaires publics, qui sont par définition antérieurs à toute organisation.",
+  Waitlist:
+    "Demande venue d'une commune non desservie : elle précède toute organisation, puisqu'aucune ne couvre ce lieu.",
+  ProApplication:
+    "Candidature d'intervenant : elle précède l'appartenance, et c'est justement ce qu'elle sert à obtenir.",
+  ProApplicationEvent: "Journal d'une candidature, qui n'a pas d'organisation.",
+  ProApplicationDocument:
+    "Pièce d'une candidature : elle est déposée avant qu'un profil existe.",
 };
 
 /** Opérations dont l'argument `where` doit être restreint à l'organisation. */

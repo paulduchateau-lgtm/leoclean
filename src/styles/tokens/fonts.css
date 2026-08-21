@@ -1,10 +1,15 @@
-@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;600&display=swap");
 :root {
-  /* Famille de travail : interface, titres, boutons, tableaux, chiffres. */
+  /* Famille de travail : interface, paragraphes, boutons, formulaires. */
   --font-sans:
     "Figtree", "Figtree Fallback", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Arial, sans-serif;
-  /* Famille d'accent : un mot par titre marketing, jamais un paragraphe. */
-  --font-display: "Fraunces", "Georgia", serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  /*
+   * Famille de titrage : Alan Sans porte les titres et les grands chiffres.
+   * Elle n'est pas servie par Google Fonts ici : le produit la charge en
+   * local par `next/font/local` (layout.tsx), depuis le woff2 variable.
+   */
+  --font-display: "Alan Sans", "Figtree", system-ui, sans-serif;
+  /* Chiffres posés : prix, codes postaux, horaires. */
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }

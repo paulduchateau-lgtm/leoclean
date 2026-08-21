@@ -52,9 +52,28 @@ function ratio(a: string, b: string): number {
 const TEXTE = [
   { nom: "encre sur blanc", avant: "ink-900", arriere: "ink-0" },
   { nom: "texte secondaire sur blanc", avant: "ink-600", arriere: "ink-0" },
-  { nom: "encre sur menthe pleine", avant: "ink-900", arriere: "mint-400" },
-  { nom: "menthe 700 sur blanc", avant: "mint-700", arriere: "ink-0" },
-  { nom: "menthe 800 sur menthe 50", avant: "mint-800", arriere: "mint-50" },
+  // L'action : mangue pleine, texte encre — le bouton du tropical punch.
+  { nom: "encre sur mangue pleine", avant: "ink-900", arriere: "mango-400" },
+  // La sélection : sarcelle pleine, texte encre — cases cochées, créneaux.
+  { nom: "encre sur sarcelle pleine", avant: "ink-900", arriere: "teal-400" },
+  // La marque en texte : liens et `text-brand`.
+  { nom: "sarcelle 600 sur blanc", avant: "teal-600", arriere: "ink-0" },
+  { nom: "sarcelle 700 sur blanc", avant: "teal-700", arriere: "ink-0" },
+  {
+    nom: "sarcelle 800 sur sarcelle 50",
+    avant: "teal-800",
+    arriere: "teal-50",
+  },
+  // La bande sombre du déroulé et son texte secondaire.
+  { nom: "blanc sur sarcelle 900", avant: "ink-0", arriere: "teal-900" },
+  {
+    nom: "sarcelle 200 sur sarcelle 900",
+    avant: "teal-200",
+    arriere: "teal-900",
+  },
+  // Les surfaces douces qui portent du texte courant.
+  { nom: "encre sur papaye 200", avant: "ink-900", arriere: "papaya-200" },
+  { nom: "encre sur ananas 300", avant: "ink-900", arriere: "pineapple-300" },
   { nom: "encre sur crème", avant: "ink-900", arriere: "cream-50" },
   { nom: "encre sur ink-50", avant: "ink-900", arriere: "ink-50" },
   { nom: "texte secondaire sur ink-50", avant: "ink-600", arriere: "ink-50" },
@@ -68,11 +87,19 @@ describe("contraste des couples employés", () => {
     },
   );
 
-  it("la menthe pleine ne porte jamais de blanc", () => {
-    // Règle du système, ici rendue vérifiable : à 400 la menthe est trop
-    // claire pour tenir le contraste avec du blanc.
-    expect(ratio(token("mint-400"), token("ink-0"))).toBeLessThan(4.5);
-    expect(ratio(token("ink-900"), token("mint-400"))).toBeGreaterThanOrEqual(
+  it("la mangue pleine ne porte jamais de blanc", () => {
+    // Règle du système, ici rendue vérifiable : à 400 la mangue est trop
+    // claire pour tenir le contraste avec du blanc — même règle que la
+    // menthe qu'elle remplace.
+    expect(ratio(token("mango-400"), token("ink-0"))).toBeLessThan(4.5);
+    expect(ratio(token("ink-900"), token("mango-400"))).toBeGreaterThanOrEqual(
+      4.5,
+    );
+  });
+
+  it("la sarcelle pleine ne porte jamais de blanc", () => {
+    expect(ratio(token("teal-400"), token("ink-0"))).toBeLessThan(4.5);
+    expect(ratio(token("ink-900"), token("teal-400"))).toBeGreaterThanOrEqual(
       4.5,
     );
   });

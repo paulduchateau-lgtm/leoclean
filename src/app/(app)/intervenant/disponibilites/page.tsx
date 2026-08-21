@@ -3,10 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SemaineForm } from "@/app/(app)/intervenant/disponibilites/semaine-form";
-import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { EspaceFerme } from "@/components/espace-ferme";
+import { espaceIntervenant } from "@/lib/auth/espaces";
 import type { Jour, Plage } from "@/lib/availability/semaine";
-import { marketplaceOrganizationId } from "@/lib/organizations";
-import { SITE } from "@/lib/site";
 
 /**
  * Les heures déclarées d'un intervenant.
@@ -25,36 +24,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function DisponibilitesPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect("/connexion?callbackUrl=/intervenant/disponibilites");
-  }
+  /*
+   * `espaceIntervenant` traduit l'absence d'appartenance en résultat
+   * plutôt qu'en exception : `requireOrganization` lève, et l'exception
+   * remontait jusqu'au rendu — une erreur 500 sur un état parfaitement
+   * ordinaire du produit.
+   */
+  const espace = await espaceIntervenant();
 
-  const organizationId = await marketplaceOrganizationId();
-  const { db } = await requireOrganization(
-    organizationId,
-    "availability:manage:own",
-  );
-
-  const profil = await db.cleanerProfile.findFirst({
-    where: { userId: user.id },
-    select: { id: true },
-  });
-
-  if (!profil) {
+  if (!espace.ouvert) {
+    if (espace.refus === "NON_CONNECTE") {
+      redirect("/connexion?callbackUrl=/intervenant/disponibilites");
+    }
     return (
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">
-          Mes disponibilités
-        </h1>
-        <p className="mt-4 rounded-xl border border-border bg-secondary/40 p-5 text-muted-foreground">
-          Votre compte n&apos;est pas encore rattaché à un profil
-          d&apos;intervenant. Appelez-nous au {SITE.phone} si vous pensez
-          qu&apos;il s&apos;agit d&apos;une erreur.
-        </p>
-      </main>
+      <EspaceFerme
+        refus={espace.refus}
+        retour={{ href: "/travailler-avec-nous", libelle: "Nous rejoindre" }}
+      />
     );
   }
+
+  const { db, profil } = espace;
 
   /*
    * Seules les règles en vigueur sont chargées : `validUntil: null`. Les

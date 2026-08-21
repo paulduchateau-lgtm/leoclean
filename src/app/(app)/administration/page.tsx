@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { Geste } from "@/app/(app)/administration/geste";
 import { chargerTableauDeBord } from "@/lib/administration/tableau-de-bord";
 import { asPlatformAdmin, getCurrentUser } from "@/lib/auth/session";
 import { formatEuros } from "@/lib/pricing";
@@ -93,8 +95,30 @@ export default async function AdministrationPage() {
       <h1 className="font-heading text-3xl font-semibold tracking-tight">
         Ce qui attend
       </h1>
+      <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        <Link
+          href="/administration/radar"
+          className="font-semibold text-primary hover:underline"
+        >
+          Ouvrir le Radar →
+        </Link>
+        <Link
+          href="/administration/candidatures"
+          className="text-primary hover:underline"
+        >
+          Candidatures →
+        </Link>
+        <Link
+          href="/administration/reclamations"
+          className="text-primary hover:underline"
+        >
+          Réclamations →
+        </Link>
+      </p>
       <p className="mt-3 max-w-prose text-muted-foreground">
-        Quatre situations que rien ne rattrape tout seul.
+        Quatre situations que rien ne rattrape tout seul. Les trois premières se
+        traitent ici : relancer rejoue le moteur d&apos;attribution, avec les
+        mêmes plannings et les mêmes trajets réels.
       </p>
 
       <Section
@@ -130,6 +154,12 @@ export default async function AdministrationPage() {
                     {reservation.clientEmail}
                   </a>
                 </p>
+                <Geste
+                  geste={{
+                    type: "recherche",
+                    bookingId: reservation.bookingId,
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -163,6 +193,12 @@ export default async function AdministrationPage() {
                     ? ` · réponse attendue le ${jour.format(proposition.repondreAvant)}`
                     : ""}
                 </p>
+                <Geste
+                  geste={{
+                    type: "proposition",
+                    assignmentId: proposition.assignmentId,
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -197,6 +233,7 @@ export default async function AdministrationPage() {
                     : ""}
                   reçue le {jour.format(demande.recueLe)}
                 </p>
+                <Geste geste={{ type: "rappel", leadId: demande.leadId }} />
               </li>
             ))}
           </ul>
@@ -224,6 +261,63 @@ export default async function AdministrationPage() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {intervenant.organisation} · inscrit le{" "}
                   {jour.format(intervenant.inscritLe)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      {/*
+        La cinquième liste, et la seule où l'inaction se paie des deux côtés :
+        le client ne voit venir personne, l'intervenant a une mission qu'il ne
+        peut pas honorer. Elle est donc marquée urgente, et ordonnée du plus
+        ancien au plus récent — traiter le plus récent laisse au fond de la pile
+        celui qui traîne depuis trois semaines, et c'est celui-là qu'on perd.
+      */}
+      <Section
+        titre={`Clients en recouvrement (${tableau.clientsEnRecouvrement.length})`}
+        vide="Aucun client en recouvrement."
+        urgence={tableau.clientsEnRecouvrement.length > 0}
+      >
+        <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+          Leurs interventions à venir sont gelées et les intervenants ont été
+          prévenus. Rien n&apos;est annulé : un appel suffit le plus souvent, la
+          cause la plus fréquente étant une carte expirée. Le gel se lève tout
+          seul dès qu&apos;un prélèvement passe.
+        </p>
+        {tableau.clientsEnRecouvrement.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Rien à recouvrer.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {tableau.clientsEnRecouvrement.map((client) => (
+              <li
+                key={client.clientProfileId}
+                className="rounded-xl border border-border bg-card p-4"
+              >
+                <p className="font-medium">{client.clientEmail}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {client.organisation} · depuis {client.jours} jour
+                  {client.jours > 1 ? "s" : ""} ({jour.format(client.depuis)}) ·{" "}
+                  {formatEuros(client.montantDuCents)} dus
+                </p>
+                <p className="mt-1 text-sm">
+                  {client.interventionsGelees === 0
+                    ? "Aucune intervention à venir."
+                    : `${client.interventionsGelees} intervention${client.interventionsGelees > 1 ? "s" : ""} gelée${client.interventionsGelees > 1 ? "s" : ""}`}
+                  {client.telephone !== null && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`tel:${client.telephone}`}
+                        className="text-brand underline"
+                      >
+                        {client.telephone}
+                      </a>
+                    </>
+                  )}
                 </p>
               </li>
             ))}

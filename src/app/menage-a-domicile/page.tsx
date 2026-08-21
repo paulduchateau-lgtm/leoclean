@@ -74,7 +74,7 @@ export default function CommunesHubPage() {
             <li key={commune.slug}>
               <Link
                 href={`/menage-a-domicile/${commune.slug}`}
-                className="block rounded-lg border border-border bg-card p-5 transition-colors hover:border-mint-400"
+                className="block rounded-lg border border-border bg-card p-5 transition-colors hover:border-teal-300"
               >
                 <span className="text-lg font-extrabold">
                   Ménage à {commune.name}

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { SITE, absoluteUrl } from "@/lib/site";
+import { SITE, canonicalUrl } from "@/lib/site";
 
 /**
  * Format attendu par Facebook, WhatsApp, LinkedIn et X.
@@ -42,9 +42,14 @@ export function ogAlt(title: string): string {
  * D'où la règle : aucune page ne construit son `og:url` à la main, et le
  * gabarit racine n'en porte plus.
  *
- * Le chemin est passé en relatif. `metadataBase` le résout pour le
- * `canonical`, mais `og:url` doit être absolu pour les moteurs de
- * prévisualisation, qui ne relisent pas la page.
+ * **Le canonical est désormais absolu, et ce n'est pas cosmétique.** Il était
+ * passé en relatif et résolu par `metadataBase`, qui vaut l'origine de la
+ * vitrine — ce qui était juste tant qu'un seul domaine portait du contenu
+ * indexable. Depuis que la face pro a le sien, une page servie par `pro.`
+ * déclarerait un canonical sur `leoclean.fr`, c'est-à-dire une **autre page**
+ * que celle qu'on lit : la façon la plus directe de se désindexer soi-même.
+ * `canonicalUrl` choisit l'origine d'après le chemin, et `og:url` la même —
+ * les deux ne peuvent pas désigner deux pages différentes.
  */
 export function pageMetadata({
   path,
@@ -103,7 +108,7 @@ export function pageMetadata({
   return {
     ...(title === undefined ? {} : { title }),
     ...(description === undefined ? {} : { description }),
-    alternates: { canonical: path },
+    alternates: { canonical: canonicalUrl(path) },
     ...(summary === undefined
       ? {}
       : { other: { "llm-summary": summary, "ai:content": summary } }),
@@ -115,7 +120,7 @@ export function pageMetadata({
             modifiedTime: article.modifiedTime,
           }
         : { type: "website" }),
-      url: absoluteUrl(path),
+      url: canonicalUrl(path),
       ...(ogTitle === undefined ? {} : { title: ogTitle }),
       ...(ogDescription === undefined ? {} : { description: ogDescription }),
       ...(hasOwnOpenGraphImage

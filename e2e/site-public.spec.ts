@@ -33,6 +33,60 @@ const COMMUNES = [
   "isle-saint-georges",
 ];
 
+test.describe("accueil — le test de couverture", () => {
+  /*
+   * « Est-ce que vous venez chez moi ? » est la première question d'un service
+   * local, et la seule à laquelle seize pastilles ne répondent pas pour qui
+   * connaît son code postal et rien d'autre. Le champ y répond sans quitter
+   * la page, et il doit répondre dans les deux sens : un refus est une
+   * réponse, pas une impasse.
+   */
+  test("répond oui sur un code postal desservi, et propose de réserver", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const reponse = page.locator("main [aria-live='polite']").first();
+    await page.getByLabel("Votre code postal").fill("33850");
+
+    await expect(reponse).toContainText("Oui, nous intervenons chez vous");
+    await expect(
+      reponse.getByRole("link", { name: "Léognan" }),
+    ).toHaveAttribute("href", "/menage-a-domicile/leognan");
+    await expect(
+      reponse.getByRole("link", { name: "Voir mes créneaux" }),
+    ).toHaveAttribute("href", "/reserver");
+  });
+
+  test("nomme toutes les communes d'un code postal partagé", async ({
+    page,
+  }) => {
+    // 33650 en couvre sept : en choisir une au hasard donnerait une réponse
+    // fausse à six personnes sur sept.
+    await page.goto("/");
+
+    const reponse = page.locator("main [aria-live='polite']").first();
+    await page.getByLabel("Votre code postal").fill("33650");
+
+    await expect(reponse).toContainText("Martillac");
+    await expect(reponse).toContainText("Saint-Morillon");
+  });
+
+  test("dit non franchement, avec un numéro plutôt qu'une impasse", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const reponse = page.locator("main [aria-live='polite']").first();
+    await page.getByLabel("Votre code postal").fill("75001");
+
+    await expect(reponse).toContainText("Pas encore chez vous");
+    await expect(
+      reponse.getByRole("link", { name: "Appelez-nous" }),
+    ).toHaveAttribute("href", /^tel:/);
+  });
+});
+
 test.describe("pages par commune", () => {
   test("chaque commune a un titre et une description qui lui sont propres", async ({
     page,
@@ -292,6 +346,7 @@ test.describe("cartes de partage", () => {
   test("chaque page porte une image de partage servie", async ({
     page,
     request,
+    baseURL,
   }) => {
     for (const path of PAGES) {
       await page.goto(path);
@@ -300,7 +355,15 @@ test.describe("cartes de partage", () => {
         .getAttribute("content");
       expect(image, `og:image manquant sur ${path}`).toBeTruthy();
 
-      const response = await request.get(image!);
+      /*
+       * L'URL est absolue et porte l'origine canonique — c'est ce qu'un réseau
+       * social doit lire. On la ramène pourtant sur l'origine testée avant de
+       * la chercher : sans cela, le test irait chercher l'image **en
+       * production** au lieu de celle qu'il vient de construire, et passerait
+       * même si la construction n'en produisait aucune.
+       */
+      const servie = new URL(new URL(image!).pathname, baseURL);
+      const response = await request.get(servie.toString());
       expect(response.status(), `image injoignable pour ${path}`).toBe(200);
       expect(response.headers()["content-type"]).toContain("image/png");
     }

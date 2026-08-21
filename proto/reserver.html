@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Réserver un ménage — Léo Clean</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="stylesheet" href="assets/leo-clean.css" />
+    <link rel="stylesheet" href="assets/theme-menthe.css" />
+    <link rel="stylesheet" href="assets/theme-pop.css" />
+    <link rel="stylesheet" href="assets/theme-tropical.css" />
+    <link rel="stylesheet" href="assets/theme-tropical-rose.css" />
+    <script src="assets/theme.js"></script>
+    <style>
+      /* Mises en page propres au tunnel. */
+      .funnel {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 40px var(--gutter-page-lg) 120px;
+      }
+      .funnel .layout {
+        display: grid;
+        grid-template-columns: 1.5fr 0.9fr;
+        gap: 32px;
+        align-items: start;
+        margin-top: 36px;
+      }
+      /* min-width:0 — sans lui, une colonne de grille prend la largeur de son
+     contenu, et la bande de jours défilante pousse le récapitulatif hors cadre. */
+      .funnel .screen {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        min-width: 0;
+      }
+      .funnel .options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .recap {
+        position: sticky;
+        top: 96px;
+        overflow: hidden;
+        padding: 0;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+      }
+      .recap .head {
+        padding: 20px 24px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .recap .lines {
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font: var(--text-body-sm);
+      }
+      .recap .lines .l {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .recap .lines .l span {
+        color: var(--text-muted);
+      }
+      .recap .lines .l b {
+        text-align: right;
+        color: var(--text-strong);
+      }
+      .recap .lines .l b button {
+        background: none;
+        border: none;
+        padding: 0;
+        font: var(--text-caption);
+        color: var(--text-link);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        display: block;
+        margin-left: auto;
+        font-weight: 600;
+      }
+
+      /* Écran 1 — adresse et contrôle de couverture. */
+      .address-box {
+        position: relative;
+      }
+      .suggestions {
+        position: absolute;
+        z-index: 20;
+        left: 0;
+        right: 0;
+        top: calc(100% + 8px);
+        background: var(--white);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        display: none;
+      }
+      .suggestions.is-open {
+        display: block;
+      }
+      .suggestions button {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 18px;
+        background: none;
+        border: none;
+        border-bottom: 1px solid var(--border-subtle);
+        cursor: pointer;
+        font: var(--text-body);
+        color: var(--text-strong);
+        text-align: left;
+        transition: var(--transition-control);
+      }
+      .suggestions button:last-child {
+        border-bottom: none;
+      }
+      .suggestions button:hover {
+        background: var(--leaf-50);
+      }
+      .suggestions .t {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-subtle);
+      }
+      .coverage {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        border-radius: var(--radius-md);
+        align-items: flex-start;
+      }
+      .coverage.ok {
+        background: var(--status-success-bg);
+        color: var(--status-success-fg);
+      }
+      .coverage.ko {
+        background: var(--status-danger-bg);
+        color: var(--status-danger-fg);
+      }
+      .coverage .txt {
+        font: var(--text-body-sm);
+        color: var(--text-body);
+      }
+      .coverage b {
+        display: block;
+        font: 600 15px/1.4 var(--font-body);
+      }
+      .communes-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .communes-list span {
+        font: var(--text-caption);
+        color: var(--text-muted);
+        background: var(--white);
+        padding: 4px 10px;
+        border-radius: var(--radius-pill);
+      }
+
+      /* Écran 2 — durée : cartes rapides et curseur au pas de 30 minutes. */
+      .duration-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .duration {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 16px;
+        border-radius: var(--radius-md);
+        background: var(--white);
+        border: var(--border-width-strong) solid var(--border-subtle);
+        cursor: pointer;
+        transition: var(--transition-control);
+        text-align: left;
+      }
+      .duration:hover {
+        transform: translateY(var(--hover-lift));
+        box-shadow: var(--shadow-md);
+      }
+      .duration.is-on {
+        background: var(--leaf-50);
+        border-color: var(--leaf-600);
+        box-shadow: none;
+      }
+      .duration b {
+        font: var(--text-h4);
+        color: var(--text-strong);
+      }
+      .duration span {
+        font: var(--text-caption);
+        color: var(--text-muted);
+      }
+      .slider-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .slider-head b {
+        font: var(--text-h2);
+        color: var(--text-strong);
+        letter-spacing: var(--tracking-heading);
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 8px;
+        border-radius: var(--radius-pill);
+        background: var(--ink-200);
+        outline: none;
+        margin: 0;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-pill);
+        background: var(--leaf-600);
+        border: 3px solid var(--white);
+        box-shadow: var(--shadow-md);
+        cursor: pointer;
+        transition: transform var(--duration-fast) var(--ease-out);
+      }
+      input[type="range"]::-webkit-slider-thumb:active {
+        transform: scale(1.12);
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-pill);
+        background: var(--leaf-600);
+        border: 3px solid var(--white);
+        box-shadow: var(--shadow-md);
+        cursor: pointer;
+      }
+      input[type="range"]:focus-visible {
+        box-shadow: var(--focus-ring);
+      }
+      .ticks {
+        display: flex;
+        justify-content: space-between;
+        font: var(--text-caption);
+        color: var(--text-subtle);
+        margin-top: 8px;
+      }
+
+      /* Écran 4 — calendrier : bande de jours, puis grille d'heures. */
+      .days {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 4px 2px 12px;
+      }
+      .day-btn {
+        flex: none;
+        width: 76px;
+        padding: 12px 8px;
+        border-radius: var(--radius-md);
+        background: var(--white);
+        border: var(--border-width-strong) solid var(--border-subtle);
+        cursor: pointer;
+        transition: var(--transition-control);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .day-btn:hover:not([disabled]) {
+        transform: translateY(var(--hover-lift));
+        box-shadow: var(--shadow-md);
+      }
+      .day-btn .dow {
+        font: var(--text-caption);
+        color: var(--text-muted);
+      }
+      .day-btn .dom {
+        font: 700 20px/1.1 var(--font-display);
+        color: var(--text-strong);
+      }
+      .day-btn .mon {
+        font: var(--text-overline);
+        letter-spacing: var(--tracking-overline);
+        text-transform: uppercase;
+        color: var(--text-subtle);
+      }
+      .day-btn.is-on {
+        background: var(--ink-900);
+        border-color: var(--ink-900);
+      }
+      .day-btn.is-on .dow,
+      .day-btn.is-on .dom,
+      .day-btn.is-on .mon {
+        color: var(--white);
+      }
+      .day-btn[disabled] {
+        cursor: not-allowed;
+      }
+      .day-btn[disabled] .dom,
+      .day-btn[disabled] .dow,
+      .day-btn[disabled] .mon {
+        text-decoration: line-through;
+        color: var(--ink-400);
+      }
+      .hours {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .hour {
+        padding: 16px 8px;
+        border-radius: var(--radius-md);
+        background: var(--white);
+        border: var(--border-width-strong) solid var(--border-subtle);
+        font: var(--text-h4);
+        color: var(--text-strong);
+        cursor: pointer;
+        transition: var(--transition-control);
+      }
+      .hour:hover:not([disabled]):not(.is-on) {
+        background: var(--leaf-50);
+        border-color: var(--leaf-300);
+      }
+      .hour.is-on {
+        background: var(--leaf-600);
+        border-color: var(--leaf-600);
+        color: var(--white);
+      }
+      .hour.is-alt {
+        background: var(--leaf-50);
+        border-color: var(--leaf-400);
+        color: var(--leaf-700);
+      }
+      .hour[disabled] {
+        background: var(--ink-50);
+        border-color: var(--ink-100);
+        color: var(--ink-400);
+        text-decoration: line-through;
+        cursor: not-allowed;
+      }
+      .legend {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        font: var(--text-caption);
+        color: var(--text-muted);
+      }
+      .legend i {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-right: 6px;
+        vertical-align: -2px;
+      }
+      /* En classes et non en styles en ligne : la variante menthe doit pouvoir
+     recolorer la pastille « préféré » pour qu'elle dise vrai. */
+      .sw-pref {
+        background: var(--leaf-600);
+      }
+      .sw-alt {
+        background: var(--leaf-50);
+        border: 2px solid var(--leaf-400);
+      }
+      .sw-off {
+        background: var(--ink-50);
+        border: 1px solid var(--ink-200);
+      }
+
+      .sticky-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        background: rgba(255, 251, 245, 0.94);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-subtle);
+        padding: 12px var(--gutter-page);
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .sticky-bar .p b {
+        font: var(--text-h3);
+        color: var(--text-strong);
+        display: block;
+        letter-spacing: var(--tracking-heading);
+      }
+      .sticky-bar .p span {
+        font: var(--text-caption);
+        color: var(--text-muted);
+      }
+      .nav-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .confirm {
+        max-width: var(--container-narrow);
+        margin: 0 auto;
+        padding: 72px var(--gutter-page-lg) 120px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        align-items: center;
+        text-align: center;
+      }
+      .confirm .seal {
+        width: 88px;
+        height: 88px;
+        border-radius: var(--radius-pill);
+        background: var(--leaf-100);
+        color: var(--leaf-600);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (max-width: 920px) {
+        .funnel {
+          padding: 24px var(--gutter-page) 120px;
+        }
+        .funnel .layout {
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+        /* Le récapitulatif passe sous l'écran : le prix est déjà porté par la
+       barre basse, et une carte de résumé en tête de page repousserait la
+       question qu'on vient de poser hors de l'écran. */
+        .recap {
+          position: static;
+        }
+        .recap .lines {
+          padding: 16px 20px;
+        }
+        .duration-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .hours {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .sticky-bar {
+          display: flex;
+        }
+        .steps-scroll {
+          overflow-x: auto;
+          padding-bottom: 8px;
+        }
+        .steps {
+          min-width: 600px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script src="assets/icons.js"></script>
+
+    <p class="proto-banner">
+      Prototype — maquette non contractuelle. Aucune réservation n’est
+      enregistrée.
+    </p>
+
+    <header class="site-header">
+      <div class="bar">
+        <a class="wordmark" href="index.html">Léo Clean</a>
+        <nav></nav>
+        <div class="actions">
+          <a class="btn btn-ghost btn-sm" href="espace-client.html"
+            ><svg class="i i-16"><use href="#i-user" /></svg
+            ><span class="tel-label">Espace client</span></a
+          >
+        </div>
+      </div>
+    </header>
+
+    <!-- ======================================================== LE TUNNEL ==== -->
+    <main class="funnel" id="funnel">
+      <div class="steps-scroll"><div class="steps" id="steps"></div></div>
+      <p class="sr-only" aria-live="polite" id="announce"></p>
+
+      <div class="layout">
+        <div class="screen" id="screen">
+          <!-- Écran 1 — l'adresse, et la réponse immédiate à « intervenez-vous chez
+           moi ? ». On ne déroule pas seize communes : on demande où c'est, et
+           c'est à nous de savoir si nous y allons. -->
+          <section data-step="adresse" hidden>
+            <div class="stack" style="gap: 8px; margin-bottom: 24px">
+              <h1>Où habitez-vous ?</h1>
+              <p class="lead">
+                Votre adresse, votre commune ou votre code postal. Nous vous
+                disons tout de suite si nous intervenons chez vous.
+              </p>
+            </div>
+            <div class="stack" style="gap: 20px">
+              <div class="address-box">
+                <label class="field"
+                  ><span class="label">Votre adresse</span>
+                  <span class="input-shell"
+                    ><svg class="i i-18"><use href="#i-map-pin" /></svg>
+                    <input
+                      type="text"
+                      id="adresse"
+                      placeholder="12 rue des Vignes, Léognan — ou 33850"
+                      autocomplete="street-address"
+                      spellcheck="false"
+                  /></span>
+                </label>
+                <div class="suggestions" id="suggestions"></div>
+              </div>
+              <div id="coverage"></div>
+              <details class="card card-cream">
+                <summary
+                  style="
+                    cursor: pointer;
+                    font: var(--text-label);
+                    color: var(--text-strong);
+                  "
+                >
+                  Voir les 16 communes desservies
+                </summary>
+                <div class="communes-list" id="communes-list"></div>
+              </details>
+            </div>
+          </section>
+
+          <!-- Écran 2 — durée. On demande des heures, pas une surface : personne ne
+           connaît sa surface au mètre près, et c'est la durée qui décide du prix. -->
+          <section data-step="logement" hidden>
+            <div class="stack" style="gap: 8px; margin-bottom: 24px">
+              <h1>De combien de temps avez-vous besoin ?</h1>
+              <p class="lead">
+                À titre indicatif, un intervenant traite environ 25 m² à
+                l’heure. Vous pourrez ajuster.
+              </p>
+            </div>
+            <div class="stack" style="gap: 20px">
+              <div class="duration-grid" id="durations"></div>
+
+              <div class="card">
+                <div class="stack" style="gap: 12px">
+                  <div class="slider-head">
+                    <span class="label" style="font: var(--text-label)"
+                      >Ajuster par pas de 30 minutes</span
+                    >
+                    <b id="slider-value">3 h</b>
+                  </div>
+                  <input
+                    type="range"
+                    id="slider"
+                    min="120"
+                    max="360"
+                    step="30"
+                    value="180"
+                    aria-label="Durée de l’intervention, par pas de 30 minutes"
+                  />
+                  <div class="ticks">
+                    <span>2 h</span><span>3 h</span><span>4 h</span
+                    ><span>5 h</span><span>6 h</span>
+                  </div>
+                  <p class="caption" id="slider-hint">
+                    Idéal pour 75 m² environ.
+                  </p>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="stack" style="gap: 14px">
+                  <span class="label" style="font: var(--text-label)"
+                    >Options</span
+                  >
+                  <p class="caption" style="margin-top: -8px">
+                    Chaque option ajoute 30 minutes à l’intervention. Le temps
+                    est facturé une seule fois, au même taux.
+                  </p>
+                  <div class="stack" style="gap: 12px" id="options"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Écran 3 — rythme. C'est ici que le prix apparaît, avant toute donnée
+           personnelle. Chaque montant porte son unité : « par session ». -->
+          <section data-step="rythme" hidden>
+            <div class="stack" style="gap: 8px; margin-bottom: 24px">
+              <h1>À quel rythme souhaitez-vous nous voir ?</h1>
+              <p class="lead">
+                Aucun abonnement à résilier. Vous arrêtez quand vous voulez.
+              </p>
+            </div>
+            <div class="options" id="frequencies"></div>
+            <p class="caption">
+              « Une fois par mois » n’est pas proposé : à ce rythme, l’entretien
+              courant n’en est plus un et la promesse d’un intervenant attitré
+              ne tient plus.
+            </p>
+          </section>
+
+          <!-- Écran 4 — calendrier. Un créneau préféré, puis des replis : entre
+           l'affichage et la confirmation, une place peut partir. -->
+          <section data-step="creneau" hidden>
+            <div class="stack" style="gap: 8px; margin-bottom: 24px">
+              <h1>Quand voulez-vous que nous venions ?</h1>
+              <p class="lead">
+                Choisissez l’heure qui vous arrange le mieux, puis celles qui
+                vous iraient aussi.
+              </p>
+            </div>
+            <div class="stack" style="gap: 20px">
+              <div class="card">
+                <div class="stack" style="gap: 16px">
+                  <div class="days" id="days"></div>
+                  <div class="stack" style="gap: 12px">
+                    <span class="overline" id="day-title">—</span>
+                    <div class="hours" id="hours"></div>
+                  </div>
+                  <div class="legend">
+                    <span><i class="sw-pref"></i>Votre préféré</span>
+                    <span><i class="sw-alt"></i>Repli accepté</span>
+                    <span><i class="sw-off"></i>Déjà pris</span>
+                  </div>
+                  <p class="caption" id="slot-hint">
+                    Cliquez l’heure qui vous arrange le mieux.
+                  </p>
+                </div>
+              </div>
+              <div class="alert alert-tip">
+                <svg class="i"><use href="#i-lightbulb" /></svg>
+                <div class="alert-body">
+                  <span class="alert-title"
+                    >Pourquoi cocher des créneaux de repli ?</span
+                  >
+                  <span class="alert-text"
+                    >Une place peut partir pendant que vous remplissez la suite.
+                    Avec des replis, nous prenons le suivant au lieu de vous
+                    faire tout recommencer — et nous vous disons lequel a été
+                    retenu.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Écran 5 — coordonnées. -->
+          <section data-step="coordonnees" hidden>
+            <div class="stack" style="gap: 8px; margin-bottom: 24px">
+              <h1>Comment vous joindre ?</h1>
+              <p class="lead">
+                Votre compte se crée à la réservation. Rien à retenir : la
+                connexion se fait par un lien envoyé par email.
+              </p>
+            </div>
+            <div class="card">
+              <div class="stack" style="gap: 16px">
+                <div
+                  style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 16px;
+                  "
+                >
+                  <label class="field"
+                    ><span class="label">Prénom</span>
+                    <span class="input-shell"
+                      ><svg class="i i-18"><use href="#i-user" /></svg
+                      ><input
+                        type="text"
+                        placeholder="Camille"
+                        autocomplete="given-name" /></span
+                  ></label>
+                  <label class="field"
+                    ><span class="label">Nom</span>
+                    <span class="input-shell"
+                      ><input
+                        type="text"
+                        placeholder="Bertin"
+                        autocomplete="family-name" /></span
+                  ></label>
+                </div>
+                <label class="field"
+                  ><span class="label">Téléphone</span>
+                  <span class="input-shell"
+                    ><svg class="i i-18"><use href="#i-phone" /></svg
+                    ><input
+                      type="tel"
+                      placeholder="06 84 36 38 62"
+                      autocomplete="tel"
+                  /></span>
+                  <span class="hint"
+                    >Écrivez-le comme vous voulez : 06 84 36 38 62 ou +33
+                    6.84.36.38.62.</span
+                  ></label
+                >
+                <label class="field"
+                  ><span class="label">Email</span>
+                  <span class="input-shell"
+                    ><svg class="i i-18"><use href="#i-mail" /></svg
+                    ><input
+                      type="email"
+                      placeholder="camille@exemple.fr"
+                      autocomplete="email"
+                  /></span>
+                  <span class="hint"
+                    >C’est là qu’arrive la confirmation, et le lien vers votre
+                    espace.</span
+                  ></label
+                >
+              </div>
+            </div>
+          </section>
+
+          <!-- Écran 6 — récapitulatif et consignes d'accès. -->
+          <section data-step="recapitulatif" hidden>
+            <div class="stack" style="gap: 8px; margin-bottom: 24px">
+              <h1>Vérifions ensemble</h1>
+              <p class="lead">
+                Dernière étape. Nous recalculons le trajet sur votre adresse
+                exacte avant de proposer la mission.
+              </p>
+            </div>
+            <div class="stack" style="gap: 20px">
+              <div class="card">
+                <div class="stack" style="gap: 16px">
+                  <label class="field"
+                    ><span class="label">Votre adresse</span>
+                    <span class="input-shell"
+                      ><svg class="i i-18"><use href="#i-map-pin" /></svg
+                      ><input
+                        type="text"
+                        id="adresse-confirm"
+                        placeholder="12 rue des Vignes, Léognan" /></span
+                  ></label>
+                  <label class="field"
+                    ><span class="label">Complément</span>
+                    <span class="input-shell"
+                      ><svg class="i i-18"><use href="#i-key-round" /></svg
+                      ><input
+                        type="text"
+                        placeholder="Bâtiment, étage, code d’accès — facultatif" /></span
+                  ></label>
+                  <label class="field"
+                    ><span class="label">Vos consignes</span>
+                    <textarea
+                      rows="3"
+                      placeholder="Le chat est craintif, les produits sont sous l’évier…"
+                    ></textarea>
+                    <span class="hint"
+                      >Elles ne partent qu’à l’intervenant qui accepte la
+                      mission.</span
+                    ></label
+                  >
+                </div>
+              </div>
+              <div class="card card-cream">
+                <div class="stack" style="gap: 12px">
+                  <b style="font: var(--text-h4)"
+                    >Ce que nous faisons de votre demande</b
+                  >
+                  <p class="sm">
+                    Elle part chez les cinq intervenants qui habitent le plus
+                    près de chez vous. Le premier qui accepte l’emporte, et vous
+                    êtes prévenu sous 24 h. Sans acceptation, la recherche
+                    s’élargit puis s’arrête au bout d’une semaine — et nous vous
+                    écrivons.
+                  </p>
+                </div>
+              </div>
+              <label class="checkbox"
+                ><input type="checkbox" id="cgu" /><span class="box"
+                  ><svg class="i i-14" style="stroke-width: 3">
+                    <use href="#i-check" /></svg
+                ></span>
+                <span class="checkbox-text"
+                  ><b>J’accepte les conditions de réservation</b>
+                  <span
+                    >Annulation gratuite jusqu’à 24 h avant. Barème public
+                    au-delà.</span
+                  ></span
+                ></label
+              >
+            </div>
+          </section>
+
+          <div class="nav-row" id="nav"></div>
+        </div>
+
+        <!-- Récapitulatif collant. Chaque ligne renvoie à son écran. -->
+        <aside class="card recap" id="recap">
+          <div class="head">
+            <svg class="i" style="color: var(--leaf-600)">
+              <use href="#i-receipt-text" /></svg
+            ><b style="font: var(--text-h4)">Votre demande</b>
+          </div>
+          <div class="lines" id="recap-lines"></div>
+          <div class="price-summary" id="recap-price"></div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- ================================================== LA CONFIRMATION ==== -->
+    <main class="confirm" id="confirmation" hidden>
+      <span class="seal"
+        ><svg class="i i-44"><use href="#i-check" /></svg
+      ></span>
+      <h1 class="display-md">Votre demande est partie</h1>
+      <p class="lead" style="max-width: 520px">
+        Elle vient d’être proposée à cinq intervenants qui habitent près de chez
+        vous. Le premier qui l’accepte devient le vôtre, et vous recevez son
+        prénom, sa commune et son ancienneté — sous 24 heures.
+      </p>
+
+      <div class="session" style="width: 100%">
+        <div class="session-head">
+          <div class="stack" style="gap: 4px; flex: 1">
+            <span
+              style="font: var(--text-h4); color: var(--text-strong)"
+              id="c-service"
+              >—</span
+            >
+            <span class="session-when"
+              ><svg class="i" style="width: 15px; height: 15px">
+                <use href="#i-calendar-days" /></svg
+              ><span id="c-when">—</span></span
+            >
+          </div>
+          <span class="badge badge-warning badge-sm">En recherche</span>
+        </div>
+        <div class="session-pro">
+          <span class="avatar avatar-sm"
+            ><svg class="i i-18"><use href="#i-users" /></svg
+          ></span>
+          <span class="sm"
+            >Proposée à
+            <b style="color: var(--text-strong)">5 intervenants</b> de votre
+            secteur</span
+          >
+        </div>
+        <div
+          class="price-summary"
+          style="border-radius: var(--radius-md)"
+          id="c-price"
+        ></div>
+      </div>
+
+      <div class="alert alert-tip" style="width: 100%; text-align: left">
+        <svg class="i"><use href="#i-lightbulb" /></svg>
+        <div class="alert-body">
+          <span class="alert-title">Rien n’est prélevé aujourd’hui</span>
+          <span class="alert-text"
+            >La préautorisation part 24 h avant l’intervention, le débit 24 h
+            après. Vous pouvez annuler gratuitement jusqu’à 24 h avant, et le
+            barème est public au-delà.</span
+          >
+        </div>
+      </div>
+
+      <div class="nav-row" style="justify-content: center">
+        <a class="btn btn-lg" href="espace-client.html"
+          >Suivre ma demande<svg class="i i-18">
+            <use href="#i-arrow-right" /></svg
+        ></a>
+        <a class="btn btn-lg btn-secondary" href="index.html"
+          >Retour à l’accueil</a
+        >
+      </div>
+    </main>
+
+    <!-- Barre basse mobile : le prix suit le parcours du premier écran au dernier. -->
+    <div class="sticky-bar" id="sticky">
+      <span class="p"
+        ><b id="sticky-price">—</b><span id="sticky-detail">—</span></span
+      >
+      <button class="btn" id="sticky-next">
+        Continuer<svg class="i i-18"><use href="#i-arrow-right" /></svg>
+      </button>
+    </div>
+
+    <script src="assets/proto.js"></script>
+  </body>
+</html>

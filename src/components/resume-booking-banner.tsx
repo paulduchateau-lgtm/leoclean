@@ -119,7 +119,7 @@ export function ResumeBookingBanner() {
   const position = STEPS.indexOf(saved.step) + 1;
 
   return (
-    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-mint-200 bg-mint-50 p-5">
+    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-teal-200 bg-teal-50 p-5">
       <div>
         <p className="font-extrabold">
           Reprendre ma réservation — étape {position} sur {STEPS.length}
@@ -132,7 +132,7 @@ export function ResumeBookingBanner() {
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href={`/reserver?commune=${saved.communeSlug}`}
-          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-mint-500"
+          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-colors duration-200 ease-brand hover:bg-mango-500"
         >
           Reprendre
           <ArrowRightIcon className="size-4" aria-hidden />

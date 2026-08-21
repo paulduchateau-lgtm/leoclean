@@ -216,7 +216,7 @@ export function CandidatureForm() {
                 name="status"
                 value={value}
                 defaultChecked={index === 0}
-                className="size-5 accent-mint-400"
+                className="size-5 accent-teal-400"
               />
               <span className="text-sm">{label}</span>
             </label>

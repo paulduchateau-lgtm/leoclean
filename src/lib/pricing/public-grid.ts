@@ -1,4 +1,5 @@
 import { formatEuros, formatHourlyRate } from "./money";
+import { MAJORATIONS_PAR_DEFAUT } from "./majorations";
 
 /**
  * Grille tarifaire publique de Léo Clean.
@@ -111,3 +112,24 @@ export function totalPonctuel(heures: number): string {
 export const LOWEST_HOURLY_RATE_CENTS = Math.min(
   ...PUBLIC_RATES.map((rate) => rate.hourlyRateCents),
 );
+
+/**
+ * Les majorations, telles que le site les annonce.
+ *
+ * Importées du moteur plutôt que recopiées : une valeur dupliquée finit
+ * toujours par diverger, et celle-ci divergerait entre ce qu'on affiche et ce
+ * qu'on facture — c'est-à-dire au pire endroit possible.
+ *
+ * Elles sont annoncées **avant** l'engagement, sur la page tarifs et dans le
+ * tunnel. Une majoration découverte au récapitulatif est une majoration
+ * contestée.
+ */
+export const PUBLIC_SURCHARGES = MAJORATIONS_PAR_DEFAUT.map((regle) => ({
+  cause: regle.cause,
+  label: regle.label,
+  /** « +25 % », tel qu'il se lit. */
+  display: `+${regle.rateBp / 100} %`.replace(".", ","),
+}));
+
+/** Délai en deçà duquel une réservation est majorée, en heures. */
+export { COURT_DELAI_HEURES } from "./majorations";

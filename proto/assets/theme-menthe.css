@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Variante « menthe » — la palette du produit (src/styles/tokens/colors.css),
+   posée sur le prototype.
+
+   Le principe : les composants du prototype lisent les échelles leaf / clay /
+   marigold / cream. On les fait pointer vers menthe / pêche / citron / crème,
+   les valeurs exactes du design system du dépôt — celles de dev.leoclean.fr.
+   Les quelques règles qui suivent corrigent ce qu'un simple remappage ne peut
+   pas faire : la menthe pleine porte du texte encre, jamais du blanc.
+   ========================================================================== */
+
+html[data-theme="menthe"],
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] {
+  /* --- Menthe (remplace leaf) — src/styles/tokens/colors.css --- */
+  --leaf-50: #edfdf6;
+  --leaf-100: #d2faeb;
+  --leaf-200: #a8f4d9;
+  --leaf-300: #7debc5;
+  --leaf-400: #63e6be;
+  --leaf-500: #35cfa1;
+  --leaf-600: #16b189;
+  --leaf-700: #0a7c61;
+  --leaf-800: #0b6350;
+  --leaf-900: #0c4f41;
+
+  /* --- Pêche (remplace clay) : la chaleur, sans le rendu terre cuite --- */
+  --clay-50: #fff4ee;
+  --clay-100: #ffe6d8;
+  --clay-200: #ffcfb6;
+  --clay-300: #ffb08c;
+  --clay-400: #ff9e70;
+  --clay-500: #f97e48;
+  --clay-600: #e4632c;
+  --clay-700: #bc4b1d;
+
+  /* --- Citron (remplace marigold) : les moments de joie --- */
+  --marigold-50: #fffbe6;
+  --marigold-100: #fef6c4;
+  --marigold-300: #fadf54;
+  --marigold-500: #f5d423;
+  --marigold-700: #8f7107;
+
+  /* --- Crème, version plus fraîche --- */
+  --cream-100: #fffaf2;
+  --cream-200: #fff3e3;
+  --cream-300: #f8e8d2;
+
+  /*
+   * Le fond de page quitte la crème pour un blanc à peine teinté vert :
+   * c'est lui qui donne la fraîcheur du site actuel — la crème réchauffe,
+   * la menthe pétille, et les deux ensemble se neutralisent.
+   */
+  --surface-page: #fafcfb;
+
+  /*
+   * L'action principale est LA règle qui change tout : menthe 400 pleine,
+   * texte encre — jamais de blanc sur menthe, elle ne tient pas le contraste.
+   */
+  --action-primary-bg: var(--leaf-400);
+  --action-primary-bg-hover: var(--leaf-500);
+  --action-primary-bg-active: var(--leaf-600);
+  --action-primary-fg: var(--ink-900);
+
+  /* L'accent devient citron : une pilule jaune sur la bande sombre, la
+     signature la plus pétillante du système. */
+  --action-accent-bg: var(--marigold-300);
+  --action-accent-bg-hover: var(--marigold-500);
+  --action-accent-fg: var(--ink-900);
+
+  /* Liens et textes de marque : menthe 700, la seule menthe lisible en texte. */
+  --text-brand: var(--leaf-700);
+  --text-link: var(--leaf-700);
+  --text-link-hover: var(--leaf-800);
+
+  /* Halo de focus du produit : menthe translucide. */
+  --focus-ring: 0 0 0 4px rgba(53, 207, 161, 0.35);
+}
+
+/* --- Ce que le remappage ne sait pas faire ------------------------------- */
+
+/* L'ombre signature du produit sous l'action principale — le « pop » menthe. */
+html[data-theme="menthe"]
+  .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(.btn-accent),
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"]
+  .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(.btn-accent) {
+  box-shadow: 0 10px 24px -8px rgba(22, 177, 137, 0.45);
+}
+html[data-theme="menthe"]
+  .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(
+    .btn-accent
+  ):active,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"]
+  .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-dark):not(
+    .btn-accent
+  ):active {
+  box-shadow: var(--shadow-inset-press);
+}
+
+/* Le logotype en menthe 600 ne tiendrait pas le contraste : 700. */
+html[data-theme="menthe"] .wordmark,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .wordmark {
+  color: var(--leaf-700);
+}
+
+/* Tout état sélectionné suit la même règle que le bouton : menthe, texte encre. */
+html[data-theme="menthe"] .badge-brand,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .badge-brand {
+  background: var(--leaf-400);
+  color: var(--ink-900);
+}
+html[data-theme="menthe"] .tag[aria-pressed="true"],
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .tag[aria-pressed="true"],
+html[data-theme="menthe"] .tag.is-selected,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .tag.is-selected {
+  background: var(--leaf-300);
+  color: var(--ink-900);
+  border-color: var(--leaf-600);
+}
+html[data-theme="menthe"] .checkbox input:checked + .box,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .checkbox input:checked + .box {
+  background: var(--leaf-400);
+  border-color: var(--leaf-500);
+  color: var(--ink-900);
+}
+html[data-theme="menthe"] .steps .step.is-done .dot,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .steps .step.is-done .dot {
+  background: var(--leaf-400);
+  color: var(--ink-900);
+}
+html[data-theme="menthe"] .option.is-selected .option-check,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .option.is-selected .option-check {
+  background: var(--leaf-400);
+  color: var(--ink-900);
+}
+html[data-theme="menthe"] .slot.is-on,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .slot.is-on,
+html[data-theme="menthe"] .hour.is-on,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .hour.is-on {
+  background: var(--leaf-400);
+  border-color: var(--leaf-500);
+  color: var(--ink-900);
+}
+
+/* Le calendrier : le jour actif reste encre, l'heure choisie est menthe. */
+html[data-theme="menthe"] .sw-pref,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .sw-pref {
+  background: var(--leaf-400);
+}
+
+/* La colonne Léo Clean du comparatif : en-tête menthe pleine, texte encre. */
+html[data-theme="menthe"] .compare thead th.mine,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .compare thead th.mine {
+  background: var(--leaf-400);
+  color: var(--ink-900);
+}
+
+/* Le héros passe du dégradé crème au dégradé menthe → page. */
+html[data-theme="menthe"] .hero,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .hero {
+  background: linear-gradient(180deg, var(--leaf-100), var(--surface-page));
+}
+
+/* Les surfaces translucides suivent le nouveau fond de page. */
+html[data-theme="menthe"] .site-header,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .site-header {
+  background: rgba(250, 252, 251, 0.88);
+}
+html[data-theme="menthe"] .sticky-bar,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .sticky-bar {
+  background: rgba(250, 252, 251, 0.94);
+}
+
+/* Le panneau de sortie : pêche en surface, texte encre — la pêche 500 ne
+   porte pas du blanc, et le système la veut en surface plutôt qu'en texte. */
+html[data-theme="menthe"] .cta-panel,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel {
+  background: var(--clay-300);
+}
+html[data-theme="menthe"] .cta-panel h2,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel h2 {
+  color: var(--ink-900);
+}
+html[data-theme="menthe"] .cta-panel p,
+html[data-theme="pop"],
+html[data-theme="tropical"],
+html[data-theme="tropical2"] .cta-panel p {
+  color: var(--ink-800);
+}

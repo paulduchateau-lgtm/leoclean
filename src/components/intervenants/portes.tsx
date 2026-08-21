@@ -56,9 +56,11 @@ export function Portes() {
               </li>
             ))}
           </ul>
+          {/* Vers le tunnel, qui ouvre un dossier — pas vers le formulaire de
+              rappel, qui ne fait que demander qu'on appelle. */}
           <Link
-            href="#candidature"
-            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mint-500 hover:shadow-mint"
+            href="/rejoindre"
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-primary px-6 font-bold text-primary-foreground shadow-xs transition-all duration-200 ease-brand hover:-translate-y-px hover:bg-mango-500 hover:shadow-mango"
           >
             Déposer ma candidature
           </Link>
@@ -95,7 +97,7 @@ export function Portes() {
           </ul>
           <Link
             href="#candidature"
-            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-6 font-bold transition-all duration-200 ease-brand hover:-translate-y-px hover:border-mint-400 hover:bg-mint-50"
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full border-2 border-border bg-card px-6 font-bold transition-all duration-200 ease-brand hover:-translate-y-px hover:border-teal-300 hover:bg-teal-50"
           >
             Nous contacter
           </Link>

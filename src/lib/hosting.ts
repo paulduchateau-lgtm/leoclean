@@ -1,9 +1,20 @@
 /**
- * Répartition des chemins entre les deux domaines de production.
+ * Répartition des chemins entre les trois domaines de production.
  *
- * `leoclean.fr` porte la vitrine — ce qui se référence, se partage et se cite.
- * `app.leoclean.fr` porte ce qui se fait une fois décidé : le tunnel, la
- * connexion et les espaces connectés.
+ * `leoclean.fr` porte la vitrine client — ce qui se référence, se partage et
+ * se cite. `app.leoclean.fr` porte ce que le client fait une fois décidé : le
+ * tunnel et son espace. `pro.leoclean.fr` porte toute la face offre, vitrine
+ * comprise : la page qui explique le métier, le tunnel de candidature et
+ * l'espace intervenant.
+ *
+ * **La connexion n'appartient à aucun des trois**, et c'est ce qui rend le
+ * cloisonnement réel. `/connexion` et `/api/auth` sont servis par l'hôte qui
+ * les reçoit, jamais redirigés : Auth.js tourne en `trustHost` et construit
+ * ses URL depuis la requête, si bien qu'une connexion ouverte sur `pro.` y
+ * dépose un cookie qui n'est **pas** envoyé à `app.` — deux sessions, deux
+ * périmètres. L'alternative aurait été d'élargir le cookie à `.leoclean.fr`,
+ * c'est-à-dire de faire exactement l'inverse de ce que « cloisonner » veut
+ * dire.
  *
  * La séparation est tenue par une redirection plutôt que par des liens
  * absolus. C'est délibéré : un lien relatif oublié quelque part atterrit de
@@ -15,28 +26,69 @@
  * permet de vérifier la table de routage sans monter une requête.
  */
 
-/**
- * Chemins appartenant à l'application.
- *
- * `/api/auth` en fait partie : Auth.js y dépose et y relit son cookie de
- * session, qui est lié à l'hôte. Le renvoyer sur la vitrine reviendrait à
- * créer la session sur un domaine qui ne s'en sert jamais.
- */
-const APP_PREFIXES = [
-  "/reserver",
-  "/connexion",
-  "/mon-compte",
-  "/mon-espace",
-  "/intervenant",
-  "/gestion",
-  "/administration",
-  "/api/auth",
-] as const;
-
-export function isAppPath(pathname: string): boolean {
-  return APP_PREFIXES.some(
+function matches(prefixes: readonly string[], pathname: string): boolean {
+  return prefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
+}
+
+/**
+ * Chemins servis par l'hôte qui les reçoit, quel qu'il soit.
+ *
+ * Auth.js y dépose et y relit son cookie de session, qui est lié à l'hôte.
+ * Les rediriger vers un hôte unique créerait la session sur un domaine, et la
+ * relirait depuis un autre qui ne la reçoit jamais. Les laisser neutres donne
+ * à chaque face sa propre session — ce qui est le cloisonnement demandé, et
+ * non un contournement.
+ */
+const NEUTRAL_PREFIXES = ["/connexion", "/api/auth"] as const;
+
+/** Ces chemins sont servis partout : ils ne se redirigent jamais. */
+export function isNeutralPath(pathname: string): boolean {
+  return matches(NEUTRAL_PREFIXES, pathname);
+}
+
+/** Chemins appartenant à l'application client. */
+const APP_PREFIXES = [
+  "/reserver",
+  "/mon-compte",
+  "/mon-espace",
+  "/gestion",
+  "/administration",
+] as const;
+
+/**
+ * Chemins appartenant à la face professionnelle.
+ *
+ * Elle prend la vitrine offre **et** l'espace connecté. `/intervenant` quitte
+ * donc l'application client, où il ne tenait que par défaut d'un troisième
+ * domaine.
+ */
+const PRO_PREFIXES = [
+  "/travailler-avec-nous",
+  "/rejoindre",
+  "/intervenant",
+] as const;
+
+/**
+ * Ce chemin est-il un espace applicatif ?
+ *
+ * Sert à décider où la coque mobile n'a rien à faire — barre d'onglets, rappel
+ * de prix. La question n'est pas celle de l'hôte : `/intervenant` est servi
+ * par `pro.` et reste un espace connecté, où un seul modèle de navigation doit
+ * régner. `/connexion` en fait partie pour la même raison.
+ */
+export function isAppPath(pathname: string): boolean {
+  return (
+    matches(APP_PREFIXES, pathname) ||
+    matches(NEUTRAL_PREFIXES, pathname) ||
+    matches(["/intervenant"], pathname)
+  );
+}
+
+/** Ce chemin appartient-il à la face professionnelle ? */
+export function isProPath(pathname: string): boolean {
+  return matches(PRO_PREFIXES, pathname);
 }
 
 /** Hôte d'une origine configurée, ou `null` si elle est absente ou illisible. */
@@ -59,8 +111,39 @@ export function hostOf(origin: string | undefined): string | null {
  * de prévisualisation, `localhost`, la vitrine statique. Dans tous ces cas le
  * site se comporte comme avant, sur un domaine unique.
  */
+export interface Hotes {
+  site: string | null;
+  app: string | null;
+  /** `null` tant que `pro.leoclean.fr` n'est pas créé : la face pro reste alors répartie comme avant. */
+  pro?: string | null;
+}
+
+/**
+ * Hôte auquel ce chemin appartient, ou `null` si la répartition n'a pas lieu.
+ *
+ * **Le repli quand `pro` n'est pas configuré est la partie qui compte.** Le
+ * sous-domaine n'existe qu'une fois créé chez le registrar et attaché au
+ * projet ; d'ici là, router vers lui produirait un 308 vers un domaine
+ * introuvable — la panne exacte déjà vécue en production sur
+ * `NEXT_PUBLIC_APP_URL`. Sans `pro`, chaque chemin de la face pro retourne
+ * donc là où il vivait la veille : l'espace intervenant sur l'application, la
+ * vitrine offre sur la vitrine.
+ */
+function hoteDe(pathname: string, hosts: Hotes): string | null {
+  const { site, app, pro = null } = hosts;
+
+  if (isNeutralPath(pathname)) return null;
+
+  if (isProPath(pathname)) {
+    if (pro) return pro;
+    return isAppPath(pathname) ? app : site;
+  }
+  if (isAppPath(pathname)) return app;
+  return site;
+}
+
 export function canonicalHost(
-  hosts: { site: string | null; app: string | null },
+  hosts: Hotes,
   requestHost: string,
   pathname: string,
 ): string | null {
@@ -69,13 +152,17 @@ export function canonicalHost(
     return null;
   }
 
-  if (requestHost === site && isAppPath(pathname)) {
-    return app;
-  }
-  if (requestHost === app && !isAppPath(pathname)) {
-    return site;
-  }
-  return null;
+  const connus = [site, app, hosts.pro ?? null].filter(
+    (host): host is string => host !== null,
+  );
+  // Un hôte inconnu — prévisualisation, `localhost`, `*.vercel.app` — n'est
+  // jamais redirigé : on ne sait pas ce qu'il sert, et le renvoyer ailleurs
+  // rendrait une prévisualisation inutilisable.
+  if (!connus.includes(requestHost)) return null;
+
+  const destination = hoteDe(pathname, hosts);
+  if (!destination || destination === requestHost) return null;
+  return destination;
 }
 
 /** Environnement déclaré du déploiement, par `NEXT_PUBLIC_ENVIRONMENT`. */
@@ -85,6 +172,8 @@ export interface ContexteIndexation {
   environnement: Environnement;
   site: string | null;
   app: string | null;
+  /** `null` tant que le sous-domaine professionnel n'existe pas. */
+  pro?: string | null;
 }
 
 /**
@@ -117,7 +206,7 @@ export function isIndexableHost(
 ): boolean {
   if (contexte.environnement !== "production") return false;
 
-  const { site, app } = contexte;
+  const { site, app, pro = null } = contexte;
   if (!site) return true;
-  return requestHost === site || requestHost === app;
+  return requestHost === site || requestHost === app || requestHost === pro;
 }

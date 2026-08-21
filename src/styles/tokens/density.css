@@ -1,0 +1,87 @@
+/*
+ * Variante dense — la console d'exploitation, dans la même identité.
+ *
+ * Le corpus de spécifications proposait un second thème pour l'administration :
+ * panneau d'instruments, rayon 0, monospace partout. Arbitrage du porteur du
+ * projet le 19 août 2026 : **pas de second thème.** Une console qui ne
+ * ressemble pas à la marque est une console qu'on oublie de tenir à jour, et
+ * deux systèmes finissent toujours par diverger.
+ *
+ * Ce fichier ne redéfinit donc que la **densité** : les espacements se
+ * resserrent, les rayons descendent d'un cran sur l'échelle existante, les
+ * ombres cèdent la place aux filets. Mangue, sarcelle, ananas, papaye et encre
+ * ne bougent pas d'un point, et `contrast.test.ts` continue de faire foi.
+ *
+ * Aucun angle vif, y compris ici : le système l'interdit, et la console n'est
+ * pas une exception. Le rayon le plus petit reste `--r-xs`.
+ */
+
+[data-density="compact"] {
+  /* Rythme de 4 plutôt que de 8 : chaque cran perd environ un tiers. */
+  --sp-1: 2px;
+  --sp-2: 6px;
+  --sp-3: 8px;
+  --sp-4: 12px;
+  --sp-5: 14px;
+  --sp-6: 16px;
+  --sp-8: 20px;
+  --sp-10: 24px;
+  --sp-12: 32px;
+  --sp-16: 40px;
+  --sp-20: 48px;
+  --sp-24: 56px;
+  --sp-32: 72px;
+
+  /* Une console se lit sur toute la largeur de l'écran, pas dans une colonne. */
+  --maxw: 100%;
+  --maxw-narrow: 960px;
+  --gutter-mobile: 12px;
+  --gutter-tablet: 16px;
+  --gutter-desktop: 20px;
+  --section-y-mobile: var(--sp-8);
+  --section-y-desktop: var(--sp-10);
+
+  /*
+   * Les rayons descendent d'un cran, jamais à zéro. Les grands barreaux de
+   * l'échelle — panneau, section, héros — n'ont pas d'emploi dans une liste
+   * dense et se replient sur ceux du dessous.
+   */
+  --r-s: 6px;
+  --r-m: 8px;
+  --r-l: 10px;
+  --r-xl: 12px;
+  --r-2xl: 14px;
+
+  /*
+   * Aucune ombre : la séparation se fait au filet. Une liste de quarante
+   * lignes ombrées est illisible, et le corpus a raison sur ce point.
+   */
+  --sh-xs: none;
+  --sh-s: none;
+  --sh-m: none;
+  --sh-l: none;
+  --sh-xl: none;
+
+  /*
+   * Les gabarits tactiles ne descendent pas sous 44 px sur ce qui porte une
+   * action : la console se pilote aussi depuis un téléphone, et c'est
+   * précisément là qu'un opérateur unique traite ses alertes du matin.
+   */
+  --control-h-md: 40px;
+  --control-h-lg: 44px;
+  --field-h: 40px;
+}
+
+/*
+ * Toute donnée chiffrée passe en JetBrains Mono, avec des chiffres de largeur
+ * fixe : dans une colonne de montants ou d'heures, l'alignement est ce qui
+ * permet de comparer sans lire.
+ */
+[data-density="compact"] table,
+[data-density="compact"] [data-donnee] {
+  font-variant-numeric: tabular-nums;
+}
+
+[data-density="compact"] [data-donnee] {
+  font-family: var(--font-mono);
+}

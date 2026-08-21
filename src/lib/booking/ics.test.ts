@@ -14,8 +14,14 @@ const EVENT = {
   start: new Date("2026-09-14T07:30:00.000Z"),
   end: new Date("2026-09-14T10:30:00.000Z"),
   location: "12 rue des Vignes, 33850 Léognan",
+  confirmed: true,
   stampedAt: new Date("2026-08-16T12:00:00.000Z"),
 };
+
+/** Défait le repli de la RFC 5545, pour chercher une phrase entière. */
+function deplier(ics: string): string {
+  return ics.replace(/\r\n /g, "");
+}
 
 describe("fichier iCalendar", () => {
   it("porte l'enveloppe et l'événement attendus", () => {
@@ -81,7 +87,9 @@ describe("fichier iCalendar", () => {
     const ics = bookingCalendar(EVENT);
 
     expect(ics).toContain("SUMMARY:Ménage Léo Clean");
-    expect(ics).toContain("sous 24 heures");
+    // Les lignes sont repliées à 75 octets : chercher une phrase dans le
+    // fichier brut fait dépendre le test de l'endroit où le pli tombe.
+    expect(deplier(ics)).toContain("sous 24 heures");
   });
 
   it("réutilise l'identifiant de réservation, pour mettre à jour plutôt que dupliquer", () => {
@@ -98,5 +106,26 @@ describe("fichier iCalendar", () => {
     expect(bookingCalendarFilename(EVENT.start)).toBe(
       "menage-leoclean-2026-09-14.ics",
     );
+  });
+});
+
+/**
+ * Ce que l'agenda annonce d'une mission que personne n'a encore acceptée.
+ *
+ * La règle du produit — cinq propositions, le premier qui accepte l'emporte —
+ * fait que le tunnel ne confirme rien. Un `STATUS:CONFIRMED` dans le fichier
+ * remettrait à l'écrit, et jusque dans l'agenda du client, la certitude que
+ * l'écran de confirmation a précisément cessé d'afficher.
+ */
+describe("statut de l'événement", () => {
+  it("annonce TENTATIVE tant que personne n'a accepté", () => {
+    const ics = bookingCalendar({ ...EVENT, confirmed: false });
+
+    expect(ics).toContain("STATUS:TENTATIVE");
+    expect(ics).not.toContain("STATUS:CONFIRMED");
+  });
+
+  it("annonce CONFIRMED une fois la mission acceptée", () => {
+    expect(bookingCalendar(EVENT)).toContain("STATUS:CONFIRMED");
   });
 });

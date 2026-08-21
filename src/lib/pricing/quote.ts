@@ -21,6 +21,13 @@ import { type DurationParameters, estimateDuration } from "./duration";
  * distinctes, dont la somme est ce total.
  */
 
+import {
+  chiffrerMajorations,
+  type LigneMajoration,
+  majorationsApplicables,
+  type RegleMajoration,
+} from "./majorations";
+
 export interface QuoteOption {
   slug: string;
   name: string;
@@ -56,10 +63,23 @@ export interface QuoteInput {
   taxCreditRateBp: BasisPoints;
   /** Durée choisie par le client, si différente de l'estimation. */
   durationOverrideMinutes?: number;
+
+  /**
+   * Instant de l'intervention et instant de la réservation.
+   *
+   * Les deux sont nécessaires aux majorations, et **les deux sont facultatifs** :
+   * un devis d'exploration — celui que l'accueil affiche avant qu'aucune date
+   * ne soit choisie — n'a rien à majorer. Sans eux, le devis est celui d'un
+   * jour ordinaire réservé à l'avance, ce qui est le prix d'appel honnête.
+   */
+  startAt?: Date;
+  bookedAt?: Date;
+  /** Grille de majorations. Celle de la marketplace par défaut. */
+  surchargeRules?: readonly RegleMajoration[];
 }
 
 export interface QuoteLine {
-  kind: "SERVICE" | "OPTION";
+  kind: "SERVICE" | "OPTION" | "SURCHARGE";
   slug: string;
   label: string;
   extraMinutes: number;
@@ -74,8 +94,18 @@ export interface Quote {
   hourlyRateCents: number;
   frequency: Frequency;
 
-  /** Ce que règle le client, toutes lignes confondues. */
+  /** Ce que règle le client, toutes lignes confondues, majorations comprises. */
   grossAmountCents: number;
+
+  /**
+   * Majorations retenues, avec leur bénéficiaire.
+   *
+   * Vide la plupart du temps. Détaillées plutôt que fondues dans le total :
+   * un client qui voit « 105 € » sans savoir pourquoi conteste, un client qui
+   * lit « dimanche +25 % » comprend.
+   */
+  surcharges: LigneMajoration[];
+  surchargeAmountCents: number;
 
   /**
    * Les deux factures. En mise en relation, l'intervenant facture sa
@@ -143,7 +173,26 @@ export function quote(input: QuoteInput): Quote {
     (total, option) => total + option.extraPriceCents,
     0,
   );
-  const grossAmountCents = timeAmountCents + optionSurchargeCents;
+  const baseAmountCents = timeAmountCents + optionSurchargeCents;
+
+  /*
+   * Les majorations portent sur la base, et chacune revient entièrement à son
+   * bénéficiaire : le jour à l'intervenant qui travaille le week-end, l'urgence
+   * à la plateforme qui place la mission au forceps.
+   */
+  const majorations =
+    input.startAt && input.bookedAt
+      ? chiffrerMajorations(
+          baseAmountCents,
+          majorationsApplicables(
+            input.startAt,
+            input.bookedAt,
+            input.surchargeRules,
+          ),
+        )
+      : { lignes: [], totalCents: 0, professionalCents: 0, platformCents: 0 };
+
+  const grossAmountCents = baseAmountCents + majorations.totalCents;
 
   if (professionalHourlyRateCents > hourlyRateCents) {
     throw new Error(
@@ -164,7 +213,8 @@ export function quote(input: QuoteInput): Quote {
    */
   const professionalAmountCents =
     amountForDuration(professionalHourlyRateCents, durationMinutes) +
-    optionSurchargeCents;
+    optionSurchargeCents +
+    majorations.professionalCents;
   const platformFeeAmountCents = grossAmountCents - professionalAmountCents;
 
   const professionalTaxCreditCents = applyRate(
@@ -193,6 +243,13 @@ export function quote(input: QuoteInput): Quote {
       extraMinutes: option.extraMinutes,
       amountCents: option.extraPriceCents,
     })),
+    ...majorations.lignes.map<QuoteLine>((majoration) => ({
+      kind: "SURCHARGE" as const,
+      slug: majoration.cause,
+      label: majoration.label,
+      extraMinutes: 0,
+      amountCents: majoration.amountCents,
+    })),
   ];
 
   return {
@@ -203,6 +260,8 @@ export function quote(input: QuoteInput): Quote {
     frequency,
 
     grossAmountCents,
+    surcharges: majorations.lignes,
+    surchargeAmountCents: majorations.totalCents,
     professionalAmountCents,
     platformFeeAmountCents,
     commissionRateBp: effectiveRateBp(platformFeeAmountCents, grossAmountCents),

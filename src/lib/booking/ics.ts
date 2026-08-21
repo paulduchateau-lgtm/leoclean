@@ -23,6 +23,17 @@ export interface CalendarEvent {
   location: string;
   /** Prénom de l'intervenant, s'il est déjà désigné. */
   cleanerFirstName?: string | null;
+  /**
+   * Un intervenant a accepté la mission.
+   *
+   * Faux à la sortie du tunnel : la demande vient d'être proposée à cinq
+   * personnes et aucune n'a répondu. L'agenda doit le dire — `TENTATIVE` est
+   * exactement ce que la RFC 5545 prévoit pour un rendez-vous non confirmé, et
+   * la plupart des agendas le rendent visiblement. Écrire `CONFIRMED` sur une
+   * recherche en cours mettrait dans l'agenda du client une certitude que le
+   * produit n'a pas.
+   */
+  confirmed: boolean;
   /** Instant d'émission. Passé explicitement : le module n'a pas d'horloge. */
   stampedAt: Date;
 }
@@ -94,7 +105,7 @@ export function bookingCalendar(event: CalendarEvent): string {
 
   const description = event.cleanerFirstName
     ? `${event.cleanerFirstName} vient faire le ménage. Une question : ${SITE.phone}.`
-    : `Nous vous confirmons votre intervenant sous 24 heures. Une question : ${SITE.phone}.`;
+    : `Nous cherchons votre intervenant et vous donnons son prénom sous 24 heures. Une question : ${SITE.phone}.`;
 
   const lines = [
     "BEGIN:VCALENDAR",
@@ -113,7 +124,7 @@ export function bookingCalendar(event: CalendarEvent): string {
     `DESCRIPTION:${escapeText(description)}`,
     `LOCATION:${escapeText(event.location)}`,
     `URL:${SITE.url}`,
-    "STATUS:CONFIRMED",
+    event.confirmed ? "STATUS:CONFIRMED" : "STATUS:TENTATIVE",
     // Un rappel la veille : c'est la fenêtre où l'annulation est encore
     // gratuite selon le barème des CGU.
     "BEGIN:VALARM",

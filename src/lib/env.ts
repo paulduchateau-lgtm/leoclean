@@ -29,6 +29,19 @@ const serverSchema = z.object({
   AUTH_SECRET: z
     .string()
     .min(32, "AUTH_SECRET doit faire au moins 32 caractères"),
+  /**
+   * Clé de chiffrement des consignes d'accès.
+   *
+   * Distincte d'`AUTH_SECRET` à dessein : une clé qui chiffre des codes de
+   * porte n'a pas le même cycle de vie qu'une clé de session, et faire tourner
+   * l'une ne doit pas rendre les autres illisibles. Sans elle, les consignes ne
+   * peuvent être ni enregistrées ni lues — et c'est un refus net, jamais un
+   * repli qui écrirait en clair.
+   */
+  ACCESS_SECRET_KEY: z
+    .string()
+    .min(32, "ACCESS_SECRET_KEY doit faire au moins 32 caractères")
+    .optional(),
   AUTH_GOOGLE_ID: z.string().min(1).optional(),
   AUTH_GOOGLE_SECRET: z.string().min(1).optional(),
 
@@ -65,6 +78,16 @@ const serverSchema = z.object({
     .enum(["haversine", "openrouteservice", "osrm"])
     .default("haversine"),
   OPENROUTESERVICE_API_KEY: z.string().min(1).optional(),
+
+  /**
+   * Clé de l'API Sirene de l'INSEE.
+   *
+   * Sans elle, un SIRET est enregistré **non vérifié** et le dossier passe en
+   * revue humaine — le funnel continue, et on ne prétend pas avoir vérifié.
+   * C'est la même direction que partout : échouer visiblement plutôt que
+   * dégrader en silence.
+   */
+  INSEE_API_KEY: z.string().min(1).optional(),
   /** Instance OSRM auto-hébergée, ex. https://osrm.leoclean.fr */
   OSRM_BASE_URL: z.url().optional(),
 
@@ -81,6 +104,34 @@ const serverSchema = z.object({
   // --- Jobs asynchrones (phase 8) ----------------------------------------
   INNGEST_EVENT_KEY: z.string().min(1).optional(),
   INNGEST_SIGNING_KEY: z.string().min(1).optional(),
+
+  /**
+   * Dépôt des photos de mission et des pièces justificatives.
+   *
+   * Absente, il n'y a pas de stockage : les écrans le disent et le dépôt est
+   * refusé, plutôt que d'accepter un fichier qu'on perdrait. `memoire` existe
+   * pour le développement et **ne survit pas à un redémarrage** — la valeur est
+   * refusée hors développement, un stockage volatil en production perdant des
+   * preuves de réalisation et des pièces d'identité.
+   *
+   * `scaleway` est le fournisseur retenu : Object Storage compatible S3,
+   * hébergé en France, ce qui évite d'avoir à documenter un transfert hors
+   * Union européenne pour des pièces d'identité.
+   */
+  STOCKAGE_PROVIDER: z.enum(["memoire", "scaleway"]).optional(),
+
+  /**
+   * Object Storage Scaleway.
+   *
+   * L'endpoint porte la région (`https://s3.fr-par.scw.cloud`). Le bucket doit
+   * être **privé** : rien n'est jamais servi en direct, une lecture passe par
+   * une URL signée de soixante secondes.
+   */
+  SCALEWAY_S3_ENDPOINT: z.url().optional(),
+  SCALEWAY_S3_REGION: z.string().min(1).default("fr-par"),
+  SCALEWAY_S3_BUCKET: z.string().min(1).optional(),
+  SCALEWAY_ACCESS_KEY: z.string().min(1).optional(),
+  SCALEWAY_SECRET_KEY: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({
@@ -96,6 +147,23 @@ const clientSchema = z.object({
    * développement, en prévisualisation et sur la vitrine statique.
    */
   NEXT_PUBLIC_APP_URL: z.url().optional(),
+
+  /**
+   * Origine de la face professionnelle, une fois `pro.leoclean.fr` vivant.
+   *
+   * Même précaution que pour `NEXT_PUBLIC_APP_URL`, et pour la même raison :
+   * le proxy renvoie les chemins de la face pro vers l'hôte déclaré sans
+   * pouvoir vérifier qu'il résout. Déclarée avant que le sous-domaine
+   * réponde, elle redirige `/travailler-avec-nous`, `/rejoindre` et
+   * `/intervenant` en 308 vers un domaine introuvable — sans qu'aucune erreur
+   * ne remonte, puisque le serveur fait ce qu'on lui a demandé. L'ordre est
+   * donc : créer le sous-domaine, l'attacher au projet, vérifier qu'il
+   * répond, puis seulement renseigner la variable.
+   *
+   * Absente, la face pro reste répartie comme avant : la vitrine offre sur la
+   * vitrine, l'espace intervenant sur l'application.
+   */
+  NEXT_PUBLIC_PRO_URL: z.url().optional(),
 
   /**
    * Déclaration Services à la personne (SAP) obtenue auprès de la DDETS.
@@ -208,6 +276,7 @@ function parse<T extends z.ZodType>(schema: T, source: unknown, scope: string) {
 const rawClientEnv = {
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_PRO_URL: process.env.NEXT_PUBLIC_PRO_URL,
   NEXT_PUBLIC_SAP_DECLARED: process.env.NEXT_PUBLIC_SAP_DECLARED,
   NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:

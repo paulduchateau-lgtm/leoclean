@@ -7,8 +7,8 @@ import { SITE } from "@/lib/site";
  *
  * Le symbole est l'étoile à quatre branches fournie par le client, conservée
  * telle quelle. Il est incrusté plutôt que chargé comme image : son tracé suit
- * `currentColor`, ce qui lui fait prendre l'encre sur fond clair et la menthe
- * sur fond sombre — le système interdit le monochrome menthe sur blanc, où le
+ * `currentColor`, ce qui lui fait prendre l'encre sur fond clair et la sarcelle
+ * sur fond sombre — le système interdit le monochrome sarcelle sur blanc, où le
  * contraste ne tient pas.
  *
  * Le nom, lui, est composé plutôt que vectorisé : il reste ainsi sélectionnable,
@@ -17,16 +17,21 @@ import { SITE } from "@/lib/site";
 export function Logo({
   href = "/",
   className,
+  inverse = false,
 }: {
   /** `null` pour un logotype non cliquable, dans le pied de page par exemple. */
   href?: string | null;
   className?: string;
+  /** Sur une surface sombre — le pied de page sarcelle — tout passe en blanc. */
+  inverse?: boolean;
 }) {
   const content = (
-    <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
+    <span
+      className={`inline-flex items-center gap-2.5 ${inverse ? "text-white" : ""} ${className ?? ""}`}
+    >
       <svg
         viewBox="165 27 57 57"
-        className="size-7 shrink-0 text-ink-900 dark:text-mint-400"
+        className={`size-7 shrink-0 ${inverse ? "text-white" : "text-ink-900 dark:text-teal-300"}`}
         aria-hidden
       >
         <path
