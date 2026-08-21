@@ -77,7 +77,7 @@ export default async function AujourdhuiPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
       <p className="text-sm">
-        <Link href="/intervenant" className="text-primary hover:underline">
+        <Link href="/intervenant" className="text-brand hover:underline">
           ← Toutes mes missions
         </Link>
       </p>
@@ -101,11 +101,11 @@ export default async function AujourdhuiPage() {
           <p className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm">
             <Link
               href="/intervenant/disponibilites"
-              className="text-primary hover:underline"
+              className="text-brand hover:underline"
             >
               Mes disponibilités →
             </Link>
-            <Link href="/intervenant" className="text-primary hover:underline">
+            <Link href="/intervenant" className="text-brand hover:underline">
               Voir les propositions →
             </Link>
           </p>
@@ -202,7 +202,7 @@ export default async function AujourdhuiPage() {
                     <p className="mt-2 text-sm">
                       <Link
                         href={`/intervenant/mission/${etape.bookingId}`}
-                        className="text-primary hover:underline"
+                        className="text-brand hover:underline"
                       >
                         Ouvrir la mission →
                       </Link>
@@ -231,7 +231,7 @@ export default async function AujourdhuiPage() {
                 <p className="mt-2 text-sm">
                   <Link
                     href="/intervenant"
-                    className="text-primary hover:underline"
+                    className="text-brand hover:underline"
                   >
                     Voir les missions disponibles →
                   </Link>

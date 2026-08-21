@@ -58,9 +58,6 @@ export default async function AccountPage() {
   const groupes = composerLeMenu({
     attestationsFiscales: canShowTaxCredit(),
     abonnement: abonnements > 0,
-    administrateurPlateforme: session.user.memberships.some(
-      (appartenance) => appartenance.role === "PLATFORM_ADMIN",
-    ),
     intervenant: profilIntervenant > 0,
   });
 

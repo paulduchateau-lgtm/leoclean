@@ -66,7 +66,7 @@ export default async function PaiementPage({
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
         <p className="text-sm">
-          <Link href="/mon-espace" className="text-primary hover:underline">
+          <Link href="/mon-espace" className="text-brand hover:underline">
             ← Mes réservations
           </Link>
         </p>

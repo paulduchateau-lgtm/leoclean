@@ -1,6 +1,7 @@
 import { genererLesRecurrences } from "@/lib/abonnement/generateur";
 import { traiterLesImpayes } from "@/lib/paiement/impayes";
 import { traiterLesPaiements } from "@/lib/paiement/travaux";
+import { rappelerLesAvis } from "@/lib/mission/rappel-avis";
 import { purgerSelonLaRetention } from "@/lib/rgpd/retention";
 import { traiterLesEcheances } from "@/lib/assignments/echeances";
 import { forOrganization } from "@/lib/db";
@@ -116,6 +117,19 @@ export async function GET(request: Request): Promise<Response> {
     retention = { erreur: true };
   }
 
+  /*
+   * Le rappel de notation. Isolé comme les autres : une erreur ici ne doit pas
+   * empêcher les impayés d'être relancés, ni les factures d'être émises.
+   */
+  let rappelsAvis: unknown = null;
+  try {
+    rappelsAvis = await rappelerLesAvis();
+  } catch (erreur) {
+    rappelsAvis = {
+      erreur: erreur instanceof Error ? erreur.message : "inconnu",
+    };
+  }
+
   console.info("Ordonnanceur", {
     ...rapport,
     recurrences,
@@ -123,6 +137,7 @@ export async function GET(request: Request): Promise<Response> {
     impayes,
     factures,
     retention,
+    rappelsAvis,
   });
 
   return Response.json({

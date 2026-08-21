@@ -20,6 +20,8 @@ export class InformationsRefuseesError extends BusinessError {}
 
 export interface InformationsVue {
   nom: string | null;
+  /** Portrait choisi par le client, ou `null`. */
+  photoUrl: string | null;
   email: string;
   telephone: string | null;
   adresses: {
@@ -46,6 +48,7 @@ export async function lireLesInformations(
     where: { userId },
     select: {
       phone: true,
+      photoUrl: true,
       addresses: {
         orderBy: { createdAt: "desc" },
         select: {
@@ -62,6 +65,7 @@ export async function lireLesInformations(
 
   return {
     nom: utilisateur.name,
+    photoUrl: profil?.photoUrl ?? null,
     email: utilisateur.email,
     telephone: profil?.phone ?? null,
     adresses: (profil?.addresses ?? []).map((adresse) => ({

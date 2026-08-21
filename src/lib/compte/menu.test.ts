@@ -5,7 +5,6 @@ import { type ContexteCompte, composerLeMenu, destinations } from "./menu";
 const VIDE: ContexteCompte = {
   attestationsFiscales: false,
   abonnement: false,
-  administrateurPlateforme: false,
   intervenant: false,
 };
 
@@ -26,7 +25,6 @@ describe("composerLeMenu", () => {
     const tout = libelles({
       attestationsFiscales: true,
       abonnement: true,
-      administrateurPlateforme: true,
       intervenant: true,
     }).join(" ");
 
@@ -56,11 +54,13 @@ describe("composerLeMenu", () => {
     );
   });
 
-  it("réserve l'administration à qui en a les droits", () => {
+  it("ne propose jamais la console d'administration", () => {
+    // « Mon compte » est un écran client. La console y figurait pour les
+    // administrateurs, ce qui mélangeait deux métiers dans le même menu et
+    // l'exposait au premier regard porté sur leur écran. Elle reste
+    // atteignable par son adresse, gardée par `asPlatformAdmin()` — le menu
+    // n'a jamais été ce qui protégeait quoi que ce soit.
     expect(destinations(composerLeMenu(VIDE))).not.toContain("/administration");
-    expect(
-      destinations(composerLeMenu({ ...VIDE, administrateurPlateforme: true })),
-    ).toContain("/administration");
   });
 
   it("ne propose la cooptation qu'aux intervenants", () => {
@@ -85,7 +85,6 @@ describe("composerLeMenu", () => {
       composerLeMenu({
         attestationsFiscales: true,
         abonnement: true,
-        administrateurPlateforme: true,
         intervenant: true,
       }),
     );
@@ -93,11 +92,7 @@ describe("composerLeMenu", () => {
   });
 
   it("ne rend aucun groupe vide", () => {
-    for (const contexte of [
-      VIDE,
-      { ...VIDE, intervenant: true },
-      { ...VIDE, administrateurPlateforme: true },
-    ]) {
+    for (const contexte of [VIDE, { ...VIDE, intervenant: true }]) {
       for (const groupe of composerLeMenu(contexte)) {
         expect(groupe.entrees.length).toBeGreaterThan(0);
       }

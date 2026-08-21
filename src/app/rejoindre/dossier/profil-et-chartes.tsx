@@ -230,7 +230,7 @@ export function ProfilEtChartes({
                             href={charte.href}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-1 inline-block text-sm text-primary underline"
+                            className="mt-1 inline-block text-sm text-brand underline"
                           >
                             Lire le texte complet
                           </a>

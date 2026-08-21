@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { TenantClient } from "@/lib/db";
+import { annoncerDansLeFil } from "@/lib/messagerie/conversation";
 import {
   CONSIGNES_VIDES,
   type Consignes,
@@ -125,8 +126,57 @@ export async function enregistrerLesConsignes(
     where: { id: addressId, clientProfile: { userId } },
     data: { consignes },
   });
+  if (count === 0) return false;
 
-  return count > 0;
+  /*
+   * Les intervenants des interventions à venir sur ce logement l'apprennent
+   * dans leur fil. C'est le seul moyen qu'ils ont de le savoir : ils lisent les
+   * consignes avant de partir, mais rien ne leur dit qu'elles ont changé depuis
+   * la dernière fois — et une consigne modifiée qu'on ne relit pas est une
+   * consigne qui n'existe pas.
+   *
+   * **Seulement à l'activation**, jamais à la mise en pause : annoncer « les
+   * consignes ont changé » quand elles viennent d'être retirées enverrait lire
+   * une liste vide.
+   */
+  if (entree.actif) {
+    await annoncerLesConsignes(db, addressId, maintenant);
+  }
+
+  return true;
+}
+
+/**
+ * Prévient, dans leur fil, les intervenants attendus sur ce logement.
+ *
+ * Silencieuse s'il n'y en a aucun : personne n'a besoin d'apprendre qu'une
+ * consigne a changé pour une intervention qui n'existe pas.
+ */
+async function annoncerLesConsignes(
+  db: TenantClient,
+  addressId: string,
+  maintenant: Date,
+): Promise<void> {
+  const aVenir = await db.booking.findMany({
+    where: {
+      addressId,
+      scheduledStart: { gt: maintenant },
+      status: { in: ["ASSIGNED", "CONFIRMED"] },
+      assignments: { some: { status: "ACCEPTED" } },
+    },
+    select: { id: true, organizationId: true },
+  });
+
+  for (const reservation of aVenir) {
+    await annoncerDansLeFil(
+      db,
+      reservation.organizationId,
+      reservation.id,
+      "Le client a mis à jour les consignes du logement. Elles sont sur la mission.",
+      "intervenant",
+      maintenant,
+    );
+  }
 }
 
 /**

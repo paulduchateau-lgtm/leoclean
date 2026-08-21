@@ -3,6 +3,7 @@ import { Figtree, JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
 
 import { AppTabBar } from "@/components/app-tab-bar";
+import { EspaceClientTabBar } from "@/components/espace-client-tab-bar";
 import { BandeauEnvironnement } from "@/components/bandeau-environnement";
 import { DemoBanner } from "@/components/demo-banner";
 import { ServiceWorker } from "@/components/service-worker";
@@ -136,6 +137,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* La coque applicative se pose ici, une fois pour tout le site : elle
             décide seule des écrans où elle n'a rien à faire. */}
         <AppTabBar />
+        {/*
+          Deux barres, mutuellement exclusives par construction : `AppTabBar` se
+          retire des chemins applicatifs, celle-ci ne s'affiche que sur l'espace
+          client. Les fondre en une seule aurait demandé un composant qui sait
+          tout de tous les espaces ; les poser côte à côte laisse chacune ne
+          connaître que le sien.
+        */}
+        <EspaceClientTabBar />
         {/* La vitrine statique n'enregistre rien : c'est un double du site,
             servi sous un chemin de dépôt. */}
         <ServiceWorker enabled={!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE} />

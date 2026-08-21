@@ -29,7 +29,7 @@ export default async function MesDonneesPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
       <p className="text-sm">
-        <Link href="/mon-compte" className="text-primary hover:underline">
+        <Link href="/mon-compte" className="text-brand hover:underline">
           ← Mon compte
         </Link>
       </p>

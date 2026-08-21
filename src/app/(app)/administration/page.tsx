@@ -98,19 +98,19 @@ export default async function AdministrationPage() {
       <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <Link
           href="/administration/radar"
-          className="font-semibold text-primary hover:underline"
+          className="font-semibold text-brand hover:underline"
         >
           Ouvrir le Radar →
         </Link>
         <Link
           href="/administration/candidatures"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Candidatures →
         </Link>
         <Link
           href="/administration/reclamations"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           Réclamations →
         </Link>
@@ -149,7 +149,7 @@ export default async function AdministrationPage() {
                   {formatEuros(reservation.montantCents)} ·{" "}
                   <a
                     href={`mailto:${reservation.clientEmail}`}
-                    className="text-primary"
+                    className="text-brand"
                   >
                     {reservation.clientEmail}
                   </a>
@@ -223,7 +223,7 @@ export default async function AdministrationPage() {
               >
                 <p className="font-medium">
                   {demande.nom} ·{" "}
-                  <a href={`tel:${demande.telephone}`} className="text-primary">
+                  <a href={`tel:${demande.telephone}`} className="text-brand">
                     {demande.telephone}
                   </a>
                 </p>

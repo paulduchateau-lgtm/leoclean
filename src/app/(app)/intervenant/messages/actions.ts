@@ -13,10 +13,10 @@ class ProfilIntrouvableError extends BusinessError {}
 
 export const repondreAuClient = authedAction(
   z.object({
-    bookingId: z.string().min(1),
+    conversationId: z.string().min(1),
     corps: z.string().trim().min(1).max(4000),
   }),
-  async ({ bookingId, corps }, user) => {
+  async ({ conversationId, corps }, user) => {
     const organizationId = await marketplaceOrganizationId();
     const { db } = await requireOrganization(
       organizationId,
@@ -33,9 +33,15 @@ export const repondreAuClient = authedAction(
       );
     }
 
-    const message = await repondre(db, profil.id, user.id, bookingId, corps);
+    const message = await repondre(
+      db,
+      profil.id,
+      user.id,
+      conversationId,
+      corps,
+    );
 
-    revalidatePath(`/intervenant/messages/${bookingId}`);
+    revalidatePath(`/intervenant/messages/${conversationId}`);
     revalidatePath("/intervenant/messages");
     return message;
   },

@@ -82,7 +82,10 @@ export function AppTabBar() {
       />
 
       <nav
-        aria-label="Navigation principale"
+        /* « Navigation principale » est déjà l'intitulé de l'en-tête : deux
+           repères de même nom obligent un lecteur d'écran à les visiter pour
+           les distinguer, ce qui est exactement ce qu'un repère sert à éviter. */
+        aria-label="Navigation rapide"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-background/95 backdrop-blur md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >

@@ -70,7 +70,7 @@ function Etape({ etape }: { etape: EtapeVue }) {
         </span>
       </p>
       {etape.estLaProposition ? (
-        <p className="mt-0.5 text-sm text-primary">La mission proposée</p>
+        <p className="mt-0.5 text-sm text-brand">La mission proposée</p>
       ) : (
         <p className="mt-0.5 text-sm text-muted-foreground">Déjà acceptée</p>
       )}

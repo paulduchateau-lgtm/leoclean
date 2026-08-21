@@ -216,7 +216,7 @@ export function SuiviDossier({
           <p className="mt-4 text-sm">
             <button
               type="button"
-              className="text-primary underline"
+              className="text-brand underline"
               onClick={() =>
                 startTransition(async () => {
                   await jaiEnvoyeMaDemarche({});
@@ -410,7 +410,7 @@ export function SuiviDossier({
               </Button>
               <a
                 href={`tel:${telephone.replace(/\s/g, "")}`}
-                className="inline-flex min-h-12 items-center rounded-full px-5 font-bold text-primary underline"
+                className="inline-flex min-h-12 items-center rounded-full px-5 font-bold text-brand underline"
               >
                 Ou appelez le {telephone}
               </a>

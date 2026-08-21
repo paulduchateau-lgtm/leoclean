@@ -67,7 +67,7 @@ export function EspaceFerme({
           >
             {retour?.libelle ?? "Réserver un ménage"}
           </Link>
-          <a href={`tel:${SITE.phoneE164}`} className="text-primary underline">
+          <a href={`tel:${SITE.phoneE164}`} className="text-brand underline">
             Ou appelez le {SITE.phone}
           </a>
         </div>

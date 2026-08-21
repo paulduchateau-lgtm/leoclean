@@ -936,6 +936,35 @@ Le site se consulte debout, dans la rue, à une main : c'est là que la décisio
 de faire venir quelqu'un chez soi se prend. Trois éléments, tous mobiles, tous
 absents en desktop où la navigation de l'en-tête reste seule maîtresse.
 
+**L'en-tête ne porte plus que trois choses.** Il en portait sept — tarifs,
+conseils, à propos, deux accès, bouton de réservation, numéro — et **débordait à
+360 pixels**, ce qui pousse la marque hors du champ ; aucun réglage de palier ne
+répare une barre qui a simplement trop à dire. Ne restent à découvert que
+« Espace pro », l'icône de personnage vers l'espace client, et le menu.
+**Les deux accès priment sur la réservation** (arbitrage du porteur du projet,
+21 août 2026) : quelqu'un qui revient cherche son espace, pas un nouveau
+parcours — il a déjà réservé. Le numéro quitte la vitrine et vit dans le
+panneau ; il reste dans l'en-tête du tunnel et de la face pro, où il est le
+recours quand le parcours coince. « Réserver » reste sous le pouce dans la barre
+d'onglets, plus près de la main que le haut de l'écran ne l'a jamais été.
+
+**L'espace client a sa propre barre d'onglets.** `AppTabBar` s'en retire —
+`isAppPath` l'exclut à juste titre, elle mène à la vitrine — si bien que
+l'espace se consultait comme une page : une pile de liens en haut, rien sous le
+pouce, et le geste le plus fréquent demandait de remonter. `EspaceClientTabBar`
+porte messages, sessions, réservation et compte. La réservation est au milieu et
+en pastille pleine : c'est la seule des quatre qui ne consulte rien — les trois
+autres regardent ce qui existe, celle-là crée. Les deux barres sont mutuellement
+exclusives par construction, chacune ne connaissant que son espace.
+
+**`text-primary` est interdit par un test.** La règle existait dans le système
+— « pour écrire, employer `text-brand`, jamais `text-primary` » — et cinquante-six
+occurrences la violaient déjà du temps de la mangue, où le défaut était seulement
+moins spectaculaire. Le passage au jaune l'a rendu criant : 1,2:1 sur blanc,
+c'est-à-dire invisible, et c'est l'espace client qui l'a révélé. Le test lit les
+sources et non le rendu, parce que c'est la classe qu'on interdit, y compris
+dans une page qui ne l'emploie pas encore.
+
 **La barre d'onglets est posée dans le gabarit racine et décide seule où elle
 n'a rien à faire.** Le critère est `isAppPath` — le même que celui qui répartit
 les chemins entre les deux domaines : pendant une réservation ou dans un espace
@@ -1364,13 +1393,76 @@ Le coût est annoncé **avant** la confirmation, calculé par `decideCancellatio
 — la même fonction pour l'écran et pour la mutation, sinon le bouton et le
 prélèvement finiraient par diverger.
 
+**`espaceClient()` ne passait pas cette règle, et c'était un défaut** trouvé
+en production le 21 août 2026 : il appelait `requireOrganization`, si bien que
+chaque page bâtie dessus — informations, factures, attestations, données
+personnelles, consignes, messages — répondait « cet espace n'est pas le vôtre »
+à un vrai client. Il ne s'était pas vu parce que **les comptes de test portent
+une appartenance**, et parce que `/mon-espace` lit ses réservations par un autre
+chemin. La seule façon de le rencontrer était d'être un client ordinaire.
+
+Ce qui autorise désormais, c'est **le profil** : client cloisonné à
+l'organisation marketplace, profil résolu depuis la session, et lecture des
+seules lignes qui s'y rattachent. « Avoir un profil dans cette organisation »
+est exactement le droit dont ces pages ont besoin. `SANS_ACCES` a donc disparu
+de ce chemin — il n'y a plus de droit à refuser, seulement un profil qui existe
+ou non. **L'espace intervenant garde son contrôle de capacité** : lui a une
+appartenance, c'est elle qui porte `assignment:read:own`, et la retirer
+ouvrirait l'espace à quiconque a un profil. Un test lit la source des deux
+fonctions, la dépendance se réintroduisant d'une ligne sans qu'un test écrit
+avec un compte de test s'en aperçoive.
+
 **L'appartenance ne passe pas par `requireOrganization`**, un client de la
 marketplace n'ayant pas de `Membership` : le profil est résolu depuis la
 session, jamais depuis l'entrée, et une réservation qui ne lui est pas
 rattachée est introuvable — le même message que si elle n'existait pas, pour
 ne pas confirmer un identifiant à un curieux.
 
-**Le chat est rattaché à l'intervention, pas au couple de personnes.** Un
+**Le chat est rattaché au couple, pas à l'intervention.** Il a suivi la
+réservation jusqu'au 21 août 2026, pour une raison qui se tenait — un
+intervenant peut changer d'une semaine sur l'autre. Mais la conséquence était
+qu'un client fidèle ouvrait un fil par semaine, et que retrouver ce qu'on
+s'était dit supposait de se rappeler à quelle réservation on avait écrit. La
+promesse du service étant « la même personne chaque semaine », c'est la
+relation qui dure.
+
+`Conversation` est unique sur (organisation, client, intervenant), et cette
+contrainte fait tout le travail : **changer d'intervenant ouvre un fil neuf sans
+qu'on l'écrive**, le couple changeant, donc la clé. Le remplaçant n'hérite
+d'aucun historique — ce qui protège la vie privée des deux — et l'ancien fil
+reste lisible sans être alimenté. Aucune condition à oublier, c'est le schéma
+qui tient la règle.
+
+**Les événements système sont des notifications, jamais la source de vérité.**
+`MessageKind.SYSTEM`, sans auteur humain — une annulation n'est pas une phrase
+du client, et la lui attribuer ferait lire une phrase de produit comme une
+phrase de personne. Ils portent la réservation qu'ils désignent : si l'horaire
+vivait dans le fil, quelqu'un finirait par l'y lire plutôt que sur la
+réservation, et le fil serait faux au changement suivant.
+
+**Le fil se rafraîchit toutes les trois secondes tant qu'il est ouvert**, et
+s'arrête dès que l'onglet passe à l'arrière-plan. C'est un sondage assumé
+(arbitrage du porteur du projet) : le poussé véritable demanderait soit de
+rouvrir l'accès direct à la base — que `20260820040000_verrouiller_lacces_api` a
+fermé, RLS sans politique et privilèges retirés à `anon`, et notre auth étant
+Auth.js, `auth.uid()` n'existe pas — soit une connexion longue que
+l'hébergement sans serveur tient mal. Le jour où un vrai canal sera branché,
+c'est cette seule fonction qu'il remplacera.
+
+**Le portrait est le seul fichier servi sans signature.** `COFFRES_PUBLICS` ne
+contient que `portraits`, et `estPublic()` garde la frontière : un avatar
+s'affiche dans une liste de fils, un en-tête, une carte — le servir par URL
+signée de soixante secondes obligerait à en engendrer une par image et par
+rendu, et l'image se casserait dans un onglet resté ouvert. Ce qui reste vrai :
+le chemin est engendré, jamais devinable, et un portrait est une photo qu'on
+choisit de montrer. Les photos de mission et les pièces d'identité ne sortent
+jamais sans signature, et `urlPublique()` **lève** sur leur coffre plutôt que de
+se replier en silence.
+
+Le chemin d'un portrait est **stable par personne** : redéposer écrase, sans
+quoi chaque changement laisserait un visage orphelin dans un coffre public.
+
+**L'ancien découpage.** Un
 intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
 personnes mélangerait deux interventions sans rapport. Sans intervenant
 désigné, l'envoi est refusé plutôt que d'écrire à personne.

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { Fil } from "@/app/(app)/intervenant/messages/[bookingId]/fil";
+import { Fil } from "@/app/(app)/intervenant/messages/[conversationId]/fil";
 import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { filDe } from "@/lib/messagerie/conversation";
 import { lireLeFil, MessageRefuseError } from "@/lib/messagerie/intervenant";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
@@ -25,12 +26,12 @@ export const dynamic = "force-dynamic";
 
 export default async function FilPage({
   params,
-}: PageProps<"/intervenant/messages/[bookingId]">) {
-  const { bookingId } = await params;
+}: PageProps<"/intervenant/messages/[conversationId]">) {
+  const { conversationId } = await params;
 
   const user = await getCurrentUser();
   if (!user) {
-    redirect(`/connexion?callbackUrl=/intervenant/messages/${bookingId}`);
+    redirect(`/connexion?callbackUrl=/intervenant/messages/${conversationId}`);
   }
 
   const organizationId = await marketplaceOrganizationId();
@@ -47,7 +48,7 @@ export default async function FilPage({
 
   let messages;
   try {
-    messages = await lireLeFil(db, profil.id, user.id, bookingId);
+    messages = await lireLeFil(db, profil.id, user.id, conversationId);
   } catch (erreur) {
     /*
      * Une intervention qui n'est pas la sienne rend 404, comme si elle
@@ -58,12 +59,23 @@ export default async function FilPage({
     throw erreur;
   }
 
-  const intervention = await db.booking.findFirst({
-    where: { id: bookingId },
+  /*
+   * L'en-tête nomme la personne, plus l'intervention : le fil suit la
+   * relation. La dernière intervention connue reste affichée pour situer —
+   * « Léognan, lundi dernier » — sans faire croire que le fil s'arrête avec
+   * elle.
+   */
+  const fil = await filDe(db, conversationId, {
+    cleanerProfileId: profil.id,
+  });
+  if (!fil) notFound();
+
+  const derniere = await db.booking.findFirst({
+    where: { clientProfileId: fil.clientProfileId },
+    orderBy: { scheduledStart: "desc" },
     select: {
       scheduledStart: true,
       address: { select: { cityName: true } },
-      clientProfile: { select: { user: { select: { name: true } } } },
     },
   });
 
@@ -72,20 +84,20 @@ export default async function FilPage({
       <p className="text-sm">
         <Link
           href="/intervenant/messages"
-          className="text-primary hover:underline"
+          className="text-brand hover:underline"
         >
           ← Mes messages
         </Link>
       </p>
 
       <h1 className="mt-3 font-heading text-2xl font-black tracking-tight">
-        {intervention?.clientProfile.user.name?.split(" ")[0] ?? "Client"}
+        {fil.interlocuteur ?? "Client"}
       </h1>
       <p className="text-sm text-muted-foreground">
-        {intervention?.address.cityName}
+        {derniere?.address.cityName ?? "—"}
       </p>
 
-      <Fil bookingId={bookingId} messages={messages} />
+      <Fil conversationId={conversationId} messages={messages} />
     </main>
   );
 }

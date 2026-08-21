@@ -364,6 +364,67 @@
     line-height: var(--lh-heading);
   }
 
+  /*
+   * **Le retour au clic, sur mobile.**
+   *
+   * Rien ne se passait quand on appuyait : les réinitialisations modernes
+   * neutralisent le halo natif d'Android et d'iOS, et le dépôt ne l'avait
+   * remplacé nulle part. Sur un téléphone, entre le doigt et le premier pixel
+   * de la page suivante, il n'y a alors **aucun signe** qu'on a été entendu —
+   * et on appuie une seconde fois.
+   *
+   * Le halo natif est rendu, teinté de la marque : il apparaît à la pression,
+   * avant toute exécution de JavaScript, ce qu'aucune animation ne sait faire.
+   */
+  a,
+  button,
+  [role="button"],
+  label[for],
+  summary {
+    -webkit-tap-highlight-color: color-mix(
+      in srgb,
+      var(--teal-600) 16%,
+      transparent
+    );
+  }
+
+  /*
+   * Et un affaissement à la pression, **partout et sur tout ce qui se clique**.
+   *
+   * Il était d'abord réservé au tactile, la souris ayant le survol pour dire
+   * qu'un élément est vivant. C'était une demi-mesure : au clic, le survol ne
+   * change rien — il est déjà actif — et la souris n'avait donc pas plus de
+   * retour que le doigt. Un lien qui mène à une page dynamique reste sans
+   * réponse visible le temps de la réponse serveur, quel que soit l'appareil.
+   *
+   * **Deux intensités, et c'est délibéré.** Un lien ne bouge pas : il doit donc
+   * s'assombrir franchement pour qu'on voie qu'il a été pris. Un bouton du
+   * système s'enfonce déjà et change de fond ; y ajouter le même écart
+   * produirait un mouvement double. On l'effleure.
+   *
+   * Aucune transition à l'aller : une pression qui met cent millisecondes à
+   * s'afficher n'est plus un accusé de réception, c'est un retard. Le retour,
+   * lui, s'adoucit — c'est le relâchement qu'on veut voir, pas un clignotement.
+   */
+  a,
+  button,
+  [role="button"],
+  summary {
+    transition: opacity 140ms var(--ease);
+  }
+
+  a:active,
+  [role="button"]:active,
+  summary:active {
+    opacity: 0.65;
+    transition-duration: 0ms;
+  }
+
+  button:not(:disabled):active {
+    opacity: 0.85;
+    transition-duration: 0ms;
+  }
+
   ::selection {
     background: var(--teal-200);
     color: var(--ink-900);
