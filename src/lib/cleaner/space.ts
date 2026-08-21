@@ -44,6 +44,7 @@ async function profilDe(db: TenantClient, user: { id: string }) {
       id: true,
       organizationId: true,
       displayName: true,
+      photoUrl: true,
       status: true,
       siret: true,
       sapDeclarationNumber: true,
@@ -223,6 +224,8 @@ export async function lireParrainage(
 
 export interface DossierView {
   displayName: string;
+  /** Portrait choisi par l'intervenant, ou `null`. */
+  photoUrl: string | null;
   status: string;
   siret: string | null;
   sapDeclarationNumber: string | null;
@@ -240,6 +243,7 @@ export async function lireDossier(
 
   return {
     displayName: profil.displayName,
+    photoUrl: profil.photoUrl,
     status: profil.status,
     siret: profil.siret,
     sapDeclarationNumber: profil.sapDeclarationNumber,

@@ -1462,6 +1462,16 @@ se replier en silence.
 Le chemin d'un portrait est **stable par personne** : redéposer écrase, sans
 quoi chaque changement laisserait un visage orphelin dans un coffre public.
 
+**Un seul écran sert les deux espaces.** `PortraitField` reçoit ses deux
+actions en propriété : un client et un intervenant n'écrivent pas dans la même
+table et ne passent pas par la même vérification d'accès — le client par son
+profil, l'intervenant par `assignment:respond:own`, capacité qu'aucun rôle de
+gestion ne détient. Dupliquer l'écran aurait donné deux politiques qui
+divergent, et c'est celui du client qui aurait fini par accepter ce que celui de
+l'intervenant refuse. Le passage est possible parce qu'une **server action
+traverse la frontière serveur / client**, ce qu'une fonction ordinaire ne sait
+pas faire.
+
 **L'ancien découpage.** Un
 intervenant peut changer d'une semaine sur l'autre, et un fil qui suivrait les
 personnes mélangerait deux interventions sans rapport. Sans intervenant

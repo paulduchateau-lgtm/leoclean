@@ -2,14 +2,10 @@
 
 import { useRef, useState, useTransition } from "react";
 
-import {
-  enregistrerMonPortrait,
-  retirerMonPortrait,
-} from "@/app/(app)/mon-compte/informations/actions";
 import { IntervenantAvatar } from "@/components/intervenant-avatar";
 
 /**
- * Le portrait du compte.
+ * Le portrait du compte, client ou intervenant.
  *
  * **Il n'est jamais obligatoire.** Un avatar retombe sur les initiales partout
  * où il s'affiche, et exiger une photo pour réserver un ménage n'aurait aucun
@@ -19,16 +15,33 @@ import { IntervenantAvatar } from "@/components/intervenant-avatar";
  * Le champ de fichier est masqué derrière un bouton : le champ natif affiche
  * « Aucun fichier sélectionné » dans une langue qui n'est pas toujours la
  * nôtre, et sa zone de clic est trop petite pour un pouce.
+ *
+ * **Les deux actions sont reçues en propriété.** Un client et un intervenant
+ * n'écrivent pas dans la même table et ne passent pas par la même vérification
+ * d'accès : dupliquer l'écran aurait donné deux politiques qui divergent, et
+ * c'est celui du client qui aurait fini par accepter ce que celui de
+ * l'intervenant refuse. Une server action traverse la frontière serveur /
+ * client, ce qu'une fonction ordinaire ne sait pas faire — c'est précisément ce
+ * qui permet de les passer d'ici.
  */
-export function Portrait({
+export function PortraitField({
   nom,
   photoUrl: initiale,
   disponible,
+  legende,
+  enregistrer,
+  retirer,
 }: {
   nom: string;
   photoUrl: string | null;
   /** Le coffre est-il configuré ? Sans lui, on le dit au lieu d'échouer. */
   disponible: boolean;
+  /** Ce que la photo change, dit à celui qui la dépose. */
+  legende: string;
+  enregistrer: (
+    formData: FormData,
+  ) => Promise<{ ok: true; url: string } | { ok: false; message: string }>;
+  retirer: () => Promise<{ ok: true }>;
 }) {
   const [photoUrl, setPhotoUrl] = useState(initiale);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -41,7 +54,7 @@ export function Portrait({
     formData.append("portrait", fichier);
 
     startTransition(async () => {
-      const resultat = await enregistrerMonPortrait(formData);
+      const resultat = await enregistrer(formData);
       if (resultat.ok) setPhotoUrl(resultat.url);
       else setErreur(resultat.message);
     });
@@ -50,10 +63,7 @@ export function Portrait({
   return (
     <section className="space-y-3">
       <p className="font-semibold">Votre photo</p>
-      <p className="text-sm text-muted-foreground">
-        Elle apparaît dans vos conversations, pour que votre intervenant sache à
-        qui il écrit. Elle n&apos;est pas obligatoire.
-      </p>
+      <p className="text-sm text-muted-foreground">{legende}</p>
 
       <div className="flex items-center gap-4">
         <IntervenantAvatar nom={nom} photoUrl={photoUrl} taille={64} />
@@ -91,7 +101,7 @@ export function Portrait({
               disabled={pending}
               onClick={() =>
                 startTransition(async () => {
-                  await retirerMonPortrait();
+                  await retirer();
                   setPhotoUrl(null);
                 })
               }

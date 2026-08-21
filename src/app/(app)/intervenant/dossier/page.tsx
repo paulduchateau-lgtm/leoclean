@@ -7,11 +7,17 @@ import {
   FormulaireIdentifiants,
 } from "@/app/(app)/intervenant/dossier/formulaires";
 import { SiteFooter } from "@/components/site-footer";
+import { PortraitField } from "@/components/portrait-field";
 import { SiteHeader } from "@/components/site-header";
 import { auth } from "@/lib/auth/config";
 import { requireOrganization } from "@/lib/auth/session";
 import { lireDossier, lireParrainage } from "@/lib/cleaner/space";
 import { PARRAINAGE } from "@/lib/facts";
+import {
+  enregistrerMonPortraitIntervenant,
+  retirerMonPortraitIntervenant,
+} from "@/app/(app)/intervenant/dossier/actions";
+import { portraitDisponible } from "@/lib/compte/portrait";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 import { formatEuros } from "@/lib/pricing";
 
@@ -58,6 +64,22 @@ export default async function DossierPage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
         <h1 className="text-3xl font-black tracking-tight">Mon dossier</h1>
         <p className="mt-2 text-muted-foreground">{dossier.displayName}</p>
+
+        {/*
+          Le portrait en tête du dossier : c'est la seule information de cet
+          écran que quelqu'un d'autre voit. Le reste — SIRET, assurance, pièces
+          — sert à vous faire activer ; celle-ci sert à vous faire reconnaître.
+        */}
+        <div className="mt-8">
+          <PortraitField
+            nom={dossier.displayName}
+            photoUrl={dossier.photoUrl}
+            disponible={portraitDisponible()}
+            legende="Elle apparaît sur la confirmation de vos clients et dans vos conversations. Faire entrer quelqu'un chez soi est plus facile quand on l'a vu. Elle n'est pas obligatoire."
+            enregistrer={enregistrerMonPortraitIntervenant}
+            retirer={retirerMonPortraitIntervenant}
+          />
+        </div>
 
         <section className="mt-10">
           <h2 className="text-lg font-extrabold">
