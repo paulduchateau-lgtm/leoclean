@@ -67,6 +67,24 @@ function estEspaceClient(pathname: string): boolean {
   );
 }
 
+/**
+ * L'emplacement d'icône, de hauteur identique pour les quatre onglets.
+ *
+ * La pastille de « Réserver » est plus haute que les trois autres — c'est ce
+ * qui la désigne comme l'action — et sans emplacement commun son libellé
+ * descendait d'autant : quatre mots sur deux lignes de base. Même défaut que
+ * les tuiles du bandeau de chiffres, même remède : on fixe le contenant, pas
+ * le contenu.
+ *
+ * **La hauteur est posée en style, pas en classe.** C'est la seule grandeur du
+ * composant qui doit être identique aux quatre onglets sous peine de rendre le
+ * défaut qu'on corrige ; la confier à une classe utilitaire la rendrait
+ * dépendante de ce que le générateur de CSS a bien voulu émettre, ce qui est
+ * beaucoup de confiance pour quatre lignes de base.
+ */
+const HAUTEUR_ICONE = 36;
+const EMPLACEMENT = "flex items-center justify-center";
+
 export function EspaceClientTabBar() {
   const pathname = usePathname();
   if (!estEspaceClient(pathname)) return null;
@@ -104,11 +122,16 @@ export function EspaceClientTabBar() {
                   }`}
                 >
                   <span
-                    className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                      ici ? "bg-teal-50" : ""
-                    }`}
+                    className={EMPLACEMENT}
+                    style={{ height: HAUTEUR_ICONE }}
                   >
-                    <Icon className="size-5" aria-hidden />
+                    <span
+                      className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
+                        ici ? "bg-teal-50" : ""
+                      }`}
+                    >
+                      <Icon className="size-5" aria-hidden />
+                    </span>
                   </span>
                   {onglet.label}
                 </Link>
@@ -123,8 +146,10 @@ export function EspaceClientTabBar() {
               href="/reserver"
               className="flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-bold text-ink-800"
             >
-              <span className="flex h-9 w-14 items-center justify-center rounded-full bg-primary text-ink-900 shadow-action">
-                <PlusIcon className="size-5" strokeWidth={2.5} aria-hidden />
+              <span className={EMPLACEMENT} style={{ height: HAUTEUR_ICONE }}>
+                <span className="flex h-9 w-14 items-center justify-center rounded-full bg-primary text-ink-900 shadow-action">
+                  <PlusIcon className="size-5" strokeWidth={2.5} aria-hidden />
+                </span>
               </span>
               Réserver
             </Link>
@@ -138,12 +163,14 @@ export function EspaceClientTabBar() {
                 actif(COMPTE.href) ? "text-teal-800" : "text-ink-600"
               }`}
             >
-              <span
-                className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
-                  actif(COMPTE.href) ? "bg-teal-50" : ""
-                }`}
-              >
-                <COMPTE.icon className="size-5" aria-hidden />
+              <span className={EMPLACEMENT} style={{ height: HAUTEUR_ICONE }}>
+                <span
+                  className={`flex h-7 w-12 items-center justify-center rounded-full transition-colors ${
+                    actif(COMPTE.href) ? "bg-teal-50" : ""
+                  }`}
+                >
+                  <COMPTE.icon className="size-5" aria-hidden />
+                </span>
               </span>
               {COMPTE.label}
             </Link>

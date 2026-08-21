@@ -3,6 +3,7 @@ import "server-only";
 import { ForbiddenError } from "@/lib/auth/permissions";
 import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
 import type { AuthenticatedUser } from "@/lib/auth/session";
+import { forOrganization } from "@/lib/db";
 import type { TenantClient } from "@/lib/db";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
@@ -88,24 +89,49 @@ async function ouvrir(
   }
 }
 
+/**
+ * L'espace client — **et il ne passe pas par `requireOrganization`**.
+ *
+ * Il y passait, et c'était un défaut : `requireOrganization` exige une
+ * `Membership` portant la capacité demandée, or **un client de la marketplace
+ * n'en a aucune**. Son compte se crée à la réservation, sans appartenance ; le
+ * dépôt l'écrit noir sur blanc depuis le tunnel pour utilisateur connu. Tout
+ * client réel recevait donc « cet espace n'est pas le vôtre » sur chaque page
+ * bâtie là-dessus — le défaut ne s'était pas vu parce que les comptes de test
+ * portent une appartenance, et parce que `/mon-espace` lui-même lit ses
+ * réservations par un autre chemin.
+ *
+ * **Ce qui autorise ici, c'est le profil.** Le client Prisma est cloisonné à
+ * l'organisation marketplace, et le profil résolu depuis la **session** — jamais
+ * depuis ce que le navigateur envoie. Les appelants ne lisent ensuite que des
+ * lignes rattachées à ce profil ou à cet utilisateur : « avoir un profil dans
+ * cette organisation » est exactement le droit dont ils ont besoin, et rien de
+ * plus large ne leur est accordé.
+ *
+ * `SANS_ACCES` disparaît donc de ce chemin : il n'y a plus de droit à refuser,
+ * seulement un profil qui existe ou non.
+ */
 export async function espaceClient(): Promise<Espace<ProfilClient>> {
-  const acces = await ouvrir("booking:read:own");
-  if ("refus" in acces) return { ouvert: false, refus: acces.refus };
+  const user = await getCurrentUser();
+  if (!user) return { ouvert: false, refus: "NON_CONNECTE" };
 
-  const profil = await acces.db.clientProfile.findFirst({
-    where: { userId: acces.user.id },
+  const organizationId = await marketplaceOrganizationId();
+  const db = forOrganization(organizationId);
+
+  const profil = await db.clientProfile.findFirst({
+    where: { userId: user.id },
     select: { id: true },
   });
 
   /*
-   * Le droit sans le profil est un état réel : une invitation acceptée, une
-   * réservation abandonnée avant écriture. On le distingue de l'absence de
-   * droit parce que la phrase à dire n'est pas la même — « vous n'avez pas
-   * encore réservé » plutôt que « cet espace n'est pas le vôtre ».
+   * L'absence de profil est un état réel : quelqu'un qui se connecte par lien
+   * magique avant d'avoir réservé. La phrase à dire n'est pas la même —
+   * « vous n'avez pas encore réservé » plutôt que « cet espace n'est pas le
+   * vôtre ».
    */
   if (!profil) return { ouvert: false, refus: "SANS_PROFIL" };
 
-  return { ouvert: true, ...acces, profil };
+  return { ouvert: true, user, db, organizationId, profil };
 }
 
 export async function espaceIntervenant(): Promise<Espace<ProfilIntervenant>> {

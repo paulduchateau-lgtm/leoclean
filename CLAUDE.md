@@ -1393,6 +1393,25 @@ Le coût est annoncé **avant** la confirmation, calculé par `decideCancellatio
 — la même fonction pour l'écran et pour la mutation, sinon le bouton et le
 prélèvement finiraient par diverger.
 
+**`espaceClient()` ne passait pas cette règle, et c'était un défaut** trouvé
+en production le 21 août 2026 : il appelait `requireOrganization`, si bien que
+chaque page bâtie dessus — informations, factures, attestations, données
+personnelles, consignes, messages — répondait « cet espace n'est pas le vôtre »
+à un vrai client. Il ne s'était pas vu parce que **les comptes de test portent
+une appartenance**, et parce que `/mon-espace` lit ses réservations par un autre
+chemin. La seule façon de le rencontrer était d'être un client ordinaire.
+
+Ce qui autorise désormais, c'est **le profil** : client cloisonné à
+l'organisation marketplace, profil résolu depuis la session, et lecture des
+seules lignes qui s'y rattachent. « Avoir un profil dans cette organisation »
+est exactement le droit dont ces pages ont besoin. `SANS_ACCES` a donc disparu
+de ce chemin — il n'y a plus de droit à refuser, seulement un profil qui existe
+ou non. **L'espace intervenant garde son contrôle de capacité** : lui a une
+appartenance, c'est elle qui porte `assignment:read:own`, et la retirer
+ouvrirait l'espace à quiconque a un profil. Un test lit la source des deux
+fonctions, la dépendance se réintroduisant d'une ligne sans qu'un test écrit
+avec un compte de test s'en aperçoive.
+
 **L'appartenance ne passe pas par `requireOrganization`**, un client de la
 marketplace n'ayant pas de `Membership` : le profil est résolu depuis la
 session, jamais depuis l'entrée, et une réservation qui ne lui est pas
