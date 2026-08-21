@@ -27,16 +27,18 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Une seule famille de lecture : Alan Sans. Voir plus bas. */
-  --font-sans: var(--font-display);
+  --font-sans: var(--font-sans);
   /* JetBrains Mono : prix, codes postaux, horaires — des chiffres posés. */
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
   /*
-   * **Alan Sans porte tout le site depuis le 21 août 2026** — titres, texte
-   * courant, grands chiffres — à la demande du porteur du projet. Figtree a
-   * donc disparu : la hiérarchie ne vient plus de deux familles qui tranchent
-   * l'une sur l'autre, mais de la taille et de la graisse seules. Une famille
-   * de moins, c'est aussi une requête réseau de moins sur le premier écran.
+   * Alan Sans porte les titres et les grands chiffres ; **Figtree reste la
+   * famille de lecture**. La hiérarchie vient des deux : la famille pour
+   * trancher, la graisse pour graduer.
+   *
+   * Alan Sans a porté tout le site quelques heures le 21 août 2026 — l'essai
+   * a été rendu : une seule famille rendait la lecture plus dense sans rien
+   * gagner en hiérarchie. **Ce qui reste de cet essai, ce sont les graisses
+   * adoucies**, qui étaient la vraie demande.
    *
    * JetBrains Mono reste pour les chiffres posés : elle dit autre chose qu'une
    * graisse, elle aligne.

@@ -2043,16 +2043,21 @@ section ou un hero. Aucun angle vif.
 Gabarits tactiles : bouton primaire à 48 px, champ à 52 px, case à cocher et
 radio à 24 px. Rien qui porte une conversion ne descend sous 44 px.
 
-Typographie : **Alan Sans porte tout le site** depuis le 21 août 2026 — titres,
-texte courant et grands chiffres. **Figtree a disparu** : la hiérarchie ne vient
-plus de deux familles qui tranchent l'une sur l'autre, mais de la taille et de
-la graisse seules. Une famille de moins, c'est aussi une requête réseau de moins
-sur le premier écran. **JetBrains Mono** reste pour les chiffres posés — prix,
-codes postaux, temps de trajet — parce qu'elle dit autre chose qu'une graisse :
-elle aligne. Alan Sans est auto-hébergée (`src/app/fonts/`, `next/font/local`,
-absente de `next/font/google`) et préchargée ; jamais l'`@import` Google Fonts du
-système, qui bloquerait le rendu. **Fraunces a disparu avec la refonte** :
-`.accent-word` ne change plus de plume, il colore le mot en sarcelle.
+Typographie : **Alan Sans** porte les titres et les grands chiffres,
+**Figtree** reste la famille de lecture, **JetBrains Mono** celle des chiffres
+posés — prix, codes postaux, temps de trajet — parce qu'elle dit autre chose
+qu'une graisse : elle aligne. La hiérarchie vient des deux premières : la
+famille pour trancher, la graisse pour graduer. Alan Sans est auto-hébergée
+(`src/app/fonts/`, `next/font/local`, absente de `next/font/google`) et
+préchargée ; jamais l'`@import` Google Fonts du système, qui bloquerait le
+rendu. **Fraunces a disparu avec la refonte** : `.accent-word` ne change plus de
+plume, il colore le mot en sarcelle.
+
+**Alan Sans a porté tout le site quelques heures le 21 août 2026, et l'essai a
+été rendu** : une seule famille rendait la lecture plus dense sans rien gagner
+en hiérarchie. Ce qui reste de ce passage, ce sont les graisses adoucies — qui
+étaient la vraie demande. Le noter ici évite qu'on refasse l'essai en croyant
+l'inventer.
 
 **L'échelle des graisses a été adoucie**, à la demande du porteur du projet :
 Alan Sans en 900 sur un titre de page produisait un bloc noir qui écrasait le
