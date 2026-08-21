@@ -389,17 +389,40 @@
   }
 
   /*
-   * Et un enfoncement, réservé au tactile.
+   * Et un affaissement à la pression, **partout et sur tout ce qui se clique**.
    *
-   * Il ne porte que sur les liens : les boutons du système ont déjà leur état
-   * pressé — enfoncement et changement de fond — et en superposer un second
-   * produirait un double mouvement. `(hover: none)` exclut la souris, où le
-   * survol dit déjà que l'élément est vivant.
+   * Il était d'abord réservé au tactile, la souris ayant le survol pour dire
+   * qu'un élément est vivant. C'était une demi-mesure : au clic, le survol ne
+   * change rien — il est déjà actif — et la souris n'avait donc pas plus de
+   * retour que le doigt. Un lien qui mène à une page dynamique reste sans
+   * réponse visible le temps de la réponse serveur, quel que soit l'appareil.
+   *
+   * **Deux intensités, et c'est délibéré.** Un lien ne bouge pas : il doit donc
+   * s'assombrir franchement pour qu'on voie qu'il a été pris. Un bouton du
+   * système s'enfonce déjà et change de fond ; y ajouter le même écart
+   * produirait un mouvement double. On l'effleure.
+   *
+   * Aucune transition à l'aller : une pression qui met cent millisecondes à
+   * s'afficher n'est plus un accusé de réception, c'est un retard. Le retour,
+   * lui, s'adoucit — c'est le relâchement qu'on veut voir, pas un clignotement.
    */
-  @media (hover: none) and (pointer: coarse) {
-    a:active {
-      opacity: 0.7;
-    }
+  a,
+  button,
+  [role="button"],
+  summary {
+    transition: opacity 140ms var(--ease);
+  }
+
+  a:active,
+  [role="button"]:active,
+  summary:active {
+    opacity: 0.65;
+    transition-duration: 0ms;
+  }
+
+  button:not(:disabled):active {
+    opacity: 0.85;
+    transition-duration: 0ms;
   }
 
   ::selection {
