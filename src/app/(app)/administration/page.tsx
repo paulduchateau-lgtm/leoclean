@@ -267,6 +267,63 @@ export default async function AdministrationPage() {
           </ul>
         )}
       </Section>
+
+      {/*
+        La cinquième liste, et la seule où l'inaction se paie des deux côtés :
+        le client ne voit venir personne, l'intervenant a une mission qu'il ne
+        peut pas honorer. Elle est donc marquée urgente, et ordonnée du plus
+        ancien au plus récent — traiter le plus récent laisse au fond de la pile
+        celui qui traîne depuis trois semaines, et c'est celui-là qu'on perd.
+      */}
+      <Section
+        titre={`Clients en recouvrement (${tableau.clientsEnRecouvrement.length})`}
+        vide="Aucun client en recouvrement."
+        urgence={tableau.clientsEnRecouvrement.length > 0}
+      >
+        <p className="mt-2 max-w-prose text-sm text-muted-foreground">
+          Leurs interventions à venir sont gelées et les intervenants ont été
+          prévenus. Rien n&apos;est annulé : un appel suffit le plus souvent, la
+          cause la plus fréquente étant une carte expirée. Le gel se lève tout
+          seul dès qu&apos;un prélèvement passe.
+        </p>
+        {tableau.clientsEnRecouvrement.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Rien à recouvrer.
+          </p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {tableau.clientsEnRecouvrement.map((client) => (
+              <li
+                key={client.clientProfileId}
+                className="rounded-xl border border-border bg-card p-4"
+              >
+                <p className="font-medium">{client.clientEmail}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {client.organisation} · depuis {client.jours} jour
+                  {client.jours > 1 ? "s" : ""} ({jour.format(client.depuis)}) ·{" "}
+                  {formatEuros(client.montantDuCents)} dus
+                </p>
+                <p className="mt-1 text-sm">
+                  {client.interventionsGelees === 0
+                    ? "Aucune intervention à venir."
+                    : `${client.interventionsGelees} intervention${client.interventionsGelees > 1 ? "s" : ""} gelée${client.interventionsGelees > 1 ? "s" : ""}`}
+                  {client.telephone !== null && (
+                    <>
+                      {" · "}
+                      <a
+                        href={`tel:${client.telephone}`}
+                        className="text-brand underline"
+                      >
+                        {client.telephone}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
     </main>
   );
 }

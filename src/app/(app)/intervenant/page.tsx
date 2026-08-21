@@ -6,6 +6,7 @@ import { MissionProposeeCarte } from "@/app/(app)/intervenant/mission-proposee";
 import { EspaceFerme } from "@/components/espace-ferme";
 import { chargerMissions } from "@/lib/assignments/repository";
 import { espaceIntervenant } from "@/lib/auth/espaces";
+import { VOCABULAIRE_GEL } from "@/lib/paiement/recouvrement";
 import { formatEuros } from "@/lib/pricing";
 
 /**
@@ -156,7 +157,9 @@ export default async function MissionsPage() {
             {aVenir.map((mission) => (
               <li
                 key={mission.assignmentId}
-                className="rounded-2xl border border-border bg-card p-5"
+                className={`rounded-2xl border bg-card p-5 ${
+                  mission.gelee ? "border-warning" : "border-border"
+                }`}
               >
                 <p className="font-heading text-lg font-semibold first-letter:uppercase">
                   {jourHeure.format(new Date(mission.debut))}
@@ -165,6 +168,25 @@ export default async function MissionsPage() {
                   {dureeLisible(mission.dureeMinutes)} ·{" "}
                   {formatEuros(mission.remunerationCents)} pour vous
                 </p>
+
+                {/*
+                  Le gel se lit avant l'adresse et avant le lien vers l'écran
+                  de travail : à 8 h du matin, quelqu'un qui cherche où aller ne
+                  doit pas découvrir en bas de carte qu'il ne faut pas y aller.
+                  Le libellé vient du module pur — le back-office compte les
+                  mêmes gels avec la même règle.
+                */}
+                {mission.gelee && (
+                  <div className="mt-4 rounded-xl border border-warning bg-warning/10 p-4">
+                    <p className="font-semibold">{VOCABULAIRE_GEL.titre}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {VOCABULAIRE_GEL.explication}
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {VOCABULAIRE_GEL.geste}
+                    </p>
+                  </div>
+                )}
 
                 {/*
                  * L'écran de travail est le geste du jour même : il porte le

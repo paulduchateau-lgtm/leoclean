@@ -13,6 +13,7 @@ import type {
   MissionsIntervenant,
 } from "@/lib/assignments/types";
 import type { TenantClient } from "@/lib/db";
+import { interventionGelee } from "@/lib/paiement/recouvrement";
 
 /**
  * Chargement des missions d'un intervenant.
@@ -53,8 +54,13 @@ const SELECTION = {
           accessNotes: true,
         },
       },
+      status: true,
+      scheduledStart: true,
       clientProfile: {
-        select: { user: { select: { name: true } } },
+        select: {
+          recouvrementDepuis: true,
+          user: { select: { name: true } },
+        },
       },
     },
   },
@@ -90,7 +96,12 @@ interface LigneAffectation {
       cityName: string;
       accessNotes: string | null;
     };
-    clientProfile: { user: { name: string | null } };
+    status: string;
+    scheduledStart: Date;
+    clientProfile: {
+      recouvrementDepuis: Date | null;
+      user: { name: string | null };
+    };
   };
 }
 
@@ -205,6 +216,16 @@ export async function chargerMissions(
       accessNotes: adresse.accessNotes,
       clientNotes: ligne.booking.clientNotes,
       clientPrenom: prenomDe(ligne.booking.clientProfile.user.name),
+      /*
+       * Dérivé, jamais stocké. La règle vit dans `paiement/recouvrement.ts`,
+       * qui est pur : le back-office compte les mêmes gels avec la même
+       * fonction, si bien que les deux écrans ne peuvent pas se contredire.
+       */
+      gelee: interventionGelee(
+        ligne.booking.clientProfile,
+        { status: ligne.booking.status, debut: ligne.booking.scheduledStart },
+        now,
+      ),
     });
   }
 

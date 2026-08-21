@@ -1,6 +1,7 @@
 import "server-only";
 
 import { forOrganization, prisma } from "@/lib/db";
+import { leverLeRecouvrement } from "@/lib/paiement/impayes";
 
 import {
   type EtapePaiement,
@@ -89,6 +90,7 @@ export async function traiterLesPaiements(
       completedAt: true,
       grossAmountCents: true,
       cancellationFeeCents: true,
+      clientProfileId: true,
       clientProfile: { select: { stripeCustomerId: true } },
       payments: {
         select: {
@@ -215,7 +217,12 @@ async function preautoriser(reservation: {
 }
 
 async function prelever(
-  reservation: { id: string; organizationId: string; grossAmountCents: number },
+  reservation: {
+    id: string;
+    organizationId: string;
+    grossAmountCents: number;
+    clientProfileId: string;
+  },
   paiement: { id: string; stripePaymentIntentId: string | null },
 ): Promise<void> {
   if (!paiement.stripePaymentIntentId) {
@@ -237,6 +244,23 @@ async function prelever(
       capturedAmountCents: capturee.amount_received,
     },
   });
+
+  /*
+   * Un prélèvement qui passe peut sortir le client du recouvrement — et lui
+   * seul le peut, puisque c'est un échec de prélèvement qui l'y a mis. La
+   * fonction relit l'état complet avant de lever : régler un impayé sur deux
+   * ne dégèle rien.
+   *
+   * Hors du chemin d'erreur de la capture, et volontairement : la capture est
+   * passée chez Stripe, l'argent a bougé. Faire échouer le travail parce qu'un
+   * email n'est pas parti représenterait un prélèvement réussi comme un échec,
+   * et le passage suivant le rejouerait.
+   */
+  try {
+    await leverLeRecouvrement(reservation.clientProfileId);
+  } catch (erreur) {
+    console.error("Levée de recouvrement échouée", erreur);
+  }
 }
 
 async function liberer(

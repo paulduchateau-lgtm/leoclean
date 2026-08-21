@@ -2,6 +2,7 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { lienEspace, notifier } from "@/lib/notifications/envoi";
+import { estEnRecouvrement } from "@/lib/paiement/recouvrement";
 
 import {
   ECHECS_AVANT_SUSPENSION,
@@ -43,6 +44,8 @@ export interface RapportImpayes {
   examines: number;
   relances: number;
   aSuspendre: string[];
+  /** Clients réellement entrés en recouvrement à ce passage. */
+  recouvrementsOuverts: string[];
   echecs: { paymentId: string; motif: string }[];
 }
 
@@ -90,6 +93,7 @@ export async function traiterLesImpayes(
     examines: 0,
     relances: 0,
     aSuspendre: [],
+    recouvrementsOuverts: [],
     echecs: [],
   };
 
@@ -169,6 +173,26 @@ export async function traiterLesImpayes(
     }
   }
 
+  /*
+   * `aSuspendre` était calculée et consommée par personne : aucune réservation
+   * ne se gelait, aucun intervenant n'était prévenu. C'est ici que la promesse
+   * publique — « vous ne vous déplacez pas pour rien » — devient un fait.
+   *
+   * L'échec n'arrête pas le reste : un client dont le recouvrement ne s'ouvre
+   * pas ne doit pas empêcher les relances des autres d'avoir été envoyées.
+   */
+  try {
+    rapport.recouvrementsOuverts = await ouvrirLeRecouvrement(
+      rapport.aSuspendre,
+      maintenant,
+    );
+  } catch (erreur) {
+    rapport.echecs.push({
+      paymentId: "recouvrement",
+      motif: erreur instanceof Error ? erreur.message : "inconnu",
+    });
+  }
+
   return rapport;
 }
 
@@ -194,4 +218,169 @@ function rangDesRelances(
    * à J+1 h 02 ne doit pas se compter comme partie à J+0.
    */
   return RELANCES_ECHEC_JOURS.filter((jours) => ecoules >= jours - 0.5).length;
+}
+
+// ===========================================================================
+// Le recouvrement — ce que `aSuspendre` déclenche enfin
+// ===========================================================================
+
+/**
+ * Formatage d'un créneau pour un email. Le même que celui des annonces.
+ */
+const JOUR_HEURE = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Paris",
+});
+
+/**
+ * Les interventions à venir d'un client, et qui doit s'y rendre.
+ *
+ * Seules les affectations `ACCEPTED` comptent : une proposition n'engage
+ * personne, et prévenir quelqu'un qui n'a pas encore accepté lui apprendrait
+ * un litige qui ne le regarde pas.
+ */
+async function interventionsAVenir(clientProfileId: string, maintenant: Date) {
+  return prisma.booking.findMany({
+    where: {
+      clientProfileId,
+      scheduledStart: { gt: maintenant },
+      status: { in: ["ASSIGNED", "CONFIRMED"] },
+    },
+    select: {
+      id: true,
+      scheduledStart: true,
+      durationMinutes: true,
+      grossAmountCents: true,
+      address: { select: { street: true, cityName: true } },
+      assignments: {
+        where: { status: "ACCEPTED" },
+        select: {
+          cleaner: {
+            select: { displayName: true, user: { select: { email: true } } },
+          },
+        },
+      },
+    },
+  });
+}
+
+/** Prévient chaque intervenant concerné, dans un sens ou dans l'autre. */
+async function prevenirLesIntervenants(
+  clientProfileId: string,
+  type: "intervention-gelee" | "intervention-degelee",
+  maintenant: Date,
+): Promise<void> {
+  const interventions = await interventionsAVenir(clientProfileId, maintenant);
+
+  for (const booking of interventions) {
+    for (const affectation of booking.assignments) {
+      const intervenant = affectation.cleaner;
+      await notifier(intervenant.user.email, {
+        type,
+        prenom: prenomDe(intervenant.displayName),
+        intervention: {
+          quand: JOUR_HEURE.format(booking.scheduledStart),
+          durationMinutes: booking.durationMinutes,
+          adresse: `${booking.address.street}, ${booking.address.cityName}`,
+          grossAmountCents: booking.grossAmountCents,
+        },
+        lienMission: lienEspace(`/intervenant/mission/${booking.id}`),
+      });
+    }
+  }
+}
+
+/**
+ * Fait entrer en recouvrement les clients dont l'impayé a épuisé les relances.
+ *
+ * **La date ne bouge pas si elle existe déjà.** Même règle que
+ * `firstFailedAt` : la remplacer à chaque passage ferait rajeunir
+ * indéfiniment une dette, alors que c'est son ancienneté qui décide de l'ordre
+ * d'appel au back-office. C'est aussi ce qui rend l'opération idempotente —
+ * l'ordonnanceur repasse toutes les heures, et l'intervenant ne doit pas
+ * recevoir vingt-quatre fois le même email par jour.
+ */
+export async function ouvrirLeRecouvrement(
+  bookingIds: readonly string[],
+  maintenant: Date = new Date(),
+): Promise<string[]> {
+  if (bookingIds.length === 0) return [];
+
+  const reservations = await prisma.booking.findMany({
+    where: { id: { in: [...bookingIds] } },
+    select: { clientProfileId: true },
+  });
+
+  const ouverts: string[] = [];
+  const clients = [...new Set(reservations.map((r) => r.clientProfileId))];
+
+  for (const clientProfileId of clients) {
+    /*
+     * `updateMany` filtré sur `null` fait office de verrou : deux passages
+     * concurrents ne peuvent pas ouvrir deux fois le même recouvrement, et
+     * seul celui qui a réellement écrit prévient les intervenants.
+     */
+    const { count } = await prisma.clientProfile.updateMany({
+      where: { id: clientProfileId, recouvrementDepuis: null },
+      data: { recouvrementDepuis: maintenant },
+    });
+    if (count === 0) continue;
+
+    ouverts.push(clientProfileId);
+    await prevenirLesIntervenants(
+      clientProfileId,
+      "intervention-gelee",
+      maintenant,
+    );
+  }
+
+  return ouverts;
+}
+
+/**
+ * Lève le recouvrement d'un client — s'il ne lui reste plus rien d'impayé.
+ *
+ * **Un paiement réussi ne suffit pas.** Un client peut porter deux impayés ;
+ * en régler un et voir tout dégeler lui rendrait ses interventions alors que
+ * l'autre dette court toujours, et l'intervenant partirait sur la foi d'un
+ * message que rien ne justifie. On relit donc l'état complet avant de lever.
+ *
+ * Appelée après chaque prélèvement réussi. Ne lève jamais : une erreur ici ne
+ * doit pas défaire une capture Stripe déjà passée.
+ */
+export async function leverLeRecouvrement(
+  clientProfileId: string,
+  maintenant: Date = new Date(),
+): Promise<boolean> {
+  const client = await prisma.clientProfile.findUnique({
+    where: { id: clientProfileId },
+    select: { recouvrementDepuis: true },
+  });
+  if (!client || !estEnRecouvrement(client)) return false;
+
+  const restant = await prisma.payment.count({
+    where: {
+      booking: { clientProfileId },
+      status: "FAILED",
+      firstFailedAt: { not: null },
+    },
+  });
+  if (restant > 0) return false;
+
+  const { count } = await prisma.clientProfile.updateMany({
+    where: { id: clientProfileId, recouvrementDepuis: { not: null } },
+    data: { recouvrementDepuis: null },
+  });
+  if (count === 0) return false;
+
+  await prevenirLesIntervenants(
+    clientProfileId,
+    "intervention-degelee",
+    maintenant,
+  );
+  return true;
 }

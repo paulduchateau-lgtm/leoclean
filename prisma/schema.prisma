@@ -297,6 +297,13 @@ model ClientProfile {
 
   stripeCustomerId String?
 
+  /// Date d'entrée en recouvrement, `null` quand tout est en ordre.
+  ///
+  /// Le gel des interventions à venir s'en **dérive** : il n'est pas posé
+  /// réservation par réservation. Régulariser lève donc tout d'un coup, sans
+  /// parcours — et aucun oubli ne peut laisser gelé quelqu'un qui a payé.
+  recouvrementDepuis DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -311,6 +318,7 @@ model ClientProfile {
 
   @@unique([organizationId, userId])
   @@index([organizationId])
+  @@index([recouvrementDepuis])
 }
 
 enum CleanerStatus {

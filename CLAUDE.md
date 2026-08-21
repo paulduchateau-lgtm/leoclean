@@ -657,14 +657,45 @@ Les trois garanties, telles qu'elles ont été tranchées :
   Jamais une part du prix de la mission : le barème des CGU est plafonné, et
   annoncer un pourcentage du prix ferait attendre plus que ce qui rentre.
 
-**Le gel de l'intervention suivante est une règle, pas encore un écran.**
-`traiterLesImpayes` envoie les trois relances, calcule la liste `aSuspendre` —
-et **personne ne la consomme** : aucune réservation ne passe en `SUSPENDED`
-pour impayé, aucune notification ne part vers l'intervenant, et le back-office
-ne liste pas les clients en recouvrement. La copy de la page dit donc le gel
-sans promettre d'alerte automatique, et un test le lui interdit. C'est la
-dette la plus visible du lot : la promesse est écrite sur une page publique,
-son exécution est manuelle et sans outil.
+**Le gel est écrit depuis le 21 août 2026**, et il ne pose aucun statut.
+
+`ClientProfile.recouvrementDepuis` porte une date, et **tout le reste s'en
+dérive** : `paiement/recouvrement.ts` est pur et décide, mission par mission,
+si elle est gelée. La tentation était de poser un `SUSPENDED` sur chaque
+réservation à venir ; elle a été écartée parce qu'il aurait fallu parcourir les
+réservations **deux fois** — au gel et au dégel — et qu'un seul oubli au dégel
+laisserait gelé quelqu'un qui vient de payer, c'est-à-dire punir précisément le
+client qui a régularisé. Une date qui retombe à `null` dégèle tout d'un coup,
+sans parcours et sans oubli possible.
+
+Trois arbitrages tiennent dans la fonction pure :
+
+- **Une intervention déjà commencée ne se gèle pas.** Quelqu'un qui est chez le
+  client finit son ménage et est payé pour ; retirer la mission sous ses pieds
+  lui ferait porter un litige qui n'est pas le sien.
+- **La date d'entrée ne bouge pas**, comme `Payment.firstFailedAt` : la
+  remplacer ferait rajeunir indéfiniment une dette, alors que c'est son
+  ancienneté qui décide de l'ordre d'appel.
+- **Un paiement réussi ne lève pas forcément le recouvrement.** `leverLe­
+Recouvrement` relit l'état complet : régler un impayé sur deux ne dégèle
+  rien, sinon l'intervenant partirait sur la foi d'un message que rien ne
+  justifie.
+
+`ouvrirLeRecouvrement` consomme enfin `aSuspendre` et prévient **les
+intervenants affectés** — seules les affectations `ACCEPTED`, une proposition
+n'engageant personne. L'`updateMany` filtré sur `null` fait office de verrou :
+l'ordonnanceur repasse toutes les heures, et personne ne doit recevoir
+vingt-quatre fois le même email. Les deux messages ne disent **rien du
+client** — ni montant, ni ancienneté, ni prix de la mission : ce n'est pas
+l'affaire de l'intervenant, et `recap(intervention, false)` tient déjà la règle
+qui lui interdit de lire le prix client.
+
+Trois surfaces, une seule règle : l'écran de l'intervenant affiche le gel
+**avant l'adresse et avant le lien vers l'écran de travail** — à 8 h du matin,
+celui qui cherche où aller ne doit pas découvrir en bas de carte qu'il ne faut
+pas y aller — le back-office en tient la file, du plus ancien au plus récent, et
+le libellé vient du module pur pour que les deux écrans ne puissent pas se
+contredire.
 
 **Le mot « garanti » est dérivé, pas écrit.** Il n'engage à rien tant qu'on
 n'a pas dit _contre quoi_ il garantit : `canSayGuaranteed()` n'est vrai que si

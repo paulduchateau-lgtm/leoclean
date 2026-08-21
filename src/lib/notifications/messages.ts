@@ -90,6 +90,33 @@ export type Evenement =
       /** Nombre de relances avant suspension, lu du calendrier. */
       avantSuspension: number;
       lienMoyenDePaiement: string;
+    }
+
+  /**
+   * L'intervenant apprend qu'une mission est gelée.
+   *
+   * C'est la contrepartie de la promesse faite sur la page d'offre : « vous ne
+   * vous déplacez pas pour rien ». Sans ce message, le gel n'existerait que
+   * dans une colonne de base et l'intervenant partirait quand même.
+   *
+   * **Rien n'est dit du client.** Ni son nom de famille, ni le montant, ni
+   * depuis quand : ce n'est pas l'affaire de l'intervenant, et la cause la plus
+   * fréquente est une carte expirée. Ce qu'il doit savoir tient en deux
+   * phrases — ne pas partir, et que ce qu'il a déjà fait lui reste dû.
+   */
+  | {
+      type: "intervention-gelee";
+      prenom: string;
+      intervention: Intervention;
+      lienMission: string;
+    }
+
+  /** La situation est réglée, la mission reprend. */
+  | {
+      type: "intervention-degelee";
+      prenom: string;
+      intervention: Intervention;
+      lienMission: string;
     };
 
 export interface Message {
@@ -286,5 +313,41 @@ export function composer(evenement: Evenement): Message {
         },
       };
     }
+
+    case "intervention-gelee":
+      return {
+        objet: "Une de vos missions est gelée",
+        apercu: "Ne vous déplacez pas sans confirmation.",
+        paragraphes: [
+          `Bonjour ${evenement.prenom},`,
+          /*
+           * L'instruction d'abord : c'est la seule chose qui change quelque
+           * chose à sa journée, et un message qui la noie sous le contexte se
+           * lit en diagonale.
+           */
+          `Cette mission est gelée : ${recap(evenement.intervention, false)} Le paiement du client n'est pas régularisé — ne vous y rendez pas tant que nous ne vous avons pas confirmé qu'elle reprend.`,
+          /*
+           * Puis ce qui le rassure, et qui est la promesse de la page d'offre :
+           * ce qu'il a déjà fait lui est dû. Rien sur le client — ni montant,
+           * ni ancienneté : ce n'est pas son affaire, et la cause la plus
+           * fréquente est une carte expirée.
+           */
+          "Rien n'est annulé et votre créneau reste tenu. Ce que vous avez déjà réalisé vous reste dû, quoi qu'il arrive ensuite.",
+          "Nous vous prévenons dès que la situation est réglée.",
+        ],
+        action: { libelle: "Voir la mission", url: evenement.lienMission },
+      };
+
+    case "intervention-degelee":
+      return {
+        objet: "Votre mission reprend",
+        apercu: "La situation est réglée.",
+        paragraphes: [
+          `Bonjour ${evenement.prenom},`,
+          `Le paiement a été régularisé : votre mission reprend normalement. ${recap(evenement.intervention, false)}`,
+          "Vous n'avez rien à faire de plus — le créneau n'avait pas bougé.",
+        ],
+        action: { libelle: "Voir la mission", url: evenement.lienMission },
+      };
   }
 }
