@@ -13,6 +13,7 @@ import type {
   MissionsIntervenant,
 } from "@/lib/assignments/types";
 import type { TenantClient } from "@/lib/db";
+import { consignesLisibles, lireLesConsignes } from "@/lib/logement/consignes";
 import { interventionGelee } from "@/lib/paiement/recouvrement";
 
 /**
@@ -52,6 +53,7 @@ const SELECTION = {
           postalCode: true,
           cityName: true,
           accessNotes: true,
+          consignes: true,
         },
       },
       status: true,
@@ -95,6 +97,7 @@ interface LigneAffectation {
       postalCode: string;
       cityName: string;
       accessNotes: string | null;
+      consignes: unknown;
     };
     status: string;
     scheduledStart: Date;
@@ -216,6 +219,7 @@ export async function chargerMissions(
       accessNotes: adresse.accessNotes,
       clientNotes: ligne.booking.clientNotes,
       clientPrenom: prenomDe(ligne.booking.clientProfile.user.name),
+      consignes: consignesLisibles(lireLesConsignes(adresse.consignes)),
       /*
        * Dérivé, jamais stocké. La règle vit dans `paiement/recouvrement.ts`,
        * qui est pur : le back-office compte les mêmes gels avec la même

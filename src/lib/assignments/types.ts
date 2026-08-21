@@ -74,6 +74,14 @@ export interface MissionAcceptee extends MissionCommune {
   clientNotes: string | null;
   clientPrenom: string | null;
   /**
+   * Les consignes du logement, déjà mises en forme.
+   *
+   * Elles sont là **à la préparation**, pas seulement à l'arrivée : quelqu'un
+   * qui découvre en ouvrant la porte qu'il fallait un produit particulier ne
+   * l'a pas dans son sac. C'est le moment où la consigne sert le plus.
+   */
+  consignes: { rubrique: string; sujet: string; reponse: string }[];
+  /**
    * Le paiement du client n'est pas régularisé : ne pas s'y rendre.
    *
    * Dérivé à la lecture depuis `ClientProfile.recouvrementDepuis`, jamais

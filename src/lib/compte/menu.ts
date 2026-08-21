@@ -62,6 +62,19 @@ export function composerLeMenu(contexte: ContexteCompte): GroupeCompte[] {
   }
 
   const parametres: EntreeCompte[] = [
+    /*
+     * En tête des paramètres, avant même la carte : c'est l'entrée qui change
+     * la prestation elle-même, là où les autres changent l'administratif. Elle
+     * n'est pas conditionnée — quelqu'un qui n'a pas encore d'adresse voit
+     * l'écran le lui dire, ce qui vaut mieux qu'une entrée qui apparaît un jour
+     * sans qu'on sache pourquoi.
+     */
+    {
+      id: "consignes",
+      libelle: "Consignes pour l'intervenant",
+      detail: "Le four, les vitres, vos produits — répondez, on transmet",
+      href: "/mon-espace/consignes",
+    },
     {
       id: "paiement",
       libelle: "Moyens de paiement",

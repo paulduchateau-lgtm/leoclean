@@ -218,6 +218,19 @@ export default async function MissionsPage() {
                       </dd>
                     </div>
                   ) : null}
+                  {mission.consignes.length > 0 ? (
+                    <div>
+                      <dt className="font-medium">Consignes du logement</dt>
+                      <dd className="mt-1 space-y-0.5 text-muted-foreground">
+                        {mission.consignes.map((consigne) => (
+                          <p key={`${consigne.rubrique}-${consigne.sujet}`}>
+                            {consigne.sujet} : {consigne.reponse}
+                          </p>
+                        ))}
+                      </dd>
+                    </div>
+                  ) : null}
+
                   {mission.accessNotes ? (
                     <div>
                       <dt className="text-muted-foreground">Pour entrer</dt>
