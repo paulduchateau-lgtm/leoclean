@@ -1,13 +1,15 @@
 import "server-only";
 
 import type { TenantClient } from "@/lib/db";
+import { afterTaxCreditCents, canShowTaxCredit } from "@/lib/fiscal";
+import { instantDePrelevement } from "@/lib/paiement/calendrier";
 import { SITE } from "@/lib/site";
 
 import { type Intervention } from "./messages";
 import { lienEspace, notifier, notifierPlusieurs } from "./envoi";
 
 /**
- * Les huit moments où le produit prend la parole.
+ * Les moments où le produit prend la parole.
  *
  * Un seul endroit charge ce qu'il faut pour écrire : le message a besoin d'un
  * prénom, d'une heure locale, d'une adresse et d'un montant, et les aller
@@ -16,6 +18,14 @@ import { lienEspace, notifier, notifierPlusieurs } from "./envoi";
  * Chaque fonction est appelée **après** l'écriture qu'elle annonce, hors
  * transaction, et sans être attendue.
  */
+
+/** Le jour seul : une date de prélèvement n'a pas d'heure qui vaille. */
+const JOUR = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  timeZone: "Europe/Paris",
+});
 
 const JOUR_HEURE = new Intl.DateTimeFormat("fr-FR", {
   weekday: "long",
@@ -318,4 +328,78 @@ export const annoncerLArretDeLaRecherche = sansRejet(
 export const rappelerLaVeille = sansRejet(
   "rappelerLaVeille",
   rappelerLaVeilleBrut,
+);
+
+/**
+ * Au client, dès que l'intervention est close — et **avant le prélèvement**.
+ *
+ * C'était le trou le plus visible de la chaîne : le ménage se terminait et le
+ * client n'entendait plus rien jusqu'au débit. Le rapport photo, la notation et
+ * les factures existaient tous, sans que rien ne les annonce.
+ *
+ * L'ordre est décidé : le débit part à H+24, le message part à la clôture, donc
+ * il écrit « nous prélèverons ». `instantDePrelevement` calcule la date plutôt
+ * que la page ne l'écrive — allonger le délai dans le calendrier changerait
+ * alors le mail tout seul, au lieu de le laisser mentir.
+ *
+ * Le crédit d'impôt n'est calculé que si `canShowTaxCredit()` l'autorise. Le
+ * montant existe toujours en base — le dépôt calcule et stocke en toutes
+ * circonstances — mais il n'entre pas dans le message tant que la déclaration
+ * SAP n'est pas obtenue.
+ */
+async function annoncerLaFinDInterventionBrut(
+  db: TenantClient,
+  bookingId: string,
+): Promise<void> {
+  const booking = await db.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      ...SELECTION,
+      scheduledEnd: true,
+      actualMinutes: true,
+      completedAt: true,
+      clientProfileId: true,
+      _count: { select: { photos: true } },
+    },
+  });
+  if (!booking) return;
+
+  /*
+   * Le prochain passage n'est annoncé que s'il est réellement pris : une
+   * réservation confirmée, dans le futur. Annoncer « prochain passage prévu »
+   * sur la foi d'un abonnement dont l'occurrence n'est pas encore engendrée
+   * ferait attendre quelqu'un un jour où personne ne vient.
+   */
+  const suivante = await db.booking.findFirst({
+    where: {
+      clientProfileId: booking.clientProfileId,
+      status: { in: ["ASSIGNED", "CONFIRMED"] },
+      scheduledStart: { gt: booking.scheduledStart },
+    },
+    orderBy: { scheduledStart: "asc" },
+    select: { scheduledStart: true },
+  });
+
+  const finReelle = booking.completedAt ?? booking.scheduledEnd;
+
+  await notifier(booking.clientProfile.user.email, {
+    type: "intervention-terminee",
+    prenom: prenomDe(booking.clientProfile.user.name),
+    intervention: interventionDe(booking),
+    dureeReelleMinutes: booking.actualMinutes ?? booking.durationMinutes,
+    rapportDisponible: booking._count.photos > 0,
+    prelevementLe: JOUR.format(instantDePrelevement(finReelle)),
+    creditImpotCents: canShowTaxCredit()
+      ? afterTaxCreditCents(booking.grossAmountCents)
+      : null,
+    prochaineIntervention:
+      suivante === null ? null : JOUR_HEURE.format(suivante.scheduledStart),
+    lienEspace: lienEspace("/mon-espace"),
+    lienNotation: lienEspace(`/mon-espace/noter?booking=${bookingId}`),
+  });
+}
+
+export const annoncerLaFinDIntervention = sansRejet(
+  "fin d'intervention",
+  annoncerLaFinDInterventionBrut,
 );
