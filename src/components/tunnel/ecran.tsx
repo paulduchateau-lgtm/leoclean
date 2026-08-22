@@ -20,6 +20,61 @@ import type { ReactNode } from "react";
  * fait deux cadres à l'endroit où il n'y a rien d'autre à regarder ; la même
  * carte sur un écran large empêche la ligne de courir sur toute la largeur.
  */
+/**
+ * Chevron de retour et barre de progression, sur une seule ligne.
+ *
+ * Les deux tunnels du site la partagent — candidature et réservation. C'est
+ * l'unique façon d'obtenir qu'ils se ressemblent : le tunnel client portait
+ * une bande de six pastilles nommées, large de 640 pixels, qu'il fallait
+ * pousser du doigt sur un écran de 375. Une progression qu'on fait défiler
+ * n'est plus une progression, c'est un contenu de plus.
+ *
+ * **Le chevron garde sa place quand il n'y a rien à quoi revenir.** Sans cela,
+ * la barre saute de quarante pixels vers la gauche entre le premier écran et
+ * le second, et c'est le seul mouvement de la page.
+ */
+export function EnTeteTunnel({
+  etape,
+  total,
+  onRetour,
+}: {
+  /** Rang de l'écran, à partir de 1. */
+  etape: number;
+  total: number;
+  /** Absent, le chevron ne s'affiche pas — on est au premier écran. */
+  onRetour?: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      {onRetour ? (
+        <button
+          type="button"
+          onClick={onRetour}
+          aria-label="Revenir à l'écran précédent"
+          className="-ml-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-secondary"
+        >
+          <ChevronLeftIcon className="size-6" aria-hidden="true" />
+        </button>
+      ) : (
+        <span aria-hidden="true" className="-ml-2 size-11 shrink-0" />
+      )}
+      <div
+        role="progressbar"
+        aria-valuenow={etape}
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-label={`Étape ${etape} sur ${total}`}
+        className="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
+      >
+        <div
+          className="h-full rounded-full bg-ink-900 transition-[width] duration-300"
+          style={{ width: `${Math.round((etape / total) * 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function EcranTunnel({
   titre,
   sousTitre,
@@ -54,33 +109,7 @@ export function EcranTunnel({
 
   return (
     <div className="w-full sm:rounded-[var(--r-xl)] sm:border sm:border-border sm:bg-card sm:p-8">
-      <div className="flex items-center gap-3">
-        {onRetour ? (
-          <button
-            type="button"
-            onClick={onRetour}
-            aria-label="Revenir à l'écran précédent"
-            className="-ml-2 inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink-700 transition-colors hover:bg-secondary"
-          >
-            <ChevronLeftIcon className="size-6" aria-hidden="true" />
-          </button>
-        ) : (
-          <span aria-hidden="true" className="-ml-2 size-11 shrink-0" />
-        )}
-        <div
-          role="progressbar"
-          aria-valuenow={etape}
-          aria-valuemin={1}
-          aria-valuemax={total}
-          aria-label={`Étape ${etape} sur ${total}`}
-          className="h-1.5 w-full overflow-hidden rounded-full bg-secondary"
-        >
-          <div
-            className="h-full rounded-full bg-ink-900 transition-[width] duration-300"
-            style={{ width: `${Math.round((etape / total) * 100)}%` }}
-          />
-        </div>
-      </div>
+      <EnTeteTunnel etape={etape} total={total} onRetour={onRetour} />
 
       <Titre className="mt-6 font-heading text-3xl font-extrabold text-balance">
         {titre}
@@ -107,6 +136,18 @@ export function EcranTunnel({
  */
 export const CHAMP_DOUX =
   "min-h-14 w-full rounded-[var(--r-l)] border-0 bg-secondary px-4 text-base outline-none placeholder:text-ink-500 focus-visible:ring-2 focus-visible:ring-teal-600";
+
+/**
+ * Le même champ, posé sur un `<Input>` de shadcn.
+ *
+ * Les classes de base du composant sont fusionnées par `tailwind-merge`, qui
+ * les remplace groupe par groupe : `border-0` chasse son `border`, la hauteur
+ * chasse la sienne. Écrire la variante à part plutôt que de modifier `Input`
+ * garde la retouche dans le tunnel — le champ du site entier n'a pas à devenir
+ * celui d'une application mobile.
+ */
+export const CHAMP_DOUX_SHADCN =
+  "min-h-14 rounded-[var(--r-l)] border-0 bg-secondary px-4 text-base placeholder:text-ink-500";
 
 /**
  * Un choix d'un écran de tunnel : la même surface pleine, alignée à gauche.

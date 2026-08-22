@@ -13,17 +13,27 @@ import { SITE } from "@/lib/site";
  *
  * Le nom, lui, est composé plutôt que vectorisé : il reste ainsi sélectionnable,
  * annoncé par un lecteur d'écran, et net à toutes les tailles.
+ *
+ * **La face professionnelle porte « Pro » en pastille, jamais dans le nom.** La
+ * marque s'écrit « Léo Clean » partout où un humain la lit, et la coudre en
+ * « Léo Clean Pro » en ferait une seconde marque à tenir. La pastille dit ce
+ * qu'elle est : la même entreprise, vue de l'autre côté. Elle porte sa propre
+ * menthe quelle que soit la surface — c'est le seul réglage qui vaille aussi
+ * sur le pied de page sarcelle, où le reste du logotype passe au blanc.
  */
 export function Logo({
   href = "/",
   className,
   inverse = false,
+  pro = false,
 }: {
   /** `null` pour un logotype non cliquable, dans le pied de page par exemple. */
   href?: string | null;
   className?: string;
   /** Sur une surface sombre — le pied de page sarcelle — tout passe en blanc. */
   inverse?: boolean;
+  /** Face professionnelle : le nom prend la pastille « Pro ». */
+  pro?: boolean;
 }) {
   const content = (
     <span
@@ -47,6 +57,11 @@ export function Logo({
       <span className="text-xl font-black tracking-[-0.04em] whitespace-nowrap">
         {SITE.name}
       </span>
+      {pro ? (
+        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-extrabold tracking-tight text-ink-900">
+          Pro
+        </span>
+      ) : null}
     </span>
   );
 
@@ -55,7 +70,14 @@ export function Logo({
   }
 
   return (
-    <Link href={href} aria-label={`${SITE.name}, retour à l'accueil`}>
+    <Link
+      href={href}
+      aria-label={
+        pro
+          ? `${SITE.name} Pro, retour à l'accueil professionnel`
+          : `${SITE.name}, retour à l'accueil`
+      }
+    >
       {content}
     </Link>
   );

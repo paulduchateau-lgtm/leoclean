@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeftIcon,
   CalendarPlusIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -25,6 +24,7 @@ import { z } from "zod";
 import { ContactSheet } from "@/components/contact-sheet";
 import { InstallPrompt } from "@/components/install-prompt";
 import { Button } from "@/components/ui/button";
+import { CHAMP_DOUX_SHADCN, EnTeteTunnel } from "@/components/tunnel/ecran";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -232,16 +232,6 @@ const STEP_TITLES: Record<Step, string> = {
   creneau: "Quand voulez-vous que nous venions ?",
   coordonnees: "Comment vous joindre ?",
   recap: "Vérifions votre réservation",
-};
-
-/** Libellé court de chaque étape, pour la barre d'avancement nommée. */
-const STEP_LABELS: Record<Step, string> = {
-  adresse: "Adresse",
-  logement: "Durée",
-  rythme: "Rythme",
-  creneau: "Créneau",
-  coordonnees: "Coordonnées",
-  recap: "Récapitulatif",
 };
 
 const dayFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -1165,7 +1155,9 @@ export function BookingFunnel({
             contenu, et la bande de jours défilante pousse le récapitulatif
             hors de l'écran : le piège que le prototype documente. */}
         <div className="flex min-h-[calc(100svh-11rem)] min-w-0 flex-col">
-          <h2 className="mt-6 text-2xl font-black tracking-tight text-balance">
+          {/* Le même titre que le tunnel de candidature : la famille des
+              titres, en 3xl, adoucie à 700 par les tokens de graisse. */}
+          <h2 className="mt-6 font-heading text-3xl font-extrabold text-balance">
             {STEP_TITLES[step]}
           </h2>
 
@@ -1512,15 +1504,17 @@ function RecapAside({
  * Un seul modèle de navigation à la fois — dans le tunnel, il n'y a ni menu ni
  * liens de contenu, qui ne serviraient qu'à en sortir.
  *
- * La progression est nommée, comme sur le prototype : une pastille par étape,
- * cochée quand l'étape est derrière soi. Les pastilles ne sont pas cliquables
- * — corriger un choix passe par le récapitulatif, qui dit ce qu'on va
- * modifier, quand une pastille ne dirait que où l'on va. Sur un écran étroit,
- * la bande défile horizontalement plutôt que d'empiler six libellés.
+ * **La progression est une barre, et c'est un remplacement, pas un réglage.**
+ * Elle était une bande de six pastilles nommées, larges de 640 pixels, qui
+ * défilait horizontalement sur un écran de 375 : la moitié des étapes était
+ * hors du champ, et il fallait pousser du doigt pour savoir où l'on en était.
+ * Le décompte n'est pas perdu — il est le nom accessible de la barre — mais il
+ * n'occupe plus une ligne de titre à lui seul. `EnTeteTunnel` est la même
+ * pièce que celle du tunnel de candidature : c'est la seule façon d'obtenir
+ * que les deux parcours se ressemblent encore dans six mois.
  *
- * La sarcelle 600 des pastilles cochées porte du blanc : c'est la sarcelle
- * foncée, celle des liens — la règle « jamais de blanc » ne vaut que pour la
- * pleine, à 400.
+ * Les pastilles n'étaient de toute façon pas cliquables — corriger un choix
+ * passe par le récapitulatif, qui dit ce qu'on va modifier.
  */
 function FunnelHeader({
   index,
@@ -1533,83 +1527,7 @@ function FunnelHeader({
 }) {
   return (
     <div>
-      <div className="flex items-center gap-3">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Revenir à l'écran précédent"
-            className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            <ArrowLeftIcon className="size-5" aria-hidden />
-          </button>
-        ) : null}
-        <p className="text-xs tracking-overline text-muted-foreground uppercase">
-          Étape {index + 1} sur {STEPS.length}
-        </p>
-      </div>
-
-      <nav
-        aria-label="Progression de la réservation"
-        className="-mx-6 mt-4 overflow-x-auto px-6"
-      >
-        <ol className="flex min-w-[640px] items-center gap-2">
-          {STEPS.map((entry, position) => {
-            const done = position < index;
-            const current = position === index;
-            return (
-              <li
-                key={entry}
-                aria-current={current ? "step" : undefined}
-                className={`flex items-center gap-2 ${
-                  position < STEPS.length - 1 ? "flex-1" : ""
-                }`}
-              >
-                <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${
-                    done
-                      ? "bg-teal-600 text-white"
-                      : current
-                        ? "bg-teal-100 text-teal-700"
-                        : "bg-ink-100 text-muted-foreground"
-                  }`}
-                  aria-hidden={done ? undefined : true}
-                >
-                  {done ? (
-                    <>
-                      <CheckIcon
-                        className="size-3.5"
-                        strokeWidth={3}
-                        aria-hidden
-                      />
-                      <span className="sr-only">Étape faite : </span>
-                    </>
-                  ) : (
-                    position + 1
-                  )}
-                </span>
-                <span
-                  className={`text-xs whitespace-nowrap ${
-                    current
-                      ? "font-bold text-foreground"
-                      : "font-medium text-muted-foreground"
-                  }`}
-                >
-                  {STEP_LABELS[entry]}
-                </span>
-                {position < STEPS.length - 1 ? (
-                  <span
-                    className={`h-0.5 min-w-3 flex-1 rounded-full ${
-                      done ? "bg-teal-300" : "bg-ink-200"
-                    }`}
-                    aria-hidden
-                  />
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
+      <EnTeteTunnel etape={index + 1} total={STEPS.length} onRetour={onBack} />
 
       {/*
         Le changement d'écran est annoncé aux lecteurs d'écran.
@@ -1997,7 +1915,7 @@ function AddressStep({
             autoComplete="street-address"
             onChange={(event) => setQuery(event.target.value)}
             placeholder={`12 rue des Vignes, ${originCommune?.name ?? "Léognan"}`}
-            className="min-h-12 pl-9"
+            className={`${CHAMP_DOUX_SHADCN} pl-10`}
           />
           {searching ? (
             <Loader2Icon
@@ -2152,7 +2070,7 @@ function ManualAddress({
           value={street}
           onChange={(event) => setStreet(event.target.value)}
           placeholder="12 rue des Vignes"
-          className="mt-2 min-h-12"
+          className={`mt-2 ${CHAMP_DOUX_SHADCN}`}
         />
       </div>
 
@@ -2162,7 +2080,7 @@ function ManualAddress({
           id="manual-commune"
           value={communeSlug}
           onChange={(event) => setCommuneSlug(event.target.value)}
-          className="mt-2 min-h-12 w-full rounded-lg border border-input bg-card px-3 text-base"
+          className={`mt-2 ${CHAMP_DOUX_SHADCN} w-full`}
         >
           {communes.map((entry) => (
             <option key={entry.slug} value={entry.slug}>
@@ -2989,7 +2907,7 @@ function ContactStep({
             autoComplete="given-name"
             value={contact.firstName}
             onChange={(event) => set("firstName")(event.target.value)}
-            className="mt-2 min-h-12"
+            className={`mt-2 ${CHAMP_DOUX_SHADCN}`}
           />
         </div>
         <div>
@@ -3000,7 +2918,7 @@ function ContactStep({
             autoComplete="family-name"
             value={contact.lastName}
             onChange={(event) => set("lastName")(event.target.value)}
-            className="mt-2 min-h-12"
+            className={`mt-2 ${CHAMP_DOUX_SHADCN}`}
           />
         </div>
         <div>
@@ -3011,7 +2929,7 @@ function ContactStep({
             placeholder="06 12 34 56 78"
             value={contact.phone}
             onValueChange={set("phone")}
-            className="mt-2 min-h-12"
+            className={`mt-2 ${CHAMP_DOUX_SHADCN}`}
           />
         </div>
         <div>
@@ -3024,7 +2942,7 @@ function ContactStep({
             inputMode="email"
             value={contact.email}
             onChange={(event) => set("email")(event.target.value)}
-            className="mt-2 min-h-12"
+            className={`mt-2 ${CHAMP_DOUX_SHADCN}`}
           />
         </div>
       </div>

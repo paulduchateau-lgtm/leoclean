@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { FunnelCandidature } from "@/app/rejoindre/funnel";
+import { Logo } from "@/components/brand/logo";
 import { FOURNISSEURS_ACTIFS } from "@/lib/auth/fournisseurs";
 import { COMMUNES } from "@/lib/territory";
 import { pageMetadata } from "@/lib/seo/metadata";
@@ -32,6 +33,19 @@ export const metadata: Metadata = {
 export default function RejoindrePage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8 sm:px-6 sm:py-12">
+      {/*
+       * **La marque, centrée, et rien d'autre au-dessus du tunnel.** Un tunnel
+       * n'a pas d'en-tête — une navigation pendant un parcours propose d'en
+       * sortir — mais une page sans marque ne dit pas chez qui l'on postule,
+       * et c'est la première chose que demande quelqu'un arrivé par une
+       * annonce. Elle ramène à la page qui dit le métier, pas à la vitrine
+       * client : on ne renvoie pas un candidat vers un formulaire de
+       * réservation de ménage.
+       */}
+      <div className="mb-8 flex justify-center">
+        <Logo pro href="/travailler-avec-nous" />
+      </div>
+
       <FunnelCandidature fournisseurs={FOURNISSEURS_ACTIFS} />
 
       {/*
