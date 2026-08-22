@@ -1,3 +1,4 @@
+import { type PointZone, dansLaZone } from "@/lib/availability/zone";
 import { haversineKm } from "@/lib/territory";
 
 /**
@@ -187,4 +188,39 @@ export function resumeDuRayon(carte: Carte, rayonKm: number): string {
     return `Nos ${carte.total} communes sont à moins de ${rayonKm} km de chez vous.`;
   }
   return `${carte.couvertes} de nos ${carte.total} communes sont à moins de ${rayonKm} km de chez vous.`;
+}
+
+/**
+ * Ce que couvre un périmètre, quel qu'il soit.
+ *
+ * Zone dessinée ou rayon : la question posée est la même — « est-ce que je
+ * couvre Cadaujac ? » — et elle doit recevoir une réponse calculée par le même
+ * endroit que celle du moteur. Deux fonctions de couverture, c'est deux
+ * occasions pour l'écran de promettre une commune que le moteur refuse.
+ */
+export function couverture(
+  communes: readonly CommuneCarte[],
+  perimetre:
+    { zone: readonly PointZone[] } | { centre: Point; rayonKm: number },
+): { commune: CommuneCarte; couverte: boolean; km: number | null }[] {
+  if ("zone" in perimetre) {
+    return communes.map((commune) => ({
+      commune,
+      couverte: dansLaZone(commune, perimetre.zone),
+      /* Une distance au centre n'a pas de sens dans une zone dessinée : elle
+         n'a pas de centre, et en inventer un ferait afficher un chiffre que
+         rien ne soutient. */
+      km: null,
+    }));
+  }
+
+  return communes.map((commune) => {
+    const km = haversineKm(
+      perimetre.centre.lat,
+      perimetre.centre.lng,
+      commune.lat,
+      commune.lng,
+    );
+    return { commune, couverte: km <= perimetre.rayonKm, km };
+  });
 }

@@ -8,6 +8,7 @@ import { EspaceFerme } from "@/components/espace-ferme";
 import { espaceIntervenant } from "@/lib/auth/espaces";
 import { RAYON_DEFAUT_KM } from "@/lib/availability/rayon";
 import type { Jour, Plage } from "@/lib/availability/semaine";
+import { lireLaZone } from "@/lib/availability/zone";
 
 /**
  * Les heures déclarées d'un intervenant.
@@ -58,10 +59,14 @@ export default async function DisponibilitesPage() {
    * anciennes restent en base pour expliquer, plus tard, pourquoi telle mission
    * avait été attribuée à telle personne.
    */
-  const profilComplet = await db.cleanerProfile.findUnique({
+  /* `findFirst` plutôt que `findUnique` : le client cloisonné ajoute
+     `organizationId` au filtre, que `findUnique` n'accepte pas parmi ses
+     critères. */
+  const profilComplet = await db.cleanerProfile.findFirst({
     where: { id: profil.id },
     select: {
       serviceRadiusKm: true,
+      serviceAreaPolygon: true,
       homeAddress: { select: { lat: true, lng: true } },
     },
   });
@@ -98,9 +103,14 @@ export default async function DisponibilitesPage() {
         <h2 id="ou" className="font-heading text-xl font-extrabold">
           Où j&apos;interviens
         </h2>
+        <p className="mt-2 text-pretty text-muted-foreground">
+          Dessinez votre zone, ou gardez un rayon autour de chez vous. Au-delà,
+          aucune mission ne vous est proposée.
+        </p>
         <div className="mt-4">
           <RayonSection
             rayonInitial={profilComplet?.serviceRadiusKm ?? RAYON_DEFAUT_KM}
+            zoneInitiale={lireLaZone(profilComplet?.serviceAreaPolygon)}
             domicile={
               profilComplet?.homeAddress
                 ? {

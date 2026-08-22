@@ -2,6 +2,8 @@ import "server-only";
 
 import type { TenantClient } from "@/lib/db";
 
+import { lireLaZone } from "../availability/zone";
+
 import { computeAvailability } from "./availability";
 import type { Interval } from "./intervals";
 import type { CleanerSchedule, RoundStop } from "./slots";
@@ -157,6 +159,10 @@ export async function loadCleanerSchedules(
         : null,
       maxTravelMinutes: cleaner.maxTravelMinutes,
       serviceRadiusKm: cleaner.serviceRadiusKm,
+      /* La colonne est du JSON libre : on la relit par le module pur plutôt
+         que de la typer par assertion — une zone mal formée doit se replier
+         sur le rayon, pas faire échouer une recherche de créneaux. */
+      serviceArea: lireLaZone(cleaner.serviceAreaPolygon),
       availability,
       stops,
       ratingAverage: cleaner.ratingAverage,

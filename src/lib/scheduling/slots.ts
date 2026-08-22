@@ -7,6 +7,7 @@ import {
   geometricTravelMatrix,
   roundTravelBuffer,
 } from "./travel";
+import { type PointZone, dansLaZone } from "../availability/zone";
 import { haversineKm } from "../territory";
 import { parisDayKey } from "../time";
 
@@ -45,6 +46,13 @@ export interface CleanerSchedule {
    * d'actif.
    */
   serviceRadiusKm?: number | null;
+  /**
+   * Zone dessinée à la main. Elle l'emporte sur le rayon quand elle existe.
+   *
+   * Un cercle ne décrit pas un territoire : il traverse une forêt, une rocade,
+   * un bras de Garonne. Le rayon reste le défaut de ceux qui n'ont rien tracé.
+   */
+  serviceArea?: readonly PointZone[] | null;
   /** Plages libres, telles que renvoyées par `computeAvailability`. */
   availability: readonly Interval[];
   /** Missions déjà attribuées, dans l'ordre chronologique. */
@@ -186,7 +194,7 @@ function stopAfter(
 }
 
 /**
- * Cette mission tombe-t-elle hors du rayon d'action déclaré ?
+ * Cette mission tombe-t-elle hors du périmètre déclaré ?
  *
  * **Le rayon décide avant tout le reste.** Il n'exprime pas une contrainte de
  * tournée mais un refus : quelqu'un qui a tracé vingt kilomètres autour de
@@ -202,9 +210,18 @@ function stopAfter(
  * les tampons de trajet.
  */
 export function horsDuRayon(
-  schedule: Pick<CleanerSchedule, "homePoint" | "serviceRadiusKm">,
+  schedule: Pick<
+    CleanerSchedule,
+    "homePoint" | "serviceRadiusKm" | "serviceArea"
+  >,
   destination: GeoPoint,
 ): boolean {
+  /* Une zone dessinée se suffit à elle-même : elle ne dépend pas du domicile,
+     et elle exprime déjà ce que le rayon approximait. */
+  if (schedule.serviceArea && schedule.serviceArea.length >= 3) {
+    return !dansLaZone(destination, schedule.serviceArea);
+  }
+
   const rayon = schedule.serviceRadiusKm;
   if (!schedule.homePoint || rayon === null || rayon === undefined) {
     return false;

@@ -694,3 +694,70 @@ describe("rayon d'action", () => {
     ).toBe(true);
   });
 });
+
+describe("zone dessinée", () => {
+  /*
+   * Un cercle ne décrit pas un territoire : il traverse une forêt, une
+   * rocade, un bras de Garonne. La zone l'emporte donc quand elle existe — et
+   * c'est le seul point où les deux réglages pourraient se contredire.
+   */
+  const CARRE_OUEST = [
+    { lat: 44.6, lng: -0.8 },
+    { lat: 44.6, lng: -0.6 },
+    { lat: 44.85, lng: -0.6 },
+    { lat: 44.85, lng: -0.8 },
+  ];
+
+  it("l'emporte sur le rayon, dans les deux sens", () => {
+    const bordeaux = { lat: 44.8378, lng: -0.5792 }; // À l'est du carré.
+
+    // Rayon large, zone qui exclut : la zone tranche.
+    expect(
+      horsDuRayon(
+        {
+          homePoint: point("leognan"),
+          serviceRadiusKm: 50,
+          serviceArea: CARRE_OUEST,
+        },
+        bordeaux,
+      ),
+    ).toBe(true);
+
+    // Rayon minuscule, zone qui inclut : la zone tranche aussi.
+    expect(
+      horsDuRayon(
+        {
+          homePoint: point("leognan"),
+          serviceRadiusKm: 1,
+          serviceArea: CARRE_OUEST,
+        },
+        point("leognan"),
+      ),
+    ).toBe(false);
+  });
+
+  it("retombe sur le rayon quand la zone n'est pas une surface", () => {
+    // Deux points ne délimitent rien : refuser tout serait retirer quelqu'un
+    // de la circulation sur une donnée d'affichage.
+    expect(
+      horsDuRayon(
+        {
+          homePoint: point("leognan"),
+          serviceRadiusKm: 50,
+          serviceArea: CARRE_OUEST.slice(0, 2),
+        },
+        { lat: 44.8378, lng: -0.5792 },
+      ),
+    ).toBe(false);
+  });
+
+  it("s'applique sans domicile connu, contrairement au rayon", () => {
+    // Une zone dessinée ne dépend pas d'un point de départ : elle se suffit.
+    expect(
+      horsDuRayon(
+        { homePoint: null, serviceRadiusKm: 5, serviceArea: CARRE_OUEST },
+        { lat: 48.8566, lng: 2.3522 },
+      ),
+    ).toBe(true);
+  });
+});

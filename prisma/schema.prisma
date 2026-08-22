@@ -414,6 +414,19 @@ model CleanerProfile {
   /// refuser par défaut retirerait de la circulation un intervenant actif.
   serviceRadiusKm Int @default(20)
 
+  /// Zone dessinée à la main, `[{ lat, lng }, …]`, ou `null`.
+  ///
+  /// **Elle l'emporte sur le rayon quand elle existe.** Un cercle ne décrit
+  /// pas un territoire : il traverse une forêt, une rocade, un bras de
+  /// Garonne. Dessiner permet de dire « oui jusqu'ici, non au-delà » là où le
+  /// rayon oblige à choisir entre trop et pas assez.
+  ///
+  /// En `Json` et non en géométrie PostGIS : le filtre est appliqué dans le
+  /// moteur de créneaux, qui est pur et travaille en mémoire — une colonne
+  /// géographique obligerait à interroger la base au milieu d'un calcul qui
+  /// n'en interroge aucune, et Prisma ne sait de toute façon pas la lire.
+  serviceAreaPolygon Json?
+
   /// Agrégats dénormalisés, recalculés à la clôture d'une mission. Ils servent
   /// au score d'attribution et à l'affichage ; la vérité reste dans Review et
   /// Assignment.
