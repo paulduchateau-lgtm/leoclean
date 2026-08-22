@@ -114,6 +114,12 @@ export default async function AdministrationPage() {
         >
           Réclamations →
         </Link>
+        <Link
+          href="/administration/intervenants"
+          className="text-brand hover:underline"
+        >
+          Comptes intervenants →
+        </Link>
       </p>
       <p className="mt-3 max-w-prose text-muted-foreground">
         Quatre situations que rien ne rattrape tout seul. Les trois premières se
