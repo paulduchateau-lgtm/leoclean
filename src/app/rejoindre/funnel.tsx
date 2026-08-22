@@ -89,6 +89,8 @@ export function FunnelCandidature({
   const [reponses, setReponses] = useState<Record<string, string>>({});
   const [erreur, setErreur] = useState<string | null>(null);
   const [issue, setIssue] = useState<"ouvert" | null>(null);
+  /* Le lien a-t-il été demandé ? Sans envoi, « je n'ai rien reçu » n'a pas de sens. */
+  const [lienDemande, setLienDemande] = useState(false);
   /*
    * Commune tapée à la main, quand elle n'est pas dans le référentiel.
    * Habiter ailleurs n'empêche pas de travailler ici : la commune sert au
@@ -122,16 +124,36 @@ export function FunnelCandidature({
            * l'adresse, on dit à quoi le lien sert, et on offre de le renvoyer :
            * un email qui n'arrive pas ferme le parcours entier.
            */}
+          {/*
+            **Le choix de la porte, avant tout envoi.** L'écran annonçait un
+            lien déjà parti ; il propose maintenant, et n'envoie que si l'on
+            choisit l'email. Recevoir un lien à usage unique quand on vient
+            d'entrer par Google ferait douter du chemin qu'on a pris.
+          */}
           <p className="mt-2 text-pretty text-muted-foreground">
-            <strong className="text-foreground">
-              Ouvrez le lien que nous venons d&apos;envoyer à {email}
-            </strong>{" "}
-            : c&apos;est lui qui vous donne accès à votre dossier, et c&apos;est
-            ainsi qu&apos;on s&apos;assure que personne d&apos;autre n&apos;y
-            dépose de documents à votre place.
+            {lienDemande ? (
+              <>
+                <strong className="text-foreground">
+                  Ouvrez le lien que nous venons d&apos;envoyer à {email}
+                </strong>{" "}
+                : c&apos;est lui qui vous donne accès à votre dossier, et
+                c&apos;est ainsi qu&apos;on s&apos;assure que personne
+                d&apos;autre n&apos;y dépose de documents à votre place.
+              </>
+            ) : (
+              <>
+                Il reste à vous identifier, une fois : c&apos;est ce qui
+                garantit que personne d&apos;autre ne dépose de documents à
+                votre place.
+              </>
+            )}
           </p>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div
+            className={`mt-4 flex flex-wrap items-center gap-3 ${
+              lienDemande ? "" : "hidden"
+            }`}
+          >
             <Button
               type="button"
               variant="outline"
@@ -170,16 +192,29 @@ export function FunnelCandidature({
             Le rattachement fonctionne pareil : ces fournisseurs vérifient
             l'adresse avant de la transmettre.
           */}
-          {fournisseurs.length > 0 ? (
-            <div className="mt-5 border-t border-success/30 pt-5">
-              <p className="mb-3 text-sm text-muted-foreground">
-                Ou entrez directement, sans passer par votre messagerie :
-              </p>
+          {fournisseurs.length > 0 && !lienDemande ? (
+            <div className="mt-5 space-y-3">
               <BoutonsSociaux
                 fournisseurs={fournisseurs}
                 callbackUrl="/rejoindre/dossier"
                 separateur={false}
               />
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  startTransition(async () => {
+                    await requestMagicLink({
+                      email,
+                      callbackUrl: "/rejoindre/dossier",
+                    });
+                    setLienDemande(true);
+                  })
+                }
+                className="min-h-12 w-full rounded-full border-2 border-border bg-card px-5 font-bold transition-colors hover:border-teal-300 hover:bg-teal-50 disabled:opacity-50"
+              >
+                Recevoir un lien par email
+              </button>
             </div>
           ) : null}
         </div>
@@ -350,12 +385,24 @@ export function FunnelCandidature({
                 email: adresse,
                 website: String(donnees.get("website") ?? ""),
                 renderedAt: affiche,
+                /*
+                 * Sans fournisseur social, le lien est la seule porte : on
+                 * l'envoie tout de suite plutôt que de faire cliquer pour
+                 * obtenir ce qu'on aurait donné de toute façon.
+                 */
+                envoyerLeLien: fournisseurs.length === 0,
               });
 
               if (!resultat.ok) {
                 setErreur(resultat.error);
                 return;
               }
+              /*
+               * Sans fournisseur social, le lien vient de partir avec
+               * l'ouverture : l'écran doit le dire, sinon il propose de
+               * s'identifier alors que le mail est déjà en route.
+               */
+              if (fournisseurs.length === 0) setLienDemande(true);
               setIssue("ouvert");
             });
           }}

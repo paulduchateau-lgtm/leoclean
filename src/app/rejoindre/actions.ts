@@ -74,6 +74,14 @@ const eligibiliteSchema = z.object({
       "Ce numéro ne semble pas valide. Exemple : 06 12 34 56 78.",
     ),
   email: z.email(),
+  /**
+   * Faut-il envoyer le lien de reprise tout de suite ?
+   *
+   * Faux quand l'écran propose d'abord un fournisseur social : le lien ne sert
+   * alors à rien, et il partirait dans le dos de quelqu'un qui a choisi une
+   * autre porte.
+   */
+  envoyerLeLien: z.boolean().default(false),
 
   website: z.string().max(0).optional(),
   renderedAt: z.coerce.number().optional(),
@@ -147,19 +155,29 @@ export const ouvrirUnDossier = publicAction(
     });
 
     /*
-     * Le lien magique part tout de suite : c'est lui qui permet de reprendre
-     * depuis un autre appareil, et c'est la seule chose qui rattrape un
-     * abandon. Son échec ne fait pas échouer l'ouverture du dossier.
+     * **Le lien ne part plus systématiquement**, et c'est un arbitrage du
+     * porteur du projet : quelqu'un qui va entrer par Google n'a que faire d'un
+     * email à usage unique, et en recevoir un le ferait douter du chemin qu'il
+     * vient de prendre. L'écran offre donc le choix d'abord, et n'envoie que
+     * si l'on choisit l'email.
+     *
+     * Le repli tient : sans fournisseur social configuré, l'écran demande
+     * l'envoi immédiatement, et le parcours est celui d'avant.
+     *
+     * Son échec ne fait jamais échouer l'ouverture du dossier — c'est le
+     * dossier qui compte, le lien n'est qu'un moyen d'y revenir.
      */
     let lienEnvoye = false;
-    try {
-      await sendMagicLink({
-        email: input.email.toLowerCase(),
-        callbackUrl: "/rejoindre/dossier",
-      });
-      lienEnvoye = true;
-    } catch (erreur) {
-      console.error("Lien de reprise de candidature non envoyé", erreur);
+    if (input.envoyerLeLien) {
+      try {
+        await sendMagicLink({
+          email: input.email.toLowerCase(),
+          callbackUrl: "/rejoindre/dossier",
+        });
+        lienEnvoye = true;
+      } catch (erreur) {
+        console.error("Lien de reprise de candidature non envoyé", erreur);
+      }
     }
 
     void tracer(

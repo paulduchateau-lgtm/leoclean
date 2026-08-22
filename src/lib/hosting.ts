@@ -41,7 +41,17 @@ function matches(prefixes: readonly string[], pathname: string): boolean {
  * à chaque face sa propre session — ce qui est le cloisonnement demandé, et
  * non un contournement.
  */
-const NEUTRAL_PREFIXES = ["/connexion", "/api/auth"] as const;
+const NEUTRAL_PREFIXES = [
+  "/connexion",
+  "/api/auth",
+  /*
+   * Le détour par le mot de passe suit le lien magique, donc l'hôte qui l'a
+   * servi. Le rediriger ailleurs enverrait la personne sur un domaine où son
+   * cookie de session n'existe pas — elle se retrouverait déconnectée à la
+   * seconde où elle vient de prouver qui elle est.
+   */
+  "/definir-mot-de-passe",
+] as const;
 
 /** Ces chemins sont servis partout : ils ne se redirigent jamais. */
 export function isNeutralPath(pathname: string): boolean {
