@@ -6,13 +6,14 @@ import { useState, useTransition } from "react";
 
 import { enregistrerSemaine } from "@/app/(app)/intervenant/disponibilites/actions";
 import { Button } from "@/components/ui/button";
-import { CHAMP_DOUX } from "@/components/tunnel/ecran";
+import { PlageSlider } from "@/components/espace-pro/plage-slider";
 import { majorationDuJourSemaine } from "@/lib/pricing/majorations";
 import {
   JOURS,
   type Jour,
   MESSAGES,
   PAS_MINUTES,
+  PLAGE_MINIMALE_MINUTES,
   type Plage,
   heureLisible,
   totalHebdomadaireMinutes,
@@ -35,38 +36,15 @@ import {
  * grille, jamais d'un libellé recopié.
  */
 
-/** Choix d'heures, du plus tôt au plus tard, par demi-heure. */
-const HEURES = Array.from(
-  { length: (22 - 6) * (60 / PAS_MINUTES) + 1 },
-  (_, index) => 6 * 60 + index * PAS_MINUTES,
-);
-
-function Selecteur({
-  value,
-  onChange,
-  label,
-}: {
-  value: number;
-  onChange: (minute: number) => void;
-  label: string;
-}) {
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className={`${CHAMP_DOUX} min-h-12 w-auto`}
-      >
-        {HEURES.map((minute) => (
-          <option key={minute} value={minute}>
-            {heureLisible(minute)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+/**
+ * Bornes du rail, en minutes depuis minuit.
+ *
+ * 6 h – 22 h : au-delà, les créneaux proposés au client n'existent pas, et un
+ * rail qui court sur vingt-quatre heures rend chaque demi-heure imprécise à
+ * régler au doigt.
+ */
+const RAIL_MIN = 6 * 60;
+const RAIL_MAX = 22 * 60;
 
 export function SemaineForm({ initiales }: { initiales: Plage[] }) {
   const router = useRouter();
@@ -78,11 +56,18 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
   const anomalies = verifierSemaine(plages);
   const total = totalHebdomadaireMinutes(plages);
 
-  function modifier(index: number, champ: keyof Plage, valeur: number) {
+  /*
+   * Les deux bornes bougent ensemble.
+   *
+   * Le curseur les rend indissociables : pousser le début au-delà de la fin
+   * est un geste que le rail permet, et l'écrêter dans le composant plutôt
+   * qu'ici produirait un état intermédiaire invalide le temps d'un rendu.
+   */
+  function modifierLa(index: number, debutMinute: number, finMinute: number) {
     setMessage(null);
     setPlages((actuelles) =>
       actuelles.map((plage, position) =>
-        position === index ? { ...plage, [champ]: valeur } : plage,
+        position === index ? { ...plage, debutMinute, finMinute } : plage,
       ),
     );
   }
@@ -157,32 +142,36 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
                 Vous ne travaillez pas ce jour-là.
               </p>
             ) : (
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3 space-y-4">
                 {duJour.map(({ plage, index }) => (
-                  <li key={index} className="flex flex-wrap items-center gap-2">
-                    <Selecteur
-                      label={`Début de la plage du ${nom.toLowerCase()}`}
-                      value={plage.debutMinute}
-                      onChange={(minute) =>
-                        modifier(index, "debutMinute", minute)
-                      }
+                  <li key={index}>
+                    <div className="flex items-center justify-between gap-3">
+                      {/* L'heure se lit au-dessus du rail, pas dans une
+                          infobulle : c'est la valeur qu'on règle, et elle doit
+                          être visible pendant qu'on la règle. */}
+                      <p className="font-mono text-base font-bold">
+                        {heureLisible(plage.debutMinute)} –{" "}
+                        {heureLisible(plage.finMinute)}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => retirer(index)}
+                        aria-label={`Retirer cette plage du ${nom.toLowerCase()}`}
+                      >
+                        <TrashIcon aria-hidden />
+                      </Button>
+                    </div>
+                    <PlageSlider
+                      nomDuJour={nom}
+                      min={RAIL_MIN}
+                      max={RAIL_MAX}
+                      pas={PAS_MINUTES}
+                      minimum={PLAGE_MINIMALE_MINUTES}
+                      debutMinute={plage.debutMinute}
+                      finMinute={plage.finMinute}
+                      onChange={(debut, fin) => modifierLa(index, debut, fin)}
                     />
-                    <span className="text-muted-foreground">à</span>
-                    <Selecteur
-                      label={`Fin de la plage du ${nom.toLowerCase()}`}
-                      value={plage.finMinute}
-                      onChange={(minute) =>
-                        modifier(index, "finMinute", minute)
-                      }
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => retirer(index)}
-                      aria-label={`Retirer cette plage du ${nom.toLowerCase()}`}
-                    >
-                      <TrashIcon aria-hidden />
-                    </Button>
                   </li>
                 ))}
               </ul>
