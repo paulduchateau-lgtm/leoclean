@@ -31,29 +31,39 @@ export const metadata: Metadata = {
 
 export default function RejoindrePage() {
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-      <h1 className="font-heading text-4xl font-black tracking-tight text-balance">
-        Des missions à moins de vingt minutes de chez vous
-      </h1>
+    <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8 sm:px-6 sm:py-12">
+      <FunnelCandidature fournisseurs={FOURNISSEURS_ACTIFS} />
 
-      <p className="mt-5 max-w-prose text-lg text-pretty text-muted-foreground">
-        Le premier poste de perte de revenu d&apos;un intervenant à domicile
-        n&apos;est pas le tarif horaire, c&apos;est le trajet non payé et les
-        trous de planning. Nos {COMMUNES.length} communes tiennent dans un
-        mouchoir : une journée remplie sans la passer en voiture.
-      </p>
+      {/*
+       * **L'argument passe sous le tunnel, il ne le précède plus.** Il tenait
+       * cinq cents pixels en tête d'écran, si bien que la première question
+       * n'était pas visible sans défiler — sur un parcours qui se joue au
+       * pouce, c'est la moitié des gens qui ne voient jamais qu'on leur
+       * demandait quelque chose. Le plaidoyer complet vit sur
+       * `/travailler-avec-nous`, qui est la page faite pour ça ; ce qui reste
+       * ici répond aux deux objections qui arrêtent pendant le parcours.
+       */}
+      <section className="mt-12 grid gap-4">
+        <div className="rounded-[var(--r-l)] bg-secondary p-5">
+          <p className="font-semibold">Des missions à moins de vingt minutes</p>
+          <p className="mt-1 text-pretty text-muted-foreground">
+            Le premier poste de perte de revenu d&apos;un intervenant à domicile
+            n&apos;est pas le tarif horaire, c&apos;est le trajet non payé et
+            les trous de planning. Nos {COMMUNES.length} communes tiennent dans
+            un mouchoir : une journée remplie sans la passer en voiture.
+          </p>
+        </div>
 
-      <div className="mt-8 rounded-2xl border border-border bg-secondary/40 p-5">
-        <p className="font-semibold">Vous n&apos;avez pas de statut ?</p>
-        <p className="mt-1 text-muted-foreground">
-          Ce n&apos;est pas un obstacle. C&apos;est gratuit à créer, il faut
-          compter une quinzaine de minutes de démarches et une à trois semaines
-          d&apos;attente — et on garde vos missions pendant ce temps. La moitié
-          des gens qui nous rejoignent passent par là.
-        </p>
-      </div>
-
-      <FunnelCandidature className="mt-10" fournisseurs={FOURNISSEURS_ACTIFS} />
+        <div className="rounded-[var(--r-l)] bg-secondary p-5">
+          <p className="font-semibold">Vous n&apos;avez pas de statut ?</p>
+          <p className="mt-1 text-pretty text-muted-foreground">
+            Ce n&apos;est pas un obstacle. C&apos;est gratuit à créer, il faut
+            compter une quinzaine de minutes de démarches et une à trois
+            semaines d&apos;attente — et on garde vos missions pendant ce temps.
+            La moitié des gens qui nous rejoignent passent par là.
+          </p>
+        </div>
+      </section>
     </main>
   );
 }

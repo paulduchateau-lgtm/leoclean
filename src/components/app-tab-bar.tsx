@@ -11,7 +11,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import dynamic from "next/dynamic";
-import { isAppPath } from "@/lib/hosting";
+import { porteLaCoqueVitrine } from "@/lib/hosting";
 
 /**
  * Le panneau de contact n'est téléchargé qu'à l'ouverture.
@@ -37,10 +37,11 @@ const ContactSheet = dynamic(() =>
  * serait ajouter un écran entre la question et la réponse, alors que la
  * réponse tient en trois liens. Elle ouvre le panneau de contact.
  *
- * **Absente des espaces applicatifs.** `isAppPath` couvre le tunnel, la
- * connexion et les espaces connectés : pendant une réservation, un seul modèle
- * de navigation à la fois — la progression et le bouton d'étape. La même règle
- * vaut déjà pour l'en-tête, qui s'y réduit à sa variante `tunnel`.
+ * **Absente des espaces applicatifs et des tunnels.** Pendant une réservation
+ * ou une candidature, un seul modèle de navigation à la fois — la progression
+ * et le bouton d'étape. La même règle vaut déjà pour l'en-tête, qui s'y réduit
+ * à sa variante `tunnel`. `porteLaCoqueVitrine` porte le critère, distinct de
+ * la répartition des hôtes pour la raison écrite dans `hosting.ts`.
  *
  * **Absente en desktop.** La navigation horizontale de l'en-tête y reste seule
  * maîtresse : deux navigations concurrentes obligeraient à choisir laquelle
@@ -65,7 +66,7 @@ export function AppTabBar() {
   const pathname = usePathname();
   const [helpOpen, setHelpOpen] = useState(false);
 
-  if (isAppPath(pathname)) return null;
+  if (!porteLaCoqueVitrine(pathname)) return null;
 
   return (
     <>

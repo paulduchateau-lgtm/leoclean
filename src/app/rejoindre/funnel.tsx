@@ -8,6 +8,11 @@ import { useState, useTransition } from "react";
 import { requestMagicLink } from "@/app/(auth)/actions";
 import { ouvrirUnDossier } from "@/app/rejoindre/actions";
 import { BoutonsSociaux } from "@/components/boutons-sociaux";
+import {
+  CHAMP_DOUX,
+  ChoixTunnel,
+  EcranTunnel,
+} from "@/components/tunnel/ecran";
 import type { Fournisseur } from "@/lib/auth/fournisseurs";
 import { Button } from "@/components/ui/button";
 import {
@@ -271,228 +276,229 @@ export function FunnelCandidature({
     );
   }
 
+  const retour = index > 0 ? () => setQuestion(ORDRE[index - 1]!) : undefined;
+
   return (
-    <div
-      className={`rounded-2xl border border-border bg-card p-6 ${className ?? ""}`}
-    >
-      <p className="font-mono text-sm text-muted-foreground">
-        Question {index + 1} sur {ORDRE.length}
-      </p>
-      <h2 className="mt-2 font-heading text-2xl font-extrabold text-balance">
-        {INTITULES[question]}
-      </h2>
-
-      {question === "commune" ? (
-        <div className="mt-5 flex flex-wrap gap-2">
-          {COMMUNES.map((commune) => (
+    <div className={className}>
+      <EcranTunnel
+        titre={INTITULES[question]}
+        titrePrincipal
+        etape={index + 1}
+        total={ORDRE.length}
+        onRetour={retour}
+        sousTitre={
+          question === "statut"
+            ? "Aucune de ces réponses ne vous écarte. Sans statut, on vous accompagne jusqu'au bout des démarches."
+            : undefined
+        }
+      >
+        {question === "commune" ? (
+          <div className="flex flex-wrap gap-2">
+            {COMMUNES.map((commune) => (
+              <button
+                key={commune.insee}
+                type="button"
+                onClick={() => repondre("commune", commune.insee)}
+                className="min-h-12 rounded-full bg-secondary px-4 text-base font-medium transition-colors hover:bg-teal-100 active:bg-teal-100"
+              >
+                {commune.name}
+              </button>
+            ))}
             <button
-              key={commune.insee}
               type="button"
-              onClick={() => repondre("commune", commune.insee)}
-              className="min-h-12 rounded-full border border-input bg-background px-4 text-base hover:border-brand"
+              onClick={() => setCommuneLibre("")}
+              aria-pressed={communeLibre !== null}
+              className="min-h-12 rounded-full border border-dashed border-input px-4 text-base"
             >
-              {commune.name}
+              Une autre commune
             </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setCommuneLibre("")}
-            aria-pressed={communeLibre !== null}
-            className="min-h-12 rounded-full border border-dashed border-input bg-background px-4 text-base"
-          >
-            Une autre commune
-          </button>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
 
-      {/*
-       * Une commune hors de nos seize n'arrête plus rien. Le rayon court est
-       * une contrainte sur les **missions**, pas sur le domicile de celui qui
-       * les fait : quelqu'un de Bordeaux centre dessert Villenave-d'Ornon sans
-       * difficulté. On dit ce que cela implique, et on laisse continuer.
-       */}
-      {question === "commune" && communeLibre !== null ? (
-        <div className="mt-4 rounded-xl border border-border bg-secondary/30 p-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium">Où habitez-vous ?</span>
-            <input
-              autoFocus
-              value={communeLibre}
-              onChange={(event) => setCommuneLibre(event.target.value)}
-              placeholder="Bordeaux, Pessac, Talence…"
-              className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
-            />
-          </label>
-          <p className="mt-2 text-sm text-pretty text-muted-foreground">
-            Nos missions sont sur nos {COMMUNES.length} communes du sud de
-            Bordeaux. Vous pouvez y travailler sans y habiter — on regardera
-            ensemble si le trajet vous convient.
-          </p>
-          <Button
-            className="mt-3"
-            disabled={communeLibre.trim().length < 2}
-            onClick={() => setQuestion("deplacement")}
-          >
-            Continuer
-          </Button>
-        </div>
-      ) : null}
-
-      {question !== "commune" && question !== "identite" ? (
-        <div className="mt-5 flex flex-col gap-2">
-          {CHOIX[question].map(([valeur, libelle]) => (
-            <button
-              key={valeur}
-              type="button"
-              onClick={() => repondre(question, valeur)}
-              className="min-h-13 rounded-xl border border-input bg-background px-4 text-left text-base hover:border-brand"
-            >
-              {libelle}
-            </button>
-          ))}
-          {question === "statut" ? (
-            <p className="mt-2 text-sm text-muted-foreground">
-              Aucune de ces réponses ne vous écarte. Sans statut, on vous
-              accompagne jusqu&apos;au bout des démarches.
+        {/*
+         * Une commune hors de nos seize n'arrête plus rien. Le rayon court est
+         * une contrainte sur les **missions**, pas sur le domicile de celui qui
+         * les fait : quelqu'un de Bordeaux centre dessert Villenave-d'Ornon sans
+         * difficulté. On dit ce que cela implique, et on laisse continuer.
+         */}
+        {question === "commune" && communeLibre !== null ? (
+          <div className="mt-4">
+            <label className="flex flex-col gap-2 text-sm">
+              <span className="font-medium">Où habitez-vous ?</span>
+              <input
+                autoFocus
+                value={communeLibre}
+                onChange={(event) => setCommuneLibre(event.target.value)}
+                placeholder="Bordeaux, Pessac, Talence…"
+                className={CHAMP_DOUX}
+              />
+            </label>
+            <p className="mt-3 text-sm text-pretty text-muted-foreground">
+              Nos missions sont sur nos {COMMUNES.length} communes du sud de
+              Bordeaux. Vous pouvez y travailler sans y habiter — on regardera
+              ensemble si le trajet vous convient.
             </p>
-          ) : null}
-        </div>
-      ) : null}
+            <div className="mt-6 flex justify-center">
+              <Button
+                size="lg"
+                className="min-w-52"
+                disabled={communeLibre.trim().length < 2}
+                onClick={() => setQuestion("deplacement")}
+              >
+                Continuer
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
-      {question === "identite" ? (
-        <form
-          className="mt-5 grid gap-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const donnees = new FormData(event.currentTarget);
-            setErreur(null);
+        {question !== "commune" && question !== "identite" ? (
+          <div className="flex flex-col gap-3">
+            {CHOIX[question].map(([valeur, libelle]) => (
+              <ChoixTunnel
+                key={valeur}
+                libelle={libelle}
+                actif={reponses[question] === valeur}
+                onClick={() => repondre(question, valeur)}
+              />
+            ))}
+          </div>
+        ) : null}
 
-            startTransition(async () => {
-              const adresse = String(donnees.get("email") ?? "");
-              setEmail(adresse);
+        {question === "identite" ? (
+          <form
+            className="grid gap-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const donnees = new FormData(event.currentTarget);
+              setErreur(null);
 
-              const resultat = await ouvrirUnDossier({
-                ...(reponses.commune
-                  ? { communeInsee: reponses.commune }
-                  : { communeLibre: communeLibre ?? undefined }),
-                travelMode: (reponses.deplacement ?? "VEHICULE") as never,
-                hoursPerWeek: (reponses.heures ?? "DE_20_A_35") as never,
-                experience: (reponses.experience ?? "AUCUNE") as never,
-                statut: (reponses.statut ?? "AUCUN") as never,
-                firstName: String(donnees.get("firstName") ?? ""),
-                lastName: String(donnees.get("lastName") ?? ""),
-                phone: String(donnees.get("phone") ?? ""),
-                email: adresse,
-                website: String(donnees.get("website") ?? ""),
-                renderedAt: affiche,
+              startTransition(async () => {
+                const adresse = String(donnees.get("email") ?? "");
+                setEmail(adresse);
+
+                const resultat = await ouvrirUnDossier({
+                  ...(reponses.commune
+                    ? { communeInsee: reponses.commune }
+                    : { communeLibre: communeLibre ?? undefined }),
+                  travelMode: (reponses.deplacement ?? "VEHICULE") as never,
+                  hoursPerWeek: (reponses.heures ?? "DE_20_A_35") as never,
+                  experience: (reponses.experience ?? "AUCUNE") as never,
+                  statut: (reponses.statut ?? "AUCUN") as never,
+                  firstName: String(donnees.get("firstName") ?? ""),
+                  lastName: String(donnees.get("lastName") ?? ""),
+                  phone: String(donnees.get("phone") ?? ""),
+                  email: adresse,
+                  website: String(donnees.get("website") ?? ""),
+                  renderedAt: affiche,
+                  /*
+                   * Sans fournisseur social, le lien est la seule porte : on
+                   * l'envoie tout de suite plutôt que de faire cliquer pour
+                   * obtenir ce qu'on aurait donné de toute façon.
+                   */
+                  envoyerLeLien: fournisseurs.length === 0,
+                });
+
+                if (!resultat.ok) {
+                  setErreur(resultat.error);
+                  return;
+                }
                 /*
-                 * Sans fournisseur social, le lien est la seule porte : on
-                 * l'envoie tout de suite plutôt que de faire cliquer pour
-                 * obtenir ce qu'on aurait donné de toute façon.
+                 * Sans fournisseur social, le lien vient de partir avec
+                 * l'ouverture : l'écran doit le dire, sinon il propose de
+                 * s'identifier alors que le mail est déjà en route.
                  */
-                envoyerLeLien: fournisseurs.length === 0,
+                if (fournisseurs.length === 0) setLienDemande(true);
+                setIssue("ouvert");
               });
+            }}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium">Prénom</span>
+                <input
+                  name="firstName"
+                  required
+                  maxLength={80}
+                  autoComplete="given-name"
+                  className={CHAMP_DOUX}
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium">Nom</span>
+                <input
+                  name="lastName"
+                  required
+                  maxLength={80}
+                  autoComplete="family-name"
+                  className={CHAMP_DOUX}
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium">Téléphone</span>
+                <PhoneField
+                  id="rejoindre-phone"
+                  name="phone"
+                  required
+                  className="min-h-14 rounded-[var(--r-l)] border-0 bg-secondary"
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium">Email</span>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className={CHAMP_DOUX}
+                />
+              </label>
+            </div>
 
-              if (!resultat.ok) {
-                setErreur(resultat.error);
-                return;
-              }
-              /*
-               * Sans fournisseur social, le lien vient de partir avec
-               * l'ouverture : l'écran doit le dire, sinon il propose de
-               * s'identifier alors que le mail est déjà en route.
-               */
-              if (fournisseurs.length === 0) setLienDemande(true);
-              setIssue("ouvert");
-            });
-          }}
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Prénom</span>
-              <input
-                name="firstName"
-                required
-                maxLength={80}
-                autoComplete="given-name"
-                className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Nom</span>
-              <input
-                name="lastName"
-                required
-                maxLength={80}
-                autoComplete="family-name"
-                className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Téléphone</span>
-              <PhoneField
-                id="rejoindre-phone"
-                name="phone"
-                required
-                className="rounded-xl"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium">Email</span>
-              <input
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                className="min-h-13 rounded-xl border border-input bg-background px-3 text-base"
-              />
-            </label>
-          </div>
+            {/*
+             * Le piège doit être invisible **et** hors du flux. `-left-[9999px]`
+             * ne l'était pas : Tailwind 4 n'émet pas cette forme, la classe
+             * tombait, et le champ s'affichait en plein milieu du formulaire.
+             * Un candidat qui écrivait dedans voyait sa candidature acceptée à
+             * l'écran et jetée en silence — exactement ce que le piège doit
+             * faire aux robots, appliqué à un humain. On reprend la boîte
+             * collabée de `lead-form.tsx`, qui, elle, tient.
+             */}
+            <div
+              aria-hidden="true"
+              className="absolute h-0 w-0 overflow-hidden"
+            >
+              <label>
+                Ne rien écrire ici
+                <input name="website" tabIndex={-1} autoComplete="off" />
+              </label>
+            </div>
 
-          {/*
-           * Le piège doit être invisible **et** hors du flux. `-left-[9999px]`
-           * ne l'était pas : Tailwind 4 n'émet pas cette forme, la classe
-           * tombait, et le champ s'affichait en plein milieu du formulaire.
-           * Un candidat qui écrivait dedans voyait sa candidature acceptée à
-           * l'écran et jetée en silence — exactement ce que le piège doit
-           * faire aux robots, appliqué à un humain. On reprend la boîte
-           * collabée de `lead-form.tsx`, qui, elle, tient.
-           */}
-          <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden">
-            <label>
-              Ne rien écrire ici
-              <input name="website" tabIndex={-1} autoComplete="off" />
-            </label>
-          </div>
-
-          {erreur ? (
-            <p role="alert" className="text-sm text-destructive">
-              {erreur}
-            </p>
-          ) : null}
-
-          <Button type="submit" size="lg" disabled={pending}>
-            {pending ? (
-              <Loader2Icon className="animate-spin" aria-hidden="true" />
+            {erreur ? (
+              <p role="alert" className="text-sm text-destructive">
+                {erreur}
+              </p>
             ) : null}
-            Ouvrir mon dossier
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            On vous envoie un lien pour reprendre où vous en êtes. Pas de mot de
-            passe à retenir.
-          </p>
-        </form>
-      ) : null}
 
-      {index > 0 && issue === null ? (
-        <button
-          type="button"
-          onClick={() => setQuestion(ORDRE[index - 1]!)}
-          className="mt-5 text-sm text-muted-foreground underline"
-        >
-          ← Revenir
-        </button>
-      ) : null}
+            <div className="mt-2 flex justify-center">
+              <Button
+                type="submit"
+                size="lg"
+                className="min-w-52"
+                disabled={pending}
+              >
+                {pending ? (
+                  <Loader2Icon className="animate-spin" aria-hidden="true" />
+                ) : null}
+                Ouvrir mon dossier
+              </Button>
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              On vous envoie un lien pour reprendre où vous en êtes. Pas de mot
+              de passe à retenir.
+            </p>
+          </form>
+        ) : null}
+      </EcranTunnel>
     </div>
   );
 }
