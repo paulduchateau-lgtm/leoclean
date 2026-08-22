@@ -47,11 +47,30 @@ export default async function SignInPage({
    */
   const echecIdentifiants = params.error === "CredentialsSignin";
 
+  /* La face d'où l'on vient, lue sur la destination demandée. */
+  const versLEspacePro =
+    callbackUrl === "/intervenant" || callbackUrl.startsWith("/intervenant/");
+
   return (
     <>
-      <h1 className="text-2xl font-black tracking-tight">Se connecter</h1>
-      <p className="mt-2 mb-6 text-sm text-muted-foreground">
-        Pour suivre vos ménages, vos factures et votre intervenant attitré.
+      {/*
+        **Une seule page, deux contextes.** L'écran est le même — mêmes
+        fournisseurs, même entonnoir, mêmes règles — mais quelqu'un qui vient de
+        la face professionnelle doit se reconnaître : arriver sur « pour suivre
+        vos ménages » après avoir cliqué « J'ai déjà un compte » depuis l'espace
+        pro fait croire qu'on s'est trompé de porte.
+
+        Le contexte se déduit de la destination et de rien d'autre : un
+        paramètre supplémentaire serait une seconde vérité à tenir d'accord avec
+        la première.
+      */}
+      <h1 className="text-2xl font-black tracking-tight">
+        {versLEspacePro ? "Espace professionnel" : "Se connecter"}
+      </h1>
+      <p className="mt-2 mb-6 text-sm text-pretty text-muted-foreground">
+        {versLEspacePro
+          ? "Vos missions, vos disponibilités, vos revenus et votre dossier."
+          : "Pour suivre vos ménages, vos factures et votre intervenant attitré."}
       </p>
 
       {echecIdentifiants ? (
