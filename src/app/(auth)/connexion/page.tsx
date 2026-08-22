@@ -17,10 +17,6 @@ export const metadata: Metadata = {
 export default async function SignInPage({
   searchParams,
 }: PageProps<"/connexion">) {
-  if (await getCurrentUser()) {
-    redirect("/");
-  }
-
   const params = await searchParams;
   const raw = params.callbackUrl;
   const candidate = Array.isArray(raw) ? raw[0] : raw;
@@ -28,6 +24,20 @@ export default async function SignInPage({
   // connexion en redirection ouverte vers un site tiers.
   const callbackUrl =
     candidate?.startsWith("/") && !candidate.startsWith("//") ? candidate : "/";
+
+  /*
+   * **Déjà connecté : on va où la personne allait, pas à l'accueil.**
+   *
+   * La destination était lue *après* cette redirection, si bien que quiconque
+   * avait déjà une session et cliquait « Se connecter » atterrissait sur la
+   * page d'accueil — en ayant demandé son espace. Le cas est le plus fréquent
+   * qui soit : les deux portes de la vitrine et celle de la face pro visent
+   * toutes `/connexion?callbackUrl=…`, précisément pour qu'une seule adresse
+   * serve le visiteur connecté comme l'autre.
+   */
+  if (await getCurrentUser()) {
+    redirect(callbackUrl);
+  }
 
   /*
    * Auth.js redirige ici avec `?error=CredentialsSignin` quand la connexion est
