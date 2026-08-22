@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { FunnelCandidature } from "@/app/rejoindre/funnel";
+import { FOURNISSEURS_ACTIFS } from "@/lib/auth/fournisseurs";
 import { COMMUNES } from "@/lib/territory";
 import { pageMetadata } from "@/lib/seo/metadata";
 
@@ -52,7 +53,7 @@ export default function RejoindrePage() {
         </p>
       </div>
 
-      <FunnelCandidature className="mt-10" />
+      <FunnelCandidature className="mt-10" fournisseurs={FOURNISSEURS_ACTIFS} />
     </main>
   );
 }

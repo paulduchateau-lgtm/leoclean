@@ -5,9 +5,9 @@ import { useActionState, useState } from "react";
 
 import {
   requestMagicLink,
-  seConnecterAvec,
   seConnecterAvecMotDePasse,
 } from "@/app/(auth)/actions";
+import { BoutonsSociaux } from "@/components/boutons-sociaux";
 import type { ActionResult } from "@/lib/actions";
 import type { Fournisseur } from "@/lib/auth/fournisseurs";
 import { Button } from "@/components/ui/button";
@@ -79,33 +79,7 @@ export function SignInForm({
 
   return (
     <div className="space-y-6">
-      {fournisseurs.length > 0 ? (
-        <>
-          <div className="flex flex-col gap-3">
-            {fournisseurs.map((fournisseur) => (
-              <form
-                key={fournisseur.id}
-                action={async () => {
-                  await seConnecterAvec(fournisseur.id, callbackUrl);
-                }}
-              >
-                <button
-                  type="submit"
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full border-2 border-border bg-card px-5 font-bold transition-colors hover:border-teal-300 hover:bg-teal-50"
-                >
-                  Continuer avec {fournisseur.nom}
-                </button>
-              </form>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" aria-hidden />
-            <span className="text-sm text-muted-foreground">ou</span>
-            <span className="h-px flex-1 bg-border" aria-hidden />
-          </div>
-        </>
-      ) : null}
+      <BoutonsSociaux fournisseurs={fournisseurs} callbackUrl={callbackUrl} />
 
       <form action={seConnecter} className="space-y-4" noValidate>
         <input type="hidden" name="callbackUrl" value={callbackUrl} />

@@ -7,6 +7,8 @@ import { useState, useTransition } from "react";
 
 import { requestMagicLink } from "@/app/(auth)/actions";
 import { ouvrirUnDossier } from "@/app/rejoindre/actions";
+import { BoutonsSociaux } from "@/components/boutons-sociaux";
+import type { Fournisseur } from "@/lib/auth/fournisseurs";
 import { Button } from "@/components/ui/button";
 import {
   LIBELLES_PIECES,
@@ -74,7 +76,14 @@ const INTITULES: Record<Question, string> = {
   identite: "Comment vous joindre ?",
 };
 
-export function FunnelCandidature({ className }: { className?: string }) {
+export function FunnelCandidature({
+  className,
+  fournisseurs = [],
+}: {
+  className?: string;
+  /** Fournisseurs sociaux réellement configurés. Vide, rien ne s'affiche. */
+  fournisseurs?: readonly Fournisseur[];
+}) {
   const [pending, startTransition] = useTransition();
   const [question, setQuestion] = useState<Question>("commune");
   const [reponses, setReponses] = useState<Record<string, string>>({});
@@ -151,6 +160,28 @@ export function FunnelCandidature({ className }: { className?: string }) {
               J&apos;ai déjà cliqué sur le lien →
             </Link>
           </div>
+
+          {/*
+            **Le raccourci qui évite la boîte mail.** Le lien magique reste la
+            voie par défaut — il vérifie l'adresse, et c'est sur elle que le
+            dossier se rattache. Mais un candidat qui a un compte Google entre
+            sans aller-retour, et un aller-retour par la messagerie est
+            l'endroit où l'on perd le plus de candidatures.
+            Le rattachement fonctionne pareil : ces fournisseurs vérifient
+            l'adresse avant de la transmettre.
+          */}
+          {fournisseurs.length > 0 ? (
+            <div className="mt-5 border-t border-success/30 pt-5">
+              <p className="mb-3 text-sm text-muted-foreground">
+                Ou entrez directement, sans passer par votre messagerie :
+              </p>
+              <BoutonsSociaux
+                fournisseurs={fournisseurs}
+                callbackUrl="/rejoindre/dossier"
+                separateur={false}
+              />
+            </div>
+          ) : null}
         </div>
 
         {/*

@@ -1,4 +1,3 @@
-import { AlertTriangleIcon, CheckIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -7,6 +6,8 @@ import {
   FormulaireIdentifiants,
 } from "@/app/(app)/intervenant/dossier/formulaires";
 import { SiteFooter } from "@/components/site-footer";
+import { Pieces } from "@/app/(app)/intervenant/dossier/pieces";
+import { BandeauStatut } from "@/components/espace-pro/bandeau-statut";
 import { PortraitField } from "@/components/portrait-field";
 import { SiteHeader } from "@/components/site-header";
 import { auth } from "@/lib/auth/config";
@@ -17,6 +18,7 @@ import {
   enregistrerMonPortraitIntervenant,
   retirerMonPortraitIntervenant,
 } from "@/app/(app)/intervenant/dossier/actions";
+import { depotDisponible } from "@/lib/cleaner/pieces";
 import { portraitDisponible } from "@/lib/compte/portrait";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 import { formatEuros } from "@/lib/pricing";
@@ -62,8 +64,23 @@ export default async function DossierPage() {
       <SiteHeader variant="tunnel" />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-        <h1 className="text-3xl font-black tracking-tight">Mon dossier</h1>
+        <h1 className="font-heading text-3xl font-black tracking-tight">
+          Mon dossier professionnel
+        </h1>
         <p className="mt-2 text-muted-foreground">{dossier.displayName}</p>
+
+        {/* L'état en tête, comme sur chaque écran de l'espace : c'est la seule
+            question qu'on se pose en arrivant. */}
+        <div className="mt-6">
+          <BandeauStatut etat={dossier.etat} />
+        </div>
+
+        <Pieces
+          pieces={dossier.pieces}
+          peutSoumettre={dossier.peutSoumettre}
+          soumisLe={dossier.dossierSoumisLe}
+          disponible={depotDisponible()}
+        />
 
         {/*
           Le portrait en tête du dossier : c'est la seule information de cet
@@ -80,46 +97,6 @@ export default async function DossierPage() {
             retirer={retirerMonPortraitIntervenant}
           />
         </div>
-
-        <section className="mt-10">
-          <h2 className="text-lg font-extrabold">
-            {dossier.activation.ready
-              ? "Votre dossier est complet"
-              : "Ce qu'il manque"}
-          </h2>
-
-          {dossier.activation.ready ? (
-            <p className="mt-2 flex items-center gap-2 text-pretty text-brand">
-              <CheckIcon className="size-5 shrink-0" aria-hidden />
-              Toutes les pièces sont vérifiées. Vous pouvez recevoir des
-              missions.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {dossier.activation.missing.map((item) => (
-                <li
-                  key={item}
-                  className="flex gap-2 rounded-[var(--r-m)] border border-border bg-card px-4 py-3 text-sm"
-                >
-                  <span className="text-muted-foreground" aria-hidden>
-                    ·
-                  </span>
-                  <span className="first-letter:uppercase">{item}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {dossier.activation.warnings.map((warning) => (
-            <p
-              key={warning}
-              className="mt-3 flex gap-2 rounded-[var(--r-m)] bg-pineapple-100 px-4 py-3 text-sm text-pretty"
-            >
-              <AlertTriangleIcon className="size-4 shrink-0" aria-hidden />
-              {warning}
-            </p>
-          ))}
-        </section>
 
         <section className="mt-12 border-t border-border pt-8">
           <h2 className="text-lg font-extrabold">Vos identifiants</h2>
