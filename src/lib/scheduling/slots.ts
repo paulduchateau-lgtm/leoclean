@@ -7,6 +7,7 @@ import {
   geometricTravelMatrix,
   roundTravelBuffer,
 } from "./travel";
+import { haversineKm } from "../territory";
 import { parisDayKey } from "../time";
 
 /**
@@ -36,6 +37,14 @@ export interface CleanerSchedule {
   homePoint: GeoPoint | null;
   /** Trajet inter-missions maximal accepté, en minutes. */
   maxTravelMinutes: number;
+  /**
+   * Rayon d'action, en kilomètres à vol d'oiseau depuis `homePoint`.
+   *
+   * `null` — ou un domicile inconnu — ne filtre rien : on ne sait pas d'où
+   * compter, et refuser par défaut retirerait de la circulation quelqu'un
+   * d'actif.
+   */
+  serviceRadiusKm?: number | null;
   /** Plages libres, telles que renvoyées par `computeAvailability`. */
   availability: readonly Interval[];
   /** Missions déjà attribuées, dans l'ordre chronologique. */
@@ -177,6 +186,40 @@ function stopAfter(
 }
 
 /**
+ * Cette mission tombe-t-elle hors du rayon d'action déclaré ?
+ *
+ * **Le rayon décide avant tout le reste.** Il n'exprime pas une contrainte de
+ * tournée mais un refus : quelqu'un qui a tracé vingt kilomètres autour de
+ * chez lui ne veut pas d'une mission à quarante, même un jour où son planning
+ * est vide. Le plafond `maxTravelMinutes`, lui, ne regarde que l'enchaînement
+ * entre deux missions et ne dit rien de la première de la journée — c'est
+ * précisément le trou que le rayon vient fermer.
+ *
+ * **À vol d'oiseau, parce que c'est un cercle sur une carte.** Mesurer par la
+ * route exclurait des adresses que l'intervenant voit à l'intérieur du cercle
+ * qu'il vient de tracer, et un réglage dont l'effet contredit le dessin n'est
+ * plus un réglage. La route continue de décider de la faisabilité, elle, par
+ * les tampons de trajet.
+ */
+export function horsDuRayon(
+  schedule: Pick<CleanerSchedule, "homePoint" | "serviceRadiusKm">,
+  destination: GeoPoint,
+): boolean {
+  const rayon = schedule.serviceRadiusKm;
+  if (!schedule.homePoint || rayon === null || rayon === undefined) {
+    return false;
+  }
+  return (
+    haversineKm(
+      schedule.homePoint.lat,
+      schedule.homePoint.lng,
+      destination.lat,
+      destination.lng,
+    ) > rayon
+  );
+}
+
+/**
  * Un intervenant peut-il prendre cette mission à cette heure ?
  *
  * Renvoie le candidat complet, ou `null` si la mission ne tient pas — parce que
@@ -192,6 +235,8 @@ export function evaluateSlot(
   const travel = request.travel ?? geometricTravelMatrix;
   const endMs = startMs + request.durationMinutes * MINUTE_MS;
   const candidate: Interval = { start: startMs, end: endMs };
+
+  if (horsDuRayon(schedule, request.destination)) return null;
 
   const previous = stopBefore(schedule.stops, startMs);
   const next = stopAfter(schedule.stops, endMs);

@@ -7,10 +7,11 @@ import {
   type RoundStop,
   evaluateSlot,
   findSlots,
+  horsDuRayon,
   insertionCostMinutes,
 } from "@/lib/scheduling/slots";
 import { travelMatrixFrom } from "@/lib/scheduling/travel";
-import { getCommuneBySlug } from "@/lib/territory";
+import { getCommuneBySlug, haversineKm } from "@/lib/territory";
 import { formatParis, parisWallClockToUtc } from "@/lib/time";
 
 const paris = (day: number, hour: number, minute = 0) =>
@@ -616,5 +617,80 @@ describe("marge de trajet sur une destination approximative", () => {
     );
 
     expect(zero).toEqual(sans);
+  });
+});
+
+describe("rayon d'action", () => {
+  /*
+   * Le rayon ferme un trou que `maxTravelMinutes` laissait ouvert : celui-ci
+   * ne s'applique qu'entre deux missions, si bien qu'une journée vide
+   * acceptait n'importe quelle distance. Les deux directions sont vérifiées —
+   * un rayon qui n'exclut rien est aussi faux qu'un rayon qui exclut tout.
+   */
+  const AILLEURS = { lat: 44.8378, lng: -0.5792 }; // Bordeaux centre, ~13 km.
+
+  it("refuse une mission au-delà du rayon, même un jour entièrement libre", () => {
+    const slots = findSlots(
+      [
+        schedule({
+          availability: TUESDAY_9_TO_17,
+          stops: [],
+          serviceRadiusKm: 5,
+        }),
+      ],
+      {
+        window: { start: paris(13, 0).getTime(), end: paris(14, 0).getTime() },
+        durationMinutes: 120,
+        destination: AILLEURS,
+        now: paris(12, 8),
+      },
+    );
+
+    expect(slots).toHaveLength(0);
+  });
+
+  it("accepte la même mission dès que le rayon la contient", () => {
+    const slots = findSlots(
+      [
+        schedule({
+          availability: TUESDAY_9_TO_17,
+          stops: [],
+          serviceRadiusKm: 25,
+        }),
+      ],
+      {
+        window: { start: paris(13, 0).getTime(), end: paris(14, 0).getTime() },
+        durationMinutes: 120,
+        destination: AILLEURS,
+        now: paris(12, 8),
+      },
+    );
+
+    expect(slots.length).toBeGreaterThan(0);
+  });
+
+  it("ne filtre rien sans domicile connu : on ne sait pas d'où compter", () => {
+    expect(horsDuRayon({ homePoint: null, serviceRadiusKm: 1 }, AILLEURS)).toBe(
+      false,
+    );
+  });
+
+  it("mesure à vol d'oiseau, pas par la route", () => {
+    // Le cercle dessiné sur la carte est la seule mesure que l'intervenant
+    // voit : la distance routière, plus longue, exclurait des adresses qu'il
+    // a placées à l'intérieur.
+    const maison = point("leognan");
+    const cible = point("cestas");
+    const km = haversineKm(maison.lat, maison.lng, cible.lat, cible.lng);
+
+    expect(
+      horsDuRayon({ homePoint: maison, serviceRadiusKm: Math.ceil(km) }, cible),
+    ).toBe(false);
+    expect(
+      horsDuRayon(
+        { homePoint: maison, serviceRadiusKm: Math.floor(km) - 1 },
+        cible,
+      ),
+    ).toBe(true);
   });
 });

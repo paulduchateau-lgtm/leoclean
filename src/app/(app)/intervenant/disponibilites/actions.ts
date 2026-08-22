@@ -5,6 +5,12 @@ import { z } from "zod";
 
 import { authedAction } from "@/lib/actions";
 import { requireOrganization } from "@/lib/auth/session";
+import {
+  RAYON_MAX_KM,
+  RAYON_MIN_KM,
+  RAYON_PAS_KM,
+  rayonValide,
+} from "@/lib/availability/rayon";
 import { type Plage, verifierSemaine } from "@/lib/availability/semaine";
 import { BusinessError } from "@/lib/booking/errors";
 import { marketplaceOrganizationId } from "@/lib/organizations";
@@ -111,5 +117,51 @@ export const enregistrerSemaine = authedAction(
     revalidatePath("/intervenant/disponibilites");
     revalidatePath("/intervenant");
     return { plages: plages.length };
+  },
+);
+
+/**
+ * Rayon d'action déclaré.
+ *
+ * Même capacité que les heures, et pour la même raison : c'est un choix de
+ * conditions de travail. Aucun rôle de gestion ne détient
+ * `availability:manage:own` — personne ne peut élargir le périmètre de
+ * quelqu'un à sa place.
+ */
+export const enregistrerRayon = authedAction(
+  z.object({ rayonKm: z.number().int() }),
+  async ({ rayonKm }, user) => {
+    /* La même règle qu'à l'écran, par le même module : l'écran empêche de se
+       tromper, cette vérification empêche de contourner. */
+    if (!rayonValide(rayonKm)) {
+      throw new SemaineInvalideError(
+        `Le rayon doit être compris entre ${RAYON_MIN_KM} et ${RAYON_MAX_KM} km, par pas de ${RAYON_PAS_KM}.`,
+      );
+    }
+
+    const organizationId = await marketplaceOrganizationId();
+    const { db } = await requireOrganization(
+      organizationId,
+      "availability:manage:own",
+    );
+
+    const profil = await db.cleanerProfile.findFirst({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    if (!profil) {
+      throw new SemaineInvalideError(
+        "Votre compte n'est pas rattaché à un profil d'intervenant.",
+      );
+    }
+
+    await db.cleanerProfile.update({
+      where: { id: profil.id },
+      data: { serviceRadiusKm: rayonKm },
+    });
+
+    revalidatePath("/intervenant/disponibilites");
+    revalidatePath("/intervenant");
+    return { rayonKm };
   },
 );

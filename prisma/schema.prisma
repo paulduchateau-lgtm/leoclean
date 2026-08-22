@@ -401,6 +401,19 @@ model CleanerProfile {
   /// Temps de trajet maximal accepté depuis la mission précédente, en minutes.
   maxTravelMinutes Int @default(30)
 
+  /// Rayon d'action, en kilomètres à vol d'oiseau depuis `homeAddress`.
+  ///
+  /// C'est **lui** qui décide si une mission est proposée : au-delà, aucune
+  /// offre n'arrive, quelle que soit la disponibilité déclarée. Il est choisi
+  /// sur une carte, donc mesuré comme un cercle — à vol d'oiseau et non par la
+  /// route. Employer la distance routière exclurait des adresses que
+  /// l'intervenant voit à l'intérieur du cercle qu'il vient de tracer, ce qui
+  /// est la façon la plus sûre de rendre un réglage incompréhensible.
+  ///
+  /// Sans `homeAddress`, il ne filtre rien : on ne sait pas d'où compter, et
+  /// refuser par défaut retirerait de la circulation un intervenant actif.
+  serviceRadiusKm Int @default(20)
+
   /// Agrégats dénormalisés, recalculés à la clôture d'une mission. Ils servent
   /// au score d'attribution et à l'affichage ; la vérité reste dans Review et
   /// Assignment.

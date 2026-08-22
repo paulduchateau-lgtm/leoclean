@@ -73,7 +73,7 @@ const CHOIX = {
 } as const;
 
 const INTITULES: Record<Question, string> = {
-  commune: "Vous habitez quelle commune ?",
+  commune: "Où habitez-vous ?",
   deplacement: "Comment vous déplacez-vous ?",
   heures: "Combien d'heures par semaine ?",
   experience: "Votre expérience du ménage à domicile ?",
@@ -97,11 +97,15 @@ export function FunnelCandidature({
   /* Le lien a-t-il été demandé ? Sans envoi, « je n'ai rien reçu » n'a pas de sens. */
   const [lienDemande, setLienDemande] = useState(false);
   /*
-   * Commune tapée à la main, quand elle n'est pas dans le référentiel.
-   * Habiter ailleurs n'empêche pas de travailler ici : la commune sert au
-   * calcul de tournée, pas à l'éligibilité.
+   * **La commune se tape, elle ne se choisit pas.** Seize pastilles étaient un
+   * référentiel administratif présenté comme une question : quelqu'un de
+   * Pessac ou de Bordeaux se cherchait dans une liste où il n'est pas, et
+   * devait comprendre que « une autre commune » lui était destinée avant de
+   * pouvoir répondre. On accepte toute la France — le rayon court est une
+   * contrainte sur les **missions**, pas sur le domicile de celui qui les
+   * fait — donc la question n'a aucune raison de proposer une liste fermée.
    */
-  const [communeLibre, setCommuneLibre] = useState<string | null>(null);
+  const [communeLibre, setCommuneLibre] = useState("");
   const [affiche] = useState(() => Date.now());
   /* L'adresse saisie, pour la nommer et pouvoir renvoyer le lien. */
   const [email, setEmail] = useState("");
@@ -293,44 +297,26 @@ export function FunnelCandidature({
         }
       >
         {question === "commune" ? (
-          <div className="flex flex-wrap gap-2">
-            {COMMUNES.map((commune) => (
-              <button
-                key={commune.insee}
-                type="button"
-                onClick={() => repondre("commune", commune.insee)}
-                className="min-h-12 rounded-full bg-secondary px-4 text-base font-medium transition-colors hover:bg-teal-100 active:bg-teal-100"
-              >
-                {commune.name}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setCommuneLibre("")}
-              aria-pressed={communeLibre !== null}
-              className="min-h-12 rounded-full border border-dashed border-input px-4 text-base"
-            >
-              Une autre commune
-            </button>
-          </div>
-        ) : null}
-
-        {/*
-         * Une commune hors de nos seize n'arrête plus rien. Le rayon court est
-         * une contrainte sur les **missions**, pas sur le domicile de celui qui
-         * les fait : quelqu'un de Bordeaux centre dessert Villenave-d'Ornon sans
-         * difficulté. On dit ce que cela implique, et on laisse continuer.
-         */}
-        {question === "commune" && communeLibre !== null ? (
-          <div className="mt-4">
+          <div>
             <label className="flex flex-col gap-2 text-sm">
-              <span className="font-medium">Où habitez-vous ?</span>
+              <span className="sr-only">Votre commune</span>
               <input
                 autoFocus
                 value={communeLibre}
                 onChange={(event) => setCommuneLibre(event.target.value)}
-                placeholder="Bordeaux, Pessac, Talence…"
+                placeholder="Bordeaux, Pessac, Léognan…"
+                autoComplete="address-level2"
+                maxLength={80}
                 className={CHAMP_DOUX}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    communeLibre.trim().length >= 2
+                  ) {
+                    event.preventDefault();
+                    setQuestion("deplacement");
+                  }
+                }}
               />
             </label>
             <p className="mt-3 text-sm text-pretty text-muted-foreground">

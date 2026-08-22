@@ -156,6 +156,7 @@ export async function loadCleanerSchedules(
         ? { lat: cleaner.homeAddress.lat, lng: cleaner.homeAddress.lng }
         : null,
       maxTravelMinutes: cleaner.maxTravelMinutes,
+      serviceRadiusKm: cleaner.serviceRadiusKm,
       availability,
       stops,
       ratingAverage: cleaner.ratingAverage,

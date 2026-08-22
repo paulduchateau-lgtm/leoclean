@@ -6,6 +6,8 @@ import { useState, useTransition } from "react";
 
 import { enregistrerSemaine } from "@/app/(app)/intervenant/disponibilites/actions";
 import { Button } from "@/components/ui/button";
+import { CHAMP_DOUX } from "@/components/tunnel/ecran";
+import { majorationDuJourSemaine } from "@/lib/pricing/majorations";
 import {
   JOURS,
   type Jour,
@@ -24,6 +26,13 @@ import {
  * empêche de se tromper, le serveur empêche de contourner. Rien n'est
  * enregistré tant que la semaine ne tient pas debout, et les anomalies sont
  * nommées jour par jour — corriger au hasard est ce qui décourage.
+ *
+ * **Les jours majorés se voient sur le jour qu'ils majorent.** Samedi et
+ * dimanche rapportent davantage, et c'est à l'intervenant que va cette
+ * majoration-là — pas à la plateforme. La taire ferait décider d'un week-end
+ * sans savoir ce qu'il vaut, et découvrir l'écart sur un relevé de versements
+ * est la façon la plus sûre de faire douter du reste. Le taux vient de la
+ * grille, jamais d'un libellé recopié.
  */
 
 /** Choix d'heures, du plus tôt au plus tard, par demi-heure. */
@@ -47,7 +56,7 @@ function Selecteur({
       <select
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="min-h-11 rounded-xl border border-input bg-card px-3 text-base"
+        className={`${CHAMP_DOUX} min-h-12 w-auto`}
       >
         {HEURES.map((minute) => (
           <option key={minute} value={minute}>
@@ -116,6 +125,7 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
         const anomaliesDuJour = anomalies.filter(
           (anomalie) => anomalie.jour === valeur,
         );
+        const majoration = majorationDuJourSemaine(valeur);
 
         return (
           <section
@@ -123,7 +133,14 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
             className="rounded-2xl border border-border bg-card p-4"
           >
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-medium">{nom}</h3>
+              <h3 className="flex flex-wrap items-baseline gap-2 font-medium">
+                {nom}
+                {majoration ? (
+                  <span className="rounded-full bg-pineapple-200 px-2 py-0.5 font-mono text-xs font-bold text-ink-900">
+                    +{majoration.rateBp / 100} % pour vous
+                  </span>
+                ) : null}
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -183,6 +200,14 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
           </section>
         );
       })}
+
+      {/* Un férié ne se range pas dans une colonne : il tombe n'importe quel
+          jour de la semaine, et son taux est celui du dimanche. Le dire à part
+          vaut mieux que de le laisser découvrir un 15 août. */}
+      <p className="rounded-[var(--r-l)] bg-pineapple-100 px-4 py-3 text-sm text-pretty">
+        Les jours fériés sont majorés comme un dimanche, quel que soit le jour
+        de la semaine où ils tombent.
+      </p>
 
       <div className="sticky bottom-0 -mx-6 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
         <p className="text-sm text-muted-foreground">
