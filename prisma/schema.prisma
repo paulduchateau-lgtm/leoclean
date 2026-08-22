@@ -329,6 +329,13 @@ model ClientProfile {
   @@index([recouvrementDepuis])
 }
 
+enum SuspensionOrigin {
+  /// L'intervenant s'est mis en pause lui-même.
+  CLEANER
+  /// La plateforme a suspendu le compte.
+  PLATFORM
+}
+
 enum CleanerStatus {
   /// Inscrit, documents non encore validés. Ne reçoit aucune mission.
   PENDING_VERIFICATION
@@ -397,6 +404,20 @@ model CleanerProfile {
   ratingAverage  Float @default(0)
   ratingCount    Int   @default(0)
   acceptanceRate Float @default(1)
+
+  /// Qui a suspendu ce compte, quand il l'est.
+  ///
+  /// La distinction commande l'écran : une pause que l'intervenant s'est donnée
+  /// se reprend d'un bouton, une suspension de la plateforme ne se lève pas
+  /// soi-même. `status = SUSPENDED` équivaut à `suspensionOrigin != null`.
+  suspensionOrigin SuspensionOrigin?
+  suspendedAt      DateTime?
+  /// Motif écrit par la plateforme, lu par l'intervenant.
+  suspensionReason String?
+
+  /// Dossier soumis à validation. Distingue « complet mais pas envoyé » de
+  /// « en cours d'examen » — deux états qui appellent des gestes opposés.
+  dossierSubmittedAt DateTime?
 
   activatedAt DateTime?
   createdAt   DateTime  @default(now())

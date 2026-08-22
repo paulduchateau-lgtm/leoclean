@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 
 import { AppTabBar } from "@/components/app-tab-bar";
 import { EspaceClientTabBar } from "@/components/espace-client-tab-bar";
+import { EspaceProTabBar } from "@/components/espace-pro/tab-bar";
 import { BandeauEnvironnement } from "@/components/bandeau-environnement";
 import { DemoBanner } from "@/components/demo-banner";
 import { ServiceWorker } from "@/components/service-worker";
@@ -145,6 +146,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           connaître que le sien.
         */}
         <EspaceClientTabBar />
+        <EspaceProTabBar />
         {/* La vitrine statique n'enregistre rien : c'est un double du site,
             servi sous un chemin de dépôt. */}
         <ServiceWorker enabled={!clientEnv.NEXT_PUBLIC_DEMO_STATIQUE} />

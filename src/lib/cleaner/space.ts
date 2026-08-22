@@ -5,6 +5,13 @@ import {
   type ActivationState,
 } from "@/lib/cleaner/activation";
 import {
+  type EtatCompte,
+  type PieceVue,
+  etatDesPieces,
+  etatDuCompte,
+  peutSoumettreLeDossier,
+} from "@/lib/cleaner/etat-compte";
+import {
   checkSapNumber,
   checkSiret,
   identifiantRefusalMessage,
@@ -49,7 +56,18 @@ async function profilDe(db: TenantClient, user: { id: string }) {
       siret: true,
       sapDeclarationNumber: true,
       insuranceExpiresAt: true,
-      documents: { select: { type: true, status: true } },
+      suspensionOrigin: true,
+      suspendedAt: true,
+      suspensionReason: true,
+      dossierSubmittedAt: true,
+      documents: {
+        select: {
+          type: true,
+          status: true,
+          expiresAt: true,
+          rejectionReason: true,
+        },
+      },
     },
   });
   if (!profil) throw new ProfilIntrouvableError();
@@ -231,6 +249,14 @@ export interface DossierView {
   sapDeclarationNumber: string | null;
   insuranceExpiresAt: string | null;
   activation: ActivationState;
+  /** L'état affiché en haut de chaque écran de l'espace. */
+  etat: EtatCompte;
+  /** Les quatre pièces, cochées ou non. */
+  pieces: PieceVue[];
+  /** Le dossier est-il en état d'être soumis à validation ? */
+  peutSoumettre: boolean;
+  dossierSoumisLe: string | null;
+  suspensionMotif: string | null;
 }
 
 /** État du dossier, tel que l'intervenant doit le lire. */
@@ -241,6 +267,21 @@ export async function lireDossier(
 ): Promise<DossierView> {
   const profil = await profilDe(db, user);
 
+  const activation = activationState({
+    siret: profil.siret,
+    sapDeclarationNumber: profil.sapDeclarationNumber,
+    insuranceExpiresAt: profil.insuranceExpiresAt,
+    documents: profil.documents,
+    now,
+  });
+
+  /*
+   * L'état et les pièces sont dérivés par le module pur, jamais recomposés
+   * ici : le bandeau, la page dossier et le back-office lisent la même
+   * fonction, et ne peuvent donc pas se contredire.
+   */
+  const pieces = etatDesPieces(profil.documents, now);
+
   return {
     displayName: profil.displayName,
     photoUrl: profil.photoUrl,
@@ -248,12 +289,17 @@ export async function lireDossier(
     siret: profil.siret,
     sapDeclarationNumber: profil.sapDeclarationNumber,
     insuranceExpiresAt: profil.insuranceExpiresAt?.toISOString() ?? null,
-    activation: activationState({
-      siret: profil.siret,
-      sapDeclarationNumber: profil.sapDeclarationNumber,
-      insuranceExpiresAt: profil.insuranceExpiresAt,
-      documents: profil.documents,
-      now,
+    activation,
+    etat: etatDuCompte({
+      status: profil.status,
+      suspensionOrigine: profil.suspensionOrigin,
+      dossierSoumisLe: profil.dossierSubmittedAt,
+      activation,
     }),
+    pieces,
+    peutSoumettre:
+      profil.dossierSubmittedAt === null && peutSoumettreLeDossier(pieces),
+    dossierSoumisLe: profil.dossierSubmittedAt?.toISOString() ?? null,
+    suspensionMotif: profil.suspensionReason,
   };
 }
