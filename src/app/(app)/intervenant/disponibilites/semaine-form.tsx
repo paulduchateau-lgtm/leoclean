@@ -6,11 +6,14 @@ import { useState, useTransition } from "react";
 
 import { enregistrerSemaine } from "@/app/(app)/intervenant/disponibilites/actions";
 import { Button } from "@/components/ui/button";
+import { PlageSlider } from "@/components/espace-pro/plage-slider";
+import { majorationDuJourSemaine } from "@/lib/pricing/majorations";
 import {
   JOURS,
   type Jour,
   MESSAGES,
   PAS_MINUTES,
+  PLAGE_MINIMALE_MINUTES,
   type Plage,
   heureLisible,
   totalHebdomadaireMinutes,
@@ -24,40 +27,24 @@ import {
  * empêche de se tromper, le serveur empêche de contourner. Rien n'est
  * enregistré tant que la semaine ne tient pas debout, et les anomalies sont
  * nommées jour par jour — corriger au hasard est ce qui décourage.
+ *
+ * **Les jours majorés se voient sur le jour qu'ils majorent.** Samedi et
+ * dimanche rapportent davantage, et c'est à l'intervenant que va cette
+ * majoration-là — pas à la plateforme. La taire ferait décider d'un week-end
+ * sans savoir ce qu'il vaut, et découvrir l'écart sur un relevé de versements
+ * est la façon la plus sûre de faire douter du reste. Le taux vient de la
+ * grille, jamais d'un libellé recopié.
  */
 
-/** Choix d'heures, du plus tôt au plus tard, par demi-heure. */
-const HEURES = Array.from(
-  { length: (22 - 6) * (60 / PAS_MINUTES) + 1 },
-  (_, index) => 6 * 60 + index * PAS_MINUTES,
-);
-
-function Selecteur({
-  value,
-  onChange,
-  label,
-}: {
-  value: number;
-  onChange: (minute: number) => void;
-  label: string;
-}) {
-  return (
-    <label className="flex items-center gap-2 text-sm">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="min-h-11 rounded-xl border border-input bg-card px-3 text-base"
-      >
-        {HEURES.map((minute) => (
-          <option key={minute} value={minute}>
-            {heureLisible(minute)}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
+/**
+ * Bornes du rail, en minutes depuis minuit.
+ *
+ * 6 h – 22 h : au-delà, les créneaux proposés au client n'existent pas, et un
+ * rail qui court sur vingt-quatre heures rend chaque demi-heure imprécise à
+ * régler au doigt.
+ */
+const RAIL_MIN = 6 * 60;
+const RAIL_MAX = 22 * 60;
 
 export function SemaineForm({ initiales }: { initiales: Plage[] }) {
   const router = useRouter();
@@ -69,11 +56,18 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
   const anomalies = verifierSemaine(plages);
   const total = totalHebdomadaireMinutes(plages);
 
-  function modifier(index: number, champ: keyof Plage, valeur: number) {
+  /*
+   * Les deux bornes bougent ensemble.
+   *
+   * Le curseur les rend indissociables : pousser le début au-delà de la fin
+   * est un geste que le rail permet, et l'écrêter dans le composant plutôt
+   * qu'ici produirait un état intermédiaire invalide le temps d'un rendu.
+   */
+  function modifierLa(index: number, debutMinute: number, finMinute: number) {
     setMessage(null);
     setPlages((actuelles) =>
       actuelles.map((plage, position) =>
-        position === index ? { ...plage, [champ]: valeur } : plage,
+        position === index ? { ...plage, debutMinute, finMinute } : plage,
       ),
     );
   }
@@ -116,6 +110,7 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
         const anomaliesDuJour = anomalies.filter(
           (anomalie) => anomalie.jour === valeur,
         );
+        const majoration = majorationDuJourSemaine(valeur);
 
         return (
           <section
@@ -123,7 +118,14 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
             className="rounded-2xl border border-border bg-card p-4"
           >
             <div className="flex items-center justify-between gap-3">
-              <h3 className="font-medium">{nom}</h3>
+              <h3 className="flex flex-wrap items-baseline gap-2 font-medium">
+                {nom}
+                {majoration ? (
+                  <span className="rounded-full bg-pineapple-200 px-2 py-0.5 font-mono text-xs font-bold text-ink-900">
+                    +{majoration.rateBp / 100} % pour vous
+                  </span>
+                ) : null}
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -140,32 +142,36 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
                 Vous ne travaillez pas ce jour-là.
               </p>
             ) : (
-              <ul className="mt-3 space-y-2">
+              <ul className="mt-3 space-y-4">
                 {duJour.map(({ plage, index }) => (
-                  <li key={index} className="flex flex-wrap items-center gap-2">
-                    <Selecteur
-                      label={`Début de la plage du ${nom.toLowerCase()}`}
-                      value={plage.debutMinute}
-                      onChange={(minute) =>
-                        modifier(index, "debutMinute", minute)
-                      }
+                  <li key={index}>
+                    <div className="flex items-center justify-between gap-3">
+                      {/* L'heure se lit au-dessus du rail, pas dans une
+                          infobulle : c'est la valeur qu'on règle, et elle doit
+                          être visible pendant qu'on la règle. */}
+                      <p className="font-mono text-base font-bold">
+                        {heureLisible(plage.debutMinute)} –{" "}
+                        {heureLisible(plage.finMinute)}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => retirer(index)}
+                        aria-label={`Retirer cette plage du ${nom.toLowerCase()}`}
+                      >
+                        <TrashIcon aria-hidden />
+                      </Button>
+                    </div>
+                    <PlageSlider
+                      nomDuJour={nom}
+                      min={RAIL_MIN}
+                      max={RAIL_MAX}
+                      pas={PAS_MINUTES}
+                      minimum={PLAGE_MINIMALE_MINUTES}
+                      debutMinute={plage.debutMinute}
+                      finMinute={plage.finMinute}
+                      onChange={(debut, fin) => modifierLa(index, debut, fin)}
                     />
-                    <span className="text-muted-foreground">à</span>
-                    <Selecteur
-                      label={`Fin de la plage du ${nom.toLowerCase()}`}
-                      value={plage.finMinute}
-                      onChange={(minute) =>
-                        modifier(index, "finMinute", minute)
-                      }
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => retirer(index)}
-                      aria-label={`Retirer cette plage du ${nom.toLowerCase()}`}
-                    >
-                      <TrashIcon aria-hidden />
-                    </Button>
                   </li>
                 ))}
               </ul>
@@ -183,6 +189,14 @@ export function SemaineForm({ initiales }: { initiales: Plage[] }) {
           </section>
         );
       })}
+
+      {/* Un férié ne se range pas dans une colonne : il tombe n'importe quel
+          jour de la semaine, et son taux est celui du dimanche. Le dire à part
+          vaut mieux que de le laisser découvrir un 15 août. */}
+      <p className="rounded-[var(--r-l)] bg-pineapple-100 px-4 py-3 text-sm text-pretty">
+        Les jours fériés sont majorés comme un dimanche, quel que soit le jour
+        de la semaine où ils tombent.
+      </p>
 
       <div className="sticky bottom-0 -mx-6 border-t border-border bg-background/95 px-6 py-4 backdrop-blur">
         <p className="text-sm text-muted-foreground">

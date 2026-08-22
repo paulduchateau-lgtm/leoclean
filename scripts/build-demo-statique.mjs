@@ -43,6 +43,12 @@ const ECARTES = [
   // dossier en base : il n'a rien à faire sur une vitrine de démonstration.
   "src/app/rejoindre",
   "src/components/intervenants",
+  // Les boutons sociaux importent la server action de connexion, qui part avec
+  // le groupe `(auth)`. Le composant vit dans `src/components/`, donc il reste
+  // — et importerait une action absente. C'est exactement la règle du dépôt :
+  // un composant resté seul est une exclusion à envisager, et c'est le typage
+  // qui échoue, pas l'export.
+  "src/components/boutons-sociaux.tsx",
   // Les pages société lisent la base pour lister les slugs publiables, et
   // `dynamicParams` est incompatible avec `output: export` — une page rendue
   // à la demande n'existe pas dans un site de fichiers.

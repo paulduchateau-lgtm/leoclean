@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { IntervenantAvatar } from "@/components/intervenant-avatar";
 
@@ -48,15 +48,51 @@ export function PortraitField({
   const [pending, startTransition] = useTransition();
   const champ = useRef<HTMLInputElement | null>(null);
 
+  /*
+   * **L'aperçu est local, et il ne remplace rien.** L'image choisie s'affiche
+   * avant même que l'envoi parte : sur un téléphone, entre le doigt et la
+   * réponse du serveur, il n'y avait aucun signe que le bon fichier avait été
+   * pris — et l'on rouvrait le sélecteur pour vérifier.
+   *
+   * `URL.createObjectURL` plutôt qu'une lecture en base64 : il ne lit pas le
+   * fichier, il en donne une adresse. Un portrait de deux mégaoctets s'affiche
+   * donc instantanément, là où `FileReader` ferait attendre la lecture entière.
+   */
+  const [apercu, setApercu] = useState<string | null>(null);
+
+  /*
+   * L'adresse d'objet est révoquée quand elle change ou que l'écran part :
+   * chaque appel réserve de la mémoire jusqu'à ce qu'on la rende, et
+   * quelqu'un qui essaie cinq photos en retiendrait cinq.
+   */
+  useEffect(() => {
+    if (apercu === null) return;
+    return () => URL.revokeObjectURL(apercu);
+  }, [apercu]);
+
   const envoyer = (fichier: File) => {
     setErreur(null);
+    setApercu(URL.createObjectURL(fichier));
+
     const formData = new FormData();
     formData.append("portrait", fichier);
 
     startTransition(async () => {
       const resultat = await enregistrer(formData);
-      if (resultat.ok) setPhotoUrl(resultat.url);
-      else setErreur(resultat.message);
+      if (resultat.ok) {
+        setPhotoUrl(resultat.url);
+        /*
+         * L'aperçu s'efface une fois l'URL servie connue : le garder ferait
+         * vivre l'écran sur une adresse locale que le rechargement perdrait,
+         * et l'on croirait la photo enregistrée alors qu'elle ne l'est pas.
+         */
+        setApercu(null);
+      } else {
+        // Le refus rend l'ancienne photo : montrer l'aperçu d'un fichier
+        // rejeté ferait croire qu'il est passé.
+        setApercu(null);
+        setErreur(resultat.message);
+      }
     });
   };
 
@@ -66,7 +102,16 @@ export function PortraitField({
       <p className="text-sm text-muted-foreground">{legende}</p>
 
       <div className="flex items-center gap-4">
-        <IntervenantAvatar nom={nom} photoUrl={photoUrl} taille={64} />
+        <span
+          className={`relative ${pending ? "animate-pulse" : ""}`}
+          aria-busy={pending}
+        >
+          <IntervenantAvatar
+            nom={nom}
+            photoUrl={apercu ?? photoUrl}
+            taille={64}
+          />
+        </span>
 
         <div className="flex flex-wrap gap-2">
           <input

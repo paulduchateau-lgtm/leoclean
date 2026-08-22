@@ -66,7 +66,14 @@ export function SiteHeader({
       )}
 
       <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-6 py-4">
-        <Logo className="shrink-0" />
+        {/* La face pro porte la pastille et ramène à la page qui dit le
+            métier, jamais à la vitrine client — celle-ci a son propre retour,
+            posé au-dessus et en secondaire. */}
+        <Logo
+          className="shrink-0"
+          pro={variant === "pro"}
+          href={variant === "pro" ? "/travailler-avec-nous" : "/"}
+        />
 
         <nav
           aria-label="Navigation principale"

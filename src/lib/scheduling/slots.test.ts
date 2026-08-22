@@ -7,10 +7,11 @@ import {
   type RoundStop,
   evaluateSlot,
   findSlots,
+  horsDuRayon,
   insertionCostMinutes,
 } from "@/lib/scheduling/slots";
 import { travelMatrixFrom } from "@/lib/scheduling/travel";
-import { getCommuneBySlug } from "@/lib/territory";
+import { getCommuneBySlug, haversineKm } from "@/lib/territory";
 import { formatParis, parisWallClockToUtc } from "@/lib/time";
 
 const paris = (day: number, hour: number, minute = 0) =>
@@ -616,5 +617,147 @@ describe("marge de trajet sur une destination approximative", () => {
     );
 
     expect(zero).toEqual(sans);
+  });
+});
+
+describe("rayon d'action", () => {
+  /*
+   * Le rayon ferme un trou que `maxTravelMinutes` laissait ouvert : celui-ci
+   * ne s'applique qu'entre deux missions, si bien qu'une journée vide
+   * acceptait n'importe quelle distance. Les deux directions sont vérifiées —
+   * un rayon qui n'exclut rien est aussi faux qu'un rayon qui exclut tout.
+   */
+  const AILLEURS = { lat: 44.8378, lng: -0.5792 }; // Bordeaux centre, ~13 km.
+
+  it("refuse une mission au-delà du rayon, même un jour entièrement libre", () => {
+    const slots = findSlots(
+      [
+        schedule({
+          availability: TUESDAY_9_TO_17,
+          stops: [],
+          serviceRadiusKm: 5,
+        }),
+      ],
+      {
+        window: { start: paris(13, 0).getTime(), end: paris(14, 0).getTime() },
+        durationMinutes: 120,
+        destination: AILLEURS,
+        now: paris(12, 8),
+      },
+    );
+
+    expect(slots).toHaveLength(0);
+  });
+
+  it("accepte la même mission dès que le rayon la contient", () => {
+    const slots = findSlots(
+      [
+        schedule({
+          availability: TUESDAY_9_TO_17,
+          stops: [],
+          serviceRadiusKm: 25,
+        }),
+      ],
+      {
+        window: { start: paris(13, 0).getTime(), end: paris(14, 0).getTime() },
+        durationMinutes: 120,
+        destination: AILLEURS,
+        now: paris(12, 8),
+      },
+    );
+
+    expect(slots.length).toBeGreaterThan(0);
+  });
+
+  it("ne filtre rien sans domicile connu : on ne sait pas d'où compter", () => {
+    expect(horsDuRayon({ homePoint: null, serviceRadiusKm: 1 }, AILLEURS)).toBe(
+      false,
+    );
+  });
+
+  it("mesure à vol d'oiseau, pas par la route", () => {
+    // Le cercle dessiné sur la carte est la seule mesure que l'intervenant
+    // voit : la distance routière, plus longue, exclurait des adresses qu'il
+    // a placées à l'intérieur.
+    const maison = point("leognan");
+    const cible = point("cestas");
+    const km = haversineKm(maison.lat, maison.lng, cible.lat, cible.lng);
+
+    expect(
+      horsDuRayon({ homePoint: maison, serviceRadiusKm: Math.ceil(km) }, cible),
+    ).toBe(false);
+    expect(
+      horsDuRayon(
+        { homePoint: maison, serviceRadiusKm: Math.floor(km) - 1 },
+        cible,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("zone dessinée", () => {
+  /*
+   * Un cercle ne décrit pas un territoire : il traverse une forêt, une
+   * rocade, un bras de Garonne. La zone l'emporte donc quand elle existe — et
+   * c'est le seul point où les deux réglages pourraient se contredire.
+   */
+  const CARRE_OUEST = [
+    { lat: 44.6, lng: -0.8 },
+    { lat: 44.6, lng: -0.6 },
+    { lat: 44.85, lng: -0.6 },
+    { lat: 44.85, lng: -0.8 },
+  ];
+
+  it("l'emporte sur le rayon, dans les deux sens", () => {
+    const bordeaux = { lat: 44.8378, lng: -0.5792 }; // À l'est du carré.
+
+    // Rayon large, zone qui exclut : la zone tranche.
+    expect(
+      horsDuRayon(
+        {
+          homePoint: point("leognan"),
+          serviceRadiusKm: 50,
+          serviceArea: CARRE_OUEST,
+        },
+        bordeaux,
+      ),
+    ).toBe(true);
+
+    // Rayon minuscule, zone qui inclut : la zone tranche aussi.
+    expect(
+      horsDuRayon(
+        {
+          homePoint: point("leognan"),
+          serviceRadiusKm: 1,
+          serviceArea: CARRE_OUEST,
+        },
+        point("leognan"),
+      ),
+    ).toBe(false);
+  });
+
+  it("retombe sur le rayon quand la zone n'est pas une surface", () => {
+    // Deux points ne délimitent rien : refuser tout serait retirer quelqu'un
+    // de la circulation sur une donnée d'affichage.
+    expect(
+      horsDuRayon(
+        {
+          homePoint: point("leognan"),
+          serviceRadiusKm: 50,
+          serviceArea: CARRE_OUEST.slice(0, 2),
+        },
+        { lat: 44.8378, lng: -0.5792 },
+      ),
+    ).toBe(false);
+  });
+
+  it("s'applique sans domicile connu, contrairement au rayon", () => {
+    // Une zone dessinée ne dépend pas d'un point de départ : elle se suffit.
+    expect(
+      horsDuRayon(
+        { homePoint: null, serviceRadiusKm: 5, serviceArea: CARRE_OUEST },
+        { lat: 48.8566, lng: 2.3522 },
+      ),
+    ).toBe(true);
   });
 });

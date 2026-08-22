@@ -161,6 +161,7 @@ model Organization {
   missionPhotos          MissionPhoto[]
   missionAnomalies       MissionAnomaly[]
   missionChecklistItems  MissionChecklistItem[]
+  demandesRgpd           DemandeRgpd[]
 
   @@index([type, status])
 }
@@ -203,17 +204,19 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts          Account[]
-  sessions          Session[]
-  memberships       Membership[]
-  clientProfiles    ClientProfile[]
-  cleanerProfiles   CleanerProfile[]
-  auditLogs         AuditLog[]
-  sentMessages      Message[]         @relation("MessageSender")
-  receivedMessages  Message[]         @relation("MessageRecipient")
-  verifiedDocuments CleanerDocument[] @relation("DocumentVerifier")
-  referralCodes     ReferralCode[]
-  referredBy        Referral?
+  accounts             Account[]
+  sessions             Session[]
+  memberships          Membership[]
+  clientProfiles       ClientProfile[]
+  cleanerProfiles      CleanerProfile[]
+  auditLogs            AuditLog[]
+  sentMessages         Message[]         @relation("MessageSender")
+  receivedMessages     Message[]         @relation("MessageRecipient")
+  verifiedDocuments    CleanerDocument[] @relation("DocumentVerifier")
+  referralCodes        ReferralCode[]
+  referredBy           Referral?
+  demandesRgpd         DemandeRgpd[]     @relation("DemandeRgpdAuteur")
+  demandesRgpdTraitees DemandeRgpd[]     @relation("DemandeRgpdTraitant")
 }
 
 model Membership {
@@ -329,6 +332,13 @@ model ClientProfile {
   @@index([recouvrementDepuis])
 }
 
+enum SuspensionOrigin {
+  /// L'intervenant s'est mis en pause lui-même.
+  CLEANER
+  /// La plateforme a suspendu le compte.
+  PLATFORM
+}
+
 enum CleanerStatus {
   /// Inscrit, documents non encore validés. Ne reçoit aucune mission.
   PENDING_VERIFICATION
@@ -391,12 +401,52 @@ model CleanerProfile {
   /// Temps de trajet maximal accepté depuis la mission précédente, en minutes.
   maxTravelMinutes Int @default(30)
 
+  /// Rayon d'action, en kilomètres à vol d'oiseau depuis `homeAddress`.
+  ///
+  /// C'est **lui** qui décide si une mission est proposée : au-delà, aucune
+  /// offre n'arrive, quelle que soit la disponibilité déclarée. Il est choisi
+  /// sur une carte, donc mesuré comme un cercle — à vol d'oiseau et non par la
+  /// route. Employer la distance routière exclurait des adresses que
+  /// l'intervenant voit à l'intérieur du cercle qu'il vient de tracer, ce qui
+  /// est la façon la plus sûre de rendre un réglage incompréhensible.
+  ///
+  /// Sans `homeAddress`, il ne filtre rien : on ne sait pas d'où compter, et
+  /// refuser par défaut retirerait de la circulation un intervenant actif.
+  serviceRadiusKm Int @default(20)
+
+  /// Zone dessinée à la main, `[{ lat, lng }, …]`, ou `null`.
+  ///
+  /// **Elle l'emporte sur le rayon quand elle existe.** Un cercle ne décrit
+  /// pas un territoire : il traverse une forêt, une rocade, un bras de
+  /// Garonne. Dessiner permet de dire « oui jusqu'ici, non au-delà » là où le
+  /// rayon oblige à choisir entre trop et pas assez.
+  ///
+  /// En `Json` et non en géométrie PostGIS : le filtre est appliqué dans le
+  /// moteur de créneaux, qui est pur et travaille en mémoire — une colonne
+  /// géographique obligerait à interroger la base au milieu d'un calcul qui
+  /// n'en interroge aucune, et Prisma ne sait de toute façon pas la lire.
+  serviceAreaPolygon Json?
+
   /// Agrégats dénormalisés, recalculés à la clôture d'une mission. Ils servent
   /// au score d'attribution et à l'affichage ; la vérité reste dans Review et
   /// Assignment.
   ratingAverage  Float @default(0)
   ratingCount    Int   @default(0)
   acceptanceRate Float @default(1)
+
+  /// Qui a suspendu ce compte, quand il l'est.
+  ///
+  /// La distinction commande l'écran : une pause que l'intervenant s'est donnée
+  /// se reprend d'un bouton, une suspension de la plateforme ne se lève pas
+  /// soi-même. `status = SUSPENDED` équivaut à `suspensionOrigin != null`.
+  suspensionOrigin SuspensionOrigin?
+  suspendedAt      DateTime?
+  /// Motif écrit par la plateforme, lu par l'intervenant.
+  suspensionReason String?
+
+  /// Dossier soumis à validation. Distingue « complet mais pas envoyé » de
+  /// « en cours d'examen » — deux états qui appellent des gestes opposés.
+  dossierSubmittedAt DateTime?
 
   activatedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -2303,4 +2353,52 @@ model ProApplicationDocument {
 
   @@unique([applicationId, kind])
   @@index([status])
+}
+
+enum DemandeRgpdType {
+  /// Droit d'accès : obtenir ses données.
+  ACCES
+  /// Droit à l'effacement, dans les limites que la comptabilité impose.
+  EFFACEMENT
+}
+
+enum DemandeRgpdStatut {
+  RECUE
+  EN_COURS
+  TRAITEE
+  REFUSEE
+}
+
+/// La demande RGPD d'un intervenant, adressée à un humain.
+///
+/// **Elle ne s'exécute pas toute seule, contrairement à celle du client.** Un
+/// intervenant a émis des factures en son nom, encaissé des reversements et
+/// signé des chartes ; son SIRET figure sur des documents que le code de
+/// commerce impose de conserver dix ans. Effacer sur simple clic produirait des
+/// factures sans émetteur, donc irrégulières.
+///
+/// Ce que le produit garantit, c'est que la demande ne se perde pas — d'où une
+/// table, et non un email.
+model DemandeRgpd {
+  id             String            @id @default(cuid())
+  organizationId String
+  userId         String
+  type           DemandeRgpdType
+  statut         DemandeRgpdStatut @default(RECUE)
+
+  /// Ce que la personne a écrit, quand elle a précisé sa demande.
+  message    String?
+  /// Ce que la plateforme a fait, et pourquoi. Exigé pour clore.
+  resolution String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  traiteeLe    DateTime?
+  traiteeParId String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation("DemandeRgpdAuteur", fields: [userId], references: [id], onDelete: Cascade)
+  traiteePar   User?        @relation("DemandeRgpdTraitant", fields: [traiteeParId], references: [id], onDelete: SetNull)
+
+  @@index([statut, createdAt])
 }

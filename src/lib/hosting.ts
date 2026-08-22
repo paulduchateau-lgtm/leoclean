@@ -41,7 +41,17 @@ function matches(prefixes: readonly string[], pathname: string): boolean {
  * à chaque face sa propre session — ce qui est le cloisonnement demandé, et
  * non un contournement.
  */
-const NEUTRAL_PREFIXES = ["/connexion", "/api/auth"] as const;
+const NEUTRAL_PREFIXES = [
+  "/connexion",
+  "/api/auth",
+  /*
+   * Le détour par le mot de passe suit le lien magique, donc l'hôte qui l'a
+   * servi. Le rediriger ailleurs enverrait la personne sur un domaine où son
+   * cookie de session n'existe pas — elle se retrouverait déconnectée à la
+   * seconde où elle vient de prouver qui elle est.
+   */
+  "/definir-mot-de-passe",
+] as const;
 
 /** Ces chemins sont servis partout : ils ne se redirigent jamais. */
 export function isNeutralPath(pathname: string): boolean {
@@ -89,6 +99,22 @@ export function isAppPath(pathname: string): boolean {
 /** Ce chemin appartient-il à la face professionnelle ? */
 export function isProPath(pathname: string): boolean {
   return matches(PRO_PREFIXES, pathname);
+}
+
+/**
+ * Ce chemin porte-t-il la coque mobile de la vitrine ?
+ *
+ * `isAppPath` ne suffit pas, et l'écart est délibéré : `/rejoindre` est un
+ * **tunnel** — un écran par question, une seule décision à la fois — mais il
+ * reste servi par la vitrine tant que `pro.` n'existe pas, si bien qu'en faire
+ * un chemin applicatif l'enverrait sur l'application client, qui n'est pas la
+ * sienne. Les deux questions sont distinctes : « quel domaine sert cette
+ * page » et « quelle navigation y règne ». Laisser la barre d'onglets client
+ * sous un tunnel de candidature proposait « Réserver » — c'est-à-dire un
+ * ménage à domicile — à quelqu'un en train de postuler pour en faire.
+ */
+export function porteLaCoqueVitrine(pathname: string): boolean {
+  return !isAppPath(pathname) && !matches(["/rejoindre"], pathname);
 }
 
 /** Hôte d'une origine configurée, ou `null` si elle est absente ou illisible. */

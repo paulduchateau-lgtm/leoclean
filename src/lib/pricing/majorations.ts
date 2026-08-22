@@ -72,6 +72,36 @@ export const MAJORATIONS_PAR_DEFAUT: readonly RegleMajoration[] = [
   },
 ];
 
+/**
+ * Ce qu'un jour de la semaine rapporte en plus à l'intervenant.
+ *
+ * Rendu au seul écran de disponibilités : quelqu'un qui déclare ses horaires
+ * doit voir où sa journée vaut davantage, sinon la majoration du samedi est
+ * une décision prise sans lui. Elle est **dérivée de la grille**, jamais
+ * recopiée — un taux écrit dans un écran finirait par annoncer autre chose que
+ * ce qui est versé.
+ *
+ * Ne rend que ce qui revient à l'intervenant : la majoration de dernière
+ * minute va à la plateforme, et l'afficher ici promettrait un gain qui n'est
+ * pas le sien. Les jours fériés relèvent du même taux que le dimanche, quel
+ * que soit le jour de la semaine où ils tombent — l'écran le dit à part, un
+ * calendrier ne se range pas dans une colonne.
+ */
+export function majorationDuJourSemaine(
+  jourIso: number,
+  regles: readonly RegleMajoration[] = MAJORATIONS_PAR_DEFAUT,
+): RegleMajoration | null {
+  const cause: CauseMajoration | null =
+    jourIso === 6 ? "SAMEDI" : jourIso === 7 ? "DIMANCHE_FERIE" : null;
+  if (!cause) return null;
+
+  const regle = regles.find((candidate) => candidate.cause === cause);
+  if (!regle || regle.rateBp <= 0 || regle.beneficiaire !== "PROFESSIONAL") {
+    return null;
+  }
+  return regle;
+}
+
 export interface MajorationApplicable {
   cause: CauseMajoration;
   label: string;

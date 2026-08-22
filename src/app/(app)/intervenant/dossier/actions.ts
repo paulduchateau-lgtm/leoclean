@@ -1,10 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { DocumentType } from "@prisma/client";
 import { z } from "zod";
 
 import { authedAction } from "@/lib/actions";
 import { getCurrentUser, requireOrganization } from "@/lib/auth/session";
+import { REQUIRED_DOCUMENTS } from "@/lib/cleaner/activation";
+import {
+  PieceRefuseeError,
+  deposerUnePiece,
+  soumettreLeDossier,
+} from "@/lib/cleaner/pieces";
 import {
   PortraitRefuseError,
   enregistrerLePortraitIntervenant,
@@ -112,4 +119,72 @@ export async function retirerMonPortraitIntervenant(): Promise<{ ok: true }> {
     revalidatePath("/intervenant/dossier");
   }
   return { ok: true };
+}
+
+/**
+ * Dépose une pièce du dossier professionnel.
+ *
+ * Les octets transitent en `FormData` : une image grossit d'un tiers en base64,
+ * et la limite d'une server action se mesure sur ce qui arrive.
+ *
+ * La date d'expiration n'est demandée que pour l'assurance — c'est la seule
+ * pièce qui périme, et réclamer une date sur un RIB ferait chercher une
+ * information qui n'existe pas.
+ */
+export async function deposerMaPiece(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const fichier = formData.get("piece");
+  const type = String(formData.get("type") ?? "");
+  if (!(fichier instanceof File) || fichier.size === 0) {
+    return { ok: false, message: "Choisissez un fichier." };
+  }
+  if (!REQUIRED_DOCUMENTS.includes(type as DocumentType)) {
+    return { ok: false, message: "Pièce inconnue." };
+  }
+
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, message: "Session expirée." };
+
+  const brut = String(formData.get("expiresAt") ?? "");
+  const expiresAt = brut ? new Date(brut) : null;
+  if (expiresAt && Number.isNaN(expiresAt.getTime())) {
+    return { ok: false, message: "Cette date n'est pas valide." };
+  }
+
+  try {
+    await deposerUnePiece(await tenant(), user.id, {
+      type: type as DocumentType,
+      octets: new Uint8Array(await fichier.arrayBuffer()),
+      expiresAt,
+    });
+    revalidatePath("/intervenant/dossier");
+    revalidatePath("/intervenant");
+    return { ok: true };
+  } catch (erreur) {
+    if (erreur instanceof PieceRefuseeError) {
+      return { ok: false, message: erreur.message };
+    }
+    throw erreur;
+  }
+}
+
+/** Soumet le dossier à validation. */
+export async function soumettreMonDossier(): Promise<
+  { ok: true } | { ok: false; message: string }
+> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, message: "Session expirée." };
+
+  try {
+    await soumettreLeDossier(await tenant(), user.id);
+    revalidatePath("/intervenant/dossier");
+    revalidatePath("/intervenant");
+    return { ok: true };
+  } catch (erreur) {
+    if (erreur instanceof PieceRefuseeError) {
+      return { ok: false, message: erreur.message };
+    }
+    throw erreur;
+  }
 }

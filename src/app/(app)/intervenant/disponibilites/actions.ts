@@ -3,9 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { Prisma } from "@prisma/client";
+
 import { authedAction } from "@/lib/actions";
 import { requireOrganization } from "@/lib/auth/session";
+import {
+  RAYON_MAX_KM,
+  RAYON_MIN_KM,
+  RAYON_PAS_KM,
+  rayonValide,
+} from "@/lib/availability/rayon";
 import { type Plage, verifierSemaine } from "@/lib/availability/semaine";
+import {
+  MESSAGES_ZONE,
+  SOMMETS_MAX,
+  SOMMETS_MIN,
+  verifierLaZone,
+} from "@/lib/availability/zone";
 import { BusinessError } from "@/lib/booking/errors";
 import { marketplaceOrganizationId } from "@/lib/organizations";
 
@@ -113,3 +127,119 @@ export const enregistrerSemaine = authedAction(
     return { plages: plages.length };
   },
 );
+
+/**
+ * Rayon d'action déclaré.
+ *
+ * Même capacité que les heures, et pour la même raison : c'est un choix de
+ * conditions de travail. Aucun rôle de gestion ne détient
+ * `availability:manage:own` — personne ne peut élargir le périmètre de
+ * quelqu'un à sa place.
+ */
+export const enregistrerRayon = authedAction(
+  z.object({ rayonKm: z.number().int() }),
+  async ({ rayonKm }, user) => {
+    /* La même règle qu'à l'écran, par le même module : l'écran empêche de se
+       tromper, cette vérification empêche de contourner. */
+    if (!rayonValide(rayonKm)) {
+      throw new SemaineInvalideError(
+        `Le rayon doit être compris entre ${RAYON_MIN_KM} et ${RAYON_MAX_KM} km, par pas de ${RAYON_PAS_KM}.`,
+      );
+    }
+
+    const organizationId = await marketplaceOrganizationId();
+    const { db } = await requireOrganization(
+      organizationId,
+      "availability:manage:own",
+    );
+
+    const profil = await db.cleanerProfile.findFirst({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    if (!profil) {
+      throw new SemaineInvalideError(
+        "Votre compte n'est pas rattaché à un profil d'intervenant.",
+      );
+    }
+
+    await db.cleanerProfile.update({
+      where: { id: profil.id },
+      data: { serviceRadiusKm: rayonKm },
+    });
+
+    revalidatePath("/intervenant/disponibilites");
+    revalidatePath("/intervenant");
+    return { rayonKm };
+  },
+);
+
+/**
+ * Zone d'intervention dessinée.
+ *
+ * Le tracé est **revalidé ici**, pas seulement à l'écran : une zone d'un
+ * mètre carré envoyée à la main couperait toutes les propositions, et une
+ * zone de mille sommets alourdirait chaque recherche de créneaux. Les mêmes
+ * règles, par le même module.
+ */
+export const enregistrerZone = authedAction(
+  z.object({
+    zone: z
+      .array(z.object({ lat: z.number(), lng: z.number() }))
+      .min(SOMMETS_MIN)
+      .max(SOMMETS_MAX),
+  }),
+  async ({ zone }, user) => {
+    const faute = verifierLaZone(zone);
+    if (faute) throw new SemaineInvalideError(MESSAGES_ZONE[faute]);
+
+    const profil = await profilDeLIntervenant(user.id);
+    await profil.db.cleanerProfile.update({
+      where: { id: profil.id },
+      data: { serviceAreaPolygon: zone },
+    });
+
+    revalidatePath("/intervenant/disponibilites");
+    revalidatePath("/intervenant");
+    return { sommets: zone.length };
+  },
+);
+
+/** Retour au rayon : la zone est retirée, jamais remplacée par une autre. */
+export const effacerZone = authedAction(z.object({}), async (_input, user) => {
+  const profil = await profilDeLIntervenant(user.id);
+  await profil.db.cleanerProfile.update({
+    where: { id: profil.id },
+    data: { serviceAreaPolygon: Prisma.DbNull },
+  });
+
+  revalidatePath("/intervenant/disponibilites");
+  revalidatePath("/intervenant");
+  return { efface: true };
+});
+
+/**
+ * Le profil de l'appelant, sur un client cloisonné.
+ *
+ * `availability:manage:own` est la capacité exigée par les trois réglages, et
+ * aucun rôle de gestion ne la détient : personne ne modifie le périmètre ou
+ * les heures de quelqu'un d'autre.
+ */
+async function profilDeLIntervenant(userId: string) {
+  const organizationId = await marketplaceOrganizationId();
+  const { db } = await requireOrganization(
+    organizationId,
+    "availability:manage:own",
+  );
+
+  const profil = await db.cleanerProfile.findFirst({
+    where: { userId },
+    select: { id: true },
+  });
+  if (!profil) {
+    throw new SemaineInvalideError(
+      "Votre compte n'est pas rattaché à un profil d'intervenant.",
+    );
+  }
+  return { id: profil.id, db };
+}

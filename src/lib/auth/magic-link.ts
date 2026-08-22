@@ -56,6 +56,28 @@ export async function sendMagicLink({
     return { sent: true, throttled: true };
   }
 
-  await signIn("resend", { email, redirectTo: callbackUrl, redirect: false });
+  /*
+   * **Le lien mène d'abord à la création d'un mot de passe**, puis à la
+   * destination demandée — arbitrage du porteur du projet.
+   *
+   * Le raisonnement : quelqu'un qui vient d'ouvrir un lien à usage unique est
+   * exactement au moment où il a prouvé qu'il reçoit les emails de cette
+   * adresse, donc le seul moment où le dépôt autorise à définir un mot de
+   * passe. Le lui proposer plus tard, dans un écran de réglages, revient à ne
+   * jamais le lui proposer — et à lui faire refaire un aller-retour par sa
+   * boîte mail à chaque connexion.
+   *
+   * **La page reste facultative**, et c'est ce qui la rend acceptable : elle
+   * offre de passer, et un compte sans mot de passe continue de se connecter
+   * par lien. Le dépôt a choisi que le mot de passe s'ajoute et ne remplace
+   * rien ; en faire un passage obligé contredirait cette règle.
+   *
+   * L'enveloppement se fait **ici et nulle part ailleurs** : chaque appelant
+   * qui composerait l'URL lui-même finirait par en oublier un, et ce lien-là
+   * serait le seul à ne rien proposer.
+   */
+  const destination = `/definir-mot-de-passe?suite=${encodeURIComponent(callbackUrl)}`;
+
+  await signIn("resend", { email, redirectTo: destination, redirect: false });
   return { sent: true, throttled: false };
 }

@@ -7,6 +7,7 @@ import {
   isIndexableHost,
   isNeutralPath,
   isProPath,
+  porteLaCoqueVitrine,
 } from "@/lib/hosting";
 
 /**
@@ -253,4 +254,39 @@ describe("face professionnelle", () => {
     // modèle de navigation doit régner.
     expect(isAppPath("/intervenant/revenus")).toBe(true);
   });
+});
+
+describe("coque de la vitrine", () => {
+  /*
+   * La barre d'onglets client proposait « Réserver » sous un tunnel de
+   * candidature. Les deux prédicats se ressemblent assez pour qu'on les
+   * confonde de nouveau : le test dit lequel répond à quoi.
+   */
+  it.each(["/reserver", "/mon-espace", "/intervenant", "/connexion"])(
+    "retire la coque de « %s », comme un espace applicatif",
+    (path) => {
+      expect(porteLaCoqueVitrine(path)).toBe(false);
+    },
+  );
+
+  it("retire la coque du tunnel de candidature sans en faire un chemin applicatif", () => {
+    expect(porteLaCoqueVitrine("/rejoindre")).toBe(false);
+    expect(porteLaCoqueVitrine("/rejoindre/dossier")).toBe(false);
+    // Sans hôte `pro`, il reste servi par la vitrine et non par l'application.
+    expect(isAppPath("/rejoindre")).toBe(false);
+    expect(
+      canonicalHost(
+        { site: "leoclean.fr", app: "app.leoclean.fr" },
+        "leoclean.fr",
+        "/rejoindre",
+      ),
+    ).toBeNull();
+  });
+
+  it.each(["/", "/tarifs", "/leognan", "/travailler-avec-nous"])(
+    "garde la coque sur « %s »",
+    (path) => {
+      expect(porteLaCoqueVitrine(path)).toBe(true);
+    },
+  );
 });

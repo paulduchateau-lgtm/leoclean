@@ -28,7 +28,6 @@ import {
   MESSAGES_REFUS,
   type RefusFichier,
 } from "@/lib/stockage";
-import { getCommuneByInsee } from "@/lib/territory";
 
 /**
  * Le funnel d'inscription intervenant.
@@ -42,17 +41,17 @@ import { getCommuneByInsee } from "@/lib/territory";
 
 const eligibiliteSchema = z.object({
   /**
-   * Commune de résidence, choisie dans le référentiel **ou saisie librement**.
+   * Commune de résidence, **saisie librement, partout en France**.
    *
-   * Elle ne conditionne rien. Habiter hors des seize communes n'empêche pas d'y
-   * travailler : quelqu'un de Bordeaux centre dessert Villenave-d'Ornon sans
-   * difficulté, et refuser sa candidature écarterait des gens parfaitement
-   * capables. La commune sert au calcul de tournée et au score de trajet, pas
-   * à l'éligibilité — et c'est un humain qui juge, en entretien, si le trajet
-   * quotidien tient.
+   * Elle ne conditionne rien, et elle ne se choisit plus dans notre
+   * référentiel — arbitrage du porteur du projet (22 août 2026). Habiter hors
+   * des seize communes n'empêche pas d'y travailler : quelqu'un de Bordeaux
+   * centre dessert Villenave-d'Ornon sans difficulté, et proposer seize
+   * pastilles demandait à tous les autres de se reconnaître dans une liste où
+   * ils ne sont pas. C'est le rayon d'action déclaré, plus tard, qui décide
+   * des missions proposées ; la commune sert au premier contact.
    */
-  communeInsee: z.string().min(1).optional(),
-  communeLibre: z.string().trim().min(2).max(80).optional(),
+  communeLibre: z.string().trim().min(2).max(80),
   travelMode: z.enum(["VEHICULE", "DEUX_ROUES", "TRANSPORTS", "A_PIED"]),
   hoursPerWeek: z.enum(["MOINS_10", "DE_10_A_20", "DE_20_A_35", "PLUS_35"]),
   experience: z.enum(["AUCUNE", "OCCASIONNELLE", "PLUSIEURS_ANNEES", "PRO"]),
@@ -74,6 +73,14 @@ const eligibiliteSchema = z.object({
       "Ce numéro ne semble pas valide. Exemple : 06 12 34 56 78.",
     ),
   email: z.email(),
+  /**
+   * Faut-il envoyer le lien de reprise tout de suite ?
+   *
+   * Faux quand l'écran propose d'abord un fournisseur social : le lien ne sert
+   * alors à rien, et il partirait dans le dos de quelqu'un qui a choisi une
+   * autre porte.
+   */
+  envoyerLeLien: z.boolean().default(false),
 
   website: z.string().max(0).optional(),
   renderedAt: z.coerce.number().optional(),
@@ -121,7 +128,9 @@ export const ouvrirUnDossier = publicAction(
          * une clé de jointure, pas un texte. Une saisie libre laisse le champ
          * nul et ne garde que le nom.
          */
-        declaredInsee: input.communeInsee ?? null,
+        /* Plus aucun code INSEE ne remonte du formulaire : la commune est un
+           texte libre. La colonne reste, elle attend un géocodage. */
+        declaredInsee: null,
         /*
          * Le nom de la commune est écrit à côté de son code INSEE. Le code seul
          * suffit au produit, mais la revue de dossier lit une identité, pas un
@@ -129,9 +138,7 @@ export const ouvrirUnDossier = publicAction(
          * qui l'avaient pourtant choisie au premier écran. Un code INSEE ne se
          * lit pas au téléphone.
          */
-        declaredCity: input.communeInsee
-          ? (getCommuneByInsee(input.communeInsee)?.name ?? null)
-          : (input.communeLibre ?? null),
+        declaredCity: input.communeLibre,
         travelMode: input.travelMode,
         hoursPerWeek: input.hoursPerWeek,
         experience: input.experience,
@@ -147,19 +154,29 @@ export const ouvrirUnDossier = publicAction(
     });
 
     /*
-     * Le lien magique part tout de suite : c'est lui qui permet de reprendre
-     * depuis un autre appareil, et c'est la seule chose qui rattrape un
-     * abandon. Son échec ne fait pas échouer l'ouverture du dossier.
+     * **Le lien ne part plus systématiquement**, et c'est un arbitrage du
+     * porteur du projet : quelqu'un qui va entrer par Google n'a que faire d'un
+     * email à usage unique, et en recevoir un le ferait douter du chemin qu'il
+     * vient de prendre. L'écran offre donc le choix d'abord, et n'envoie que
+     * si l'on choisit l'email.
+     *
+     * Le repli tient : sans fournisseur social configuré, l'écran demande
+     * l'envoi immédiatement, et le parcours est celui d'avant.
+     *
+     * Son échec ne fait jamais échouer l'ouverture du dossier — c'est le
+     * dossier qui compte, le lien n'est qu'un moyen d'y revenir.
      */
     let lienEnvoye = false;
-    try {
-      await sendMagicLink({
-        email: input.email.toLowerCase(),
-        callbackUrl: "/rejoindre/dossier",
-      });
-      lienEnvoye = true;
-    } catch (erreur) {
-      console.error("Lien de reprise de candidature non envoyé", erreur);
+    if (input.envoyerLeLien) {
+      try {
+        await sendMagicLink({
+          email: input.email.toLowerCase(),
+          callbackUrl: "/rejoindre/dossier",
+        });
+        lienEnvoye = true;
+      } catch (erreur) {
+        console.error("Lien de reprise de candidature non envoyé", erreur);
+      }
     }
 
     void tracer(
