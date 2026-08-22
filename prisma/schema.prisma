@@ -161,6 +161,7 @@ model Organization {
   missionPhotos          MissionPhoto[]
   missionAnomalies       MissionAnomaly[]
   missionChecklistItems  MissionChecklistItem[]
+  demandesRgpd           DemandeRgpd[]
 
   @@index([type, status])
 }
@@ -203,17 +204,19 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts          Account[]
-  sessions          Session[]
-  memberships       Membership[]
-  clientProfiles    ClientProfile[]
-  cleanerProfiles   CleanerProfile[]
-  auditLogs         AuditLog[]
-  sentMessages      Message[]         @relation("MessageSender")
-  receivedMessages  Message[]         @relation("MessageRecipient")
-  verifiedDocuments CleanerDocument[] @relation("DocumentVerifier")
-  referralCodes     ReferralCode[]
-  referredBy        Referral?
+  accounts             Account[]
+  sessions             Session[]
+  memberships          Membership[]
+  clientProfiles       ClientProfile[]
+  cleanerProfiles      CleanerProfile[]
+  auditLogs            AuditLog[]
+  sentMessages         Message[]         @relation("MessageSender")
+  receivedMessages     Message[]         @relation("MessageRecipient")
+  verifiedDocuments    CleanerDocument[] @relation("DocumentVerifier")
+  referralCodes        ReferralCode[]
+  referredBy           Referral?
+  demandesRgpd         DemandeRgpd[]     @relation("DemandeRgpdAuteur")
+  demandesRgpdTraitees DemandeRgpd[]     @relation("DemandeRgpdTraitant")
 }
 
 model Membership {
@@ -2324,4 +2327,52 @@ model ProApplicationDocument {
 
   @@unique([applicationId, kind])
   @@index([status])
+}
+
+enum DemandeRgpdType {
+  /// Droit d'accès : obtenir ses données.
+  ACCES
+  /// Droit à l'effacement, dans les limites que la comptabilité impose.
+  EFFACEMENT
+}
+
+enum DemandeRgpdStatut {
+  RECUE
+  EN_COURS
+  TRAITEE
+  REFUSEE
+}
+
+/// La demande RGPD d'un intervenant, adressée à un humain.
+///
+/// **Elle ne s'exécute pas toute seule, contrairement à celle du client.** Un
+/// intervenant a émis des factures en son nom, encaissé des reversements et
+/// signé des chartes ; son SIRET figure sur des documents que le code de
+/// commerce impose de conserver dix ans. Effacer sur simple clic produirait des
+/// factures sans émetteur, donc irrégulières.
+///
+/// Ce que le produit garantit, c'est que la demande ne se perde pas — d'où une
+/// table, et non un email.
+model DemandeRgpd {
+  id             String            @id @default(cuid())
+  organizationId String
+  userId         String
+  type           DemandeRgpdType
+  statut         DemandeRgpdStatut @default(RECUE)
+
+  /// Ce que la personne a écrit, quand elle a précisé sa demande.
+  message    String?
+  /// Ce que la plateforme a fait, et pourquoi. Exigé pour clore.
+  resolution String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  traiteeLe    DateTime?
+  traiteeParId String?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation("DemandeRgpdAuteur", fields: [userId], references: [id], onDelete: Cascade)
+  traiteePar   User?        @relation("DemandeRgpdTraitant", fields: [traiteeParId], references: [id], onDelete: SetNull)
+
+  @@index([statut, createdAt])
 }

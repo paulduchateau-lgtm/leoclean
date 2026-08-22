@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { MissionProposeeCarte } from "@/app/(app)/intervenant/mission-proposee";
 import { EspaceFerme } from "@/components/espace-ferme";
 import { chargerMissions } from "@/lib/assignments/repository";
+import { BandeauStatut } from "@/components/espace-pro/bandeau-statut";
+import { lireDossier } from "@/lib/cleaner/space";
 import { espaceIntervenant } from "@/lib/auth/espaces";
 import { VOCABULAIRE_GEL } from "@/lib/paiement/recouvrement";
 import { formatEuros } from "@/lib/pricing";
@@ -63,15 +65,29 @@ export default async function MissionsPage() {
     );
   }
 
-  const { db, profil } = espace;
-  const { propositions, aVenir } = await chargerMissions(db, profil.id);
+  const { db, profil, user } = espace;
+  const [{ propositions, aVenir }, dossier] = await Promise.all([
+    chargerMissions(db, profil.id),
+    lireDossier(db, { id: user.id }, new Date()),
+  ]);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-12">
-      <h1 className="font-heading text-3xl font-semibold tracking-tight">
+      <h1 className="font-heading text-3xl font-black tracking-tight">
         Bonjour {profil.displayName}
       </h1>
-      <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+
+      {/*
+        L'état du compte avant tout le reste. C'est la seule question qu'on se
+        pose en ouvrant l'application, et un planning vide n'y répond pas :
+        « rien aujourd'hui » et « votre dossier bloque » se ressemblent à
+        l'écran et n'appellent pas le même geste.
+      */}
+      <div className="mt-6">
+        <BandeauStatut etat={dossier.etat} />
+      </div>
+
+      <p className="mt-6 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         <Link
           href="/intervenant/aujourdhui"
           className="font-semibold text-brand hover:underline"
@@ -113,6 +129,15 @@ export default async function MissionsPage() {
           className="text-brand hover:underline"
         >
           Coopter →
+        </Link>
+        <Link
+          href="/intervenant/dossier"
+          className="text-brand hover:underline"
+        >
+          Mon dossier →
+        </Link>
+        <Link href="/intervenant/profil" className="text-brand hover:underline">
+          Mon profil →
         </Link>
       </p>
 
